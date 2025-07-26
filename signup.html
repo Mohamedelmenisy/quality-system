@@ -18,7 +18,7 @@
             --light-gray: #e9ecef;
             --success-color: #28a745;
             --white-color: #fff;
-            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -29,6 +29,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
+            padding: 20px 0;
         }
 
         .signup-container {
@@ -51,22 +52,20 @@
         }
 
         .signup-header h2 {
-            margin: 10px 0;
+            margin: 10px 0 5px;
             color: var(--text-color);
             font-weight: 600;
+        }
+        
+        .signup-header p {
+            color: #6c757d;
+            font-size: 15px;
         }
 
         .input-group {
             position: relative;
             margin-bottom: 20px;
             text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: 500;
-            font-size: 14px;
         }
         
         .input-group input, .input-group select {
@@ -76,16 +75,19 @@
             border-radius: 8px;
             font-size: 16px;
             box-sizing: border-box;
+            background-color: #f8f9fa;
         }
 
         .input-group input:focus, .input-group select:focus {
             outline: none;
             border-color: var(--primary-color);
+            background-color: var(--white-color);
         }
 
         .btn-signup {
             width: 100%;
             padding: 12px;
+            margin-top: 10px;
             background-color: var(--primary-color);
             border: none;
             border-radius: 8px;
@@ -111,28 +113,24 @@
             font-weight: 500;
         }
         
-        /* Success Message Styling */
         .success-message {
             display: none;
-            padding: 15px;
-            background-color: var(--success-color);
-            color: var(--white-color);
+            padding: 10px;
+            background-color: #e4f8e9;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
             border-radius: 8px;
-            margin-top: 20px;
+            margin-bottom: 20px;
             font-weight: 500;
+            font-size: 14px;
             animation: fadeIn 0.5s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
-
-    <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/fluency/48/000000/group-task.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/fluency/32/000000/group-task.png">
-    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/000000/group-task.png">
-
 </head>
 <body>
 
@@ -144,33 +142,26 @@
         </div>
 
         <form id="signupForm">
+            <div id="successMessage" class="success-message"></div>
             <div class="input-group">
-                <label for="fullName">Full Name</label>
-                <input type="text" id="fullName" required>
+                <input type="text" id="fullName" placeholder="Full Name" required>
             </div>
             <div class="input-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" required>
+                <input type="email" id="email" placeholder="Email Address" required>
             </div>
             <div class="input-group">
-                <label for="password">Password</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" placeholder="Password" required>
             </div>
             <div class="input-group">
-                <label for="role">Select Your Role</label>
                 <select id="role" required>
+                    <option value="" disabled selected>Select Your Role</option>
                     <option value="quality">Quality Agent</option>
-                    <option value="senior">Senior Quality</option>
-                    <option value="agent">Agent (Other Dept)</option>
+                    <option value="agent">Support Agent</option>
                     <option value="manager">Manager</option>
                 </select>
             </div>
             <button type="submit" class="btn-signup">Create Account</button>
         </form>
-
-        <div id="successMessage" class="success-message">
-            Account created successfully! Redirecting to login...
-        </div>
         
         <div class="signup-footer">
             <p>Already have an account? <a href="./login.html">Log In</a></p>
@@ -181,14 +172,16 @@
         document.getElementById('signupForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            // Show success message
             const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = 'Account created successfully! Redirecting to login...';
             successMessage.style.display = 'block';
 
-            // Simulate a delay and redirect
+            // Disable form
+            document.querySelector('.btn-signup').disabled = true;
+
             setTimeout(() => {
                 window.location.href = './login.html';
-            }, 3000); // 3-second delay
+            }, 2500); // 2.5-second delay
         });
     </script>
 
