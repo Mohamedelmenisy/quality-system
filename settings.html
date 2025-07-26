@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Settings - Quality System</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet">
+    <style>
+        /* --- Base and Theme Variables --- */
+        :root {
+            --primary-color: #3b82f6; --sidebar-bg-light: #fff; --sidebar-bg-dark: #1f2937;
+            --bg-light: #f9fafb; --bg-dark: #111827; --card-light: #fff; --card-dark: #1f2937;
+            --text-light: #1f2937; --text-dark: #f9fafb; --text-muted-light: #6b7280;
+            --text-muted-dark: #9ca3af; --border-light: #e5e7eb; --border-dark: #374151;
+        }
+        [data-theme="dark"] {
+            --sidebar-bg: var(--sidebar-bg-dark); --bg-color: var(--bg-dark); --card-color: var(--card-dark);
+            --text-color: var(--text-dark); --text-muted: var(--text-muted-dark); --border-color: var(--border-dark);
+        }
+        [data-theme="light"] {
+            --sidebar-bg: var(--sidebar-bg-light); --bg-color: var(--bg-light); --card-color: var(--card-light);
+            --text-color: var(--text-light); --text-muted: var(--text-muted-light); --border-color: var(--border-light);
+        }
+        /* --- Global Styles --- */
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); margin: 0; color: var(--text-color); transition: background-color 0.3s ease, color 0.3s ease;}
+        .main-content { margin-left: 260px; padding: 30px; }
+        .card { background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+        h2 { font-size: 24px; font-weight: 600; margin-bottom: 25px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 8px; font-size: 14px; }
+        .form-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--bg-color); color: var(--text-color); }
+        .btn-save { background-color: var(--primary-color); color: #fff; padding: 10px 20px; border-radius: 8px; border: none; cursor: pointer; font-weight: 500; }
+        /* --- Sidebar & Header --- (Shared across dashboards) --- */
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; box-sizing: border-box; }
+        .sidebar .logo { font-size: 22px; font-weight: 700; color: var(--primary-color); display: flex; align-items: center; gap: 8px; padding: 10px; margin-bottom: 20px; }
+        .nav-item { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 8px; transition: all 0.2s; }
+        .nav-item:hover, .nav-item.active { background-color: #3b82f61a; color: var(--primary-color); }
+        header { display: flex; justify-content: flex-end; align-items: center; margin-bottom: 30px; }
+        .user-profile { position: relative; cursor: pointer; }
+        .user-profile > div { display: flex; align-items: center; gap: 10px; }
+        .user-profile img { width: 40px; height: 40px; border-radius: 50%; }
+        .user-dropdown { display: none; position: absolute; right: 0; top: 50px; background-color: var(--card-color); border: 1px solid var(--border-color); border-radius: 8px; width: 180px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); z-index: 10; }
+        .user-profile:hover .user-dropdown { display: block; }
+        .dropdown-item { display: flex; align-items: center; gap: 10px; padding: 10px 15px; color: var(--text-color); text-decoration: none; }
+        .dropdown-item:hover { background-color: #3b82f61a; }
+        /* --- Settings Specific --- */
+        .theme-selector { display: flex; gap: 15px; }
+        .theme-option { border: 2px solid var(--border-color); padding: 15px; border-radius: 8px; cursor: pointer; text-align: center; flex: 1; }
+        .theme-option.active { border-color: var(--primary-color); }
+        .theme-option .icon { font-size: 28px; }
+    </style>
+</head>
+<body data-theme="light">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <a href="./index.html" class="logo"><span class="material-icons-outlined">shield</span>QualityFlow</a>
+        <nav>
+            <a href="./dashboard-manager.html" class="nav-item"><span class="material-icons-outlined">dashboard</span>Dashboard</a>
+            <a href="#" class="nav-item"><span class="material-icons-outlined">checklist</span>My Tasks</a>
+            <a href="#" class="nav-item"><span class="material-icons-outlined">history</span>History</a>
+            <a href="./settings.html" class="nav-item active"><span class="material-icons-outlined">settings</span>Settings</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header>
+            <div class="user-profile">
+                <div>
+                    <img src="https://i.pravatar.cc/40" alt="Avatar">
+                    <div>
+                        <div style="font-weight: 600;">Mohamed</div>
+                        <div style="font-size: 12px; color: var(--text-muted);">manager@company.com</div>
+                    </div>
+                </div>
+                <div class="user-dropdown">
+                    <a href="#" class="dropdown-item"><span class="material-icons-outlined">person</span>Profile</a>
+                    <a href="./settings.html" class="dropdown-item"><span class="material-icons-outlined">settings</span>Settings</a>
+                    <a href="./login.html" class="dropdown-item"><span class="material-icons-outlined">logout</span>Logout</a>
+                </div>
+            </div>
+        </header>
+
+        <section class="settings-page">
+            <h2>Settings</h2>
+            <div class="card">
+                <h3>Appearance</h3>
+                <p style="color: var(--text-muted); margin-top: -20px; margin-bottom: 20px;">Choose how the system looks.</p>
+                <div class="theme-selector">
+                    <div class="theme-option" id="theme-light">
+                        <span class="material-icons-outlined">light_mode</span><div>Light</div>
+                    </div>
+                    <div class="theme-option" id="theme-dark">
+                        <span class="material-icons-outlined">dark_mode</span><div>Dark</div>
+                    </div>
+                </div>
+            </div>
+            <div class="card" style="margin-top: 20px;">
+                <h3>Profile Information</h3>
+                <div class="form-group">
+                    <label for="fullName">Full Name</label>
+                    <input type="text" id="fullName" value="Mohamed Elmenisy">
+                </div>
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" value="m.elmenisy@example.com" disabled>
+                </div>
+                <button class="btn-save">Save Changes</button>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        // --- THEME SWITCHER SCRIPT (can be shared across dashboards) ---
+        const lightThemeBtn = document.getElementById('theme-light');
+        const darkThemeBtn = document.getElementById('theme-dark');
+
+        function setActiveTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            document.body.setAttribute('data-theme', theme); // for legacy support
+            localStorage.setItem('theme', theme);
+            if (theme === 'dark') {
+                darkThemeBtn.classList.add('active');
+                lightThemeBtn.classList.remove('active');
+            } else {
+                lightThemeBtn.classList.add('active');
+                darkThemeBtn.classList.remove('active');
+            }
+        }
+        
+        lightThemeBtn.addEventListener('click', () => setActiveTheme('light'));
+        darkThemeBtn.addEventListener('click', () => setActiveTheme('dark'));
+
+        // Apply saved theme on page load
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        setActiveTheme(savedTheme);
+    </script>
+</body>
+</html>
