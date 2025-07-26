@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality System - Team Performance Platform</title>
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=google.com">
+    <!-- Google Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #007BFF;
+            --primary-hover: #0056b3;
+            --secondary-color: #f8f9fa;
+            --text-color: #343a40;
+            --white-color: #fff;
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            background-color: var(--white-color);
+            color: var(--text-color);
+        }
+
+        /* Header */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 50px;
+            background-color: var(--white-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .header .logo {
+            display: flex;
+            align-items: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+        
+        .header .logo .icon {
+            margin-right: 10px;
+        }
+
+        .header .nav-buttons a {
+            text-decoration: none;
+            color: var(--primary-color);
+            font-weight: 500;
+            padding: 10px 20px;
+            border-radius: 8px;
+            margin-left: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .header .nav-buttons .btn-login {
+            border: 1px solid var(--primary-color);
+        }
+
+        .header .nav-buttons .btn-signup {
+            background-color: var(--primary-color);
+            color: var(--white-color);
+        }
+        
+        .header .nav-buttons .btn-signup:hover {
+            background-color: var(--primary-hover);
+        }
+
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            padding: 100px 20px;
+            background-color: var(--secondary-color);
+        }
+
+        .hero h1 {
+            font-size: 48px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .hero h1 span {
+            color: var(--primary-color);
+        }
+
+        .hero p {
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto 30px;
+            color: #6c757d;
+        }
+        
+        .hero .cta-button {
+            text-decoration: none;
+            background-color: var(--primary-color);
+            color: var(--white-color);
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background-color 0.3s ease;
+        }
+
+        .hero .cta-button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 50px;
+            text-align: center;
+        }
+        
+        .features h2 {
+            font-size: 36px;
+            font-weight: 600;
+            margin-bottom: 50px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .feature-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            text-align: left;
+            transition: all 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+        }
+
+        .feature-card .icon {
+            font-size: 48px;
+            color: var(--primary-color);
+            margin-bottom: 20px;
+        }
+
+        .feature-card h3 {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .feature-card p {
+            font-size: 16px;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 20px;
+            background-color: var(--text-color);
+            color: #ccc;
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header { padding: 20px; }
+            .hero h1 { font-size: 36px; }
+            .features { padding: 50px 20px; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Header Section -->
+    <header class="header">
+        <div class="logo">
+            <span class="material-icons icon">assessment</span>
+            <span>QualitySystem</span>
+        </div>
+        <div class="nav-buttons">
+            <a href="./login.html" class="btn-login">Login</a>
+            <a href="./signup.html" class="btn-signup">Sign Up for Free</a>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <main>
+        <section class="hero">
+            <h1>The All-In-One Platform to <span>Boost Team Quality</span></h1>
+            <p>Streamline your team's workflow, track performance, and drive continuous improvement with our powerful and intuitive quality management system.</p>
+            <a href="./signup.html" class="cta-button">Get Started Now</a>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features">
+            <h2>Everything You Need to Manage Quality</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <span class="material-icons icon">rate_review</span>
+                    <h3>Task Management</h3>
+                    <p>Assign, track, and manage review tasks with intuitive workflows and progress tracking for every order.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-icons icon">bar_chart</span>
+                    <h3>Performance Analytics</h3>
+                    <p>Get a clear view of individual and team performance with interactive charts and detailed statistics.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-icons icon">rule</span>
+                    <h3>Error Tracking</h3>
+                    <p>Identify, categorize, and analyze errors to find root causes and provide targeted feedback to your agents.</p>
+                </div>
+                <div class="feature-card">
+                    <span class="material-icons icon">groups</span>
+                    <h3>Role-Based Views</h3>
+                    <p>Customized dashboards for every user, from agents to managers, ensuring everyone sees exactly what they need.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer Section -->
+    <footer class="footer">
+        <p>© 2025 QualitySystem. All Rights Reserved.</p>
+    </footer>
+
+</body>
+</html>
