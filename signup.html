@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        .dark-mode { background-color: #1f2937; color: white; }
-        .transition { transition: all 0.3s ease-in-out; }
-    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - Quality System</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=google.com">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/fluency/48/000000/group-task.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/fluency/32/000000/group-task.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/000000/group-task.png">
     <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -25,7 +20,7 @@
             --light-gray: #e9ecef;
             --success-color: #28a745;
             --white-color: #fff;
-            --shadow: 0 4px 25px rgba(0, 0, 0, 0.1);
+            --shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         body {
@@ -36,7 +31,6 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            padding: 20px 0;
         }
 
         .signup-container {
@@ -59,42 +53,45 @@
         }
 
         .signup-header h2 {
-            margin: 10px 0 5px;
+            margin: 10px 0;
             color: var(--text-color);
             font-weight: 600;
-        }
-        
-        .signup-header p {
-            color: #6c757d;
-            font-size: 15px;
         }
 
         .input-group {
             position: relative;
             margin-bottom: 20px;
-            text-align: left;
         }
         
+        .input-group .icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #aaa;
+        }
+
         .input-group input, .input-group select {
             width: 100%;
-            padding: 12px;
+            padding: 12px 12px 12px 45px;
             border: 1px solid var(--light-gray);
             border-radius: 8px;
             font-size: 16px;
             box-sizing: border-box;
-            background-color: #f8f9fa;
+        }
+        
+        .input-group select {
+            padding-left: 15px; /* No icon for select */
         }
 
         .input-group input:focus, .input-group select:focus {
             outline: none;
             border-color: var(--primary-color);
-            background-color: var(--white-color);
         }
 
         .btn-signup {
             width: 100%;
             padding: 12px;
-            margin-top: 10px;
             background-color: var(--primary-color);
             border: none;
             border-radius: 8px;
@@ -122,63 +119,58 @@
         
         .success-message {
             display: none;
-            padding: 10px;
-            background-color: #e4f8e9;
-            color: var(--success-color);
-            border: 1px solid var(--success-color);
+            padding: 15px;
+            background-color: var(--success-color);
+            color: var(--white-color);
             border-radius: 8px;
-            margin-bottom: 20px;
+            margin-top: 20px;
             font-weight: 500;
-            font-size: 14px;
             animation: fadeIn 0.5s ease;
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-10px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
     </style>
 </head>
-<body class="transition">
-    <script>
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-        }
-    </script>
-    <div class="p-4 flex justify-end">
-        <button onclick="toggleDarkMode()" class="bg-gray-200 dark:bg-gray-700 text-sm px-3 py-1 rounded">
-            Toggle Mode
-        </button>
-    </div>
+<body>
 
     <div class="signup-container">
         <div class="signup-header">
             <span class="material-icons icon">person_add</span>
-            <h2 class="text-lg font-semibold flex items-center gap-2"><i class="ph ph-list"></i>Create Your Account</h2>
+            <h2>Create Your Account</h2>
             <p>Join us to manage your team effectively.</p>
         </div>
 
         <form id="signupForm">
-            <div id="successMessage" class="success-message"></div>
             <div class="input-group">
+                <span class="material-icons icon">badge</span>
                 <input type="text" id="fullName" placeholder="Full Name" required>
             </div>
             <div class="input-group">
+                <span class="material-icons icon">email</span>
                 <input type="email" id="email" placeholder="Email Address" required>
             </div>
             <div class="input-group">
+                <span class="material-icons icon">lock</span>
                 <input type="password" id="password" placeholder="Password" required>
             </div>
             <div class="input-group">
                 <select id="role" required>
                     <option value="" disabled selected>Select Your Role</option>
                     <option value="quality">Quality Agent</option>
-                    <option value="agent">Support Agent</option>
+                    <option value="senior">Senior Quality</option>
+                    <option value="agent">Agent (Other Dept)</option>
                     <option value="manager">Manager</option>
                 </select>
             </div>
             <button type="submit" class="btn-signup">Create Account</button>
         </form>
+
+        <div id="successMessage" class="success-message">
+            Account created successfully! Redirecting to login...
+        </div>
         
         <div class="signup-footer">
             <p>Already have an account? <a href="./login.html">Log In</a></p>
@@ -190,15 +182,11 @@
             e.preventDefault();
             
             const successMessage = document.getElementById('successMessage');
-            successMessage.textContent = 'Account created successfully! Redirecting to login...';
             successMessage.style.display = 'block';
-
-            // Disable form
-            document.querySelector('.btn-signup').disabled = true;
 
             setTimeout(() => {
                 window.location.href = './login.html';
-            }, 2500); // 2.5-second delay
+            }, 2000);
         });
     </script>
 
