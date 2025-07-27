@@ -55,3 +55,33 @@ The system provides a unique interface for each user role to ensure a focused an
 ## 📁 File Structure
 
 The project is organized into self-contained HTML files for simplicity. No external `assets` folder is needed.
+
+quality-system/
+│
+├── index.html # Landing Page
+├── login.html # Login Page
+├── signup.html # New User Registration Page
+├── dashboard-employee.html # Dashboard for Quality Agents
+├── dashboard-manager.html # Dashboard for Managers
+├── dashboard-agent.html # Dashboard for Support Agents (to view their errors)
+└── README.md # You are here!
+
+---
+
+## 🔌 Future Integration Plan
+
+This front-end project is the first step. The next phase is to connect it to a backend service.
+
+1.  **Backend Choice**: The system is designed to be compatible with **Supabase** or **Firebase** for easy setup of database and authentication.
+2.  **API Connection**: Each page will fetch and post data via a REST API.
+3.  **Authentication**: The login and signup pages will be connected to the chosen authentication service. The current redirect is based on a simple string check in the email for demo purposes.
+
+---
+
+## ✅ To-Do / Next Steps
+
+-   [ ] Build the dashboard for the **Senior Quality** role.
+-   [ ] Implement a **Settings Page** with theme (Dark/Light) and profile options.
+-   [ ] Connect the front-end to a Firebase/Supabase backend.
+-   [ ] Enable the "Export to PDF/CSV" functionality for managers.
+-   [ ] Make table filters functional using JavaScript.
