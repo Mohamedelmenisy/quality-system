@@ -1,18 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        .dark-mode { background-color: #1f2937; color: white; }
-        .transition { transition: all 0.3s ease-in-out; }
-    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quality System - Team Performance Platform</title>
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=google.com">
+    <link rel="icon" type="image/png" sizes="32x32" href="https://img.icons8.com/fluency/48/000000/group-task.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="https://img.icons8.com/fluency/32/000000/group-task.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="https://img.icons8.com/fluency/180/000000/group-task.png">
     <!-- Google Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -41,9 +36,6 @@
             padding: 20px 50px;
             background-color: var(--white-color);
             box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
         }
 
         .header .logo {
@@ -52,7 +44,6 @@
             font-size: 24px;
             font-weight: 600;
             color: var(--primary-color);
-            text-decoration: none;
         }
         
         .header .logo .icon {
@@ -72,11 +63,6 @@
         .header .nav-buttons .btn-login {
             border: 1px solid var(--primary-color);
         }
-        
-        .header .nav-buttons .btn-login:hover {
-            background: var(--primary-color);
-            color: var(--white-color);
-        }
 
         .header .nav-buttons .btn-signup {
             background-color: var(--primary-color);
@@ -87,13 +73,12 @@
             background-color: var(--primary-hover);
         }
 
+
         /* Hero Section */
         .hero {
             text-align: center;
             padding: 100px 20px;
             background-color: var(--secondary-color);
-            background-image: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
-            color: var(--white-color);
         }
 
         .hero h1 {
@@ -104,31 +89,29 @@
         }
 
         .hero h1 span {
-            color: #a0d8ff;
+            color: var(--primary-color);
         }
 
         .hero p {
             font-size: 18px;
             max-width: 600px;
             margin: 0 auto 30px;
-            color: #e9ecef;
+            color: #6c757d;
         }
         
         .hero .cta-button {
             text-decoration: none;
-            background-color: var(--white-color);
-            color: var(--primary-color);
+            background-color: var(--primary-color);
+            color: var(--white-color);
             padding: 15px 30px;
             border-radius: 8px;
             font-size: 18px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: var(--shadow);
+            transition: background-color 0.3s ease;
         }
 
         .hero .cta-button:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background-color: var(--primary-hover);
         }
 
         /* Features Section */
@@ -158,7 +141,6 @@
             box-shadow: var(--shadow);
             text-align: left;
             transition: all 0.3s ease;
-            border-top: 4px solid var(--primary-color);
         }
 
         .feature-card:hover {
@@ -197,40 +179,34 @@
             .hero h1 { font-size: 36px; }
             .features { padding: 50px 20px; }
         }
+
     </style>
 </head>
-<body class="transition">
-    <script>
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-        }
-    </script>
-    <div class="p-4 flex justify-end">
-        <button onclick="toggleDarkMode()" class="bg-gray-200 dark:bg-gray-700 text-sm px-3 py-1 rounded">
-            Toggle Mode
-        </button>
-    </div>
+<body>
 
+    <!-- Header Section -->
     <header class="header">
-        <a href="#" class="logo">
+        <div class="logo">
             <span class="material-icons icon">assessment</span>
             <span>QualitySystem</span>
-        </a>
+        </div>
         <div class="nav-buttons">
             <a href="./login.html" class="btn-login">Login</a>
             <a href="./signup.html" class="btn-signup">Sign Up for Free</a>
         </div>
     </header>
 
+    <!-- Hero Section -->
     <main>
         <section class="hero">
-            <h1 class="text-xl font-bold flex items-center gap-2"><i class="ph ph-gauge"></i>The All-In-One Platform to <span>Boost Team Quality</span></h1>
+            <h1>The All-In-One Platform to <span>Boost Team Quality</span></h1>
             <p>Streamline your team's workflow, track performance, and drive continuous improvement with our powerful and intuitive quality management system.</p>
             <a href="./signup.html" class="cta-button">Get Started Now</a>
         </section>
 
+        <!-- Features Section -->
         <section class="features">
-            <h2 class="text-lg font-semibold flex items-center gap-2"><i class="ph ph-list"></i>Everything You Need to Manage Quality</h2>
+            <h2>Everything You Need to Manage Quality</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <span class="material-icons icon">rate_review</span>
@@ -256,6 +232,7 @@
         </section>
     </main>
 
+    <!-- Footer Section -->
     <footer class="footer">
         <p>© 2025 QualitySystem. All Rights Reserved.</p>
     </footer>
