@@ -1,13 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    <style>
-        .dark-mode { background-color: #1f2937; color: white; }
-        .transition { transition: all 0.3s ease-in-out; }
-    </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Quality System - Team Performance Platform</title>
@@ -199,17 +192,7 @@
         }
     </style>
 </head>
-<body class="transition">
-    <script>
-        function toggleDarkMode() {
-            document.body.classList.toggle('dark-mode');
-        }
-    </script>
-    <div class="p-4 flex justify-end">
-        <button onclick="toggleDarkMode()" class="bg-gray-200 dark:bg-gray-700 text-sm px-3 py-1 rounded">
-            Toggle Mode
-        </button>
-    </div>
+<body>
 
     <header class="header">
         <a href="#" class="logo">
@@ -224,13 +207,13 @@
 
     <main>
         <section class="hero">
-            <h1 class="text-xl font-bold flex items-center gap-2"><i class="ph ph-gauge"></i>The All-In-One Platform to <span>Boost Team Quality</span></h1>
+            <h1>The All-In-One Platform to <span>Boost Team Quality</span></h1>
             <p>Streamline your team's workflow, track performance, and drive continuous improvement with our powerful and intuitive quality management system.</p>
             <a href="./signup.html" class="cta-button">Get Started Now</a>
         </section>
 
         <section class="features">
-            <h2 class="text-lg font-semibold flex items-center gap-2"><i class="ph ph-list"></i>Everything You Need to Manage Quality</h2>
+            <h2>Everything You Need to Manage Quality</h2>
             <div class="features-grid">
                 <div class="feature-card">
                     <span class="material-icons icon">rate_review</span>
