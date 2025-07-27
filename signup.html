@@ -100,7 +100,6 @@
             -webkit-appearance: none;
             -moz-appearance: none;
             appearance: none;
-            cursor: pointer;
         }
 
         .form-group .select {
@@ -108,6 +107,7 @@
             background-repeat: no-repeat;
             background-position: right 15px center;
             background-size: .65em auto;
+            cursor: pointer;
         }
         
         .form-group .select option {
@@ -120,21 +120,15 @@
             left: 15px;
             top: 14px;
             font-size: 0.95em;
-            cursor: text;
+            pointer-events: none; /* Changed from cursor: text */
             transition: 0.3s ease;
         }
-        
-        .form-group .select-label {
-            color: var(--text-secondary-color);
-            position: absolute;
-            left: 15px;
-            top: 4px;
-            font-size: 0.75em;
-            font-weight: 600;
-        }
 
+        /* Unified rule for all labels when input/select is focused or valid */
         .form-group .input:focus + .input-label,
-        .form-group .input:valid + .input-label {
+        .form-group .input:valid + .input-label,
+        .form-group .select:focus + .input-label,
+        .form-group .select:valid + .input-label {
             color: var(--primary-color);
             top: 4px;
             font-size: 0.75em;
@@ -233,14 +227,15 @@
                 <span class="input-label">Confirm Password</span>
             </div>
             <div class="form-group">
-                <span class="select-label">Role</span>
                 <select id="role" class="select" required>
-                    <option value="" disabled selected></option>
+                    <option value="" disabled selected hidden></option>
                     <option value="quality-agent">Quality Agent</option>
                     <option value="senior-quality">Senior Quality</option>
                     <option value="manager">Manager</option>
                     <option value="other-staff">Staff from another department</option>
                 </select>
+                <!-- Label is now after the select and uses the same class -->
+                <span class="input-label">Role</span>
             </div>
             <button type="submit" class="submit-btn">Create Account</button>
         </form>
