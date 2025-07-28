@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Quality System</title>
-    <link rel="icon" type="image/png" href="https://www.google.com/s2/favicons?domain=google.com">
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%23F97316'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23581C87'/%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -199,10 +200,13 @@
         document.getElementById('loginForm').addEventListener('submit', function(e) {
             e.preventDefault();
             
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.toLowerCase();
             const successMessage = document.getElementById('successMessage');
             
-            let redirectUrl = './dashboard-employee.html';
+            // Default redirection for employees
+            let redirectUrl = './dashboard-employee.html'; 
+
+            // Check for keywords in email to redirect to specific dashboards
             if (email.includes('manager')) {
                 redirectUrl = './dashboard-manager.html';
             } else if (email.includes('agent')) {
