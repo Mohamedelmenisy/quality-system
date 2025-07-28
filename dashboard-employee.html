@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QualityX System - لوحة التحكم</title>
+    <title>QualityX System - Dashboard</title>
     
     <!-- Favicon using the logo -->
     <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB2aWV3Qm94PSIwIDAgMTAwIDEwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICAgIDxwYXRoIGQ9Ik0wIDBIMTAwVjUwSDBWMFoiIGZpbGw9IiNGOTczMTYiLz4KICAgIDxwYXRoIGQ9Ik0wIDUwSDEwMFYxMDBIMFY1MFoiIGZpbGw9IiM1ODF DODciLz4KPC9zdmc+">
@@ -11,7 +11,7 @@
     <!-- Google Fonts & Icons -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
     <!-- Chart.js Library -->
@@ -36,7 +36,7 @@
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { 
-            font-family: 'Cairo', sans-serif; 
+            font-family: 'Poppins', sans-serif; 
             background-color: var(--main-bg); 
             color: var(--text-color); 
             display: flex;
@@ -49,11 +49,11 @@
             background-color: var(--sidebar-bg);
             height: 100vh;
             position: fixed;
-            right: 0; top: 0;
+            left: 0; top: 0;
             padding: 25px 20px;
             display: flex; flex-direction: column;
-            border-left: 1px solid var(--border-color);
-            transition: right 0.3s ease;
+            border-right: 1px solid var(--border-color);
+            transition: left 0.3s ease;
         }
         .sidebar .logo {
             display: flex;
@@ -77,7 +77,7 @@
 
         /* --- Main Content --- */
         .main-content {
-            margin-right: 260px;
+            margin-left: 260px;
             width: calc(100% - 260px);
             padding: 25px;
             overflow-y: auto;
@@ -140,11 +140,11 @@
         .filters { display: flex; gap: 15px; align-items: center; flex-wrap: wrap; }
         .filters input, .filters select {
             background-color: var(--main-bg); border: 1px solid var(--border-color); color: var(--text-color);
-            padding: 8px 12px; border-radius: 6px; font-family: 'Cairo', sans-serif;
+            padding: 8px 12px; border-radius: 6px; font-family: 'Poppins', sans-serif;
         }
 
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 15px; text-align: right; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap; vertical-align: middle; }
         th { font-weight: 600; font-size: 12px; text-transform: uppercase; color: var(--text-muted); }
         tbody tr { transition: background-color 0.2s ease; }
         tbody tr:hover { background-color: #2a3547; }
@@ -158,7 +158,7 @@
         .status.reviewed { background-color: rgba(14, 165, 233, 0.15); color: #0ea5e9; }
 
 
-        .action-btn { background: none; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; color: var(--text-muted); margin: 0 4px; padding: 6px 10px; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: 'Cairo'; font-size: 13px; }
+        .action-btn { background: none; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; color: var(--text-muted); margin: 0 4px; padding: 6px 10px; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px; font-family: 'Poppins'; font-size: 13px; }
         .action-btn:hover { color: var(--text-color); border-color: var(--primary-color); }
         .escalate-btn:hover { color: var(--orange); border-color: var(--orange); }
         .review-btn.senior:hover { color: var(--green); border-color: var(--green); }
@@ -203,16 +203,16 @@
             <span>QualityX System</span>
         </a>
         
-        <a class="nav-item active" data-target="dashboard"><span class="material-icons">dashboard</span>لوحة التحكم</a>
-        <a class="nav-item" data-target="orders"><span class="material-icons">assignment</span>طلباتي</a>
-        <a class="nav-item" data-target="history"><span class="material-icons">history</span>السجل والتقارير</a>
+        <a class="nav-item active" data-target="dashboard"><span class="material-icons">dashboard</span>Dashboard</a>
+        <a class="nav-item" data-target="orders"><span class="material-icons">assignment</span>My Orders</a>
+        <a class="nav-item" data-target="history"><span class="material-icons">history</span>History & Reports</a>
     </aside>
 
     <main class="main-content">
         <div class="header">
-            <h1 id="header-title" class="header-title">لوحة التحكم</h1>
+            <h1 id="header-title" class="header-title">Dashboard</h1>
             <div class="user-info">
-                <span class="user-name">أحمد (Quality Agent)</span>
+                <span class="user-name">Ahmed (Quality Agent)</span>
                 <div class="user-avatar">QE</div>
             </div>
         </div>
@@ -222,29 +222,29 @@
             <div class="kpi-grid">
                 <div class="kpi-card blue">
                     <div class="icon"><span class="material-icons">inventory_2</span></div>
-                    <div class="text"><h3>1,240</h3> <p>إجمالي الطلبات (الشهر الحالي)</p></div>
+                    <div class="text"><h3>1,240</h3> <p>Total Orders (This Month)</p></div>
                 </div>
                 <div class="kpi-card green">
                     <div class="icon"><span class="material-icons">check_circle</span></div>
-                    <div class="text"><h3>1,225</h3> <p>الطلبات المكتملة</p></div>
+                    <div class="text"><h3>1,225</h3> <p>Completed Orders</p></div>
                 </div>
                  <div class="kpi-card orange">
                     <div class="icon"><span class="material-icons">gpp_good</span></div>
-                    <div class="text"><h3>98.7%</h3> <p>نسبة الإنجاز اليومي</p></div>
+                    <div class="text"><h3>98.7%</h3> <p>Today's Completion Rate</p></div>
                 </div>
                 <div class="kpi-card red">
                     <div class="icon"><span class="material-icons">running_with_errors</span></div>
-                    <div class="text"><h3>15</h3> <p>الطلبات المتأخرة</p></div>
+                    <div class="text"><h3>15</h3> <p>Late Orders</p></div>
                 </div>
             </div>
 
             <div class="charts-grid">
                 <div class="dashboard-card">
-                    <div class="card-header"><h3 class="card-title">مؤشر الأداء (آخر 7 أيام)</h3></div>
+                    <div class="card-header"><h3 class="card-title">Performance Trend (Last 7 Days)</h3></div>
                     <div id="performance-chart-container"><canvas id="performanceChart"></canvas></div>
                 </div>
                 <div class="dashboard-card">
-                    <div class="card-header"><h3 class="card-title">الأخطاء الأكثر شيوعًا</h3></div>
+                    <div class="card-header"><h3 class="card-title">Most Common Issues</h3></div>
                     <div id="issues-chart-container"><canvas id="issuesChart"></canvas></div>
                 </div>
             </div>
@@ -253,22 +253,22 @@
         <!-- Section 2: My Orders -->
         <section id="orders" class="page-section">
             <div class="table-container">
-                <div class="table-header"><h3 class="table-title">الطلبات المفتوحة والمعلقة</h3></div>
+                <div class="table-header"><h3 class="table-title">Pending & Open Orders</h3></div>
                 <table id="pending-orders-table">
-                     <thead><tr><th>رقم الطلب</th><th>اسم الموظف</th><th>التاريخ</th><th>الحالة</th><th>الإجراءات</th></tr></thead>
+                     <thead><tr><th>Order ID</th><th>Agent Name</th><th>Date</th><th>Status</th><th>Actions</th></tr></thead>
                      <tbody>
-                        <tr><td>#19245521</td><td>أحمد علي</td><td>26 يوليو 2025</td><td><span class="status open"><span class="material-icons">inbox</span>مفتوح</span></td><td><button class="action-btn escalate-btn" title="تصعيد للمدير"><span class="material-icons">upload</span>تصعيد للمدير</button></td></tr>
-                        <tr><td>#19245522</td><td>سارة فؤاد</td><td>26 يوليو 2025</td><td><span class="status open"><span class="material-icons">inbox</span>مفتوح</span></td><td><button class="action-btn escalate-btn" title="تصعيد للمدير"><span class="material-icons">upload</span>تصعيد للمدير</button></td></tr>
-                        <tr><td>#19245518</td><td>منى كمال</td><td>25 يوليو 2025</td><td><span class="status late"><span class="material-icons">schedule</span>متأخر</span></td><td><button class="action-btn escalate-btn" title="تصعيد للمدير"><span class="material-icons">upload</span>تصعيد للمدير</button></td></tr>
+                        <tr><td>#19245521</td><td>Ahmed Ali</td><td>July 26, 2025</td><td><span class="status open"><span class="material-icons">inbox</span>Open</span></td><td><button class="action-btn escalate-btn" title="Escalate to Senior"><span class="material-icons">upload</span>Escalate to Senior</button></td></tr>
+                        <tr><td>#19245522</td><td>Sara Fouad</td><td>July 26, 2025</td><td><span class="status open"><span class="material-icons">inbox</span>Open</span></td><td><button class="action-btn escalate-btn" title="Escalate to Senior"><span class="material-icons">upload</span>Escalate to Senior</button></td></tr>
+                        <tr><td>#19245518</td><td>Mona Kamal</td><td>July 25, 2025</td><td><span class="status late"><span class="material-icons">schedule</span>Late</span></td><td><button class="action-btn escalate-btn" title="Escalate to Senior"><span class="material-icons">upload</span>Escalate to Senior</button></td></tr>
                     </tbody>
                 </table>
             </div>
             
             <div class="table-container">
-                <div class="table-header"><h3 class="table-title">الطلبات المُصعَّدة</h3></div>
+                <div class="table-header"><h3 class="table-title">Escalated Orders</h3></div>
                 <table id="escalated-orders-table">
-                    <thead><tr><th>رقم الطلب</th><th>اسم الموظف</th><th>تاريخ التصعيد</th><th>الحالة</th><th>إجراء المدير</th></tr></thead>
-                    <tbody><!-- سيتم ملء هذا الجدول عبر الجافاسكربت --></tbody>
+                    <thead><tr><th>Order ID</th><th>Agent Name</th><th>Escalation Date</th><th>Status</th><th>Senior's Action</th></tr></thead>
+                    <tbody><!-- This table will be populated via JavaScript --></tbody>
                 </table>
             </div>
         </section>
@@ -277,31 +277,31 @@
         <section id="history" class="page-section">
              <div class="table-container">
                 <div class="table-header">
-                    <h3 class="table-title">تصفية السجل</h3>
+                    <h3 class="table-title">Filter Records</h3>
                     <div class="filters">
-                        <input type="text" placeholder="رقم الطلب...">
+                        <input type="text" placeholder="Order ID...">
                         <select>
-                            <option value="">كل الحالات</option>
-                            <option value="completed">مكتمل</option>
-                            <option value="escalated">تم تصعيده</option>
-                             <option value="reviewed">تمت مراجعته</option>
+                            <option value="">All Statuses</option>
+                            <option value="completed">Completed</option>
+                            <option value="escalated">Escalated</option>
+                             <option value="reviewed">Reviewed</option>
                         </select>
-                        <input type="date" title="من تاريخ">
-                        <input type="date" title="إلى تاريخ">
+                        <input type="text" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="From Date">
+                        <input type="text" onfocus="(this.type='date')" onblur="(this.type='text')" placeholder="To Date">
                     </div>
                 </div>
             </div>
             <div class="table-container">
                 <div class="table-header">
-                    <h3 class="table-title">سجل الطلبات المكتملة</h3>
-                    <button class="export-btn" onclick="alert('سيتم هنا تنفيذ وظيفة تصدير التقرير.')"><span class="material-icons">download</span> تصدير التقرير</button>
+                    <h3 class="table-title">Completed Orders History</h3>
+                    <button class="export-btn" onclick="alert('Report export functionality would be implemented here.')"><span class="material-icons">download</span> Export Report</button>
                 </div>
                 <table>
-                     <thead><tr><th>رقم الطلب</th><th>اسم الموظف</th><th>تاريخ الإنجاز</th><th>الحالة النهائية</th></tr></thead>
+                     <thead><tr><th>Order ID</th><th>Agent Name</th><th>Completion Date</th><th>Final Status</th></tr></thead>
                      <tbody>
-                         <tr><td>#19245515</td><td>منى كمال</td><td>25 يوليو 2025</td><td><span class="status completed"><span class="material-icons">check_circle</span>مكتمل</span></td></tr>
-                         <tr><td>#123456</td><td>حسن طارق</td><td>24 يوليو 2025</td><td><span class="status reviewed"><span class="material-icons">verified_user</span>تمت مراجعته بواسطة المدير</span></td></tr>
-                         <tr><td>#19245501</td><td>علياء ياسر</td><td>23 يوليو 2025</td><td><span class="status completed"><span class="material-icons">check_circle</span>مكتمل</span></td></tr>
+                         <tr><td>#19245515</td><td>Mona Kamal</td><td>July 25, 2025</td><td><span class="status completed"><span class="material-icons">check_circle</span>Completed</span></td></tr>
+                         <tr><td>#123456</td><td>Hassan Tarek</td><td>July 24, 2025</td><td><span class="status reviewed"><span class="material-icons">verified_user</span>Reviewed by Senior</span></td></tr>
+                         <tr><td>#19245501</td><td>Alya Yasser</td><td>July 23, 2025</td><td><span class="status completed"><span class="material-icons">check_circle</span>Completed</span></td></tr>
                      </tbody>
                 </table>
             </div>
@@ -321,7 +321,7 @@
             item.addEventListener('click', function(e) {
                 e.preventDefault();
                 const targetId = this.dataset.target;
-                const pageName = this.childNodes[1].nodeValue.trim();
+                const pageName = this.textContent.trim();
                 
                 headerTitle.textContent = pageName;
                 navItems.forEach(nav => nav.classList.remove('active'));
@@ -340,7 +340,7 @@
             notificationBanner.style.display = 'block';
             setTimeout(() => {
                 notificationBanner.style.display = 'none';
-            }, 4000); // إخفاء الإشعار بعد 4 ثوانٍ
+            }, 4000); // Hide notification after 4 seconds
         }
 
         // --- Escalation Logic ---
@@ -361,15 +361,15 @@
             newRow.innerHTML = `
                 <td>${orderId}</td>
                 <td>${agentName}</td>
-                <td>${new Date().toLocaleDateString('ar-EG')}</td>
-                <td><span class="status escalated"><span class="material-icons">warning</span>بانتظار المراجعة</span></td>
-                <td><button class="action-btn senior review-btn" title="مراجعة الطلب"><span class="material-icons">visibility</span> مراجعة </button></td>
+                <td>${new Date().toLocaleDateString('en-US')}</td>
+                <td><span class="status escalated"><span class="material-icons">warning</span>Awaiting Review</span></td>
+                <td><button class="action-btn senior review-btn" title="Review Order"><span class="material-icons">visibility</span> Review </button></td>
             `;
             
             // Remove the original row
             row.remove();
             
-            showNotification(`تم تصعيد الطلب ${orderId} بنجاح.`);
+            showNotification(`Order ${orderId} has been escalated successfully.`);
         });
 
         // --- Senior Review Simulation Logic ---
@@ -381,13 +381,13 @@
             const orderId = row.cells[0].textContent;
 
             // Update status and actions
-            row.cells[3].innerHTML = `<span class="status reviewed"><span class="material-icons">verified_user</span>تمت مراجعته</span>`;
-            row.cells[4].innerHTML = `<span style="color:var(--green)">تم الإجراء</span>`;
+            row.cells[3].innerHTML = `<span class="status reviewed"><span class="material-icons">verified_user</span>Reviewed</span>`;
+            row.cells[4].innerHTML = `<span style="color:var(--green)">Action Taken</span>`;
             
             // Highlight the row temporarily
             row.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
             
-            showNotification(`قام المدير بمراجعة الطلب المُصعَّد ${orderId}.`);
+            showNotification(`Senior Ahmed reviewed your escalated order ${orderId}.`);
         });
 
 
@@ -404,9 +404,9 @@
         new Chart(perfCtx, {
             type: 'line',
             data: {
-                labels: ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'],
+                labels: ['Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
                 datasets: [{
-                    label: 'الطلبات المكتملة',
+                    label: 'Completed Orders',
                     data: [15, 22, 18, 25, 20, 30, 28],
                     backgroundColor: gradient,
                     borderColor: 'var(--primary-color)',
@@ -432,7 +432,7 @@
         new Chart(issuesCtx, {
             type: 'doughnut',
             data: {
-                labels: ['بيانات غير صحيحة', 'خطأ في النظام', 'عنصر خاطئ', 'تأخير في التوصيل'],
+                labels: ['Incorrect Data', 'System Error', 'Wrong Item', 'Delivery Delay'],
                 datasets: [{
                     data: [45, 25, 15, 15],
                     backgroundColor: ['#3B82F6', '#EF4444', '#F59E0B', '#6366f1'],
@@ -446,7 +446,7 @@
                 plugins: {
                     legend: { 
                         position: 'bottom', 
-                        labels: { color: textMutedColor, padding: 15, font: { size: 12, family: 'Cairo' } },
+                        labels: { color: textMutedColor, padding: 15, font: { size: 12, family: 'Poppins' } },
                         align: 'start'
                     }
                 }
