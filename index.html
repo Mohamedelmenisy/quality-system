@@ -15,6 +15,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Favicon -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%23F97316'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23581C87'/%3E%3C/svg%3E">
 
     <style>
         /* Apply Poppins font and set dark theme as default */
@@ -64,12 +67,7 @@
 </head>
 <body class="bg-dark-bg text-dark-text">
 
-    <!-- 1. Announcement Bar -->
-    <div class="bg-primary-700 text-white text-sm text-center py-2 px-4 font-medium">
-        <p><strong>Notice:</strong> Scheduled system maintenance this Friday from 2 AM to 3 AM.</p>
-    </div>
-
-    <!-- 2. Header -->
+    <!-- Header -->
     <header class="sticky top-0 bg-dark-bg/80 backdrop-blur-lg border-b border-dark-border z-50">
         <div class="container mx-auto px-6 py-4 flex justify-between items-center">
             <!-- Logo and System Name -->
@@ -83,20 +81,21 @@
             </a>
             
             <!-- Navigation & Actions -->
-            <div class="flex items-center gap-6">
+            <div class="flex items-center gap-4">
                 <nav class="hidden md:flex items-center gap-6 text-sm font-medium">
                     <a href="#features" class="text-dark-text-secondary hover:text-white transition-colors">Features</a>
                     <a href="#dashboard" class="text-dark-text-secondary hover:text-white transition-colors">Dashboard</a>
                     <a href="#faq" class="text-dark-text-secondary hover:text-white transition-colors">FAQ</a>
                 </nav>
-                <a href="#" class="bg-primary-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700 transition-all hover:scale-105">Sign In</a>
+                <a href="./signup.html" class="bg-dark-card border border-dark-border text-dark-text px-5 py-2 rounded-lg text-sm font-semibold hover:bg-gray-800 transition">Sign Up</a>
+                <a href="./login.html" class="bg-primary-600 text-white px-5 py-2 rounded-lg text-sm font-semibold hover:bg-primary-700 transition-all hover:scale-105">Sign In</a>
             </div>
         </div>
     </header>
 
     <main class="container mx-auto px-6 pt-24 pb-16">
         
-        <!-- 3. Hero Section -->
+        <!-- Hero Section -->
         <section class="text-center" data-aos="fade-up">
             <div class="inline-flex items-center justify-center bg-primary-900/50 border border-primary-700 text-primary-300 rounded-full px-4 py-1.5 text-sm font-semibold mb-6">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -118,7 +117,7 @@
             </div>
         </section>
         
-        <!-- 4. Features (User Roles) -->
+        <!-- Features (User Roles) -->
         <section id="features" class="py-24" data-aos="fade-up" data-aos-delay="200">
             <div class="text-center mb-16">
                 <h2 class="text-3xl md:text-4xl font-bold text-white">Tailored to Serve Your Role in the Team</h2>
@@ -152,7 +151,7 @@
             </div>
         </section>
 
-        <!-- 5. Dashboard Teaser Section -->
+        <!-- Dashboard Teaser Section -->
         <section id="dashboard" class="py-24" data-aos="fade-up">
             <div class="text-center mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-white">A Glimpse into the System's Power</h2>
@@ -199,7 +198,7 @@
             </div>
         </section>
 
-        <!-- 6. FAQ Section -->
+        <!-- FAQ Section -->
         <section id="faq" class="py-24" data-aos="fade-up">
             <div class="text-center mb-12">
                 <h2 class="text-3xl md:text-4xl font-bold text-white">Frequently Asked Questions</h2>
@@ -230,12 +229,12 @@
             </div>
         </section>
 
-        <!-- 7. Final CTA Section -->
+        <!-- Final CTA Section -->
         <section class="bg-gradient-to-r from-primary-600 to-primary-800 text-white rounded-2xl p-12 text-center" data-aos="zoom-in">
              <h2 class="text-3xl md:text-4xl font-bold">Ready to Elevate Your Team's Quality?</h2>
              <p class="mt-4 max-w-xl mx-auto opacity-80">Join now and start leveraging all of QualityX's tools to enhance performance.</p>
              <div class="mt-8">
-                 <a href="#" class="bg-white text-primary-600 px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105">
+                 <a href="./signup.html" class="bg-white text-primary-600 px-8 py-3 rounded-lg font-bold text-lg hover:bg-gray-100 transition-transform hover:scale-105">
                      Join The System Now
                  </a>
              </div>
@@ -243,7 +242,7 @@
 
     </main>
 
-    <!-- 8. Footer -->
+    <!-- Footer -->
     <footer class="border-t border-dark-border mt-16">
         <div class="container mx-auto px-6 py-8 flex flex-col md:flex-row justify-between items-center text-sm">
             <p class="text-dark-text-secondary">© 2025 Chefz. All rights reserved. Internal QualityX System.</p>
