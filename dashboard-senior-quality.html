@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Senior Quality Portal</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%2300bfff'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23007BFF'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #00bfff;
+            --primary-color-darker: #007BFF;
+            --bg-color: #121212;
+            --sidebar-bg: #1a1a1a;
+            --card-bg: #1a1a1a;
+            --text-color: #e6edf3;
+            --text-muted-color: #8b949e;
+            --border-color: #333;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --font-body: 'Poppins', sans-serif;
+            --border-radius-base: 0.75rem;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
+        .layout { display: flex; min-height: 100vh; }
+        .sidebar {
+            width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 1.5rem 0; position: fixed; height: 100%; z-index: 1000;
+        }
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sidebar-logo { height: 32px; }
+        .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
+        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
+        .sidebar-nav { list-style: none; padding: 0 1.5rem; }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; margin: 0.25rem 0;
+            text-decoration: none; color: var(--text-muted-color); font-weight: 500; border-radius: 0.5rem;
+            transition: all 0.2s ease; cursor: pointer;
+        }
+        .sidebar-nav a:hover { background-color: rgba(0, 191, 255, 0.1); color: var(--primary-color); }
+        .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
+        .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .user-profile-widget { text-align: center; }
+        .user-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--primary-color); margin: 0 auto 10px; }
+        .user-name { font-weight: 600; font-size: 1rem; }
+        .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
+        .main-wrapper { flex-grow: 1; margin-left: 260px; display: flex; flex-direction: column; }
+        .topbar {
+            background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 900;
+        }
+        .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
+        .main-content { padding: 2rem; flex-grow: 1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); }
+        .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; }
+        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .results-table tbody tr:last-child td { border-bottom: none; }
+        .results-table tbody tr:hover { background-color: #2c2c2c; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
+        .btn-primary { background-color: var(--primary-color); color: black; }
+        .btn-success { background-color: var(--success-color); color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .modal { display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.7); }
+        .modal-content { background-color: var(--card-bg); margin: 10% auto; padding: 25px; border: 1px solid var(--border-color); width: 80%; max-width: 700px; border-radius: var(--border-radius-base); position: relative; animation: slideIn 0.4s; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
+        .close-btn { color: var(--text-muted-color); font-size: 28px; font-weight: bold; cursor: pointer; }
+        @keyframes slideIn { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .escalation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .detail-item { background: #222; padding: 15px; border-radius: 8px; }
+        .detail-item strong { display: block; color: var(--text-muted-color); font-size: 0.8rem; margin-bottom: 5px;}
+        .detail-item span { font-size: 1rem; font-weight: 500;}
+        .feedback-form textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 8px; font-family: inherit; margin-top: 10px; }
+        .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+        .chart-container { height: 320px; }
+    </style>
+</head>
+<body class="dark">
+    <div class="layout">
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <svg class="sidebar-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H100V50H0V0Z" fill="#00bfff"/><path d="M0 50H100V100H0V50Z" fill="#007BFF"/></svg>
+                    <h1 class="sidebar-title">Senior Portal</h1>
+                </div>
+                <div class="sidebar-nav-container">
+                    <ul class="sidebar-nav">
+                        <li class="active"><a data-tab="escalations">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
+                            Escalations</a></li>
+                        <li><a data-tab="agent-performance">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Agent Performance</a></li>
+                        <li><a data-tab="assignments">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"/><path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/></svg>
+                            Assignments</a></li>
+                        <li><a onclick="window.location.href='./login.html'">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                            Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="sidebar-footer">
+                <div class="user-profile-widget">
+                    <img class="user-avatar" src="https://i.pravatar.cc/50?u=senior.user" alt="User Avatar">
+                    <div class="user-name">Khaled Al-Mutairi</div>
+                    <div class="user-role">Senior Quality</div>
+                </div>
+            </div>
+        </aside>
+
+        <div class="main-wrapper">
+            <header class="topbar">
+                <h2 class="page-title" id="page-title">Escalations Queue</h2>
+            </header>
+
+            <main class="main-content">
+                <!-- Escalations -->
+                <div id="escalations" class="tab-content active">
+                    <div class="widget">
+                         <h3>Orders Awaiting Your Review (<span id="escalation-count">3</span>)</h3>
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr><th>Order ID</th> <th>Issue Type</th> <th>Escalated By</th> <th>Date</th> <th>Action</th></tr>
+                                </thead>
+                                <tbody id="escalation-table-body">
+                                    <!-- Rows populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Agent Performance -->
+                <div id="agent-performance" class="tab-content">
+                    <div class="widget">
+                         <h3>Quality Team Performance</h3>
+                         <div class="charts-grid">
+                            <div class="chart-container">
+                                <canvas id="agentAccuracyChart"></canvas>
+                            </div>
+                             <div class="chart-container">
+                                <canvas id="reviewsVsErrorsChart"></canvas>
+                            </div>
+                         </div>
+                    </div>
+                </div>
+
+                 <!-- Assignments -->
+                <div id="assignments" class="tab-content">
+                    <div class="widget">
+                        <h3>Task Assignment</h3>
+                         <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Assign new batches of orders to quality agents.</p>
+                         <div style="background: #222; padding: 1.5rem; border-radius: var(--border-radius-base); text-align: center;">
+                            <h4 style="font-size: 1.1rem; font-weight: 600;">This feature is under development</h4>
+                            <p>A tool for bulk assigning orders will be available here.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Feedback Modal -->
+    <div id="review-modal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">Review Escalation: <span id="modal-order-id"></span></h3>
+            <span class="close-btn" id="close-review-modal">×</span>
+        </div>
+        <div class="escalation-details">
+            <div class="detail-item">
+                <strong>Issue Type</strong>
+                <span id="modal-issue-type"></span>
+            </div>
+             <div class="detail-item">
+                <strong>Escalated By</strong>
+                <span id="modal-escalated-by"></span>
+            </div>
+            <div class="detail-item" style="grid-column: span 2;">
+                <strong>Agent's Comment</strong>
+                <span id="modal-agent-comment"></span>
+            </div>
+        </div>
+        <hr style="border-color: var(--border-color); margin: 20px 0;">
+        <div class="feedback-form">
+            <label for="feedback-comment" style="font-weight: 500; margin-bottom: 8px; display:block;">Your Feedback & Final Decision:</label>
+            <textarea id="feedback-comment" rows="4" placeholder="e.g., I agree with the agent's assessment. The error is confirmed."></textarea>
+            <div class="feedback-actions">
+                <button class="btn btn-danger">Confirm Error</button>
+                <button class="btn btn-success">Mark as Correct</button>
+            </div>
+        </div>
+      </div>
+    </div>
+    
+    <script>
+    // --- Tab Switching Logic ---
+    const pageTitle = document.getElementById('page-title');
+    document.querySelectorAll('.sidebar-nav a').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (link.onclick) { e.preventDefault(); link.onclick(); return; }
+            e.preventDefault();
+            const tabId = link.dataset.tab;
+            if (!tabId) return;
+            
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+            
+            document.getElementById(tabId).classList.add('active');
+            link.parentElement.classList.add('active');
+            pageTitle.textContent = link.textContent.trim();
+        });
+    });
+
+    // --- Modal Logic ---
+    const reviewModal = document.getElementById('review-modal');
+    const closeReviewModal = document.getElementById('close-review-modal');
+    closeReviewModal.onclick = () => reviewModal.style.display = 'none';
+    window.onclick = (event) => {
+      if (event.target == reviewModal) reviewModal.style.display = "none";
+    }
+
+    // --- Sample Data & Rendering ---
+    const sampleEscalations = [
+        { id: 'CZ-84371', issue: 'Spillage', escalatedBy: 'Fahad A.', date: '2025-07-26', comment: 'Customer reported a major spillage. Agent decision seems wrong.'},
+        { id: 'CZ-84355', issue: 'Driver Behavior', escalatedBy: 'Ali K.', date: '2025-07-25', comment: 'Complex case. Need senior review on policy interpretation.'},
+        { id: 'CZ-84340', issue: 'Missing Item', escalatedBy: 'Fahad A.', date: '2025-07-24', comment: 'The agent marked it correct, but proof suggests otherwise.'},
+    ];
+
+    function renderEscalationsTable() {
+        const tableBody = document.getElementById('escalation-table-body');
+        tableBody.innerHTML = '';
+        sampleEscalations.forEach(order => {
+            tableBody.innerHTML += `
+                <tr data-order='${JSON.stringify(order)}'>
+                    <td>${order.id}</td>
+                    <td>${order.issue}</td>
+                    <td>${order.escalatedBy}</td>
+                    <td>${order.date}</td>
+                    <td><button class="btn btn-primary review-btn">Review</button></td>
+                </tr>
+            `;
+        });
+        document.getElementById('escalation-count').textContent = sampleEscalations.length;
+        addReviewButtonListeners();
+    }
+
+    function addReviewButtonListeners() {
+        document.querySelectorAll('.review-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const row = e.target.closest('tr');
+                const orderData = JSON.parse(row.dataset.order);
+                document.getElementById('modal-order-id').textContent = orderData.id;
+                document.getElementById('modal-issue-type').textContent = orderData.issue;
+                document.getElementById('modal-escalated-by').textContent = orderData.escalatedBy;
+                document.getElementById('modal-agent-comment').textContent = orderData.comment;
+                reviewModal.style.display = 'block';
+            });
+        });
+    }
+
+    // --- Chart.js Initializations ---
+    Chart.defaults.font.family = 'Poppins';
+    Chart.defaults.color = '#e6edf3';
+    
+    new Chart(document.getElementById('agentAccuracyChart').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: ['Fahad A.', 'Ali K.', 'Hessa M.', 'Noura S.'],
+            datasets: [{
+                label: 'Accuracy Rate (%)',
+                data: [98.2, 97.5, 99.1, 96.8],
+                backgroundColor: 'rgba(0, 191, 255, 0.6)',
+                borderColor: 'rgba(0, 191, 255, 1)',
+                borderWidth: 1,
+                borderRadius: 4,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false }, title: { display: true, text: 'Agent Accuracy Rate (This Month)', color: '#fff' } },
+            scales: { y: { min: 95, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } }
+        }
+    });
+
+     new Chart(document.getElementById('reviewsVsErrorsChart').getContext('2d'), {
+        type: 'doughnut',
+        data: {
+            labels: ['Total Reviews', 'Total Errors'],
+            datasets: [{
+                data: [5412, 123],
+                backgroundColor: ['#28a745', '#dc3545'],
+                borderColor: var(--card-bg),
+                borderWidth: 4,
+            }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Team Overall Performance', color: '#fff' } }
+        }
+    });
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        renderEscalationsTable();
+    });
+    </script>
+</body>
+</html>

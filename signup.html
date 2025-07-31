@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Up - QualityX System</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%2300bfff'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23007BFF'/%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00bfff;
+            --primary-hover: #00a4d9;
+            --bg-color: #121212;
+            --form-bg-color: #1a1a1a;
+            --input-bg-color: #2c2c2c;
+            --text-color: #fff;
+            --text-secondary-color: rgba(255, 255, 255, 0.7);
+            --border-color: #333;
+            --success-bg-color: #1e4620;
+            --success-text-color: #72d679;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .form-container {
+            background-color: var(--form-bg-color);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; translateY(0); } }
+        .title {
+            font-size: 28px; font-weight: 600; letter-spacing: -1px; position: relative;
+            display: flex; align-items: center; padding-left: 35px; color: var(--primary-color); margin-bottom: 10px;
+        }
+        .title::before, .title::after {
+            position: absolute; content: ""; height: 18px; width: 18px; border-radius: 50%;
+            left: 0; background-color: var(--primary-color);
+        }
+        .title::after { width: 18px; height: 18px; animation: pulse 1.5s linear infinite; }
+        .message { color: var(--text-secondary-color); font-size: 14.5px; margin-bottom: 30px; }
+        .form-row { display: flex; gap: 15px; }
+        .form-group { position: relative; margin-bottom: 25px; width: 100%; }
+        .form-group .input, .form-group .select {
+            background-color: var(--input-bg-color); color: var(--text-color); width: 100%;
+            padding: 18px 15px 8px 15px; outline: 0; border: 1px solid #444; border-radius: 10px;
+            font-size: 1em; box-sizing: border-box; -webkit-appearance: none; -moz-appearance: none; appearance: none;
+            transition: border-color 0.3s;
+        }
+        .form-group .input:focus, .form-group .select:focus { border-color: var(--primary-color); }
+        .form-group .select {
+            background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%2300bfff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E');
+            background-repeat: no-repeat; background-position: right 15px center; background-size: .65em auto; cursor: pointer;
+        }
+        .form-group .select option { background-color: var(--input-bg-color); }
+        .form-group .input-label {
+            color: var(--text-secondary-color); position: absolute; left: 15px; top: 14px;
+            font-size: 0.95em; pointer-events: none; transition: 0.3s ease;
+        }
+        .form-group .input:focus + .input-label, .form-group .input:valid + .input-label,
+        .form-group .select:focus + .input-label, .form-group .select:valid + .input-label {
+            color: var(--primary-color); top: 4px; font-size: 0.75em; font-weight: 600;
+        }
+        .submit-btn {
+            width: 100%; padding: 14px; border: none; outline: none; border-radius: 10px; color: #111;
+            font-size: 16px; font-weight: 600; cursor: pointer; background-color: var(--primary-color);
+            transition: background-color .3s ease, transform .1s ease;
+        }
+        .submit-btn:hover { background-color: var(--primary-hover); }
+        .submit-btn:active { transform: scale(0.98); }
+        .signin-link { text-align: center; margin-top: 20px; font-size: 14px; color: var(--text-secondary-color); }
+        .signin-link a { color: var(--primary-color); text-decoration: none; font-weight: 500; }
+        .signin-link a:hover { text-decoration: underline; }
+        .success-message {
+            display: none; padding: 12px; background-color: var(--success-bg-color); color: var(--success-text-color);
+            border: 1px solid var(--success-text-color); border-radius: 10px; margin-bottom: 20px;
+            font-weight: 500; font-size: 15px; animation: fadeIn 0.5s ease; text-align: center;
+        }
+        @keyframes pulse { from { transform: scale(0.9); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <form id="signupForm">
+            <h2 class="title">Register</h2>
+            <p class="message">Create your account for the QualityX System.</p>
+            <div id="successMessage" class="success-message"></div>
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" id="firstName" class="input" required>
+                    <span class="input-label">First Name</span>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="lastName" class="input" required>
+                    <span class="input-label">Last Name</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" class="input" required placeholder=" ">
+                <span class="input-label">Email Address (e.g., manager@qualityx.system)</span>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" class="input" required>
+                <span class="input-label">Password</span>
+            </div>
+            <div class="form-group">
+                <select id="role" class="select" required>
+                    <option value="" disabled selected hidden></option>
+                    <option value="quality-agent">Quality Agent</option>
+                    <option value="senior-quality">Senior Quality</option>
+                    <option value="manager">Manager</option>
+                    <option value="staff">Staff (e.g., Customer Service)</option>
+                </select>
+                <span class="input-label">Your Role</span>
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+        <div class="signin-link">
+            <p>Already have an account? <a href="./login.html">Log In</a></p>
+        </div>
+    </div>
+    <script>
+        document.getElementById('signupForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Store the selected role and email to be used on the login page.
+            // In a real app, this would be saved to a database.
+            // Here, we use localStorage as a simple simulation.
+            const email = document.getElementById('email').value;
+            const role = document.getElementById('role').value;
+            localStorage.setItem('user_role_' + email.toLowerCase(), role);
+
+            const successMessage = document.getElementById('successMessage');
+            successMessage.textContent = 'Account created! Redirecting to login...';
+            successMessage.style.display = 'block';
+            document.querySelector('.submit-btn').disabled = true;
+            
+            setTimeout(() => {
+                window.location.href = './login.html';
+            }, 2000);
+        });
+    </script>
+</body>
+</html>
