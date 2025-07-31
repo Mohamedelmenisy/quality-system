@@ -4,7 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Quality Command Center</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%2300bfff'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23007BFF'/%3E%3C/svg%3E">
+    <!-- MODIFIED: New, custom favicon with a 'Q' design, using the primary color for better branding. -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
     <style>
@@ -25,6 +26,7 @@
             --border-radius-base: 0.75rem;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
         body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
         .layout { display: flex; min-height: 100vh; }
         .sidebar {
@@ -35,7 +37,7 @@
             padding: 0 1.5rem 1.5rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
             border-bottom: 1px solid var(--border-color);
         }
-        .sidebar-logo { height: 32px; }
+        .sidebar-logo { height: 32px; fill: var(--primary-color); }
         .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
         .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
         .nav-group { margin-bottom: 1.5rem; padding: 0 1.5rem; }
@@ -52,12 +54,16 @@
         .sidebar-nav a:hover { background-color: rgba(0, 191, 255, 0.1); color: var(--primary-color); }
         .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
         .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
-        .user-profile-widget { text-align: center; }
-        .user-avatar { width: 50px; height: 50px; border-radius: 50%; border: 2px solid var(--primary-color); margin: 0 auto 10px; }
-        .user-name { font-weight: 600; font-size: 1rem; }
-        .user-role { font-size: 0.8rem; color: var(--text-muted-color); margin-bottom: 8px; }
-        .user-status { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 0.8rem; }
-        .user-status .status-dot { width: 8px; height: 8px; background-color: var(--success-color); border-radius: 50%; }
+        .user-profile-widget { display: flex; align-items: center; gap: 12px; }
+        .avatar-initials {
+            width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color);
+            color: black; font-weight: 700; font-size: 1rem;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .user-info .user-name { font-weight: 600; font-size: 1rem; }
+        .user-info .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
+        .user-status { font-size: 0.75rem; color: var(--success-color); margin-top: 2px; }
+
         .main-wrapper { flex-grow: 1; margin-left: 250px; display: flex; flex-direction: column; }
         .topbar {
             background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
@@ -80,46 +86,137 @@
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; }
+        .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
+        .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
         .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
         .grid-col-span-12 { grid-column: span 12; }
-        .grid-col-span-3 { grid-column: span 3; }
         .grid-col-span-4 { grid-column: span 4; }
         .grid-col-span-8 { grid-column: span 8; }
         .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); }
         .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
-        .chart-container { max-height: 350px; } /* New class to contain chart */
-        .chart-container img { width: 100%; height: auto; object-fit: contain; }
+        .chart-container { height: 350px; width: 100%; }
+        .chart-container img { width: 100%; height: 100%; }
+        .activity-feed { list-style: none; }
+        .activity-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-text { font-size: 0.9rem; }
+        .activity-text strong { color: var(--text-color); }
+        .activity-time { font-size: 0.8rem; color: var(--text-muted-color); margin-top: 4px; }
+
         .results-table-container { overflow-x: auto; }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; }
-        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); }
+        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
         .results-table tbody tr:last-child td { border-bottom: none; }
         .results-table tbody tr:hover { background-color: #2c2c2c; }
         .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-align: center; display: inline-block; }
+        .status-new { background-color: var(--primary-color); color: black;}
         .status-open { background-color: var(--info-color); }
         .status-correct { background-color: var(--success-color); }
         .status-error { background-color: var(--danger-color); }
         .status-escalated { background-color: var(--warning-color); color: #000; }
-        .table-actions { display: flex; gap: 0.5rem; align-items: center; }
+        
+        /* MODIFIED: Consolidated filter bar styles */
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 1.5rem; border: 1px solid var(--border-color);}
+        .filter-bar .filter-group { display: flex; align-items: center; gap: 0.5rem;}
+        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted-color); margin-right: 0.25rem; }
+        .filter-bar select, .filter-bar input[type="date"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        
+        /* ADDED: New, improved search input styles */
+        .search-input-container { position: relative; }
+        .search-input-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted-color); }
+        .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px 8px 38px; width: 250px; }
+        
         .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
         .btn-primary { background-color: var(--primary-color); color: black; }
-        .btn-icon-text { background-color: #2c2c2c; color: var(--text-muted-color); padding: 0.4rem 0.8rem; }
-        .btn-icon-text:hover { background-color: #383838; color: white; }
-        .btn-icon-text.correct { color: var(--success-color); }
-        .btn-icon-text.error { color: var(--danger-color); }
-        .placeholder-content { background-color: var(--card-bg); padding: 3rem; border-radius: var(--border-radius-base); text-align: center; color: var(--text-muted-color); border: 2px dashed var(--border-color); }
-        /* Settings Tab Styles */
-        .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .setting-card { background-color: #222; padding: 1.5rem; border-radius: var(--border-radius-base); }
-        .setting-card h4 { font-size: 1.1rem; font-weight: 600; margin-bottom: 1rem; }
-        .setting-card p { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 1.5rem; }
-        .toggle-switch { display: flex; justify-content: space-between; align-items: center; }
+        .btn-secondary { background-color: #333; color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        /* ADDED: Modal styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; }
+        .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
+        .modal-body .form-group { margin-bottom: 1rem; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .modal-body textarea, .modal-body select, .modal-body input { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; font-family: inherit; resize: vertical;}
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+
+        /* ADDED: Improved view order modal styles */
+        .order-details-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .detail-item { background: #2c2c2c; padding: 1rem; border-radius: 8px; }
+        .detail-item strong { display: block; color: var(--primary-color); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;}
+        .detail-item p { margin: 0; font-size: 1rem; }
+
+        .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .schedule-controls { display: none; gap: 1rem; }
+        .schedule-controls.active { display: flex; }
+        .schedule-table-container { overflow-x: auto; }
+        .schedule-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
+        .schedule-table thead th { background-color: #2c2c2c; font-weight: 600; }
+        .schedule-table .member-name { font-weight: 600; text-align: left; }
+        .schedule-table .shift-cell { cursor: not-allowed; transition: background-color 0.2s ease; }
+        .schedule-table.edit-mode .shift-cell { cursor: pointer; background-color: rgba(0, 191, 255, 0.1); }
+        .shift-time { display: block; font-weight: 500; }
+        .shift-leave { color: var(--warning-color); font-weight: 600; }
+        .shift-sick { color: var(--danger-color); font-weight: 600; }
+        .shift-off { color: var(--text-muted-color); }
+
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .team-member-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
+        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
+        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
+        
+        /* ADDED: New, professional settings page styles */
+        .settings-layout { display: flex; gap: 2rem; }
+        .settings-nav { flex: 0 0 200px; }
+        .settings-nav ul { list-style: none; }
+        .settings-nav a { display: block; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-muted-color); border-radius: 8px; font-weight: 500; }
+        .settings-nav a:hover { background-color: #2c2c2c; color: var(--text-color); }
+        .settings-nav a.active { background-color: var(--primary-color); color: black; }
+        .settings-content { flex-grow: 1; }
+        .settings-section { display: none; }
+        .settings-section.active { display: block; animation: fadeIn 0.4s ease; }
+        .settings-section h4 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-color); }
+        .settings-section p.section-description { font-size: 1rem; color: var(--text-muted-color); margin-bottom: 2rem; }
+        .setting-card { background-color: #222; padding: 1.5rem; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item-content span { display: block; font-weight: 500; }
+        .setting-item-content p { font-size: 0.9rem; color: var(--text-muted-color); margin-top: 4px; }
         .toggle-switch .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3c3c3c; transition: .4s; border-radius: 24px; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted-color); }
+        .form-group input, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
+        .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+
+        /* ADDED: New modern theme selector styles */
+        .theme-selector { display: flex; background-color: #2c2c2c; border-radius: 8px; padding: 4px; }
+        .theme-selector .theme-option {
+            flex: 1; text-align: center; padding: 6px 10px; border-radius: 6px;
+            cursor: pointer; font-weight: 500; transition: background-color 0.2s, color 0.2s;
+            border: 1px solid transparent;
+        }
+        .theme-selector .theme-option.active {
+            background-color: var(--primary-color); color: black; border-color: var(--primary-color);
+        }
+        .theme-selector .theme-option:not(.active):hover { background-color: #3c3c3c; }
+
     </style>
 </head>
 <body class="dark">
@@ -127,7 +224,10 @@
         <aside class="sidebar" id="sidebar">
             <div>
                 <div class="sidebar-header">
-                    <svg class="sidebar-logo" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0H100V50H0V0Z" fill="#00bfff"/><path d="M0 50H100V100H0V50Z" fill="#007BFF"/></svg>
+                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                        <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
                     <h1 class="sidebar-title">QualityX</h1>
                 </div>
 
@@ -144,6 +244,9 @@
                             <li><a data-tab="team-scheduling">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                                 Team Scheduling</a></li>
+                            <li><a data-tab="team-members">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Team Members</a></li>
                             <li><a data-tab="reports">
                                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg>
                                 Reports & Analytics</a></li>
@@ -152,15 +255,15 @@
                      <div class="nav-group">
                         <h2 class="nav-group-title">Account</h2>
                          <ul class="sidebar-nav">
+                            <li><a data-tab="profile">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                Profile</a></li>
                             <li><a data-tab="settings">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                                 Settings</a></li>
                             <li><a data-tab="help">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
                                 Get Help</a></li>
-                            <li><a onclick="window.location.href='./login.html'">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                                Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -168,147 +271,378 @@
 
             <div class="sidebar-footer">
                 <div class="user-profile-widget">
-                    <img class="user-avatar" src="https://i.pravatar.cc/50?u=quality.user" alt="User Avatar">
-                    <div class="user-name">Fahad Al-Qahtani</div>
-                    <div class="user-role">Quality Agent</div>
-                    <div class="user-status"><span class="status-dot"></span> Connected</div>
+                    <div class="avatar-initials" id="sidebar-avatar-initials">FA</div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebar-username">Fahad Al-Qahtani</div>
+                        <div class="user-role" id="sidebar-userrole">Quality Agent</div>
+                        <div class="user-status" id="sidebar-userstatus">● Connected</div>
+                    </div>
                 </div>
             </div>
         </aside>
 
         <div class="main-wrapper">
             <header class="topbar">
-                <div class="topbar-left">
-                     <h2 class="page-title" id="page-title">Dashboard</h2>
-                </div>
+                 <h2 class="page-title" id="page-title">Dashboard</h2>
                 <div class="topbar-actions">
-                     <input type="search" id="search-bar" placeholder="Search for orders...">
                      <div class="notification-bell">
                         <button id="notification-btn" class="notification-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         </button>
-                        <div id="notification-dropdown" class="notification-dropdown">
+                         <div id="notification-dropdown" class="notification-dropdown">
                             <div class="notification-header">Notifications</div>
                             <ul class="notification-list">
-                                <li class="notification-item">New Escalation: Order CZ-84371</li>
-                                <li class="notification-item">3 new reviews assigned.</li>
-                                <li class="notification-item">Report for last week is ready.</li>
+                                <li class="notification-item">3 new orders were assigned to you.</li>
+                                <li class="notification-item">Report for June 2025 is ready.</li>
                             </ul>
                         </div>
                      </div>
-                    <button class="btn btn-primary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        New Review</button>
+                    <button id="new-review-btn" class="btn btn-primary">New Review</button>
                 </div>
             </header>
 
             <main class="main-content">
                 <!-- Dashboard -->
                 <div id="dashboard" class="tab-content active">
+                    <div id="welcome-message" style="margin-bottom: 1rem;">
+                        <h2 style="font-size: 1.75rem; font-weight: 700;">Welcome, Fahad Al-Qahtani!</h2>
+                        <p style="color: var(--text-muted-color);">Your central hub for monitoring quality and driving team excellence.</p>
+                    </div>
+
+                    <!-- ADDED: Global search bar for the dashboard -->
+                    <div class="filter-bar">
+                         <div class="search-input-container" style="width: 100%;">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="dashboard-search-input" placeholder="Search anything... (e.g., Order ID, Issue Type, Member Name)" style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
+                        </div>
+                    </div>
+
+
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Today's Reviews</div>
+                            <div class="kpi-value">42</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+5 from yesterday</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Open Cases</div>
+                            <div class="kpi-value">6</div>
+                             <div class="kpi-change" style="color: var(--warning-color);">2 Escalated</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Avg. Quality Score</div>
+                            <div class="kpi-value">98.2%</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+0.5% vs last week</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Escalation Rate</div>
+                            <div class="kpi-value">2.1%</div>
+                            <div class="kpi-change" style="color: var(--danger-color);">-0.2% vs last week</div>
+                        </div>
+                    </div>
                     <div class="dashboard-grid">
                         <div class="widget grid-col-span-8">
                             <h3>Monthly Performance</h3>
                             <div class="chart-container">
-                                <!-- UPDATED: Chart URL changed to a line chart for a more modern look -->
                                 <img src="https://quickchart.io/chart?c={type:'line',options:{legend:{display:true,labels:{fontColor:'white'}},scales:{xAxes:[{gridLines:{color:'rgba(255,255,255,0.1)'},ticks:{fontColor:'white'}}],yAxes:[{ticks:{precision:0,fontColor:'white'},gridLines:{color:'rgba(255,255,255,0.1)'}}]}},data:{labels:['Feb','Mar','Apr','May','Jun','Jul'],datasets:[{label:'Correct',data:[5300,5100,5400,4900,5200,5412],backgroundColor:'rgba(40,167,69,0.3)',borderColor:'%2328a745',fill:true,pointRadius:4,pointBackgroundColor:'%2328a745'},{label:'Errors',data:[210,180,240,150,140,123],backgroundColor:'rgba(220,53,69,0.3)',borderColor:'%23dc3545',fill:true,pointRadius:4,pointBackgroundColor:'%23dc3545'}]}}" alt="Reviews per month chart">
                             </div>
                         </div>
                         <div class="widget grid-col-span-4">
-                            <h3>Your Performance</h3>
-                            <p class="text-muted-color">vs. Last Month</p>
-                            <div class="performance-comp" style="margin-top: 1.5rem;">
-                                <div class="label">Total Reviews</div>
-                                <div class="progress-bar">
-                                    <div class="progress-bar-inner" style="width: 85%; background-color: var(--primary-color-darker);"></div>
-                                </div>
-                                <p class="performance-change" style="color: var(--success-color);">+3.1%</p>
-                            </div>
-                            <div class="performance-comp" style="margin-top: 1.5rem;">
-                                <div class="label">Error Rate</div>
-                                <div class="progress-bar">
-                                    <div class="progress-bar-inner" style="width: 25%; background-color: var(--danger-color);"></div>
-                                </div>
-                                <p class="performance-change" style="color: var(--success-color);">-1.8% (Improvement)</p>
-                            </div>
+                             <h3>Issue Types (Last 30 Days)</h3>
+                             <div class="chart-container" style="height: 200px; margin-bottom: 1.5rem;">
+                                <img src="https://quickchart.io/chart?c={type:'doughnut',data:{datasets:[{data:[45,25,18,12],backgroundColor:['%2300bfff', '%23dc3545', '%23ffc107', '%2317a2b8']}],labels:['Missing Item','Wrong Item','Spillage','Driver Behavior']},options:{legend:{position:'right',labels:{fontColor:'white'}},plugins:{datalabels:{display:false},doughnutlabel:{labels:[{text:'Total',font:{size:20}},{text:'291'}]}}}}" alt="Issue types chart"/>
+                             </div>
+                             <h3>Recent Activity</h3>
+                             <ul class="activity-feed">
+                                 <li class="activity-item">
+                                    <div class="activity-icon" style="background: var(--danger-color);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+                                    <div class="activity-text">You marked order <strong>CZ-84360</strong> as Error.<div class="activity-time">15 minutes ago</div></div>
+                                 </li>
+                                 <li class="activity-item">
+                                     <div class="activity-icon" style="background: var(--primary-color-darker);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+                                    <div class="activity-text">3 new orders were assigned to you.<div class="activity-time">2 hours ago</div></div>
+                                 </li>
+                                  <li class="activity-item">
+                                     <div class="activity-icon" style="background: var(--success-color);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                     <div class="activity-text">Noura Al-Dossari marked order <strong>CZ-84365</strong> as Correct.<div class="activity-time">Yesterday</div></div>
+                                 </li>
+                             </ul>
                         </div>
                     </div>
                 </div>
                 
                 <!-- Assigned Orders -->
                 <div id="my-assigned-orders" class="tab-content">
-                     <div class="filter-panel">
-                        <div class="filter-group">
-                            <label for="status-filter">Status</label>
-                            <select id="status-filter"><option>All</option><option>Open</option><option>Escalated</option><option>Correct</option><option>Error</option></select>
+                    <div class="filter-bar">
+                         <!-- MODIFIED: Search bar appearance improved with an icon -->
+                         <div class="filter-group search-input-container">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="orders-search-input" placeholder="Search by ID, issue...">
                         </div>
                         <div class="filter-group">
-                             <label for="from-date">From Date</label>
-                             <input id="from-date" type="date" style="color-scheme: dark;">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="All">All</option>
+                                <option value="New">New</option>
+                                <option value="Open">Open</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Escalated">Escalated</option>
+                            </select>
                         </div>
                         <div class="filter-group">
-                             <label for="to-date">To Date</label>
-                             <input id="to-date" type="date" style="color-scheme: dark;">
+                            <label for="filter-issue-type">Issue:</label>
+                             <select id="filter-issue-type">
+                                <option value="All">All Types</option>
+                                <!-- Options will be populated by JS -->
+                            </select>
                         </div>
-                         <button class="btn btn-primary">Apply</button>
-                         <button class="btn" style="background: #333; color: white;">Reset</button>
+                         <div class="filter-group">
+                            <label for="filter-from-date">From:</label>
+                            <input type="date" id="filter-from-date">
+                        </div>
+                        <div class="filter-group">
+                             <label for="filter-to-date">To:</label>
+                            <input type="date" id="filter-to-date">
+                        </div>
+                        <button class="btn btn-secondary" id="export-csv-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export CSV
+                        </button>
                     </div>
+
                     <div class="widget">
-                         <h3>Orders in Queue (<span id="orders-count">6</span>)</h3>
+                         <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
                         <div class="results-table-container">
                             <table class="results-table">
-                                <thead>
-                                    <tr><th>Request ID</th> <th>Issue Type</th> <th>Date Assigned</th> <th>Status</th> <th>Actions</th></tr>
-                                </thead>
-                                <tbody id="orders-table-body">
-                                    <!-- Rows rendered by JS -->
-                                </tbody>
+                                <thead><tr><th>Request ID</th><th>Issue Type</th><th>Date Assigned</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody id="orders-table-body"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Other Tabs Placeholders -->
-                <div id="team-scheduling" class="tab-content"><div class="placeholder-content"><h3>Team Scheduling feature is under development.</h3></div></div>
-                <div id="reports" class="tab-content"><div class="placeholder-content"><h3>Reports & Analytics feature is under development.</h3></div></div>
-                <div id="help" class="tab-content"><div class="placeholder-content"><h3>Help Center is under development.</h3></div></div>
-                <!-- UPDATED: Settings Tab Content -->
+                <!-- Team Scheduling -->
+                <div id="team-scheduling" class="tab-content">
+                    <div class="widget">
+                        <div class="schedule-header">
+                             <h3>Weekly Team Schedule</h3>
+                              <div>
+                                 <!-- MODIFIED: Add member button now triggers a modal -->
+                                 <button class="btn btn-secondary" id="add-member-btn" style="margin-right: 1rem;">Add Member</button>
+                                 <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
+                                 <div class="schedule-controls" id="schedule-controls">
+                                     <button class="btn btn-secondary" id="cancel-schedule-btn">Cancel</button>
+                                     <button class="btn btn-primary" id="save-schedule-btn">Save Changes</button>
+                                 </div>
+                             </div>
+                        </div>
+                        <div class="schedule-table-container">
+                             <table class="schedule-table" id="schedule-table">
+                                <thead>
+                                    <tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr>
+                                </thead>
+                                <tbody id="schedule-table-body">
+                                    <tr>
+                                        <td class="member-name">Fahad Al-Qahtani</td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="On Leave"><span class="shift-leave">On Leave</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                    </tr>
+                                     <tr>
+                                        <td class="member-name">Noura Al-Dossari</td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                    </tr>
+                                     <tr>
+                                        <td class="member-name">Ahmed Khan</td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                    </tr>
+                                </tbody>
+                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Members -->
+                <div id="team-members" class="tab-content">
+                    <div class="widget">
+                        <h3>Team Members</h3>
+                        <div class="team-grid" id="team-grid">
+                           <!-- Team members are rendered by JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="reports" class="tab-content"><div class="placeholder-content" style="padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color);"><h3>Reports & Analytics feature is under development.</h3></div></div>
+                <div id="help" class="tab-content"><div class="placeholder-content" style="padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color);"><h3>Help Center is under development.</h3></div></div>
+                
+                <!-- Profile Tab Content -->
+                <div id="profile" class="tab-content">
+                    <div class="widget">
+                        <h3>Edit Profile</h3>
+                        <div class="form-group">
+                            <label for="profile-photo">Profile Picture</label>
+                            <input type="file" id="profile-photo" accept="image/*" />
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-fullname">Full Name</label>
+                            <input type="text" id="profile-fullname" value="Fahad Al-Qahtani">
+                        </div>
+                         <div class="form-group">
+                            <label for="profile-jobtitle">Job Title</label>
+                            <input type="text" id="profile-jobtitle" value="Quality Agent">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-email">Email Address</label>
+                            <input type="email" id="profile-email" value="fahad.qahtani@example.com" />
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-phone">Phone Number</label>
+                            <input type="tel" id="profile-phone" value="+966 50 123 4567">
+                        </div>
+                         <div class="page-actions">
+                             <button class="btn btn-secondary">Cancel</button>
+                             <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Settings -->
                 <div id="settings" class="tab-content">
                     <div class="widget">
-                        <h3>Settings</h3>
-                        <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your interface and notification preferences.</p>
-                        <div class="settings-grid">
-                            <div class="setting-card">
-                                <h4>Notifications</h4>
-                                <p>Control how you receive alerts about new assignments and escalations.</p>
-                                <div class="toggle-switch">
-                                    <span>In-App Notifications</span>
-                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                                </div>
-                                <hr style="border-color: var(--border-color); margin: 1rem 0;">
-                                <div class="toggle-switch">
-                                    <span>Email Notifications</span>
-                                    <label class="switch"><input type="checkbox"><span class="slider"></span></label>
-                                </div>
-                            </div>
-                            <div class="setting-card">
-                                <h4>Interface</h4>
-                                <p>Customize the look and feel of your dashboard and review tools.</p>
-                                <div class="toggle-switch">
-                                    <span>Compact Table View</span>
-                                    <label class="switch"><input type="checkbox"><span class="slider"></span></label>
-                                </div>
-                                <hr style="border-color: var(--border-color); margin: 1rem 0;">
-                                <div class="toggle-switch">
-                                    <span>Auto-open First Item in Queue</span>
-                                    <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
-                                </div>
-                            </div>
-                             <div class="setting-card">
-                                <h4>Account Security</h4>
-                                <p>Manage your account password and security settings.</p>
-                                <button class="btn" style="background: #333; color: white; width:100%;">Change Password</button>
+                        <h3>Application Settings</h3>
+                        <p style="color: var(--text-muted-color); margin-top:-0.5rem; margin-bottom: 2rem;">Manage your profile, security, notifications, and interface preferences.</p>
+                        <div class="settings-layout">
+                            <nav class="settings-nav">
+                                <ul>
+                                    <li><a href="#" class="active" data-section="security">Security</a></li>
+                                    <li><a href="#" data-section="notifications">Notifications</a></li>
+                                    <li><a href="#" data-section="appearance">Appearance</a></li>
+                                    <li><a href="#" data-section="language">Language & Region</a></li>
+                                </ul>
+                            </nav>
+                            <div class="settings-content">
+                                <!-- Security Section -->
+                                <section id="settings-section-security" class="settings-section active">
+                                    <h4>Security</h4>
+                                    <p class="section-description">Manage your account's security settings.</p>
+                                    <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Password</span>
+                                                <p>Change your password regularly to keep your account secure.</p>
+                                            </div>
+                                            <button class="btn btn-secondary">Change Password</button>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Two-Factor Authentication (2FA)</span>
+                                                <p>Add an extra layer of security to your account.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Notifications Section -->
+                                <section id="settings-section-notifications" class="settings-section">
+                                    <h4>Notifications</h4>
+                                    <p class="section-description">Select how and when you want to be notified.</p>
+                                     <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>In-App Notifications</span>
+                                                <p>Receive alerts directly within the application.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Email Notifications</span>
+                                                <p>Get important notifications sent to your email address.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                         <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>New Order Assigned</span>
+                                                <p>Notify me when a new order is added to my queue.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Appearance Section -->
+                                <section id="settings-section-appearance" class="settings-section">
+                                    <h4>Appearance</h4>
+                                    <p class="section-description">Customize the look and feel of the application.</p>
+                                     <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Theme</span>
+                                                <p>Choose between light and dark themes.</p>
+                                            </div>
+                                            <!-- MODIFIED: Replaced select with a modern button group -->
+                                            <div class="theme-selector" id="theme-selector">
+                                                <div class="theme-option active" data-theme="dark">Dark</div>
+                                                <div class="theme-option" data-theme="light">Light</div>
+                                                <div class="theme-option" data-theme="system">System</div>
+                                            </div>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Compact Table View</span>
+                                                <p>Reduce row height to see more items at once.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Language Section -->
+                                <section id="settings-section-language" class="settings-section">
+                                    <h4>Language & Region</h4>
+                                    <p class="section-description">Set your preferred language and time zone.</p>
+                                     <div class="setting-card">
+                                         <div class="form-group">
+                                             <label for="language-select">Language</label>
+                                             <select id="language-select"><option>English</option><option>العربية</option></select>
+                                         </div>
+                                         <div class="form-group" style="margin-bottom:0;">
+                                             <label for="timezone-select">Time Zone</label>
+                                             <select id="timezone-select"><option>(UTC+03:00) Riyadh</option><option>(UTC-05:00) New York</option></select>
+                                         </div>
+                                    </div>
+                                </section>
                             </div>
                         </div>
+                         <div class="page-actions">
+                             <button class="btn btn-secondary">Discard</button>
+                             <button class="btn btn-primary" onclick="alert('Settings saved successfully!')">Save Changes</button>
+                         </div>
                     </div>
                 </div>
 
@@ -316,97 +650,605 @@
         </div>
     </div>
     
+    <!-- ADDED: All Modals -->
+    <!-- New Review Modal -->
+    <div class="modal-overlay" id="new-review-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Create a New Review</h3>
+                <button class="modal-close-btn" data-modal-id="new-review-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="review-order-id">Order ID</label>
+                    <input type="text" id="review-order-id" placeholder="e.g., CZ-12345">
+                </div>
+                <div class="form-group">
+                    <label for="review-feedback">Feedback</label>
+                    <textarea id="review-feedback" rows="5" placeholder="Write your feedback here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="new-review-modal">Cancel</button>
+                 <button class="btn btn-primary" onclick="alert('Review Submitted!')">Submit</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Order Modal -->
+    <div class="modal-overlay" id="escalate-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Escalate Order</h3>
+                <button class="modal-close-btn" data-modal-id="escalate-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem;">You are escalating order <strong id="escalate-order-id-display" style="color: var(--primary-color);"></strong>.</p>
+                <div class="form-group">
+                    <label for="escalate-role-select">Escalate To</label>
+                    <select id="escalate-role-select">
+                        <option value="Helper">Send to Helper</option>
+                        <option value="Senior">Send to Senior</option>
+                        <option value="Supervisor">Send to Supervisor</option>
+                        <option value="Manager">Send to Manager</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="escalate-notes">Add Escalation Notes (Optional)</label>
+                    <textarea id="escalate-notes" rows="4" placeholder="Provide context or specific instructions for the escalation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="escalate-order-modal">Cancel</button>
+                 <button class="btn btn-primary" id="confirm-escalate-btn">Confirm Escalation</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Order Modal -->
+    <div class="modal-overlay" id="error-order-modal">
+        <div class="modal-box">
+            <div class="modal-header" style="border-color: var(--danger-color);">
+                <h3 class="modal-title" style="color: var(--danger-color);">Mark Order as Error</h3>
+                <button class="modal-close-btn" data-modal-id="error-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem;">You are marking order <strong id="error-order-id-display" style="color: var(--primary-color);"></strong> as an error. Please provide a detailed comment.</p>
+                <div class="form-group">
+                    <label for="error-comments">Error Details & Comments</label>
+                    <textarea id="error-comments" rows="5" placeholder="Explain the reason for the error classification..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="error-order-modal">Cancel</button>
+                 <button class="btn btn-danger" id="confirm-error-btn">Confirm Error</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Order Modal -->
+    <div class="modal-overlay" id="view-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Order Details: <span id="view-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-order-modal">×</button>
+            </div>
+            <div class="modal-body" id="view-order-body">
+                <!-- Details will be populated by JS in a new, beautiful format -->
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-primary modal-close-btn" data-modal-id="view-order-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Edit Modal -->
+    <div class="modal-overlay" id="schedule-modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="schedule-modal-title">Edit Shift</h3>
+                <button class="modal-close-btn" data-modal-id="schedule-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="shift-select">Select new status for the day:</label>
+                    <select id="shift-select">
+                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
+                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
+                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Sick Leave">Sick Leave</option>
+                        <option value="Off">Off</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="schedule-modal">Cancel</button>
+                 <button class="btn btn-primary" id="schedule-modal-save">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDED: New Modal for adding a team member -->
+    <div class="modal-overlay" id="add-member-modal">
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Team Member</h3>
+                <button class="modal-close-btn" data-modal-id="add-member-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-member-name">Full Name</label>
+                    <input type="text" id="new-member-name" placeholder="e.g., Omar Hassan">
+                </div>
+                <div class="form-group">
+                    <label for="new-member-role">Role</label>
+                    <input type="text" id="new-member-role" placeholder="e.g., Quality Agent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="add-member-modal">Cancel</button>
+                 <button class="btn btn-primary" id="add-member-save-btn">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+
     <script>
-    // --- Tab Switching Logic ---
-    const pageTitle = document.getElementById('page-title');
-    document.querySelectorAll('.sidebar-nav a').forEach(link => {
-        link.addEventListener('click', (e) => {
-            const tabId = link.dataset.tab;
-            if (!tabId) { 
-                if(link.onclick) { e.preventDefault(); link.onclick(); }
-                return;
-            }
-            e.preventDefault();
-            
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-            document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
-            
-            document.getElementById(tabId).classList.add('active');
-            link.parentElement.classList.add('active');
-            pageTitle.textContent = link.textContent.trim().replace('Reports & Analytics', 'Reports');
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Global State & Data ---
+        const sampleOrders = [
+            { id: 'CZ-84382', issue: 'Missing Item', status: 'New', date: '2025-07-30', details: 'Customer claims the main course was missing from the bag. Restaurant insists it was packed.', comments: ''},
+            { id: 'CZ-84381', issue: 'Wrong Item', status: 'New', date: '2025-07-30', details: 'Customer received diet coke instead of regular coke.', comments: ''},
+            { id: 'CZ-84380', issue: 'Driver Behavior', status: 'New', date: '2025-07-30', details: 'Customer reported driver was late and impolite.', comments: ''},
+            { id: 'CZ-84375', issue: 'Missing Item', status: 'Open', date: '2025-07-28', details: 'Side dish and drink missing from combo meal.', comments: ''},
+            { id: 'CZ-84374', issue: 'Wrong Order', status: 'Open', date: '2025-07-28', details: 'Customer received a completely different person\'s order.', comments: ''},
+            { id: 'CZ-84373', issue: 'Cold Food', status: 'Open', date: '2025-07-27', details: 'Food was reported to be cold on arrival. Delivery time was within expected range.', comments: ''},
+            { id: 'CZ-84371', issue: 'Spillage', status: 'Escalated', date: '2025-07-26', details: 'Major spillage of soup inside the delivery bag. Customer requests a full refund. Escalated to Senior Agent.', escalatedTo: 'Senior', comments: 'Needs manager approval for full refund.'},
+            { id: 'CZ-84365', issue: 'Wrong Item', status: 'Correct', date: '2025-07-24', details: 'Customer received a different sandwich. We contacted the restaurant and issued a partial refund.', comments: 'Resolved with partial credit.'},
+            { id: 'CZ-84360', issue: 'Driver Behavior', status: 'Error', date: '2025-07-23', details: 'Customer reported rude behavior from the driver. Driver has been issued a warning.', comments: 'Driver behavior confirmed via GPS logs showing extended stop. Warning issued.'},
+            { id: 'CZ-84359', issue: 'Spillage', status: 'Correct', date: '2025-07-29', details: 'Minor drink spillage. Customer was compensated with credits.', comments: 'Customer satisfied with apology and credits.'},
+        ];
+
+        // MODIFIED: Team Members data is now a mutable let variable
+        let teamMembers = [
+            { name: "Fahad Al-Qahtani", role: "Quality Agent", color: "#00bfff"},
+            { name: "Noura Al-Dossari", role: "Quality Agent", color: "#ff69b4"},
+            { name: "Ahmed Khan", role: "Senior Quality Agent", color: "#28a745"},
+            { name: "Ali Al-Mansoori", role: "Quality Manager", color: "#ffc107"},
+        ];
+
+        // --- Helper Functions ---
+        const getInitials = (name) => {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : `${names[0][0]}`.toUpperCase();
+        };
+
+        const showModal = (modalId) => document.getElementById(modalId)?.classList.add('show');
+        const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('show');
+        
+        // --- Core Application Logic ---
+        
+        // Tab Switching Logic
+        const pageTitle = document.getElementById('page-title');
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const tabId = link.dataset.tab;
+                if (!tabId) return;
+                e.preventDefault();
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+                document.getElementById(tabId)?.classList.add('active');
+                link.parentElement.classList.add('active');
+                pageTitle.textContent = link.textContent.trim();
+            });
         });
-    });
 
-    // --- Sample Data & Rendering for "Assigned Orders" ---
-    const sampleOrders = [
-        { id: 'CZ-84375', issue: 'Missing Item', status: 'Open', date: '2025-07-28'},
-        { id: 'CZ-84371', issue: 'Spillage', status: 'Escalated', date: '2025-07-26'},
-        { id: 'CZ-84365', issue: 'Wrong Item', status: 'Correct', date: '2025-07-24'},
-        { id: 'CZ-84360', issue: 'Driver Behavior', status: 'Error', date: '2025-07-23'},
-        { id: 'CZ-84374', issue: 'Wrong Order', status: 'Open', date: '2025-07-28'},
-        { id: 'CZ-84373', issue: 'Cold Food', status: 'Open', date: '2025-07-27'},
-    ];
+        // Notifications Dropdown
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        notificationBtn.addEventListener('click', () => notificationDropdown.classList.toggle('show'));
+        document.addEventListener('click', (e) => {
+            if (!notificationBtn.parentElement.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
+            }
+        });
 
-    function renderOrdersTable() {
-        const tableBody = document.getElementById('orders-table-body');
-        tableBody.innerHTML = '';
-        sampleOrders.forEach(order => {
-            const statusClass = `status-${order.status.toLowerCase()}`;
-            
-            // --- UPDATED: Actions buttons with icons and text ---
-            let actionsHtml = `<button class="btn btn-icon-text view-btn" title="View Details" data-id="${order.id}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                    View
-                               </button>`;
-            if (order.status === 'Open' || order.status === 'Escalated') {
-                actionsHtml += `<button class="btn btn-icon-text correct" title="Mark as Correct">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-                                    Correct
-                                </button>
-                                <button class="btn btn-icon-text error error-btn" title="Mark as Error" data-id="${order.id}">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-                                    Error
-                                </button>`;
+        // --- Assigned Orders Table & Filtering ---
+        const ordersTableBody = document.getElementById('orders-table-body');
+        const ordersCountEl = document.getElementById('orders-count');
+        const filterStatusSelect = document.getElementById('filter-status');
+        const filterIssueTypeSelect = document.getElementById('filter-issue-type');
+        const searchInput = document.getElementById('orders-search-input');
+        const fromDateInput = document.getElementById('filter-from-date');
+        const toDateInput = document.getElementById('filter-to-date');
+
+        function populateIssueFilter() {
+             const issueTypes = [...new Set(sampleOrders.map(o => o.issue))];
+             filterIssueTypeSelect.innerHTML = '<option value="All">All Types</option>';
+             issueTypes.sort().forEach(type => {
+                 const option = document.createElement('option');
+                 option.value = type;
+                 option.textContent = type;
+                 filterIssueTypeSelect.appendChild(option);
+             });
+        }
+        
+        function renderOrdersTable() {
+            if (!ordersTableBody) return;
+
+            const currentStatusFilter = filterStatusSelect.value;
+            const currentIssueFilter = filterIssueTypeSelect.value;
+            const currentSearchTerm = searchInput.value.toLowerCase();
+            const currentFromDate = fromDateInput.value;
+            const currentToDate = toDateInput.value;
+
+            let filteredOrders = sampleOrders;
+
+            // 1. Filter by Status
+            filteredOrders = filteredOrders.filter(order => {
+                if (currentStatusFilter === 'All') return true;
+                if (currentStatusFilter === 'Completed') return ['Correct', 'Error'].includes(order.status);
+                return order.status === currentStatusFilter;
+            });
+
+            // 2. Filter by Issue Type
+            if (currentIssueFilter !== 'All') {
+                filteredOrders = filteredOrders.filter(order => order.issue === currentIssueFilter);
             }
 
-            tableBody.innerHTML += `
-                <tr data-order='${JSON.stringify(order)}'>
+            // 3. Filter by Search Term
+            if (currentSearchTerm) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.id.toLowerCase().includes(currentSearchTerm) || 
+                    order.issue.toLowerCase().includes(currentSearchTerm)
+                );
+            }
+
+            // 4. Filter by Date Range
+            if (currentFromDate) {
+                filteredOrders = filteredOrders.filter(order => new Date(order.date) >= new Date(currentFromDate));
+            }
+            if (currentToDate) {
+                filteredOrders = filteredOrders.filter(order => new Date(order.date) <= new Date(currentToDate));
+            }
+            
+            ordersCountEl.textContent = filteredOrders.length;
+            ordersTableBody.innerHTML = filteredOrders.map(order => {
+                const statusClass = `status-${order.status.toLowerCase()}`;
+                const actionsHtml = `<td style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" data-action="view" data-order-id="${order.id}">View</button>
+                    <button class="btn btn-primary btn-sm" data-action="correct" data-order-id="${order.id}">Correct</button>
+                    <button class="btn btn-danger btn-sm" data-action="error" data-order-id="${order.id}">Error</button>
+                    <button class="btn btn-secondary btn-sm" style="background-color: var(--warning-color); color: black;" data-action="escalate" data-order-id="${order.id}">Escalate</button>
+                </td>`;
+
+                return `<tr>
                     <td>${order.id}</td>
                     <td>${order.issue}</td>
                     <td>${order.date}</td>
-                    <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                    <td><div class="table-actions">${actionsHtml}</div></td>
-                </tr>
-            `;
-        });
-        addTableActionListeners();
-    }
-    
-    // (Other JS functions like notifications, modals, and listeners remain largely the same)
-    const notificationBtn = document.getElementById('notification-btn');
-    const notificationDropdown = document.getElementById('notification-dropdown');
-    notificationBtn.addEventListener('click', () => notificationDropdown.classList.toggle('show'));
-    window.addEventListener('click', (e) => {
-        if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
-            notificationDropdown.classList.remove('show');
+                    <td><span class="status-badge ${statusClass}">${order.escalatedTo ? `${order.status} to ${order.escalatedTo}` : order.status}</span></td>
+                    ${actionsHtml}
+                </tr>`;
+            }).join('');
         }
-    });
 
-    function addTableActionListeners() {
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                // Modal logic as before
+        // --- Event Listeners for Order Filters ---
+        [filterStatusSelect, filterIssueTypeSelect, fromDateInput, toDateInput].forEach(el => {
+            el?.addEventListener('change', renderOrdersTable);
+        });
+        searchInput?.addEventListener('keyup', renderOrdersTable);
+
+        // --- Event Listeners for Order Actions ---
+        ordersTableBody?.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            const action = button.dataset.action;
+            const orderId = button.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+
+            if (!order) return;
+
+            switch (action) {
+                case 'view':
+                    document.getElementById('view-order-id').textContent = order.id;
+                    document.getElementById('view-order-body').innerHTML = `
+                        <div class="order-details-grid">
+                            <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${order.status.toLowerCase()}">${order.escalatedTo ? `${order.status} to ${order.escalatedTo}` : order.status}</span></p></div>
+                            <div class="detail-item"><strong>Issue Type</strong><p>${order.issue}</p></div>
+                            <div class="detail-item"><strong>Date Assigned</strong><p>${order.date}</p></div>
+                        </div>
+                        <div class="detail-item" style="margin-top: 1.5rem;"><strong>Details</strong><p>${order.details}</p></div>
+                         ${order.comments ? `<div class="detail-item" style="margin-top: 1.5rem; background-color: #333;"><p style="font-style: italic;">${order.comments}</p></div>` : ''}
+                    `;
+                    showModal('view-order-modal');
+                    break;
+                case 'correct':
+                    order.status = 'Correct';
+                    order.escalatedTo = null;
+                    order.comments = 'Marked as correct by agent.';
+                    renderOrdersTable();
+                    break;
+                case 'error':
+                    document.getElementById('error-order-id-display').textContent = order.id;
+                    document.getElementById('confirm-error-btn').dataset.orderId = order.id;
+                    document.getElementById('error-comments').value = '';
+                    showModal('error-order-modal');
+                    break;
+                case 'escalate':
+                    document.getElementById('escalate-order-id-display').textContent = order.id;
+                    document.getElementById('confirm-escalate-btn').dataset.orderId = order.id;
+                    document.getElementById('escalate-notes').value = '';
+                    showModal('escalate-order-modal');
+                    break;
+            }
+        });
+        
+        document.getElementById('confirm-error-btn')?.addEventListener('click', e => {
+            const orderId = e.target.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+            if(order) {
+                const comments = document.getElementById('error-comments').value;
+                if (!comments) {
+                    alert('Please provide a comment before marking as an error.');
+                    return;
+                }
+                order.status = 'Error';
+                order.escalatedTo = null;
+                order.comments = comments;
+                hideModal('error-order-modal');
+                renderOrdersTable();
+            }
+        });
+
+        document.getElementById('confirm-escalate-btn')?.addEventListener('click', e => {
+            const orderId = e.target.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+            if(order) {
+                const role = document.getElementById('escalate-role-select').value;
+                const notes = document.getElementById('escalate-notes').value;
+                order.status = 'Escalated';
+                order.escalatedTo = role;
+                order.comments = notes;
+                alert(`Order ${orderId} escalated to ${role}.`);
+                hideModal('escalate-order-modal');
+                renderOrdersTable();
+            }
+        });
+        
+        // Modal Management
+        document.getElementById('new-review-btn')?.addEventListener('click', () => showModal('new-review-modal'));
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
+        });
+        
+        // CSV Export
+        document.getElementById('export-csv-btn')?.addEventListener('click', () => {
+             // Re-run filter logic to get currently visible data for export
+            const currentStatusFilter = filterStatusSelect.value;
+            const currentIssueFilter = filterIssueTypeSelect.value;
+            const currentSearchTerm = searchInput.value.toLowerCase();
+            const currentFromDate = fromDateInput.value;
+            const currentToDate = toDateInput.value;
+
+            let filteredOrders = sampleOrders;
+            filteredOrders = filteredOrders.filter(order => {
+                if (currentStatusFilter === 'All') return true;
+                if (currentStatusFilter === 'Completed') return ['Correct', 'Error'].includes(order.status);
+                return order.status === currentStatusFilter;
+            });
+            if (currentIssueFilter !== 'All') filteredOrders = filteredOrders.filter(order => order.issue === currentIssueFilter);
+            if (currentSearchTerm) filteredOrders = filteredOrders.filter(order => order.id.toLowerCase().includes(currentSearchTerm) || order.issue.toLowerCase().includes(currentSearchTerm));
+            if (currentFromDate) filteredOrders = filteredOrders.filter(order => new Date(order.date) >= new Date(currentFromDate));
+            if (currentToDate) filteredOrders = filteredOrders.filter(order => new Date(order.date) <= new Date(currentToDate));
+
+            if(filteredOrders.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            const headers = ['Request ID', 'Issue Type', 'Date Assigned', 'Status', 'Escalated To', 'Details', 'Comments'];
+            const csvRows = [headers.join(',')];
+            
+            filteredOrders.forEach(order => {
+                const values = [order.id, order.issue, order.date, order.status, order.escalatedTo || 'N/A', `"${order.details.replace(/"/g, '""')}"`, `"${(order.comments || '').replace(/"/g, '""')}"`];
+                csvRows.push(values.join(','));
+            });
+
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'orders_export.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+
+        // Team Members Rendering
+        function renderTeamMembers() {
+            const grid = document.getElementById('team-grid');
+            if(!grid) return;
+            // Generate a random color for new members
+            const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            grid.innerHTML = teamMembers.map(member => `
+                 <div class="team-member-card">
+                    <div class="team-member-avatar-initials" style="background-color: ${member.color || randomColor()};">
+                        ${getInitials(member.name)}
+                    </div>
+                    <div class="team-member-name">${member.name}</div>
+                    <div class="team-member-role">${member.role}</div>
+                </div>
+            `).join('');
+        }
+        
+        // Profile Page Logic
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', () => {
+                const newName = document.getElementById('profile-fullname').value;
+                document.getElementById('sidebar-username').textContent = newName;
+                document.getElementById('sidebar-userrole').textContent = document.getElementById('profile-jobtitle').value;
+                document.getElementById('sidebar-avatar-initials').textContent = getInitials(newName);
+                const welcomeMessageH2 = document.querySelector('#welcome-message h2');
+                if (welcomeMessageH2) welcomeMessageH2.textContent = `Welcome, ${newName}!`;
+                alert('Profile updated successfully!');
+            });
+        }
+        
+        // Settings Page Navigation Logic
+        const settingsNavLinks = document.querySelectorAll('.settings-nav a');
+        const settingsSections = document.querySelectorAll('.settings-section');
+        settingsNavLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const sectionId = `settings-section-${link.dataset.section}`;
+                settingsNavLinks.forEach(l => l.classList.remove('active'));
+                settingsSections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                document.getElementById(sectionId)?.classList.add('active');
             });
         });
-        document.querySelectorAll('.error-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                // Modal logic as before
-            });
-        });
-    }
 
-    document.addEventListener('DOMContentLoaded', () => {
+        // ADDED: Modern Theme Selector Logic
+        const themeSelector = document.getElementById('theme-selector');
+        themeSelector?.addEventListener('click', (e) => {
+            const target = e.target.closest('.theme-option');
+            if(target) {
+                themeSelector.querySelector('.active').classList.remove('active');
+                target.classList.add('active');
+                // You would add theme-switching logic here
+                console.log(`Theme changed to: ${target.dataset.theme}`);
+            }
+        });
+
+
+        // --- Team Scheduling Logic ---
+        const editScheduleBtn = document.getElementById('edit-schedule-btn');
+        const saveScheduleBtn = document.getElementById('save-schedule-btn');
+        const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+        const scheduleTable = document.getElementById('schedule-table');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const scheduleControls = document.getElementById('schedule-controls');
+        
+        const scheduleModal = document.getElementById('schedule-modal');
+        const scheduleModalSave = document.getElementById('schedule-modal-save');
+        const shiftSelect = document.getElementById('shift-select');
+        let activeCell = null;
+
+        function enterEditMode() {
+            if (!scheduleTable) return;
+            scheduleTable.classList.add('edit-mode');
+            editScheduleBtn.style.display = 'none';
+            scheduleControls.style.display = 'flex';
+            scheduleTable.querySelectorAll('.shift-cell').forEach(cell => {
+                cell.dataset.originalValue = cell.textContent.trim();
+            });
+        }
+        
+        function exitEditMode(save = false) {
+             if (!scheduleTable) return;
+            scheduleTable.classList.remove('edit-mode');
+            editScheduleBtn.style.display = 'inline-flex';
+            scheduleControls.style.display = 'none';
+            
+            scheduleTable.querySelectorAll('.shift-cell').forEach(cell => {
+                if (!save) {
+                    updateCellContent(cell, cell.dataset.originalValue);
+                } else {
+                     cell.dataset.originalValue = cell.textContent.trim();
+                }
+            });
+        }
+        
+        function updateCellContent(cell, value) {
+            let className = 'shift-time';
+            if(value === 'Off') className = 'shift-off';
+            else if(value === 'On Leave') className = 'shift-leave';
+            else if(value === 'Sick Leave') className = 'shift-sick';
+            cell.innerHTML = `<span class="${className}">${value}</span>`;
+        }
+        
+        if (editScheduleBtn) editScheduleBtn.addEventListener('click', enterEditMode);
+        if (cancelScheduleBtn) cancelScheduleBtn.addEventListener('click', () => exitEditMode(false));
+        if (saveScheduleBtn) {
+            saveScheduleBtn.addEventListener('click', () => {
+                exitEditMode(true);
+                alert("Schedule saved successfully!");
+            });
+        }
+        
+        if (scheduleTable) {
+            scheduleTable.addEventListener('click', (e) => {
+                const cell = e.target.closest('.shift-cell');
+                if (scheduleTable.classList.contains('edit-mode') && cell) {
+                    activeCell = cell;
+                    const currentValue = cell.textContent.trim();
+                    shiftSelect.value = currentValue;
+                    showModal('schedule-modal');
+                }
+            });
+        }
+        
+        if(scheduleModalSave) {
+            scheduleModalSave.addEventListener('click', () => {
+                if(activeCell) {
+                    const newValue = shiftSelect.value;
+                    updateCellContent(activeCell, newValue);
+                    activeCell.dataset.originalValue = newValue;
+                }
+                hideModal('schedule-modal');
+            });
+        }
+
+        // --- ADDED: Add Member Functionality ---
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const addMemberModalSaveBtn = document.getElementById('add-member-save-btn');
+        const newMemberNameInput = document.getElementById('new-member-name');
+        const newMemberRoleInput = document.getElementById('new-member-role');
+
+        addMemberBtn?.addEventListener('click', () => {
+            newMemberNameInput.value = ''; // Clear previous input
+            newMemberRoleInput.value = '';
+            showModal('add-member-modal');
+        });
+
+        addMemberModalSaveBtn?.addEventListener('click', () => {
+            const name = newMemberNameInput.value.trim();
+            const role = newMemberRoleInput.value.trim();
+            if (name && role) {
+                // Add to teamMembers array
+                const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                teamMembers.push({ name, role, color: randomColor() });
+                
+                // Add row to schedule table
+                const newRow = document.createElement('tr');
+                let offCells = '';
+                for (let i = 0; i < 7; i++) {
+                    offCells += `<td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>`;
+                }
+                newRow.innerHTML = `<td class="member-name">${name}</td>${offCells}`;
+                scheduleTableBody.appendChild(newRow);
+
+                // Re-render team members page
+                renderTeamMembers();
+                
+                hideModal('add-member-modal');
+            } else {
+                alert('Please fill in both name and role for the new member.');
+            }
+        });
+        
+        
+        // --- Initial Calls ---
+        populateIssueFilter();
         renderOrdersTable();
+        renderTeamMembers();
+        document.getElementById('sidebar-avatar-initials').textContent = getInitials(document.getElementById('sidebar-username').textContent);
     });
     </script>
 </body>
