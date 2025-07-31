@@ -4,7 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - QualityX System</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M0 0H100V50H0V0Z' fill='%2300bfff'/%3E%3Cpath d='M0 50H100V100H0V50Z' fill='%23007BFF'/%3E%3C/svg%3E">
+    <!-- MODIFIED: Favicon updated to the QualityX 'Q' logo -->
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -39,35 +40,35 @@
             max-width: 400px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
             animation: fadeIn 0.5s ease-in-out;
+            text-align: center; /* Center content */
         }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; translateY(0); } }
-        .title {
-            font-size: 28px;
-            font-weight: 600;
-            letter-spacing: -1px;
-            position: relative;
+
+        /* ADDED: Logo and Header Styling */
+        .form-header {
             display: flex;
             align-items: center;
-            padding-left: 35px;
-            color: var(--primary-color);
-            margin-bottom: 10px;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 15px;
         }
-        .title::before, .title::after {
-            position: absolute;
-            content: "";
-            height: 18px;
-            width: 18px;
-            border-radius: 50%;
-            left: 0;
-            background-color: var(--primary-color);
+        .form-logo {
+            height: 36px;
+            width: 36px;
         }
-        .title::after {
-            width: 18px;
-            height: 18px;
-            animation: pulse 1.5s linear infinite;
+        .form-logo path {
+            stroke: var(--primary-color);
+            fill: var(--primary-color);
+            fill-opacity: 0.1;
         }
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
         .message { color: var(--text-secondary-color); font-size: 14.5px; margin-bottom: 30px; }
-        .form-group { position: relative; margin-bottom: 25px; }
+        .form-group { position: relative; margin-bottom: 25px; text-align: left; }
         .form-group .input {
             background-color: var(--input-bg-color);
             color: var(--text-color);
@@ -105,14 +106,22 @@
             border: 1px solid var(--success-text-color); border-radius: 10px; margin-bottom: 20px;
             font-weight: 500; font-size: 15px; animation: fadeIn 0.5s ease; text-align: center;
         }
-        @keyframes pulse { from { transform: scale(0.9); opacity: 1; } to { transform: scale(1.8); opacity: 0; } }
     </style>
 </head>
 <body>
     <div class="form-container">
+        <!-- ADDED: Logo and Title Header -->
+        <div class="form-header">
+            <svg class="form-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 22V12" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <h2 class="form-title">QualityX</h2>
+        </div>
+
+        <p class="message">Sign in to your workspace.</p>
+
         <form id="loginForm">
-            <h2 class="title">Welcome Back</h2>
-            <p class="message">Sign in to your QualityX System workspace.</p>
             <div id="successMessage" class="success-message"></div>
             <div class="form-group">
                 <input type="email" id="email" class="input" required placeholder=" ">
@@ -134,7 +143,7 @@
             const email = document.getElementById('email').value.toLowerCase();
             const successMessage = document.getElementById('successMessage');
             
-            // --- UPDATED: Role-based redirection logic ---
+            // --- Role-based redirection logic ---
             // In a real app, you would validate password and get role from a server.
             // Here, we retrieve the role from localStorage set during signup.
             const role = localStorage.getItem('user_role_' + email);
@@ -147,7 +156,8 @@
                         redirectUrl = './dashboard-manager.html';
                         break;
                     case 'senior-quality':
-                        redirectUrl = './dashboard-senior-quality.html';
+                        // This should match the senior dashboard file name
+                        redirectUrl = './senior 1 .html'; 
                         break;
                     case 'staff':
                         redirectUrl = './dashboard-agent.html';
@@ -158,16 +168,15 @@
                         break;
                 }
             } else {
-                 // Fallback for users not found in localStorage (e.g. pre-existing users)
+                 // Fallback for users not found in localStorage
                 if (email.includes('manager')) {
                     redirectUrl = './dashboard-manager.html';
                 } else if (email.includes('senior')) {
-                    redirectUrl = './dashboard-senior-quality.html';
+                    redirectUrl = './senior 1 .html';
                 } else if (email.includes('agent') || email.includes('support')) {
                     redirectUrl = './dashboard-agent.html';
                 }
             }
-
 
             successMessage.textContent = 'Login Successful! Redirecting...';
             successMessage.style.display = 'block';
