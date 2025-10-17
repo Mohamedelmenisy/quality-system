@@ -137,55 +137,91 @@
             <p>Don't have an account? <a href="./signup.html">Sign Up</a></p>
         </div>
     </div>
-    <script>
-        document.getElementById('loginForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = document.getElementById('email').value.toLowerCase();
-            const successMessage = document.getElementById('successMessage');
-            
-            // --- Role-based redirection logic ---
-            // In a real app, you would validate password and get role from a server.
-            // Here, we retrieve the role from localStorage set during signup.
-            const role = localStorage.getItem('user_role_' + email);
-            
-            let redirectUrl = './dashboard-quality.html'; // Default
-            
-            if (role) {
-                switch(role) {
-                    case 'manager':
-                        redirectUrl = './dashboard-manager.html';
-                        break;
-                    case 'senior-quality':
-                        // This should match the senior dashboard file name
-                        redirectUrl = './senior 1 .html'; 
-                        break;
-                    case 'staff':
-                        redirectUrl = './dashboard-agent.html';
-                        break;
-                    case 'quality-agent':
-                    default:
-                        redirectUrl = './dashboard-quality.html';
-                        break;
-                }
-            } else {
-                 // Fallback for users not found in localStorage
-                if (email.includes('manager')) {
-                    redirectUrl = './dashboard-manager.html';
-                } else if (email.includes('senior')) {
-                    redirectUrl = './senior 1 .html';
-                } else if (email.includes('agent') || email.includes('support')) {
-                    redirectUrl = './dashboard-agent.html';
-                }
-            }
+<script type="module">
+import { supabase } from "./api-client.js";
 
-            successMessage.textContent = 'Login Successful! Redirecting...';
-            successMessage.style.display = 'block';
-            document.querySelector('.submit-btn').disabled = true;
+const form = document.getElementById("loginForm");
+const successMessage = document.getElementById("successMessage");
 
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 1500);
-        });
-    </script>
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim().toLowerCase();
+  const password = document.getElementById("password").value.trim();
+
+  try {
+    // 🔹 تسجيل الدخول عبر Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) throw error;
+    const user = data.user;
+
+    if (!user) throw new Error("User not found.");
+
+    // 🔹 سحب بيانات المستخدم من جدول users
+    const { data: userData, error: userError } = await supabase
+      .from("users")
+      .select("role, department, name, status")
+      .eq("email", email)
+      .single();
+
+    if (userError || !userData) {
+      throw new Error("User data not found in database.");
+    }
+
+    // 🔹 تحقق من حالة المستخدم
+    if (userData.role === "pending") {
+      successMessage.textContent =
+        "Your account is awaiting manager approval.";
+      successMessage.style.backgroundColor = "#46201e";
+      successMessage.style.border = "1px solid #d67a72";
+      successMessage.style.color = "#d67a72";
+      successMessage.style.display = "block";
+      return;
+    }
+
+    // 🔹 تحديث حالة المستخدم إلى online
+    await supabase
+      .from("users")
+      .update({ status: "online", last_seen: new Date() })
+      .eq("email", email);
+
+    // 🔹 تحديد الصفحة المناسبة حسب الدور
+    let redirectUrl = "./dashboard-quality.html"; // الافتراضي
+    switch (userData.role) {
+      case "admin":
+        redirectUrl = "./dashboard-manager.html";
+        break;
+      case "manager":
+        redirectUrl = "./dashboard-manager.html";
+        break;
+      case "senior-quality":
+        redirectUrl = "./dashboard-quality.html"; // لاحقًا ممكن صفحة مستقلة
+        break;
+      case "quality-agent":
+        redirectUrl = "./dashboard-quality.html";
+        break;
+      case "staff":
+        redirectUrl = "./dashboard-agent.html";
+        break;
+      default:
+        redirectUrl = "./dashboard-quality.html";
+    }
+
+    // 🔹 عرض رسالة النجاح والتحويل
+    successMessage.textContent = "Login Successful! Redirecting...";
+    successMessage.style.display = "block";
+    document.querySelector(".submit-btn").disabled = true;
+
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 1500);
+  } catch (err) {
+    alert("Login failed: " + err.message);
+  }
+});
+</script>
 </body>
 </html>
