@@ -1,233 +1,240 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sign Up - QualityX System</title>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E"
-    />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-      :root {
-        --primary-color: #00bfff;
-        --primary-hover: #00a4d9;
-        --bg-color: #121212;
-        --form-bg-color: #1a1a1a;
-        --input-bg-color: #2c2c2c;
-        --text-color: #fff;
-        --text-secondary-color: rgba(255, 255, 255, 0.7);
-        --border-color: #333;
-        --success-bg-color: #1e4620;
-        --success-text-color: #72d679;
-      }
-      body {
-        font-family: "Poppins", sans-serif;
-        background-color: var(--bg-color);
-        color: var(--text-color);
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        min-height: 100vh;
-        margin: 0;
-        padding: 20px;
-      }
-      .form-container {
-        background-color: var(--form-bg-color);
-        border: 1px solid var(--border-color);
-        padding: 40px;
-        border-radius: 20px;
-        width: 100%;
-        max-width: 450px;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
-        animation: fadeIn 0.5s ease-in-out;
-        text-align: center;
-      }
-      @keyframes fadeIn {
-        from {
-          opacity: 0;
-          transform: translateY(20px);
+        :root {
+            --primary-color: #00bfff;
+            --primary-hover: #00a4d9;
+            --bg-color: #121212;
+            --form-bg-color: #1a1a1a;
+            --input-bg-color: #2c2c2c;
+            --text-color: #fff;
+            --text-secondary-color: rgba(255, 255, 255, 0.7);
+            --border-color: #333;
+            --success-bg-color: #1e4620;
+            --success-text-color: #72d679;
+            --error-bg-color: #46201e;
+            --error-text-color: #d67a72;
         }
-        to {
-          opacity: 1;
-          translateY: 0;
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
         }
-      }
-      .form-header {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 12px;
-        margin-bottom: 15px;
-      }
-      .form-logo {
-        height: 36px;
-        width: 36px;
-      }
-      .form-logo path {
-        stroke: var(--primary-color);
-        fill: var(--primary-color);
-        fill-opacity: 0.1;
-      }
-      .form-title {
-        font-size: 28px;
-        font-weight: 700;
-        color: var(--text-color);
-      }
-      .message {
-        color: var(--text-secondary-color);
-        font-size: 14.5px;
-        margin-bottom: 30px;
-      }
-      .form-row {
-        display: flex;
-        gap: 15px;
-        text-align: left;
-      }
-      .form-group {
-        position: relative;
-        margin-bottom: 25px;
-        width: 100%;
-        text-align: left;
-      }
-      .form-group .input,
-      .form-group .select {
-        background-color: var(--input-bg-color);
-        color: var(--text-color);
-        width: 100%;
-        padding: 18px 15px 8px 15px;
-        outline: 0;
-        border: 1px solid #444;
-        border-radius: 10px;
-        font-size: 1em;
-        box-sizing: border-box;
-        transition: border-color 0.3s;
-      }
-      .form-group .input:focus,
-      .form-group .select:focus {
-        border-color: var(--primary-color);
-      }
-      .submit-btn {
-        width: 100%;
-        padding: 14px;
-        border: none;
-        outline: none;
-        border-radius: 10px;
-        color: #111;
-        font-size: 16px;
-        font-weight: 600;
-        cursor: pointer;
-        background-color: var(--primary-color);
-        transition: background-color 0.3s ease, transform 0.1s ease;
-      }
-      .submit-btn:hover {
-        background-color: var(--primary-hover);
-      }
-      .submit-btn:active {
-        transform: scale(0.98);
-      }
-      .success-message {
-        display: none;
-        padding: 12px;
-        background-color: var(--success-bg-color);
-        color: var(--success-text-color);
-        border: 1px solid var(--success-text-color);
-        border-radius: 10px;
-        margin-bottom: 20px;
-        font-weight: 500;
-        font-size: 15px;
-        animation: fadeIn 0.5s ease;
-        text-align: center;
-      }
+        .form-container {
+            background-color: var(--form-bg-color);
+            border: 1px solid var(--border-color);
+            padding: 40px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.5s ease-in-out;
+            text-align: center;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .form-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+        .form-logo {
+            height: 36px;
+            width: 36px;
+        }
+        .form-title {
+            font-size: 28px;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+        .message { 
+            color: var(--text-secondary-color); 
+            font-size: 14.5px; 
+            margin-bottom: 30px; 
+        }
+        .form-row { 
+            display: flex; 
+            gap: 15px; 
+            text-align: left; 
+        }
+        .form-group { 
+            position: relative; 
+            margin-bottom: 25px; 
+            width: 100%; 
+            text-align: left; 
+        }
+        .form-group .input {
+            background-color: var(--input-bg-color);
+            color: var(--text-color);
+            width: 100%;
+            padding: 18px 15px 8px 15px;
+            outline: 0;
+            border: 1px solid #444;
+            border-radius: 10px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+        .form-group .input:focus {
+            border-color: var(--primary-color);
+        }
+        .form-group .input-label {
+            color: var(--text-secondary-color);
+            position: absolute;
+            left: 15px;
+            top: 14px;
+            font-size: 0.95em;
+            pointer-events: none;
+            transition: 0.3s ease;
+        }
+        .form-group .input:focus + .input-label,
+        .form-group .input:not(:placeholder-shown) + .input-label {
+            color: var(--primary-color);
+            top: 4px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            outline: none;
+            border-radius: 10px;
+            color: #111;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            background-color: var(--primary-color);
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+        .submit-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+        .signin-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 14px;
+            color: var(--text-secondary-color);
+        }
+        .signin-link a {
+            color: var(--primary-color);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .signin-link a:hover {
+            text-decoration: underline;
+        }
+        .success-message {
+            display: none;
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-weight: 500;
+            font-size: 15px;
+            animation: fadeIn 0.5s ease;
+            text-align: center;
+        }
     </style>
-  </head>
-  <body>
+</head>
+<body>
     <div class="form-container">
-      <div class="form-header">
-        <svg
-          class="form-logo"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z"
-            stroke-width="1"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          ></path>
-          <path
-            d="M12 22V12"
-            stroke-width="1"
-            stroke-linecap="round"
-            stroke-linejoin="round"
-          ></path>
-        </svg>
-        <h2 class="form-title">QualityX</h2>
-      </div>
-
-      <p class="message">Create your account to access the system.</p>
-
-      <form id="signupForm">
-        <div id="successMessage" class="success-message"></div>
-        <div class="form-row">
-          <div class="form-group">
-            <input type="text" id="firstName" class="input" required />
-            <span class="input-label">First Name</span>
-          </div>
-          <div class="form-group">
-            <input type="text" id="lastName" class="input" required />
-            <span class="input-label">Last Name</span>
-          </div>
+        <div class="form-header">
+            <svg class="form-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 22V12" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <h2 class="form-title">QualityX</h2>
         </div>
-        <div class="form-group">
-          <input type="email" id="email" class="input" required placeholder=" " />
-          <span class="input-label">Email Address</span>
+        
+        <p class="message">Create your account to access the system.</p>
+        
+        <form id="signupForm">
+            <div id="successMessage" class="success-message"></div>
+            <div class="form-row">
+                <div class="form-group">
+                    <input type="text" id="firstName" class="input" required>
+                    <span class="input-label">First Name</span>
+                </div>
+                <div class="form-group">
+                    <input type="text" id="lastName" class="input" required>
+                    <span class="input-label">Last Name</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <input type="email" id="email" class="input" required placeholder=" ">
+                <span class="input-label">Email Address</span>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" class="input" required>
+                <span class="input-label">Password</span>
+            </div>
+            <button type="submit" class="submit-btn">Create Account</button>
+        </form>
+        <div class="signin-link">
+            <p>Already have an account? <a href="./login.html">Log In</a></p>
         </div>
-        <div class="form-group">
-          <input type="password" id="password" class="input" required />
-          <span class="input-label">Password</span>
-        </div>
-        <button type="submit" class="submit-btn">Create Account</button>
-      </form>
-      <div class="signin-link">
-        <p>Already have an account? <a href="./login.html">Log In</a></p>
-      </div>
     </div>
 
     <script type="module">
-      import { signUp } from "./api-client.js";
+        import { signUp } from './api-client.js';
 
-      const form = document.getElementById("signupForm");
-      const successMessage = document.getElementById("successMessage");
+        const form = document.getElementById('signupForm');
+        const successMessage = document.getElementById('successMessage');
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
 
-        const firstName = document.getElementById("firstName").value.trim();
-        const lastName = document.getElementById("lastName").value.trim();
-        const email = document.getElementById("email").value.trim();
-        const password = document.getElementById("password").value.trim();
+            const firstName = document.getElementById('firstName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
 
-        const name = `${firstName} ${lastName}`;
-        const department = email.includes("@thechefz.co")
-          ? "Quality"
-          : "External";
+            const name = `${firstName} ${lastName}`;
+            const department = email.includes('@thechefz.co') ? 'Quality' : 'External';
 
-        try {
-          await signUp(email, password, name, "pending", department);
-          successMessage.textContent =
-            "Account created successfully! Waiting for manager approval.";
-          successMessage.style.display = "block";
-          document.querySelector(".submit-btn").disabled = true;
-          setTimeout(() => (window.location.href = "./login.html"), 3000);
-        } catch (err) {
-          alert("Error: " + err.message);
-        }
-      });
+            try {
+                await signUp(email, password, name, department);
+                
+                successMessage.textContent = '✅ Account created successfully! Waiting for manager approval.';
+                successMessage.style.backgroundColor = 'var(--success-bg-color)';
+                successMessage.style.color = 'var(--success-text-color)';
+                successMessage.style.border = '1px solid var(--success-text-color)';
+                successMessage.style.display = 'block';
+                
+                document.querySelector('.submit-btn').disabled = true;
+
+                setTimeout(() => {
+                    window.location.href = './login.html';
+                }, 3000);
+
+            } catch (error) {
+                successMessage.textContent = `❌ Error: ${error.message}`;
+                successMessage.style.backgroundColor = 'var(--error-bg-color)';
+                successMessage.style.color = 'var(--error-text-color)';
+                successMessage.style.border = '1px solid var(--error-text-color)';
+                successMessage.style.display = 'block';
+                console.error('Signup error:', error);
+            }
+        });
     </script>
-  </body>
+</body>
 </html>
