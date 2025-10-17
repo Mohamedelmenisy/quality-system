@@ -13,34 +13,30 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // 2️⃣ AUTH: إنشاء حساب جديد
-export async function signUp(email, password, name, role, department = null) {
+export async function signUp(email, password, name, role = "pending", department = null) {
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: {
-      data: { name, role, department }
-    }
+    options: { data: { name, role, department } }
   });
 
   if (error) throw error;
 
-  // بعد الإنشاء، نحفظه في جدول users لو مش موجود
   const user = data.user;
   if (user) {
     await supabase.from("users").upsert({
       id: user.id,
       name,
       email,
-      role,
+      role: "pending",   // دايمًا pending مهما اختار المستخدم
       department,
       first_login: new Date(),
-      status: "online"
+      status: "offline"
     });
   }
 
   return user;
 }
-
 // 3️⃣ تسجيل الدخول
 export async function signIn(email, password) {
   const { data, error } = await supabase.auth.signInWithPassword({
