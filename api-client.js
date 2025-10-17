@@ -39,7 +39,7 @@ export async function signUp(
   const user = data.user;
   if (user) {
     // إدخال المستخدم في جدول qualityx.users
-await supabase.from("users").upsert({
+await supabase.from("app_users").upsert({
       id: user.id,
         name,
         email,
@@ -64,9 +64,7 @@ export async function signIn(email, password) {
   if (error) throw error;
 
   // تحديث آخر ظهور للمستخدم بعد تسجيل الدخول
-  await supabase
-    .schema("qualityx")
-    .from("users")
+  await supabase.from("app_users").select(...)
     .update({ last_seen: new Date(), status: "online" })
     .eq("id", data.user.id);
 
