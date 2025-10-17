@@ -39,11 +39,8 @@ export async function signUp(
   const user = data.user;
   if (user) {
     // إدخال المستخدم في جدول qualityx.users
-    const { error: insertError } = await supabase
-      .schema("qualityx")
-      .from("users")
-      .upsert({
-        id: user.id,
+await supabase.from("users").upsert({
+      id: user.id,
         name,
         email,
         role: "pending", // المستخدم دايمًا بيبدأ pending
