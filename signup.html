@@ -156,26 +156,36 @@
             <p>Already have an account? <a href="./login.html">Log In</a></p>
         </div>
     </div>
-    <script>
-        document.getElementById('signupForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            // Store the selected role and email to be used on the login page.
-            // In a real app, this would be saved to a database.
-            // Here, we use localStorage as a simple simulation.
-            const email = document.getElementById('email').value;
-            const role = document.getElementById('role').value;
-            localStorage.setItem('user_role_' + email.toLowerCase(), role);
+    <script type="module">
+import { signUp } from "./api-client.js";
 
-            const successMessage = document.getElementById('successMessage');
-            successMessage.textContent = 'Account created! Redirecting to login...';
-            successMessage.style.display = 'block';
-            document.querySelector('.submit-btn').disabled = true;
-            
-            setTimeout(() => {
-                window.location.href = './login.html';
-            }, 2000);
-        });
-    </script>
+const form = document.getElementById("signupForm");
+const successMessage = document.getElementById("successMessage");
+
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const firstName = document.getElementById("firstName").value;
+  const lastName = document.getElementById("lastName").value;
+  const email = document.getElementById("email").value;
+  const password = document.getElementById("password").value;
+  const role = document.getElementById("role").value;
+
+  const name = `${firstName} ${lastName}`;
+  const department =
+    role === "manager" ? "Management" :
+    role === "senior-quality" ? "Quality" :
+    role === "quality-agent" ? "Quality" :
+    "Support";
+
+  try {
+    await signUp(email, password, name, role, department);
+    successMessage.textContent = "Account created successfully!";
+    successMessage.style.display = "block";
+    setTimeout(() => (window.location.href = "./login.html"), 2000);
+  } catch (err) {
+    alert("Error: " + err.message);
+  }
+});
+</script>
 </body>
 </html>
