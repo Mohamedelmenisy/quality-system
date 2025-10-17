@@ -13,18 +13,16 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 export async function signUp(email, password, name, department = null) {
   try {
-    console.log('🚀 Starting signup process for:', email);
+    console.log('🚀 Starting signup for:', email);
     
-    // 1. تسجيل المستخدم في Auth مع metadata عشان الـ Display Name
+    // 1. Auth signup
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
       options: {
         data: { 
-          name: name,                    // ده اللي هيظهر في Display Name
-          full_name: name,               // نسخة احتياطية
-          department: department,
-          role: 'pending'
+          name: name,
+          department: department
         }
       }
     });
@@ -38,7 +36,7 @@ export async function signUp(email, password, name, department = null) {
 
     const user = data.user;
     if (user) {
-      // 2. إضافة المستخدم في جدولنا
+      // 2. Add to our table
       const { error: insertError } = await supabase
         .from('users')
         .insert({
@@ -61,7 +59,7 @@ export async function signUp(email, password, name, department = null) {
 
     return user;
   } catch (error) {
-    console.error('💥 SignUp Full Error:', error);
+    console.error('💥 SignUp Error:', error);
     throw error;
   }
 }
@@ -100,7 +98,7 @@ export async function signIn(email, password) {
 
     return user;
   } catch (error) {
-    console.error('💥 SignIn Full Error:', error);
+    console.error('💥 SignIn Error:', error);
     throw error;
   }
 }
@@ -135,7 +133,7 @@ export async function getCurrentUser() {
 
 export async function getUserData(email) {
   try {
-    console.log('📋 Fetching user data for:', email);
+    console.log('🔍 Searching for user:', email);
     
     const { data, error } = await supabase
       .from('users')
@@ -143,12 +141,19 @@ export async function getUserData(email) {
       .eq('email', email)
       .single();
 
+    console.log('📊 Query result - Data:', data, 'Error:', error);
+    
     if (error) {
       console.error('❌ Get user data error:', error);
-      throw error;
+      throw new Error('User data not found in database');
     }
 
-    console.log('✅ User data fetched:', data);
+    if (!data) {
+      console.error('❌ No user data found');
+      throw new Error('User data not found in database');
+    }
+
+    console.log('✅ User data found:', data);
     return data;
   } catch (error) {
     console.error('💥 GetUserData error:', error);
@@ -172,22 +177,7 @@ export async function getUserById(userId) {
   }
 }
 
-export async function updateUserRole(email, newRole) {
-  try {
-    const { error } = await supabase
-      .from('users')
-      .update({ role: newRole })
-      .eq('email', email);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('UpdateUserRole error:', error);
-    throw error;
-  }
-}
-
-// ==================== ORDERS FUNCTIONS ====================
+// ==================== OTHER FUNCTIONS ====================
 
 export async function getOrders() {
   try {
@@ -204,117 +194,6 @@ export async function getOrders() {
   }
 }
 
-export async function getOrdersByStatus(status) {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('status', status)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetOrdersByStatus error:', error);
-    throw error;
-  }
-}
-
-export async function createOrder(orderData) {
-  try {
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData]);
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('CreateOrder error:', error);
-    throw error;
-  }
-}
-
-export async function updateOrderStatus(orderId, newStatus) {
-  try {
-    const { error } = await supabase
-      .from('orders')
-      .update({ status: newStatus, updated_at: new Date() })
-      .eq('id', orderId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('UpdateOrderStatus error:', error);
-    throw error;
-  }
-}
-
-// ==================== ASSIGNMENTS FUNCTIONS ====================
-
-export async function createAssignment(assignmentData) {
-  try {
-    const { data, error } = await supabase
-      .from('assignments')
-      .insert([assignmentData]);
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('CreateAssignment error:', error);
-    throw error;
-  }
-}
-
-export async function getAssignmentsByAgent(agentId) {
-  try {
-    const { data, error } = await supabase
-      .from('assignments')
-      .select('*')
-      .eq('agent_id', agentId)
-      .order('assigned_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetAssignmentsByAgent error:', error);
-    throw error;
-  }
-}
-
-// ==================== REVIEWS FUNCTIONS ====================
-
-export async function addReview(reviewData) {
-  try {
-    const { data, error } = await supabase
-      .from('reviews')
-      .insert([reviewData]);
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('AddReview error:', error);
-    throw error;
-  }
-}
-
-export async function getReviewsByOrder(orderId) {
-  try {
-    const { data, error } = await supabase
-      .from('reviews')
-      .select('*')
-      .eq('order_id', orderId)
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetReviewsByOrder error:', error);
-    throw error;
-  }
-}
-
-// ==================== NOTIFICATIONS FUNCTIONS ====================
-
 export async function getNotifications(userId) {
   try {
     const { data, error } = await supabase
@@ -329,88 +208,4 @@ export async function getNotifications(userId) {
     console.error('GetNotifications error:', error);
     throw error;
   }
-}
-
-export async function createNotification(notificationData) {
-  try {
-    const { data, error } = await supabase
-      .from('notifications')
-      .insert([notificationData]);
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('CreateNotification error:', error);
-    throw error;
-  }
-}
-
-export async function markNotificationAsRead(notificationId) {
-  try {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notificationId);
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error('MarkNotificationAsRead error:', error);
-    throw error;
-  }
-}
-
-// ==================== UTILITY FUNCTIONS ====================
-
-export async function getAllUsers() {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .order('name', { ascending: true });
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetAllUsers error:', error);
-    throw error;
-  }
-}
-
-export async function getPendingUsers() {
-  try {
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('role', 'pending')
-      .order('created_at', { ascending: false });
-
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetPendingUsers error:', error);
-    throw error;
-  }
-}
-
-// ==================== REAL-TIME SUBSCRIPTIONS ====================
-
-export function subscribeToOrders(callback) {
-  return supabase
-    .channel('orders-changes')
-    .on('postgres_changes', 
-      { event: '*', schema: 'public', table: 'orders' }, 
-      callback
-    )
-    .subscribe();
-}
-
-export function subscribeToNotifications(userId, callback) {
-  return supabase
-    .channel('notifications-changes')
-    .on('postgres_changes', 
-      { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, 
-      callback
-    )
-    .subscribe();
 }
