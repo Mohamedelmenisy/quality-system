@@ -140,23 +140,13 @@
                 <input type="password" id="password" class="input" required>
                 <span class="input-label">Password</span>
             </div>
-            <div class="form-group">
-                <select id="role" class="select" required>
-                    <option value="" disabled selected hidden></option>
-                    <option value="quality-agent">Quality Agent</option>
-                    <option value="senior-quality">Senior Quality</option>
-                    <option value="manager">Manager</option>
-                    <option value="staff">Staff (e.g., Customer Service)</option>
-                </select>
-                <span class="input-label">Your Role</span>
-            </div>
             <button type="submit" class="submit-btn">Create Account</button>
         </form>
         <div class="signin-link">
             <p>Already have an account? <a href="./login.html">Log In</a></p>
         </div>
     </div>
-    <script type="module">
+   <script type="module">
 import { signUp } from "./api-client.js";
 
 const form = document.getElementById("signupForm");
@@ -164,24 +154,20 @@ const successMessage = document.getElementById("successMessage");
 
 form.addEventListener("submit", async (e) => {
   e.preventDefault();
-  const firstName = document.getElementById("firstName").value;
-  const lastName = document.getElementById("lastName").value;
-  const email = document.getElementById("email").value;
-  const password = document.getElementById("password").value;
-  const role = document.getElementById("role").value;
+
+  const firstName = document.getElementById("firstName").value.trim();
+  const lastName = document.getElementById("lastName").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value.trim();
 
   const name = `${firstName} ${lastName}`;
-  const department =
-    role === "manager" ? "Management" :
-    role === "senior-quality" ? "Quality" :
-    role === "quality-agent" ? "Quality" :
-    "Support";
+  const department = email.includes("@thechefz.co") ? "Quality" : "External";
 
   try {
-    await signUp(email, password, name, role, department);
-    successMessage.textContent = "Account created successfully!";
+    await signUp(email, password, name, "pending", department);
+    successMessage.textContent = "Account created! Waiting for manager approval.";
     successMessage.style.display = "block";
-    setTimeout(() => (window.location.href = "./login.html"), 2000);
+    setTimeout(() => (window.location.href = "./login.html"), 3000);
   } catch (err) {
     alert("Error: " + err.message);
   }
