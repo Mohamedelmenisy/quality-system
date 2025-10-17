@@ -24,7 +24,7 @@ export async function signUp(email, password, name, role = "pending", department
 
   const user = data.user;
   if (user) {
-    await supabase.from("users").upsert({
+await supabase.from("qualityx.users").upsert({
       id: user.id,
       name,
       email,
