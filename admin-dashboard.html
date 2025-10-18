@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - QualityX</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #00bfff;
+            --primary-hover: #00a4d9;
+            --bg-color: #121212;
+            --card-bg: #1a1a1a;
+            --text-color: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border-color: #333333;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        
+        .admin-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .admin-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        
+        .admin-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        
+        .dashboard-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 25px;
+        }
+        
+        .dashboard-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 15px;
+            padding: 30px 25px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .dashboard-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-color);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-card:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-8px);
+            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.1);
+        }
+        
+        .dashboard-card:hover::before {
+            transform: scaleX(1);
+        }
+        
+        .card-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+        
+        .card-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--text-color);
+        }
+        
+        .card-description {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+        
+        .card-badge {
+            display: inline-block;
+            background: var(--primary-color);
+            color: #000;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .admin-title {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="admin-header">
+        <h1 class="admin-title">Admin Dashboard</h1>
+        <p class="admin-subtitle">Full System Access & Management</p>
+    </div>
+    
+    <div class="dashboard-container">
+        <div class="dashboard-card" onclick="redirectTo('manager')">
+            <div class="card-icon">👨‍💼</div>
+            <h3 class="card-title">Manager Dashboard</h3>
+            <p class="card-description">Team management, user approvals, and overall system supervision</p>
+            <span class="card-badge">Full Access</span>
+        </div>
+        
+        <div class="dashboard-card" onclick="redirectTo('senior')">
+            <div class="card-icon">⭐</div>
+            <h3 class="card-title">Senior Quality Dashboard</h3>
+            <p class="card-description">Advanced quality monitoring and performance analytics</p>
+            <span class="card-badge">Quality Oversight</span>
+        </div>
+        
+        <div class="dashboard-card" onclick="redirectTo('quality')">
+            <div class="card-icon">🔍</div>
+            <h3 class="card-title">Quality Agent Dashboard</h3>
+            <p class="card-description">Order reviews, quality checks, and issue tracking</p>
+            <span class="card-badge">Review Access</span>
+        </div>
+        
+        <div class="dashboard-card" onclick="redirectTo('agent')">
+            <div class="card-icon">👤</div>
+            <h3 class="card-title">Agent Dashboard</h3>
+            <p class="card-description">Client workspace, order management, and performance tracking</p>
+            <span class="card-badge">User View</span>
+        </div>
+    </div>
+
+    <script>
+        function redirectTo(dashboardType) {
+            const pages = {
+                'manager': './dashboard-manager.html',
+                'senior': './dashboard-senior.html',
+                'quality': './dashboard-quality.html',
+                'agent': './dashboard-agent.html'
+            };
+            
+            if (pages[dashboardType]) {
+                window.location.href = pages[dashboardType];
+            }
+        }
+    </script>
+</body>
+</html>
