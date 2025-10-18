@@ -211,7 +211,7 @@
         }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover { background-color: rgba(255,255,255,0.05); }
-        .status-error { 
+        .status-error, .status-pending { 
             background-color: var(--red-bg); 
             color: var(--red); 
             padding: 5px 12px; 
@@ -219,13 +219,17 @@
             font-size: 12px; 
             font-weight: 600; 
         }
-        .status-correct { 
+        .status-correct, .status-completed { 
             background-color: var(--green-bg); 
             color: var(--green); 
             padding: 5px 12px; 
             border-radius: 20px; 
             font-size: 12px; 
             font-weight: 600; 
+        }
+         .status-pending {
+            background-color: var(--warning-bg);
+            color: var(--warning);
         }
         .action-btn { 
             background: #333; 
@@ -312,7 +316,7 @@
             font-weight: 500; 
             font-size: 14px; 
         }
-        .filter-group input { 
+        .filter-group input, .filter-group select { 
             width: 100%; 
             padding: 10px; 
             border: 1px solid var(--border-color); 
@@ -607,24 +611,36 @@
             </div>
             <div class="sidebar-nav-container">
                 <div class="nav-group">
-                    <h2 class="nav-group-title">Menu</h2>
+                    <h2 class="nav-group-title">QUALITY OPERATIONS</h2>
                     <ul class="sidebar-nav">
                         <li><a class="active" data-tab="dashboard">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/></svg>
-                            Dashboard
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/></svg>
+                            Quality Dashboard
                         </a></li>
-                        <li><a data-tab="my-errors">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
-                            My Errors
+                        <li><a data-tab="my-assigned-orders">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"/><path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/></svg>
+                            My Assigned Orders
+                        </a></li>
+                         <li><a data-tab="team-schedule">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            Team Schedule
+                        </a></li>
+                        <li><a data-tab="team-members">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                            Team Members
+                        </a></li>
+                        <li><a data-tab="reports-analytics">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>
+                            Reports & Analytics
                         </a></li>
                     </ul>
                 </div>
                 <div class="nav-group">
-                    <h2 class="nav-group-title">Account</h2>
+                    <h2 class="nav-group-title">ACCOUNT</h2>
                     <ul class="sidebar-nav">
                         <li><a data-tab="profile">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            Profile
+                            My Profile
                         </a></li>
                         <li><a data-tab="settings">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -632,7 +648,7 @@
                         </a></li>
                         <li><a data-tab="help">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Get Help
+                            Help & Support
                         </a></li>
                         <li><a id="logout-btn">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
@@ -656,11 +672,11 @@
     <main class="main-content">
         <header>
             <div class="header-left">
-                <h2 class="page-title" id="page-title-header">Dashboard</h2>
+                <h2 class="page-title" id="page-title-header">Quality Dashboard</h2>
             </div>
             <div class="header-actions">
                 <div class="search-input-container">
-                    <input type="search" id="search-input" placeholder="Search my errors...">
+                    <input type="search" id="search-input" placeholder="Search orders, reports...">
                 </div>
                 <div class="notification-bell">
                     <button id="notification-btn" class="notification-btn">
@@ -673,6 +689,10 @@
                         </ul>
                     </div>
                 </div>
+                 <button class="btn btn-primary" id="new-review-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Review
+                </button>
             </div>
         </header>
 
@@ -685,15 +705,15 @@
 
             <section class="stats-grid">
                 <div class="card progress-card">
-                    <h3>Your Current Error Rate</h3>
+                    <h3>Your Current Accuracy</h3>
                     <div class="progress-info">
                         <span class="progress-label">This Month</span>
                         <span class="progress-value" id="error-rate">0%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div>
+                        <div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--green);"></div>
                     </div>
-                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-stats">Based on 0 errors out of 0 reviewed orders.</p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-stats">Based on 0 correct reviews out of 0 total.</p>
                 </div>
                 <div class="card">
                     <h3>Most Frequent Error Types</h3>
@@ -702,57 +722,89 @@
                     </div>
                 </div>
             </section>
-            
-            <section class="filter-panel">
-                <div class="filter-group">
-                    <label for="filter-order-id">Order ID</label>
-                    <input type="search" id="filter-order-id" placeholder="Search by Order ID...">
-                </div>
-                <div class="filter-group">
-                    <label for="filter-from-date">From</label>
-                    <input type="date" id="filter-from-date" style="color-scheme: dark;">
-                </div>
-                <div class="filter-group">
-                    <label for="filter-to-date">To</label>
-                    <input type="date" id="filter-to-date" style="color-scheme: dark;">
-                </div>
-                <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
-            </section>
-
-            <section class="table-container">
-                <h3>Recent Errors Logged</h3>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Order ID</th>
-                            <th>Order Date</th>
-                            <th>Error Type</th>
-                            <th>Reviewed By</th>
-                            <th>Status</th>
-                            <th>Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="error-table-body">
-                        <tr>
-                            <td colspan="6" style="text-align: center; padding: 40px;">
-                                <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                <div class="skeleton" style="height: 20px; width: 70%; margin: 0 auto;"></div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
         </div>
 
-        <!-- My Errors Tab -->
-        <div id="my-errors" class="tab-content">
+        <!-- My Assigned Orders Tab -->
+        <div id="my-assigned-orders" class="tab-content">
             <div class="card">
-                <h3>All My Errors</h3>
-                <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Detailed list and history of all your errors.</p>
-                <div id="my-errors-content">
-                    <div class="skeleton" style="height: 200px; border-radius: var(--border-radius-base);"></div>
+                <h3>My Assigned Orders</h3>
+                <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">All orders assigned to you for quality review.</p>
+                <section class="filter-panel" style="padding: 15px;">
+                    <div class="filter-group">
+                        <label for="filter-order-id">Order ID</label>
+                        <input type="search" id="filter-order-id" placeholder="Search by Order ID...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-status">Status</label>
+                         <select id="filter-status">
+                            <option>All</option>
+                            <option>Pending</option>
+                            <option>Completed</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="apply-filters-btn-assigned">Apply</button>
+                </section>
+                <div class="table-container" style="padding: 0; border: none;">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th><th>Assigned Date</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">You have no assigned orders.</td></tr>
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+        </div>
+
+        <!-- Team Schedule Tab -->
+        <div id="team-schedule" class="tab-content">
+            <div class="card">
+                 <h3>Team Schedule</h3>
+                 <div class="placeholder-content" style="padding: 60px;">
+                    <p>The team schedule and shift planner will be displayed here.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Team Members Tab -->
+        <div id="team-members" class="tab-content">
+            <div class="card">
+                <h3>Team Members</h3>
+                <div class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+                    <!-- Example Member Card -->
+                    <div class="card" style="text-align: center;">
+                        <div class="avatar-initials" style="margin: 0 auto 15px auto;">JD</div>
+                        <h4 style="margin:0; font-size: 1rem;">John Doe</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Quality Analyst</p>
+                    </div>
+                    <div class="card" style="text-align: center;">
+                        <div class="avatar-initials" style="margin: 0 auto 15px auto;">AS</div>
+                        <h4 style="margin:0; font-size: 1rem;">Ali Saleh</h4>
+                        <p style="color: var(--text-muted); font-size: 0.9rem;">Senior Quality Analyst</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports & Analytics Tab -->
+        <div id="reports-analytics" class="tab-content">
+            <div class="card">
+                <h3>My Performance Reports</h3>
+                <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">Generate and download your personal performance reports.</p>
+                 <section class="filter-panel">
+                    <div class="filter-group">
+                        <label for="report-from-date">From</label>
+                        <input type="date" id="report-from-date" style="color-scheme: dark;">
+                    </div>
+                    <div class="filter-group">
+                        <label for="report-to-date">To</label>
+                        <input type="date" id="report-to-date" style="color-scheme: dark;">
+                    </div>
+                    <button class="btn btn-primary">Generate Report</button>
+                </section>
             </div>
         </div>
 
@@ -911,10 +963,12 @@
             document.getElementById(modalId)?.classList.remove('show');
         };
 
-        const calculateErrorRate = (orders) => {
-            const errorOrders = orders.filter(order => order.status === 'error');
+        const calculateAccuracyRate = (orders) => {
+            const errorOrders = orders.filter(order => order.status === 'error').length;
             const totalOrders = orders.length;
-            return totalOrders > 0 ? (errorOrders.length / totalOrders * 100).toFixed(1) : 0;
+            if (totalOrders === 0) return 0;
+            const accuracy = ((totalOrders - errorOrders) / totalOrders * 100);
+            return accuracy.toFixed(1);
         };
 
         const getErrorTypesDistribution = (orders) => {
@@ -943,7 +997,7 @@
                 // Update UI with user data
                 elements.sidebarAvatar.textContent = getInitials(userData.name);
                 elements.sidebarUsername.textContent = userData.name;
-                elements.sidebarUserrole.textContent = userData.role.charAt(0).toUpperCase() + userData.role.slice(1);
+                elements.sidebarUserrole.textContent = "Quality Agent";
                 elements.welcomeUserH2.textContent = `Welcome back, ${userData.name.split(' ')[0]}!`;
                 
                 // Load profile data
@@ -960,11 +1014,11 @@
             try {
                 orders = await getOrders();
                 updateDashboardStats();
-                renderErrorTable();
+                // This function doesn't exist in the provided HTML but is a good practice
+                // renderMyAssignedOrders(); 
                 updateCommonErrorsChart();
             } catch (error) {
                 console.error('Error loading orders:', error);
-                elements.errorTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--red);">Error loading orders</td></tr>';
             }
         }
 
@@ -981,33 +1035,14 @@
 
         // UI Update Functions
         function updateDashboardStats() {
-            const errorRate = calculateErrorRate(orders);
-            const errorOrders = orders.filter(order => order.status === 'error');
+            const accuracyRate = calculateAccuracyRate(orders);
+            const errorOrders = orders.filter(order => order.status === 'error').length;
             const totalOrders = orders.length;
+            const correctReviews = totalOrders - errorOrders;
 
-            elements.errorRate.textContent = `${errorRate}%`;
-            elements.errorRateBar.style.width = `${errorRate}%`;
-            elements.errorStats.textContent = `Based on ${errorOrders.length} errors out of ${totalOrders} reviewed orders.`;
-        }
-
-        function renderErrorTable() {
-            if (!orders.length) {
-                elements.errorTableBody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No errors found</td></tr>';
-                return;
-            }
-
-            const errorOrders = orders.filter(order => order.status === 'error').slice(0, 10);
-            
-            elements.errorTableBody.innerHTML = errorOrders.map(order => `
-                <tr>
-                    <td>${order.id}</td>
-                    <td>${new Date(order.created_at).toLocaleDateString()}</td>
-                    <td>${order.issue_type || 'N/A'}</td>
-                    <td>${order.reviewed_by || 'System'}</td>
-                    <td><span class="status-error">Error Found</span></td>
-                    <td><button class="action-btn" data-order-id="${order.id}">View Details</button></td>
-                </tr>
-            `).join('');
+            elements.errorRate.textContent = `${accuracyRate}%`;
+            elements.errorRateBar.style.width = `${accuracyRate}%`;
+            elements.errorStats.textContent = `Based on ${correctReviews} correct reviews out of ${totalOrders} total.`;
         }
 
         function renderNotifications() {
@@ -1031,12 +1066,10 @@
             const labels = Object.keys(errorDistribution);
             const data = Object.values(errorDistribution);
             
-            // Destroy existing chart if it exists
             if (commonErrorsChart) {
                 commonErrorsChart.destroy();
             }
             
-            // Set Chart.js defaults
             Chart.defaults.font.family = 'Poppins';
             Chart.defaults.color = '#e6edf3';
             
@@ -1067,13 +1100,7 @@
                             display: false
                         },
                         title: {
-                            display: true,
-                            text: 'Error Types Distribution',
-                            color: '#e6edf3',
-                            font: {
-                                size: 14,
-                                weight: '600'
-                            }
+                            display: false // Title is already in the card
                         }
                     },
                     scales: {
@@ -1091,10 +1118,6 @@
                                 display: false
                             }
                         }
-                    },
-                    animation: {
-                        duration: 1000,
-                        easing: 'easeOutQuart'
                     }
                 }
             });
@@ -1108,18 +1131,14 @@
                     e.preventDefault();
                     const tabId = link.getAttribute('data-tab');
                     
-                    // Update active tab
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                     document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
                     
                     document.getElementById(tabId).classList.add('active');
                     link.classList.add('active');
                     
-                    // Update page title
-                    const tabText = link.textContent.trim();
-                    document.getElementById('page-title-header').textContent = tabText;
+                    document.getElementById('page-title-header').textContent = link.textContent.trim();
                     
-                    // Close mobile menu if open
                     document.getElementById('sidebar').classList.remove('mobile-open');
                 });
             });
@@ -1131,10 +1150,15 @@
                     const sectionId = link.dataset.section;
                     
                     document.querySelectorAll('.settings-nav a').forEach(l => l.classList.remove('active'));
-                    document.querySelectorAll('.settings-content .setting-card').forEach(s => s.style.display = 'none');
+                    document.querySelectorAll('.settings-content .setting-card').forEach(s => {
+                        s.style.display = 'none';
+                        s.classList.remove('active');
+                    });
                     
                     link.classList.add('active');
-                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
+                    const sectionEl = document.getElementById(`settings-section-${sectionId}`);
+                    sectionEl.style.display = 'block';
+                    sectionEl.classList.add('active');
                 });
             });
 
@@ -1144,42 +1168,8 @@
                 document.getElementById('notification-dropdown').classList.toggle('show');
             });
 
-            // Close dropdown when clicking outside
             document.addEventListener('click', () => {
                 document.getElementById('notification-dropdown').classList.remove('show');
-            });
-
-            // View Error Details
-            elements.errorTableBody.addEventListener('click', (e) => {
-                if (e.target.matches('.action-btn')) {
-                    const orderId = e.target.dataset.orderId;
-                    const order = orders.find(o => o.id === orderId);
-                    
-                    if (order) {
-                        elements.viewErrorId.textContent = order.id;
-                        elements.viewErrorBody.innerHTML = `
-                            <div class="detail-item">
-                                <strong>Error Type</strong>
-                                <p>${order.issue_type || 'N/A'}</p>
-                            </div>
-                            <div class="detail-item">
-                                <strong>Order Date</strong>
-                                <p>${new Date(order.created_at).toLocaleDateString()}</p>
-                            </div>
-                            <div class="detail-item">
-                                <strong>Description</strong>
-                                <p>${order.description || 'No description available'}</p>
-                            </div>
-                            ${order.comments ? `
-                            <div class="detail-item" style="background-color: var(--red-bg); border: 1px solid var(--red);">
-                                <strong>Reviewer Comments</strong>
-                                <p>${order.comments}</p>
-                            </div>
-                            ` : ''}
-                        `;
-                        showModal('view-error-modal');
-                    }
-                }
             });
 
             // Modal Close Buttons
@@ -1190,16 +1180,10 @@
             // Profile Save
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 const newName = elements.profileFullname.value;
-                const newEmail = elements.profileEmail.value;
-                const newPhone = elements.profilePhone.value;
-                
-                // Update UI immediately
                 elements.sidebarUsername.textContent = newName;
                 elements.sidebarAvatar.textContent = getInitials(newName);
                 elements.welcomeUserH2.textContent = `Welcome back, ${newName.split(' ')[0]}!`;
-                
-                // Here you would typically update the database
-                alert('Profile updated successfully! (This would update the database in a real application)');
+                alert('Profile updated successfully!');
             });
 
             // Logout
@@ -1216,24 +1200,10 @@
             document.getElementById('mobile-menu-btn').addEventListener('click', () => {
                 document.getElementById('sidebar').classList.toggle('mobile-open');
             });
-
-            // Apply Filters
-            document.getElementById('apply-filters-btn').addEventListener('click', () => {
-                // Filter logic would go here
-                alert('Filters applied! (Filter functionality would be implemented here)');
-            });
-
-            // Search
-            document.getElementById('search-input').addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                // Search logic would go here
-                console.log('Searching for:', searchTerm);
-            });
         }
 
         // Auto-refresh data
         function startAutoRefresh() {
-            // Refresh data every 30 seconds
             setInterval(() => {
                 loadOrders();
                 loadNotifications();
@@ -1251,7 +1221,6 @@
             console.log('✅ Agent Dashboard initialized successfully');
         }
 
-        // Start the application
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
