@@ -514,6 +514,7 @@
             text-decoration: none;
             position: relative;
             overflow: hidden;
+            height: 44px;
         }
 
         .btn::before {
@@ -557,6 +558,7 @@
         .btn-sm {
             padding: 8px 16px;
             font-size: 13px;
+            height: 36px;
         }
 
         /* Main Dashboard Content */
@@ -763,13 +765,18 @@
 
         .filter-group select,
         .filter-group input {
-            background: rgba(255, 255, 255, 0.05);
+            background: #2a2a2a;
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius-sm);
             color: var(--text-color);
             padding: 12px;
             font-size: 14px;
             transition: var(--transition);
+        }
+
+        .filter-group select option {
+            background: #2a2a2a;
+            color: var(--text-color);
         }
 
         .filter-group select:focus,
@@ -1105,6 +1112,62 @@
             100% { background-position: -200% 0; }
         }
 
+        /* Toggle Switch Styles */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #2a2a2a;
+            border: 1px solid var(--border-color);
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 18px;
+            width: 18px;
+            left: 3px;
+            bottom: 2px;
+            background-color: var(--text-muted);
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+            background-color: white;
+        }
+
+        .toggle-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            cursor: pointer;
+        }
+
         /* Responsive Design */
         @media (max-width: 1200px) {
             .charts-grid {
@@ -1178,6 +1241,10 @@
                 width: 320px;
                 right: -50px;
             }
+
+            .page-actions {
+                flex-direction: column;
+            }
         }
 
         @media (max-width: 480px) {
@@ -1196,10 +1263,6 @@
             .btn {
                 padding: 10px 16px;
                 font-size: 13px;
-            }
-            
-            .page-actions {
-                flex-direction: column;
             }
             
             .modal-box {
@@ -1225,48 +1288,37 @@
                     <h2 class="nav-group-title">Menu</h2>
                     <ul class="sidebar-nav">
                         <li class="active"><a data-tab="dashboard">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>
                             Dashboard
                         </a></li>
+                        <li><a data-tab="orders">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                            Orders
+                        </a></li>
                         <li><a data-tab="escalations">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
                             Escalations
                         </a></li>
-                        <li><a data-tab="assignments">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"/><path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/></svg>
-                            Assignments
+                        <li><a data-tab="reports">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"></path><path d="M22 12A10 10 0 0 0 12 2v10z"></path></svg>
+                            Reports
                         </a></li>
-                        <li><a data-tab="agent-performance">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                            Agent Performance
-                        </a></li>
-                        <li><a data-tab="kpis">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 2.06 1.25-1 2.5-2.06 4-2.06V6.52c0-1.25-.5-2.5-1.5-3.5-1-1-2.25-1.5-3.5-1.5-1.25 0-2.5.5-3.5 1.5S10 5.27 10 6.52v3.42c0 1.25.5 2.5 1.5 3.5.75.75 1.75 1.25 2.5 1.5v.44z"/></svg>
-                            KPIs
-                        </a></li>
-                        <li><a data-tab="reports-analytics">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>
-                            Reports & Analytics
+                        <li><a data-tab="performance">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20V10"></path><path d="M18 20V4"></path><path d="M6 20v-4"></path></svg>
+                            Performance
                         </a></li>
                     </ul>
                 </div>
+                
                 <div class="nav-group">
-                    <h2 class="nav-group-title">Account</h2>
+                    <h2 class="nav-group-title">System</h2>
                     <ul class="sidebar-nav">
-                        <li><a data-tab="profile">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-                            Profile
-                        </a></li>
                         <li><a data-tab="settings">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
                             Settings
                         </a></li>
-                        <li><a data-tab="help">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
-                            Get Help
-                        </a></li>
-                        <li><a id="logout-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                        <li><a href="#" id="logout-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
                             Logout
                         </a></li>
                     </ul>
@@ -1275,11 +1327,11 @@
             
             <div class="sidebar-footer">
                 <div class="user-profile-widget">
-                    <div class="avatar-initials" id="sidebar-avatar-initials">--</div>
+                    <div class="avatar-initials">QA</div>
                     <div>
-                        <div class="user-name" id="sidebar-username">Loading...</div>
-                        <div class="user-role" id="sidebar-userrole">Senior Quality Analyst</div>
-                        <div class="user-status" id="sidebar-userstatus">● Online</div>
+                        <div class="user-name">Quality Analyst</div>
+                        <div class="user-role">Senior Quality Specialist</div>
+                        <div class="user-status">Online</div>
                     </div>
                 </div>
             </div>
@@ -1291,44 +1343,39 @@
             <header class="dashboard-header">
                 <div class="header-content">
                     <div class="header-left">
-                        <h1 class="page-title" id="page-title">Dashboard</h1>
-                        <p class="page-subtitle">Monitor escalations, assign orders, and track team performance</p>
+                        <h1 class="page-title">Senior Quality Dashboard</h1>
+                        <p class="page-subtitle">Monitor escalations, review orders, and track team performance</p>
                     </div>
+                    
                     <div class="header-actions">
                         <div class="search-input-container">
-                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                            </svg>
-                            <input type="search" id="global-search" placeholder="Search orders, agents, reports...">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="search-input" placeholder="Search orders, escalations...">
                             <div class="search-results" id="search-results"></div>
                         </div>
                         
                         <div class="notification-bell">
-                            <button id="notification-btn" class="notification-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                    <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                                </svg>
+                            <button class="notification-btn" id="notification-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
                             </button>
-                            <div class="notification-badge" id="notification-count">2</div>
-                            <div id="notification-dropdown" class="notification-dropdown">
+                            <span class="notification-badge" id="notification-count">3</span>
+                            <div class="notification-dropdown" id="notification-dropdown">
                                 <div class="notification-header">
                                     <span>Notifications</span>
-                                    <small style="color: var(--text-muted); font-weight: 400;">2 unread</small>
+                                    <button class="btn btn-sm btn-secondary">Mark all as read</button>
                                 </div>
                                 <ul class="notification-list" id="notification-list">
                                     <li class="notification-item unread">
-                                        <strong>New Escalation</strong><br>
-                                        Order #12345 requires your review
+                                        <div><strong>New escalation</strong> - Order #12345 requires review</div>
+                                        <small>2 minutes ago</small>
                                     </li>
                                     <li class="notification-item unread">
-                                        <strong>Assignment Completed</strong><br>
-                                        Ahmed Ali completed 15 orders
+                                        <div><strong>Quality Alert</strong> - 3 orders pending review</div>
+                                        <small>1 hour ago</small>
                                     </li>
                                     <li class="notification-item">
-                                        <strong>Performance Alert</strong><br>
-                                        Team B accuracy dropped by 2%
+                                        <div><strong>Performance Report</strong> - Weekly report is ready</div>
+                                        <small>Yesterday</small>
                                     </li>
                                 </ul>
                             </div>
@@ -1339,373 +1386,305 @@
 
             <!-- Dashboard Content -->
             <div class="dashboard-content">
-                <!-- Dashboard Tab -->
-                <div id="dashboard" class="tab-content active">
-                    <!-- Welcome Section -->
-                    <div class="welcome-section">
-                        <h2 id="welcome-user-h2">Welcome!</h2>
-                        <p>Here is a summary of your activity and team oversight.</p>
+                <!-- Welcome Section -->
+                <div class="welcome-section">
+                    <h2>Welcome back, Quality Analyst!</h2>
+                    <p>You have <strong>5 escalations</strong> pending review and <strong>12 orders</strong> awaiting quality check.</p>
+                </div>
+
+                <!-- Stats Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span>Total Orders</span>
+                            <div class="stat-icon">📦</div>
+                        </div>
+                        <div class="stat-value">1,247</div>
+                        <div class="stat-change positive">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            +12% from last week
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span>Escalations</span>
+                            <div class="stat-icon">⚠️</div>
+                        </div>
+                        <div class="stat-value">23</div>
+                        <div class="stat-change negative">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                            +5% from last week
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span>Avg. Quality Score</span>
+                            <div class="stat-icon">⭐</div>
+                        </div>
+                        <div class="stat-value">94.2%</div>
+                        <div class="stat-change positive">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            +2.1% from last week
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <span>Pending Reviews</span>
+                            <div class="stat-icon">📝</div>
+                        </div>
+                        <div class="stat-value">17</div>
+                        <div class="stat-change positive">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                            -3 from yesterday
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <h3>Orders vs Escalations</h3>
+                        <div class="chart-container">
+                            <canvas id="ordersChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Quality Score Trends</h3>
+                        <div class="chart-container">
+                            <canvas id="qualityChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab Content -->
+                <div class="tab-content active" id="dashboard-tab">
+                    <!-- Filter Panel -->
+                    <div class="filter-container">
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label for="date-range">Date Range</label>
+                                <select id="date-range">
+                                    <option value="today">Today</option>
+                                    <option value="yesterday">Yesterday</option>
+                                    <option value="week" selected>This Week</option>
+                                    <option value="month">This Month</option>
+                                    <option value="quarter">This Quarter</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="status-filter">Status</label>
+                                <select id="status-filter">
+                                    <option value="all">All Statuses</option>
+                                    <option value="pending">Pending</option>
+                                    <option value="completed">Completed</option>
+                                    <option value="escalated">Escalated</option>
+                                    <option value="reviewed">Reviewed</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label for="team-filter">Team</label>
+                                <select id="team-filter">
+                                    <option value="all">All Teams</option>
+                                    <option value="team-a">Team A</option>
+                                    <option value="team-b">Team B</option>
+                                    <option value="team-c">Team C</option>
+                                </select>
+                            </div>
+                            
+                            <div class="filter-group">
+                                <label>&nbsp;</label>
+                                <button class="btn btn-primary" id="apply-filters">Apply Filters</button>
+                            </div>
+                        </div>
                     </div>
 
-                    <!-- Key Metrics -->
-                    <section class="stats-grid">
-                        <div class="stat-card">
-                            <div class="stat-header">
-                                <span>Reviews Today</span>
-                                <div class="stat-icon">📊</div>
-                            </div>
-                            <div class="stat-value" id="reviews-today">0</div>
-                            <div class="stat-change positive" id="reviews-change">+0 from yesterday</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-header">
-                                <span>Pending Escalations</span>
-                                <div class="stat-icon">⚠️</div>
-                            </div>
-                            <div class="stat-value" id="pending-escalations" style="color: var(--warning-color);">0</div>
-                            <div class="stat-change" id="escalations-change">0 waiting review</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-header">
-                                <span>Avg. Resolution Time</span>
-                                <div class="stat-icon">⏱️</div>
-                            </div>
-                            <div class="stat-value" id="avg-resolution">0m</div>
-                            <div class="stat-change positive">-0m vs last week</div>
-                        </div>
-                        <div class="stat-card">
-                            <div class="stat-header">
-                                <span>Team Accuracy</span>
-                                <div class="stat-icon">🎯</div>
-                            </div>
-                            <div class="stat-value" id="team-accuracy" style="color: var(--success-color);">0%</div>
-                            <div class="stat-change positive" id="accuracy-change">+0% vs target</div>
-                        </div>
-                    </section>
-
-                    <!-- Charts -->
-                    <section class="charts-grid">
-                        <div class="chart-card">
-                            <h3>Personal & Team Performance Analysis</h3>
-                            <div class="chart-container">
-                                <canvas id="personalPerformanceChart"></canvas>
-                            </div>
-                        </div>
-                        <div class="chart-card">
-                            <h3>Team Error Types Distribution</h3>
-                            <div class="chart-container">
-                                <canvas id="teamErrorTypesChart"></canvas>
-                            </div>
-                        </div>
-                    </section>
+                    <!-- Recent Orders Table -->
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Customer</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Quality Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="orders-table-body">
+                                <!-- Orders will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
 
                 <!-- Escalations Tab -->
-                <div id="escalations" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Orders Awaiting Your Review (<span id="escalation-count">0</span>)</h3>
-                        <div class="filter-panel">
-                            <div class="search-input-container" style="grid-column: 1 / -1;">
-                                <input type="search" id="escalation-search" placeholder="Search by Order ID...">
-                            </div>
-                            <div class="filter-group">
-                                <label for="escalation-status-filter">Status</label>
-                                <select id="escalation-status-filter">
-                                    <option value="all">All Statuses</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Reviewed">Reviewed</option>
-                                </select>
+                <div class="tab-content" id="escalations-tab">
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Escalation ID</th>
+                                    <th>Order ID</th>
+                                    <th>Reason</th>
+                                    <th>Date</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="escalations-table-body">
+                                <!-- Escalations will be populated here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div class="tab-content" id="reports-tab">
+                    <div class="filter-panel">
+                        <div class="filter-group">
+                            <label for="report-type">Report Type</label>
+                            <select id="report-type">
+                                <option value="quality">Quality Report</option>
+                                <option value="performance">Performance Report</option>
+                                <option value="escalations">Escalations Report</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label for="report-period">Period</label>
+                            <select id="report-period">
+                                <option value="weekly">Weekly</option>
+                                <option value="monthly">Monthly</option>
+                                <option value="quarterly">Quarterly</option>
+                            </select>
+                        </div>
+                        
+                        <div class="filter-group">
+                            <label>&nbsp;</label>
+                            <div style="display: flex; gap: 12px;">
+                                <button class="btn btn-primary" id="generate-report">Generate Report</button>
+                                <button class="btn btn-secondary" id="download-report">Download CSV</button>
                             </div>
                         </div>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Issue Type</th>
-                                        <th>Escalated By</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="escalation-table-body">
-                                    <tr>
-                                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                            Loading escalations...
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
+                    </div>
+                    
+                    <div class="chart-card">
+                        <h3>Report Preview</h3>
+                        <div class="chart-container">
+                            <canvas id="reportChart"></canvas>
                         </div>
                     </div>
                 </div>
 
-                <!-- Agent Performance Tab -->
-                <div id="agent-performance" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Quality Team Performance</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label for="agent-filter">Filter by Agent:</label>
-                                <select id="agent-filter">
-                                    <option value="all">All Agents</option>
-                                    <!-- Will be populated by JavaScript -->
-                                </select>
+                <!-- Performance Tab -->
+                <div class="tab-content" id="performance-tab">
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <h3>Reviews vs Errors</h3>
+                            <div class="chart-container">
+                                <canvas id="reviewsVsErrorsChart"></canvas>
                             </div>
                         </div>
-                        <div class="charts-grid">
-                            <div class="chart-card">
-                                <h3>Agent Accuracy Rate</h3>
-                                <div class="chart-container">
-                                    <canvas id="agentAccuracyChart"></canvas>
-                                </div>
-                            </div>
-                            <div class="chart-card">
-                                <h3>Reviews vs Errors</h3>
-                                <div class="chart-container">
-                                    <canvas id="reviewsVsErrorsChart"></canvas>
-                                </div>
+                        
+                        <div class="chart-card">
+                            <h3>Team Performance</h3>
+                            <div class="chart-container">
+                                <canvas id="teamPerformanceChart"></canvas>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Assignments Tab -->
-                <div id="assignments" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Unassigned Orders (<span id="unassigned-count">0</span>)</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label>Assign selected to:</label>
-                                <select id="agent-select"></select>
-                            </div>
-                            <div class="filter-group">
-                                <button id="assign-btn" class="btn btn-primary">Assign Selected</button>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox" id="select-all-checkbox" /></th>
-                                        <th>Order ID</th>
-                                        <th>Reason</th>
-                                        <th>Employee</th>
-                                        <th>Chefz</th>
-                                        <th>Order Status</th>
-                                        <th>Requested Delivery Date</th>
-                                        <th>Payment Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="unassigned-table-body">
-                                    <tr>
-                                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                            No unassigned orders available.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-
-                    <div class="chart-card">
-                        <h3>Assigned Orders Status</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label for="assigned-status-filter">Status</label>
-                                <select id="assigned-status-filter">
-                                    <option value="all">All Statuses</option>
-                                    <option value="Pending">Pending</option>
-                                    <option value="Completed">Completed</option>
-                                    <option value="Late">Late</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="assigned-date-filter">Date</label>
-                                <input type="date" id="assigned-date-filter" style="color-scheme: dark;">
-                            </div>
-                            <div class="filter-group">
-                                <button id="clear-assigned-filters" class="btn btn-secondary">Clear Filters</button>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table class="data-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Agent</th>
-                                        <th>Status</th>
-                                        <th>Date Assigned</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="assigned-table-body">
-                                    <tr>
-                                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                                            No assigned orders to display.
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPIs Tab -->
-                <div id="kpis" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
-                        <p style="color: var(--text-muted); margin-top: -16px; margin-bottom: 24px;">Set the targets against which Quality Agents will be evaluated.</p>
-                        <div class="filter-panel" style="grid-template-columns: 1fr 1fr;">
-                            <div class="form-group">
-                                <label for="kpi-accuracy">Minimum Review Accuracy Target (%)</label>
-                                <input type="number" id="kpi-accuracy" value="98" min="80" max="100">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-reviews-day">Daily Reviews Target (per agent)</label>
-                                <input type="number" id="kpi-reviews-day" value="25" min="10" max="100">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-aht">Average Handle Time Target (minutes)</label>
-                                <input type="number" id="kpi-aht" value="5" min="1" max="30">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-escalation-rate">Allowed Escalation Rate (%)</label>
-                                <input type="number" id="kpi-escalation-rate" value="3" min="0" max="20">
-                            </div>
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn btn-primary" id="update-kpi-btn">Update KPI Targets</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Reports & Analytics Tab -->
-                <div id="reports-analytics" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Advanced Reports & Analytics</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label for="report-type">Report Type</label>
-                                <select id="report-type">
-                                    <option value="performance">Team Performance</option>
-                                    <option value="errors">Error Analysis</option>
-                                    <option value="escalations">Escalation Trends</option>
-                                    <option value="timeliness">Timeliness Reports</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="report-start-date">Start Date</label>
-                                <input type="date" id="report-start-date" style="color-scheme: dark;">
-                            </div>
-                            <div class="filter-group">
-                                <label for="report-end-date">End Date</label>
-                                <input type="date" id="report-end-date" style="color-scheme: dark;">
-                            </div>
-                            <div class="filter-group">
-                                <button class="btn btn-primary" id="generate-report-btn">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                                    Generate Report
-                                </button>
-                            </div>
-                        </div>
-                        <div id="reports-content" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                           Please select your criteria and generate a report to see the results.
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Tab -->
-                <div id="profile" class="tab-content">
-                    <div class="chart-card">
-                        <h3>Edit Profile</h3>
-                        <div class="form-group">
-                            <label for="profile-photo">Profile Picture</label>
-                            <input type="file" id="profile-photo" accept="image/*" />
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" placeholder="Loading...">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" placeholder="Loading...">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" placeholder="Loading...">
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
-                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-                        </div>
+                    
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Team Member</th>
+                                    <th>Orders Reviewed</th>
+                                    <th>Avg. Quality Score</th>
+                                    <th>Escalations</th>
+                                    <th>Avg. Resolution Time</th>
+                                </tr>
+                            </thead>
+                            <tbody id="performance-table-body">
+                                <!-- Performance data will be populated here -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
 
                 <!-- Settings Tab -->
-                <div id="settings" class="tab-content">
+                <div class="tab-content" id="settings-tab">
                     <div class="chart-card">
-                        <h3>Settings</h3>
-                        <p style="color: var(--text-muted); margin-top: -16px; margin-bottom: 24px;">Manage team settings, rules, and your preferences.</p>
-                        <div class="filter-panel" style="grid-template-columns: 1fr 1fr;">
-                            <div class="form-group">
-                                <h4>Notification Preferences</h4>
-                                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label for="in-app-notifications">In-App Notifications</label>
-                                    <input type="checkbox" id="in-app-notifications" checked>
-                                </div>
-                                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label for="email-notifications">Email Notifications</label>
+                        <h3>Account Settings</h3>
+                        
+                        <div class="form-group">
+                            <label for="user-name">Full Name</label>
+                            <input type="text" id="user-name" value="Quality Analyst">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-email">Email Address</label>
+                            <input type="email" id="user-email" value="qa@qualityx.com">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="user-role">Role</label>
+                            <input type="text" id="user-role" value="Senior Quality Specialist" disabled>
+                        </div>
+                        
+                        <h3 style="margin-top: 24px; margin-bottom: 16px;">Notification Preferences</h3>
+                        
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <span>Email Notifications</span>
+                                <div class="toggle-switch">
                                     <input type="checkbox" id="email-notifications" checked>
+                                    <span class="toggle-slider"></span>
                                 </div>
-                                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
-                                    <label for="escalation-alerts">Urgent Escalation Alerts</label>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <span>Push Notifications</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="push-notifications" checked>
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <span>Escalation Alerts</span>
+                                <div class="toggle-switch">
                                     <input type="checkbox" id="escalation-alerts" checked>
+                                    <span class="toggle-slider"></span>
                                 </div>
-                            </div>
-                            <div class="form-group">
-                                <h4>Interface Settings</h4>
-                                <div class="form-group">
-                                    <label for="theme-select">Theme</label>
-                                    <select id="theme-select">
-                                        <option value="dark">Dark</option>
-                                        <option value="light">Light</option>
-                                    </select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="language-select">Language</label>
-                                    <select id="language-select">
-                                        <option value="en">English</option>
-                                        <option value="ar">العربية</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="form-group" style="grid-column: 1 / -1;">
-                                <h4>Auto-Escalation Rules</h4>
-                                <label for="auto-escalate-reason">Auto-escalate for reason:</label>
-                                <select id="auto-escalate-reason">
-                                    <option>Driver Behavior Issues</option>
-                                    <option>Financial Fraud</option>
-                                    <option>Do not auto-escalate</option>
-                                </select>
-                            </div>
+                            </label>
                         </div>
+                        
+                        <div class="form-group">
+                            <label class="toggle-label">
+                                <span>Weekly Reports</span>
+                                <div class="toggle-switch">
+                                    <input type="checkbox" id="weekly-reports">
+                                    <span class="toggle-slider"></span>
+                                </div>
+                            </label>
+                        </div>
+                        
                         <div class="page-actions">
-                            <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Help Tab -->
-                <div id="help" class="tab-content">
-                    <div class="chart-card" style="text-align: center; padding: 40px;">
-                        <h3>Help & Support</h3>
-                        <p style="color: var(--text-muted); max-width: 500px; margin: 16px auto 24px auto;">
-                            Access documentation or contact IT support.
-                        </p>
-                        <div style="display: flex; justify-content: center; gap: 16px;">
-                            <button class="btn btn-primary" id="view-docs-btn">View Documentation</button>
-                            <button class="btn btn-secondary" id="contact-support-btn">Contact Support</button>
+                            <button class="btn btn-secondary" id="cancel-settings">Cancel</button>
+                            <button class="btn btn-primary" id="save-settings">Save Settings</button>
                         </div>
                     </div>
                 </div>
@@ -1713,36 +1692,58 @@
 
             <!-- Footer -->
             <footer class="site-footer">
-                © 2025 Mohamed Elmenisy. All rights reserved.
+                <p>QualityX Dashboard &copy; 2023. All rights reserved.</p>
             </footer>
         </main>
     </div>
 
-    <!-- Modals -->
-    <div class="modal-overlay" id="logout-modal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 class="modal-title">Confirm Logout</h3>
-                <button class="modal-close-btn" data-modal-id="logout-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <p>Are you sure you want to logout from the system?</p>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-modal-id="logout-modal">Cancel</button>
-                <button class="btn btn-primary" id="confirm-logout-btn">Yes, Logout</button>
-            </div>
-        </div>
-    </div>
-
+    <!-- Review Modal -->
     <div class="modal-overlay" id="review-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Review Escalation: <span id="modal-order-id">--</span></h3>
-                <button class="modal-close-btn" data-modal-id="review-modal">×</button>
+                <h2 class="modal-title">Review Escalation</h2>
+                <button class="modal-close-btn" id="close-review-modal">&times;</button>
             </div>
-            <div id="modal-body-content">
-                <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
+            
+            <div class="modal-content">
+                <div id="review-modal-skeleton" class="skeleton" style="height: 200px; margin-bottom: 20px;"></div>
+                
+                <div id="review-modal-content" style="display: none;">
+                    <div class="form-group">
+                        <label for="order-id">Order ID</label>
+                        <input type="text" id="order-id" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="customer-name">Customer Name</label>
+                        <input type="text" id="customer-name" readonly>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="escalation-reason">Escalation Reason</label>
+                        <textarea id="escalation-reason" rows="3" readonly></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="review-notes">Review Notes</label>
+                        <textarea id="review-notes" rows="4" placeholder="Add your review notes here..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="quality-score">Quality Score</label>
+                        <select id="quality-score">
+                            <option value="excellent">Excellent (95-100%)</option>
+                            <option value="good">Good (85-94%)</option>
+                            <option value="average">Average (75-84%)</option>
+                            <option value="poor">Poor (Below 75%)</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-review">Cancel</button>
+                <button class="btn btn-primary" id="submit-review">Submit Review</button>
             </div>
         </div>
     </div>
@@ -1750,372 +1751,420 @@
     <!-- Toast Container -->
     <div class="toast-container" id="toast-container"></div>
 
-    <script type="module">
-        import { supabase, getCurrentUser, getUserData, getOrders, getNotifications, signOut, getUserById } from './api-client.js';
-
-        // Global State
-        let currentUser = null;
-        let userData = null;
+    <script>
+        // Global variables
+        let charts = {};
         let orders = [];
         let escalations = [];
-        let agents = [];
         let notifications = [];
-        let charts = {};
 
         // DOM Elements
-        const elements = {
-            // User Info
-            sidebarAvatar: document.getElementById('sidebar-avatar-initials'),
-            sidebarUsername: document.getElementById('sidebar-username'),
-            sidebarUserrole: document.getElementById('sidebar-userrole'),
-            welcomeUserH2: document.getElementById('welcome-user-h2'),
-            pageTitle: document.getElementById('page-title'),
-            
-            // Dashboard Stats
-            reviewsToday: document.getElementById('reviews-today'),
-            pendingEscalations: document.getElementById('pending-escalations'),
-            avgResolution: document.getElementById('avg-resolution'),
-            teamAccuracy: document.getElementById('team-accuracy'),
-            
-            // Tables
-            escalationTableBody: document.getElementById('escalation-table-body'),
-            unassignedTableBody: document.getElementById('unassigned-table-body'),
-            assignedTableBody: document.getElementById('assigned-table-body'),
-            
-            // Counts
-            escalationCount: document.getElementById('escalation-count'),
-            unassignedCount: document.getElementById('unassigned-count'),
-            
-            // Search
-            searchResults: document.getElementById('search-results'),
-            
-            // Toast
-            toastContainer: document.getElementById('toast-container'),
-            
-            // Modals
-            modalOrderId: document.getElementById('modal-order-id'),
-            modalBodyContent: document.getElementById('modal-body-content')
-        };
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebar = document.getElementById('sidebar');
+        const searchInput = document.getElementById('search-input');
+        const searchResults = document.getElementById('search-results');
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const notificationCount = document.getElementById('notification-count');
+        const notificationList = document.getElementById('notification-list');
+        const logoutBtn = document.getElementById('logout-btn');
+        const tabLinks = document.querySelectorAll('.sidebar-nav a[data-tab]');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const applyFiltersBtn = document.getElementById('apply-filters');
+        const ordersTableBody = document.getElementById('orders-table-body');
+        const escalationsTableBody = document.getElementById('escalations-table-body');
+        const performanceTableBody = document.getElementById('performance-table-body');
+        const reviewModal = document.getElementById('review-modal');
+        const closeReviewModal = document.getElementById('close-review-modal');
+        const cancelReview = document.getElementById('cancel-review');
+        const reviewModalSkeleton = document.getElementById('review-modal-skeleton');
+        const reviewModalContent = document.getElementById('review-modal-content');
+        const submitReview = document.getElementById('submit-review');
+        const generateReportBtn = document.getElementById('generate-report');
+        const downloadReportBtn = document.getElementById('download-report');
+        const cancelSettingsBtn = document.getElementById('cancel-settings');
+        const saveSettingsBtn = document.getElementById('save-settings');
+        const toastContainer = document.getElementById('toast-container');
 
-        // Helper Functions
-        const getInitials = (name) => {
-            if (!name || name === 'Loading...') return '--';
-            const names = name.split(' ');
-            return names.length > 1 
-                ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() 
-                : `${names[0][0]}`.toUpperCase();
-        };
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeDashboard();
+            setupEventListeners();
+            loadData();
+            initializeCharts();
+            startAutoRefresh();
+        });
 
-        // Toast Messages
-        function showToast(title, message, type = 'info', duration = 5000) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.innerHTML = `
-                <div class="toast-icon">
-                    ${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}
-                </div>
-                <div class="toast-content">
-                    <div class="toast-title">${title}</div>
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close">×</button>
-            `;
+        // Initialize dashboard components
+        function initializeDashboard() {
+            // Set active tab
+            setActiveTab('dashboard');
             
-            elements.toastContainer.appendChild(toast);
+            // Initialize empty data arrays
+            orders = [];
+            escalations = [];
+            notifications = [];
             
-            // Auto remove after duration
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.style.animation = 'slideInRight 0.3s ease reverse';
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
+            // Show loading states
+            showTableLoadingState(ordersTableBody, 5);
+            showTableLoadingState(escalationsTableBody, 3);
+            showTableLoadingState(performanceTableBody, 4);
+        }
+
+        // Set up event listeners
+        function setupEventListeners() {
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', toggleMobileMenu);
+            
+            // Search functionality
+            searchInput.addEventListener('input', handleSearch);
+            
+            // Notifications
+            notificationBtn.addEventListener('click', toggleNotifications);
+            
+            // Logout
+            logoutBtn.addEventListener('click', handleLogout);
+            
+            // Tab navigation
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('data-tab');
+                    setActiveTab(tabId);
+                });
+            });
+            
+            // Apply filters
+            applyFiltersBtn.addEventListener('click', applyFilters);
+            
+            // Review modal
+            closeReviewModal.addEventListener('click', () => hideModal(reviewModal));
+            cancelReview.addEventListener('click', () => hideModal(reviewModal));
+            submitReview.addEventListener('click', handleReviewSubmission);
+            
+            // Reports
+            generateReportBtn.addEventListener('click', generateReport);
+            downloadReportBtn.addEventListener('click', downloadReport);
+            
+            // Settings
+            cancelSettingsBtn.addEventListener('click', resetSettingsForm);
+            saveSettingsBtn.addEventListener('click', saveSettings);
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
                 }
-            }, duration);
-            
-            // Close button
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.animation = 'slideInRight 0.3s ease reverse';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
+                
+                if (!searchInput.contains(e.target) && !searchResults.contains(e.target)) {
+                    searchResults.classList.remove('show');
+                }
             });
         }
 
-        // Modal Functions
-        function showModal(modalId) {
-            document.getElementById(modalId).classList.add('show');
+        // Toggle mobile menu
+        function toggleMobileMenu() {
+            sidebar.classList.toggle('mobile-open');
         }
 
-        function hideModal(modalId) {
-            document.getElementById(modalId).classList.remove('show');
-        }
-
-        // Search Functionality
-        function performSearch(query) {
-            if (query.length < 2) {
-                elements.searchResults.classList.remove('show');
-                return;
-            }
-            
-            // Mock search results - in real app, this would be API call
-            const results = [
-                { type: 'order', name: 'Order #12345', description: 'Missing Item - Pending Review' },
-                { type: 'agent', name: 'Ahmed Ali', description: 'Quality Agent - 98.2% Accuracy' },
-                { type: 'escalation', name: 'Escalation #E-001', description: 'Driver Behavior Issue' },
-                { type: 'report', name: 'Weekly Performance', description: 'Team A Performance Report' }
-            ].filter(item => 
-                item.name.toLowerCase().includes(query.toLowerCase()) || 
-                item.description.toLowerCase().includes(query.toLowerCase())
-            );
-            
-            if (results.length > 0) {
-                elements.searchResults.innerHTML = results.map(result => `
-                    <div class="search-result-item" data-type="${result.type}">
-                        <strong>${result.name}</strong><br>
-                        <small>${result.description}</small>
-                    </div>
-                `).join('');
-                elements.searchResults.classList.add('show');
-            } else {
-                elements.searchResults.innerHTML = '<div class="search-result-item">No results found</div>';
-                elements.searchResults.classList.add('show');
-            }
-        }
-
-        // Data Fetching
-        async function loadUserData() {
-            try {
-                currentUser = await getCurrentUser();
-                if (!currentUser) {
-                    window.location.href = 'login.html';
-                    return;
+        // Set active tab
+        function setActiveTab(tabId) {
+            // Update sidebar navigation
+            tabLinks.forEach(link => {
+                if (link.getAttribute('data-tab') === tabId) {
+                    link.parentElement.classList.add('active');
+                } else {
+                    link.parentElement.classList.remove('active');
                 }
-
-                userData = await getUserData(currentUser.email);
-                
-                // Update UI with user data
-                elements.sidebarAvatar.textContent = getInitials(userData.name);
-                elements.sidebarUsername.textContent = userData.name;
-                elements.sidebarUserrole.textContent = 'Senior Quality Analyst';
-                elements.welcomeUserH2.textContent = `Welcome back, ${userData.name.split(' ')[0]}!`;
-                
-                // Update profile form
-                document.getElementById('profile-fullname').value = userData.name;
-                document.getElementById('profile-email').value = userData.email;
-                
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                showToast('Error', 'Failed to load user data', 'error');
-            }
-        }
-
-        async function loadOrders() {
-            try {
-                orders = await getOrders();
-                updateDashboardStats();
-                updateAssignmentsTable();
-                initializeCharts();
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                showToast('Error', 'Failed to load orders data', 'error');
-            }
-        }
-
-        async function loadEscalations() {
-            try {
-                // Mock escalations data - in real app, this would be API call
-                escalations = [
-                    {
-                        id: '1',
-                        order_id: '12345',
-                        issue_type: 'Missing Item',
-                        escalated_by: 'Ahmed Ali',
-                        date: '2025-01-15',
-                        status: 'Pending'
-                    },
-                    {
-                        id: '2',
-                        order_id: '12346',
-                        issue_type: 'Wrong Order',
-                        escalated_by: 'Sara Mohamed',
-                        date: '2025-01-15',
-                        status: 'Pending'
-                    }
-                ];
-                
-                updateEscalationsTable();
-            } catch (error) {
-                console.error('Error loading escalations:', error);
-                showToast('Error', 'Failed to load escalations', 'error');
-            }
-        }
-
-        async function loadAgents() {
-            try {
-                // Mock agents data - in real app, this would be API call
-                agents = [
-                    { id: '1', name: 'Ahmed Ali', role: 'Quality Agent' },
-                    { id: '2', name: 'Sara Mohamed', role: 'Quality Agent' },
-                    { id: '3', name: 'Mohammed Hassan', role: 'Quality Agent' }
-                ];
-                
-                updateAgentSelects();
-            } catch (error) {
-                console.error('Error loading agents:', error);
-            }
-        }
-
-        async function loadNotifications() {
-            try {
-                if (!userData) return;
-                
-                notifications = await getNotifications(userData.id);
-                updateNotifications();
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-            }
-        }
-
-        // UI Updates
-        function updateDashboardStats() {
-            // Mock data - in real app, this would be calculated from actual data
-            elements.reviewsToday.textContent = '42';
-            elements.pendingEscalations.textContent = '5';
-            elements.avgResolution.textContent = '15m';
-            elements.teamAccuracy.textContent = '98.2%';
+            });
             
-            elements.escalationCount.textContent = '5';
-            elements.unassignedCount.textContent = orders.filter(order => !order.assigned_agent).length;
+            // Show corresponding tab content
+            tabContents.forEach(tab => {
+                if (tab.id === `${tabId}-tab`) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // Close mobile menu after selecting a tab
+            if (window.innerWidth <= 1024) {
+                sidebar.classList.remove('mobile-open');
+            }
         }
 
-        function updateEscalationsTable() {
-            if (!escalations.length) {
-                elements.escalationTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            No escalations pending review.
-                        </td>
-                    </tr>
-                `;
+        // Handle search
+        function handleSearch() {
+            const query = searchInput.value.trim();
+            
+            if (query.length === 0) {
+                searchResults.classList.remove('show');
                 return;
             }
+            
+            // Simulate search results
+            const results = [
+                { type: 'Order', id: 'ORD-12345', description: 'Customer: John Smith' },
+                { type: 'Escalation', id: 'ESC-67890', description: 'Reason: Quality Issue' },
+                { type: 'Order', id: 'ORD-54321', description: 'Customer: Sarah Johnson' }
+            ];
+            
+            // Display results
+            searchResults.innerHTML = '';
+            results.forEach(result => {
+                const item = document.createElement('div');
+                item.className = 'search-result-item';
+                item.innerHTML = `
+                    <div><strong>${result.type}: ${result.id}</strong></div>
+                    <div style="font-size: 12px; color: var(--text-muted);">${result.description}</div>
+                `;
+                item.addEventListener('click', () => {
+                    searchInput.value = '';
+                    searchResults.classList.remove('show');
+                    showToast(`Navigating to ${result.type} ${result.id}`, 'info');
+                });
+                searchResults.appendChild(item);
+            });
+            
+            searchResults.classList.add('show');
+        }
 
-            elements.escalationTableBody.innerHTML = escalations.map(escalation => `
-                <tr>
-                    <td>${escalation.order_id}</td>
-                    <td>${escalation.issue_type}</td>
-                    <td>${escalation.escalated_by}</td>
-                    <td>${escalation.date}</td>
-                    <td><span class="status-badge status-${escalation.status.toLowerCase()}">${escalation.status}</span></td>
+        // Toggle notifications dropdown
+        function toggleNotifications() {
+            notificationDropdown.classList.toggle('show');
+        }
+
+        // Handle logout
+        function handleLogout() {
+            showToast('Logging out...', 'info');
+            
+            // Simulate logout process
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 1500);
+        }
+
+        // Apply filters
+        function applyFilters() {
+            showToast('Filters applied successfully', 'success');
+            // In a real app, this would reload data with the applied filters
+        }
+
+        // Load data
+        async function loadData() {
+            try {
+                // Simulate API call delay
+                await new Promise(resolve => setTimeout(resolve, 1500));
+                
+                // Load orders
+                orders = [
+                    { id: 'ORD-12345', customer: 'John Smith', date: '2023-10-15', status: 'completed', score: '96%' },
+                    { id: 'ORD-12346', customer: 'Sarah Johnson', date: '2023-10-15', status: 'pending', score: 'N/A' },
+                    { id: 'ORD-12347', customer: 'Michael Brown', date: '2023-10-14', status: 'escalated', score: '82%' },
+                    { id: 'ORD-12348', customer: 'Emily Davis', date: '2023-10-14', status: 'reviewed', score: '94%' },
+                    { id: 'ORD-12349', customer: 'Robert Wilson', date: '2023-10-13', status: 'completed', score: '98%' }
+                ];
+                
+                // Load escalations
+                escalations = [
+                    { id: 'ESC-67890', orderId: 'ORD-12347', reason: 'Quality Issue', date: '2023-10-14', priority: 'High', status: 'pending' },
+                    { id: 'ESC-67891', orderId: 'ORD-12350', reason: 'Missing Information', date: '2023-10-13', priority: 'Medium', status: 'in-progress' },
+                    { id: 'ESC-67892', orderId: 'ORD-12352', reason: 'Customer Complaint', date: '2023-10-12', priority: 'High', status: 'pending' }
+                ];
+                
+                // Load performance data
+                const performanceData = [
+                    { name: 'Alex Johnson', reviews: 142, score: '96.2%', escalations: 3, resolution: '2.1h' },
+                    { name: 'Maria Garcia', reviews: 128, score: '94.7%', escalations: 5, resolution: '2.8h' },
+                    { name: 'David Chen', reviews: 135, score: '95.8%', escalations: 2, resolution: '1.9h' },
+                    { name: 'Sarah Williams', reviews: 118, score: '93.5%', escalations: 7, resolution: '3.2h' }
+                ];
+                
+                // Update tables with real data
+                updateOrdersTable();
+                updateEscalationsTable();
+                updatePerformanceTable(performanceData);
+                
+            } catch (error) {
+                console.error('Error loading data:', error);
+                showToast('Failed to load data', 'error');
+                
+                // Show empty state messages
+                showEmptyTableState(ordersTableBody, 'No orders available');
+                showEmptyTableState(escalationsTableBody, 'No escalations available');
+                showEmptyTableState(performanceTableBody, 'No performance data available');
+            }
+        }
+
+        // Update orders table
+        function updateOrdersTable() {
+            if (orders.length === 0) {
+                showEmptyTableState(ordersTableBody, 'No orders available');
+                return;
+            }
+            
+            ordersTableBody.innerHTML = '';
+            
+            orders.forEach(order => {
+                const row = document.createElement('tr');
+                
+                let statusClass = '';
+                switch(order.status) {
+                    case 'pending': statusClass = 'status-pending'; break;
+                    case 'completed': statusClass = 'status-completed'; break;
+                    case 'escalated': statusClass = 'status-error'; break;
+                    case 'reviewed': statusClass = 'status-reviewed'; break;
+                }
+                
+                row.innerHTML = `
+                    <td>${order.id}</td>
+                    <td>${order.customer}</td>
+                    <td>${order.date}</td>
+                    <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                    <td>${order.score}</td>
                     <td>
-                        <button class="btn btn-primary btn-sm review-escalation-btn" data-order-id="${escalation.order_id}">
-                            Review
-                        </button>
+                        <button class="btn btn-sm btn-secondary" onclick="viewOrder('${order.id}')">View</button>
+                        ${order.status === 'escalated' ? 
+                          `<button class="btn btn-sm btn-primary" onclick="openReviewModal('${order.id}')">Review</button>` : 
+                          ''}
+                    </td>
+                `;
+                
+                ordersTableBody.appendChild(row);
+            });
+        }
+
+        // Update escalations table
+        function updateEscalationsTable() {
+            if (escalations.length === 0) {
+                showEmptyTableState(escalationsTableBody, 'No escalations available');
+                return;
+            }
+            
+            escalationsTableBody.innerHTML = '';
+            
+            escalations.forEach(escalation => {
+                const row = document.createElement('tr');
+                
+                let priorityClass = '';
+                switch(escalation.priority) {
+                    case 'High': priorityClass = 'status-error'; break;
+                    case 'Medium': priorityClass = 'status-late'; break;
+                    case 'Low': priorityClass = 'status-pending'; break;
+                }
+                
+                let statusClass = '';
+                switch(escalation.status) {
+                    case 'pending': statusClass = 'status-pending'; break;
+                    case 'in-progress': statusClass = 'status-late'; break;
+                    case 'resolved': statusClass = 'status-completed'; break;
+                }
+                
+                row.innerHTML = `
+                    <td>${escalation.id}</td>
+                    <td>${escalation.orderId}</td>
+                    <td>${escalation.reason}</td>
+                    <td>${escalation.date}</td>
+                    <td><span class="status-badge ${priorityClass}">${escalation.priority}</span></td>
+                    <td><span class="status-badge ${statusClass}">${escalation.status}</span></td>
+                    <td>
+                        <button class="btn btn-sm btn-secondary" onclick="viewEscalation('${escalation.id}')">View</button>
+                        <button class="btn btn-sm btn-primary" onclick="openReviewModal('${escalation.orderId}')">Review</button>
+                    </td>
+                `;
+                
+                escalationsTableBody.appendChild(row);
+            });
+        }
+
+        // Update performance table
+        function updatePerformanceTable(data) {
+            if (data.length === 0) {
+                showEmptyTableState(performanceTableBody, 'No performance data available');
+                return;
+            }
+            
+            performanceTableBody.innerHTML = '';
+            
+            data.forEach(employee => {
+                const row = document.createElement('tr');
+                
+                row.innerHTML = `
+                    <td>${employee.name}</td>
+                    <td>${employee.reviews}</td>
+                    <td>${employee.score}</td>
+                    <td>${employee.escalations}</td>
+                    <td>${employee.resolution}</td>
+                `;
+                
+                performanceTableBody.appendChild(row);
+            });
+        }
+
+        // Show table loading state
+        function showTableLoadingState(tableBody, rows) {
+            tableBody.innerHTML = '';
+            
+            for (let i = 0; i < rows; i++) {
+                const row = document.createElement('tr');
+                
+                // Create skeleton cells
+                for (let j = 0; j < 6; j++) {
+                    const cell = document.createElement('td');
+                    const skeleton = document.createElement('div');
+                    skeleton.className = 'skeleton';
+                    skeleton.style.height = '16px';
+                    skeleton.style.width = j === 5 ? '80px' : `${Math.random() * 100 + 50}px`;
+                    cell.appendChild(skeleton);
+                    row.appendChild(cell);
+                }
+                
+                tableBody.appendChild(row);
+            }
+        }
+
+        // Show empty table state
+        function showEmptyTableState(tableBody, message) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                        ${message}
                     </td>
                 </tr>
-            `).join('');
+            `;
         }
 
-        function updateAssignmentsTable() {
-            const unassignedOrders = orders.filter(order => !order.assigned_agent);
-            
-            if (!unassignedOrders.length) {
-                elements.unassignedTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
-                            No unassigned orders available.
-                        </td>
-                    </tr>
-                `;
-            } else {
-                elements.unassignedTableBody.innerHTML = unassignedOrders.map(order => `
-                    <tr>
-                        <td><input type="checkbox" class="order-checkbox" value="${order.id}"></td>
-                        <td>${order.id}</td>
-                        <td>${order.issue_type || 'N/A'}</td>
-                        <td>${order.employee || 'N/A'}</td>
-                        <td>${order.chefz || 'N/A'}</td>
-                        <td>${order.order_status || 'N/A'}</td>
-                        <td>${order.requested_delivery_date || 'N/A'}</td>
-                        <td>${order.payment_type || 'N/A'}</td>
-                    </tr>
-                `).join('');
-            }
-        }
-
-        function updateAgentSelects() {
-            const agentSelect = document.getElementById('agent-select');
-            const agentFilter = document.getElementById('agent-filter');
-            
-            agentSelect.innerHTML = '<option value="">Select Agent</option>';
-            agentFilter.innerHTML = '<option value="all">All Agents</option>';
-            
-            agents.forEach(agent => {
-                agentSelect.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
-                agentFilter.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
-            });
-        }
-
-        function updateNotifications() {
-            if (!notifications.length) {
-                elements.notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
-                document.getElementById('notification-count').textContent = '0';
-                return;
-            }
-
-            const unreadCount = notifications.filter(n => !n.read).length;
-            document.getElementById('notification-count').textContent = unreadCount;
-            
-            elements.notificationList.innerHTML = notifications.slice(0, 5).map(notification => `
-                <li class="notification-item ${notification.read ? '' : 'unread'}">
-                    <strong>${notification.title}</strong><br>
-                    ${notification.message}
-                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
-                        ${new Date(notification.created_at).toLocaleDateString()}
-                    </div>
-                </li>
-            `).join('');
-        }
-
+        // Initialize charts
         function initializeCharts() {
-            // Set Chart.js defaults
-            Chart.defaults.font.family = 'Poppins';
-            Chart.defaults.color = '#8b949e';
-            Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(26, 26, 26, 0.9)';
-            Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
-            Chart.defaults.plugins.tooltip.bodyColor = '#8b949e';
-            Chart.defaults.plugins.tooltip.borderColor = '#2d2d2d';
-            Chart.defaults.plugins.tooltip.borderWidth = 1;
-
-            // Personal Performance Chart
-            const personalCtx = document.getElementById('personalPerformanceChart').getContext('2d');
-            charts.personalPerformance = new Chart(personalCtx, {
-                type: 'line',
+            // Destroy existing charts to prevent "Canvas is already in use" error
+            destroyChart('ordersChart');
+            destroyChart('qualityChart');
+            destroyChart('reviewsVsErrorsChart');
+            destroyChart('teamPerformanceChart');
+            destroyChart('reportChart');
+            
+            // Orders vs Escalations Chart
+            const ordersCtx = document.getElementById('ordersChart').getContext('2d');
+            charts.ordersChart = new Chart(ordersCtx, {
+                type: 'bar',
                 data: {
                     labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
                     datasets: [
                         {
-                            label: 'Your Reviews',
-                            data: [25, 32, 28, 35, 40, 30, 38],
-                            borderColor: '#00bfff',
-                            backgroundColor: 'rgba(0, 191, 255, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 3
+                            label: 'Orders',
+                            data: [45, 52, 38, 64, 57, 42, 30],
+                            backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                            borderColor: 'rgba(0, 191, 255, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
                         },
                         {
-                            label: 'Team Average',
-                            data: [20, 25, 22, 28, 30, 25, 32],
-                            borderColor: '#00d97e',
-                            backgroundColor: 'rgba(0, 217, 126, 0.1)',
-                            fill: true,
-                            tension: 0.4,
-                            borderWidth: 3
+                            label: 'Escalations',
+                            data: [3, 5, 2, 6, 4, 3, 1],
+                            backgroundColor: 'rgba(230, 55, 87, 0.7)',
+                            borderColor: 'rgba(230, 55, 87, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
                         }
                     ]
                 },
@@ -2127,9 +2176,14 @@
                             position: 'top',
                             labels: {
                                 color: '#ffffff',
-                                usePointStyle: true,
-                                padding: 20
+                                font: {
+                                    family: 'Poppins'
+                                }
                             }
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
                         }
                     },
                     scales: {
@@ -2138,7 +2192,7 @@
                                 color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: '#8b949e'
+                                color: '#ffffff'
                             }
                         },
                         y: {
@@ -2147,71 +2201,41 @@
                                 color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: '#8b949e'
+                                color: '#ffffff'
                             }
                         }
                     }
                 }
             });
-
-            // Team Error Types Chart
-            const errorCtx = document.getElementById('teamErrorTypesChart').getContext('2d');
-            charts.teamErrorTypes = new Chart(errorCtx, {
-                type: 'doughnut',
+            
+            // Quality Score Trends Chart
+            const qualityCtx = document.getElementById('qualityChart').getContext('2d');
+            charts.qualityChart = new Chart(qualityCtx, {
+                type: 'line',
                 data: {
-                    labels: ['Missing Items', 'Wrong Orders', 'Late Delivery', 'Quality Issues', 'Other'],
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
                     datasets: [{
-                        data: [35, 25, 20, 15, 5],
-                        backgroundColor: [
-                            '#00bfff',
-                            '#00d97e',
-                            '#f6c343',
-                            '#e63757',
-                            '#6b5aed'
-                        ],
-                        borderColor: '#1a1a1a',
+                        label: 'Quality Score %',
+                        data: [92.5, 93.2, 94.1, 93.8, 94.5, 94.2],
+                        borderColor: 'rgba(0, 215, 126, 1)',
+                        backgroundColor: 'rgba(0, 215, 126, 0.1)',
                         borderWidth: 3,
-                        hoverOffset: 15
+                        fill: true,
+                        tension: 0.4
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
-                    cutout: '65%',
                     plugins: {
                         legend: {
-                            position: 'bottom',
+                            position: 'top',
                             labels: {
                                 color: '#ffffff',
-                                padding: 20,
-                                usePointStyle: true
+                                font: {
+                                    family: 'Poppins'
+                                }
                             }
-                        }
-                    }
-                }
-            });
-
-            // Agent Accuracy Chart
-            const accuracyCtx = document.getElementById('agentAccuracyChart').getContext('2d');
-            charts.agentAccuracy = new Chart(accuracyCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Ahmed Ali', 'Sara Mohamed', 'Mohammed Hassan', 'Lina Samir', 'Omar Khaled'],
-                    datasets: [{
-                        label: 'Accuracy Rate %',
-                        data: [98.2, 97.5, 96.8, 99.1, 95.7],
-                        backgroundColor: '#00bfff',
-                        borderColor: '#00a4d9',
-                        borderWidth: 2,
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
                         }
                     },
                     scales: {
@@ -2220,226 +2244,394 @@
                                 color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: '#8b949e'
+                                color: '#ffffff'
                             }
                         },
                         y: {
-                            beginAtZero: true,
+                            min: 90,
                             max: 100,
                             grid: {
                                 color: 'rgba(255, 255, 255, 0.1)'
                             },
                             ticks: {
-                                color: '#8b949e',
-                                callback: function(value) {
-                                    return value + '%';
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Reviews vs Errors Chart
+            const reviewsVsErrorsCtx = document.getElementById('reviewsVsErrorsChart').getContext('2d');
+            charts.reviewsVsErrorsChart = new Chart(reviewsVsErrorsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Alex J.', 'Maria G.', 'David C.', 'Sarah W.'],
+                    datasets: [
+                        {
+                            label: 'Reviews Completed',
+                            data: [142, 128, 135, 118],
+                            backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                            borderColor: 'rgba(0, 191, 255, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Errors Found',
+                            data: [8, 12, 6, 15],
+                            backgroundColor: 'rgba(230, 55, 87, 0.7)',
+                            borderColor: 'rgba(230, 55, 87, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    family: 'Poppins'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Team Performance Chart
+            const teamPerformanceCtx = document.getElementById('teamPerformanceChart').getContext('2d');
+            charts.teamPerformanceChart = new Chart(teamPerformanceCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Team A', 'Team B', 'Team C'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: [
+                            'rgba(0, 191, 255, 0.8)',
+                            'rgba(0, 215, 126, 0.8)',
+                            'rgba(107, 90, 237, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgba(0, 191, 255, 1)',
+                            'rgba(0, 215, 126, 1)',
+                            'rgba(107, 90, 237, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    family: 'Poppins'
                                 }
                             }
                         }
                     }
                 }
             });
-        }
-
-        // Event Listeners
-        function setupEventListeners() {
-            // Tab Switching
-            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    const tabId = link.getAttribute('data-tab');
-                    
-                    // Update active states
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
-                    
-                    document.getElementById(tabId).classList.add('active');
-                    link.classList.add('active');
-                    
-                    // Update page title
-                    const tabText = link.textContent.trim();
-                    elements.pageTitle.textContent = tabText;
-                    
-                    // Close mobile menu
-                    document.getElementById('sidebar').classList.remove('mobile-open');
-                });
-            });
-
-            // Search Functionality
-            document.getElementById('global-search').addEventListener('input', (e) => {
-                performSearch(e.target.value);
-            });
-
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.search-input-container')) {
-                    elements.searchResults.classList.remove('show');
-                }
-            });
-
-            // Notifications
-            document.getElementById('notification-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('notification-dropdown').classList.toggle('show');
-            });
-
-            document.addEventListener('click', () => {
-                document.getElementById('notification-dropdown').classList.remove('show');
-            });
-
-            // Mobile Menu
-            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
-                document.getElementById('sidebar').classList.toggle('mobile-open');
-            });
-
-            // Profile Save
-            document.getElementById('save-profile-btn').addEventListener('click', () => {
-                const newName = document.getElementById('profile-fullname').value;
-                elements.sidebarUsername.textContent = newName;
-                elements.sidebarAvatar.textContent = getInitials(newName);
-                elements.welcomeUserH2.textContent = `Welcome back, ${newName.split(' ')[0]}!`;
-                showToast('Success', 'Profile updated successfully!', 'success');
-            });
-
-            // Assign Orders
-            document.getElementById('assign-btn').addEventListener('click', () => {
-                const selectedAgent = document.getElementById('agent-select').value;
-                const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked'))
-                    .map(cb => cb.value);
-                
-                if (!selectedAgent) {
-                    showToast('Error', 'Please select an agent to assign orders to', 'error');
-                    return;
-                }
-                
-                if (selectedOrders.length === 0) {
-                    showToast('Error', 'Please select at least one order to assign', 'error');
-                    return;
-                }
-                
-                showToast('Success', `Assigned ${selectedOrders.length} orders to agent`, 'success');
-                
-                // In real app, this would be API call to update assignments
-                selectedOrders.forEach(orderId => {
-                    const checkbox = document.querySelector(`.order-checkbox[value="${orderId}"]`);
-                    if (checkbox) {
-                        checkbox.closest('tr').remove();
+            
+            // Report Chart
+            const reportCtx = document.getElementById('reportChart').getContext('2d');
+            charts.reportChart = new Chart(reportCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [
+                        {
+                            label: 'Quality Score',
+                            data: [91.2, 92.5, 93.1, 93.8, 94.2, 94.0, 94.5, 94.8, 94.2, 94.6],
+                            borderColor: 'rgba(0, 191, 255, 1)',
+                            backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Escalations',
+                            data: [12, 10, 8, 7, 6, 5, 4, 3, 5, 4],
+                            borderColor: 'rgba(230, 55, 87, 1)',
+                            backgroundColor: 'rgba(230, 55, 87, 0.1)',
+                            borderWidth: 3,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                font: {
+                                    family: 'Poppins'
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            }
+                        }
                     }
-                });
-                
-                // Update counts
-                const remainingOrders = document.querySelectorAll('.order-checkbox').length;
-                elements.unassignedCount.textContent = remainingOrders;
-            });
-
-            // Select All Checkbox
-            document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
-                const checkboxes = document.querySelectorAll('.order-checkbox');
-                checkboxes.forEach(cb => {
-                    cb.checked = e.target.checked;
-                });
-            });
-
-            // Update KPI Targets
-            document.getElementById('update-kpi-btn').addEventListener('click', () => {
-                showToast('Success', 'KPI targets updated successfully!', 'success');
-            });
-
-            // Generate Report
-            document.getElementById('generate-report-btn').addEventListener('click', () => {
-                const reportType = document.getElementById('report-type').value;
-                const startDate = document.getElementById('report-start-date').value;
-                const endDate = document.getElementById('report-end-date').value;
-                
-                document.getElementById('reports-content').innerHTML = `
-                    <h4>${reportType} Report</h4>
-                    <p>Date Range: ${startDate} to ${endDate}</p>
-                    <div style="margin-top: 20px;">
-                        <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
-                    </div>
-                `;
-                
-                showToast('Success', 'Report generated successfully!', 'success');
-            });
-
-            // Settings Save
-            document.getElementById('save-settings-btn').addEventListener('click', () => {
-                showToast('Success', 'Settings saved successfully!', 'success');
-            });
-
-            // Help Buttons
-            document.getElementById('view-docs-btn').addEventListener('click', () => {
-                showToast('Info', 'Opening documentation...', 'info');
-            });
-
-            document.getElementById('contact-support-btn').addEventListener('click', () => {
-                showToast('Info', 'Opening support contact form...', 'info');
-            });
-
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                showModal('logout-modal');
-            });
-
-            document.getElementById('confirm-logout-btn').addEventListener('click', async () => {
-                try {
-                    await signOut();
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Logout error:', error);
-                    showToast('Error', 'Failed to logout', 'error');
                 }
-            });
-
-            // Review Escalation Buttons
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('review-escalation-btn')) {
-                    const orderId = e.target.getAttribute('data-order-id');
-                    elements.modalOrderId.textContent = orderId;
-                    showModal('review-modal');
-                }
-            });
-
-            // Modal Close Buttons
-            document.querySelectorAll('.modal-close-btn, .btn-secondary[data-modal-id]').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    hideModal(btn.dataset.modalId);
-                });
-            });
-
-            // Close modals when clicking outside
-            document.querySelectorAll('.modal-overlay').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) {
-                        hideModal(modal.id);
-                    }
-                });
             });
         }
 
-        // Auto-refresh
+        // Destroy chart if it exists
+        function destroyChart(chartId) {
+            if (charts[chartId]) {
+                charts[chartId].destroy();
+                delete charts[chartId];
+            }
+        }
+
+        // Start auto-refresh
         function startAutoRefresh() {
             setInterval(() => {
-                loadOrders();
-                loadEscalations();
-                loadNotifications();
-            }, 30000); // Refresh every 30 seconds
+                // Simulate data updates
+                const newNotifications = Math.floor(Math.random() * 3);
+                if (newNotifications > 0) {
+                    updateNotificationCount(newNotifications);
+                    showToast(`${newNotifications} new notification${newNotifications > 1 ? 's' : ''}`, 'info');
+                }
+            }, 30000); // 30 seconds
         }
 
-        // Initialize Application
-        async function init() {
-            await loadUserData();
-            await loadOrders();
-            await loadEscalations();
-            await loadAgents();
-            await loadNotifications();
-            setupEventListeners();
-            startAutoRefresh();
+        // Update notification count
+        function updateNotificationCount(count) {
+            const currentCount = parseInt(notificationCount.textContent);
+            notificationCount.textContent = currentCount + count;
             
-            console.log('✅ Senior Quality Dashboard initialized successfully');
+            // Add new notifications to the list
+            for (let i = 0; i < count; i++) {
+                const newItem = document.createElement('li');
+                newItem.className = 'notification-item unread';
+                newItem.innerHTML = `
+                    <div><strong>New update</strong> - System refresh completed</div>
+                    <small>Just now</small>
+                `;
+                notificationList.insertBefore(newItem, notificationList.firstChild);
+            }
         }
 
-        // Start the application
-        document.addEventListener('DOMContentLoaded', init);
+        // Show modal
+        function showModal(modal) {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        // Hide modal
+        function hideModal(modal) {
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Open review modal
+        function openReviewModal(orderId) {
+            showModal(reviewModal);
+            
+            // Show skeleton loader
+            reviewModalSkeleton.style.display = 'block';
+            reviewModalContent.style.display = 'none';
+            
+            // Simulate loading data
+            setTimeout(() => {
+                // Hide skeleton and show content
+                reviewModalSkeleton.style.display = 'none';
+                reviewModalContent.style.display = 'block';
+                
+                // Populate form with order data
+                document.getElementById('order-id').value = orderId;
+                document.getElementById('customer-name').value = 'John Smith';
+                document.getElementById('escalation-reason').value = 'Quality issue detected in order processing';
+                document.getElementById('review-notes').value = '';
+                document.getElementById('quality-score').value = 'good';
+            }, 1500);
+        }
+
+        // Handle review submission
+        function handleReviewSubmission() {
+            const notes = document.getElementById('review-notes').value;
+            const score = document.getElementById('quality-score').value;
+            
+            if (!notes.trim()) {
+                showToast('Please add review notes', 'warning');
+                return;
+            }
+            
+            // Simulate API call
+            showToast('Submitting review...', 'info');
+            
+            setTimeout(() => {
+                hideModal(reviewModal);
+                showToast('Review submitted successfully', 'success');
+                
+                // Update the order status in the table
+                const orderId = document.getElementById('order-id').value;
+                updateOrderStatus(orderId, 'reviewed');
+            }, 1000);
+        }
+
+        // Update order status
+        function updateOrderStatus(orderId, newStatus) {
+            const orderIndex = orders.findIndex(order => order.id === orderId);
+            if (orderIndex !== -1) {
+                orders[orderIndex].status = newStatus;
+                updateOrdersTable();
+            }
+        }
+
+        // Generate report
+        function generateReport() {
+            showToast('Generating report...', 'info');
+            
+            // Simulate report generation
+            setTimeout(() => {
+                showToast('Report generated successfully', 'success');
+            }, 2000);
+        }
+
+        // Download report
+        function downloadReport() {
+            showToast('Downloading report as CSV...', 'info');
+            
+            // Simulate download
+            setTimeout(() => {
+                showToast('Report downloaded successfully', 'success');
+            }, 1500);
+        }
+
+        // Reset settings form
+        function resetSettingsForm() {
+            document.getElementById('user-name').value = 'Quality Analyst';
+            document.getElementById('user-email').value = 'qa@qualityx.com';
+            document.getElementById('email-notifications').checked = true;
+            document.getElementById('push-notifications').checked = true;
+            document.getElementById('escalation-alerts').checked = true;
+            document.getElementById('weekly-reports').checked = false;
+            
+            showToast('Settings reset to original values', 'info');
+        }
+
+        // Save settings
+        function saveSettings() {
+            const name = document.getElementById('user-name').value;
+            const email = document.getElementById('user-email').value;
+            const emailNotif = document.getElementById('email-notifications').checked;
+            const pushNotif = document.getElementById('push-notifications').checked;
+            const escalationNotif = document.getElementById('escalation-alerts').checked;
+            const weeklyReports = document.getElementById('weekly-reports').checked;
+            
+            // Simulate saving settings
+            showToast('Saving settings...', 'info');
+            
+            setTimeout(() => {
+                showToast('Settings saved successfully', 'success');
+            }, 1000);
+        }
+
+        // Show toast message
+        function showToast(message, type = 'info') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = 'ℹ️';
+            let title = 'Information';
+            
+            switch(type) {
+                case 'success':
+                    icon = '✅';
+                    title = 'Success';
+                    break;
+                case 'error':
+                    icon = '❌';
+                    title = 'Error';
+                    break;
+                case 'warning':
+                    icon = '⚠️';
+                    title = 'Warning';
+                    break;
+            }
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Add event listener to close button
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.remove();
+            });
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.remove();
+                }
+            }, 5000);
+        }
+
+        // View order (placeholder function)
+        function viewOrder(orderId) {
+            showToast(`Viewing order ${orderId}`, 'info');
+        }
+
+        // View escalation (placeholder function)
+        function viewEscalation(escalationId) {
+            showToast(`Viewing escalation ${escalationId}`, 'info');
+        }
     </script>
 </body>
 </html>
