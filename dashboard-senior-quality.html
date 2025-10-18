@@ -1902,69 +1902,69 @@
                 elements.sidebarAvatar.textContent = getInitials(userData.name);
                 elements.sidebarUsername.textContent = userData.name;
                 elements.sidebarUserrole.textContent = 'Senior Quality Analyst';
-  elements.welcomeUserH2.textContent = `Welcome, ${userData.name.split(' ')[0]}!`;
+                elements.welcomeUserH2.textContent = `Welcome back, ${userData.name.split(' ')[0]}!`;
                 
-                // Load profile data
+                // Update profile form
                 document.getElementById('profile-fullname').value = userData.name;
                 document.getElementById('profile-email').value = userData.email;
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
+                showToast('Error', 'Failed to load user data', 'error');
             }
         }
 
         async function loadOrders() {
             try {
                 orders = await getOrders();
-                calculateKPIs();
-                updateCharts();
+                updateDashboardStats();
+                updateAssignmentsTable();
+                initializeCharts();
             } catch (error) {
                 console.error('Error loading orders:', error);
+                showToast('Error', 'Failed to load orders data', 'error');
             }
         }
 
         async function loadEscalations() {
             try {
-                // This would normally come from the escalations table
-                // For now, we'll use mock data that matches the orders with escalated status
-                escalations = orders.filter(order => 
-                    order.status === 'escalated' || order.escalated_to_role
-                ).map(order => ({
-                    id: order.id,
-                    issue: order.issue_type || 'Unknown Issue',
-                    escalatedBy: 'System',
-                    date: new Date(order.created_at).toISOString().split('T')[0],
-                    status: order.status === 'escalated' ? 'Pending' : 'Reviewed',
-                    comment: order.description || 'No comments'
-                }));
-
-                renderEscalations();
+                // Mock escalations data - in real app, this would be API call
+                escalations = [
+                    {
+                        id: '1',
+                        order_id: '12345',
+                        issue_type: 'Missing Item',
+                        escalated_by: 'Ahmed Ali',
+                        date: '2025-01-15',
+                        status: 'Pending'
+                    },
+                    {
+                        id: '2',
+                        order_id: '12346',
+                        issue_type: 'Wrong Order',
+                        escalated_by: 'Sara Mohamed',
+                        date: '2025-01-15',
+                        status: 'Pending'
+                    }
+                ];
+                
+                updateEscalationsTable();
             } catch (error) {
                 console.error('Error loading escalations:', error);
+                showToast('Error', 'Failed to load escalations', 'error');
             }
         }
 
         async function loadAgents() {
             try {
-                // This would normally come from the users table filtered by role='agent'
-                // For now, using mock data
+                // Mock agents data - in real app, this would be API call
                 agents = [
-                    { id: '1', name: 'Fahad A.', role: 'Quality Agent' },
-                    { id: '2', name: 'Ali K.', role: 'Quality Agent' },
-                    { id: '3', name: 'Hessa M.', role: 'Quality Agent' },
-                    { id: '4', name: 'Noura S.', role: 'Quality Agent' }
+                    { id: '1', name: 'Ahmed Ali', role: 'Quality Agent' },
+                    { id: '2', name: 'Sara Mohamed', role: 'Quality Agent' },
+                    { id: '3', name: 'Mohammed Hassan', role: 'Quality Agent' }
                 ];
-
-                // Populate agent selects
-                const agentSelect = document.getElementById('agent-select');
-                const agentFilter = document.getElementById('agent-filter');
                 
-                agents.forEach(agent => {
-                    const option1 = new Option(agent.name, agent.id);
-                    const option2 = new Option(agent.name, agent.id);
-                    agentSelect.add(option1);
-                    agentFilter.add(option2);
-                });
+                updateAgentSelects();
             } catch (error) {
                 console.error('Error loading agents:', error);
             }
@@ -1975,284 +1975,271 @@
                 if (!userData) return;
                 
                 notifications = await getNotifications(userData.id);
-                renderNotifications();
+                updateNotifications();
             } catch (error) {
                 console.error('Error loading notifications:', error);
             }
         }
 
-        // UI Update Functions
-        function renderEscalations() {
-            const statusFilter = document.getElementById('escalation-status-filter').value;
-            const searchTerm = document.getElementById('escalation-search').value.toLowerCase();
+        // UI Updates
+        function updateDashboardStats() {
+            // Mock data - in real app, this would be calculated from actual data
+            elements.reviewsToday.textContent = '42';
+            elements.pendingEscalations.textContent = '5';
+            elements.avgResolution.textContent = '15m';
+            elements.teamAccuracy.textContent = '98.2%';
             
-            const filteredData = escalations.filter(esc => {
-                const statusMatch = statusFilter === 'all' || esc.status === statusFilter;
-                const searchMatch = esc.id.toLowerCase().includes(searchTerm);
-                return statusMatch && searchMatch;
-            });
-
-            elements.escalationTableBody.innerHTML = filteredData.map(esc => {
-                const statusClass = esc.status === 'Reviewed' ? 'status-reviewed' : 'status-pending';
-                return `
-                <tr data-order-id="${esc.id}">
-                    <td>${esc.id}</td>
-                    <td>${esc.issue}</td>
-                    <td>${esc.escalatedBy}</td>
-                    <td>${esc.date}</td>
-                    <td><span class="status-badge ${statusClass}">${esc.status}</span></td>
-                    <td><button class="btn btn-primary review-btn">Review</button></td>
-                </tr>`;
-            }).join('') || '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No escalations found</td></tr>';
-
-            elements.escalationCount.textContent = filteredData.length;
-            addReviewButtonListeners();
+            elements.escalationCount.textContent = '5';
+            elements.unassignedCount.textContent = orders.filter(order => !order.assigned_agent).length;
         }
 
-        function renderNotifications() {
-            const notificationList = document.getElementById('notification-list');
-            if (!notifications.length) {
-                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+        function updateEscalationsTable() {
+            if (!escalations.length) {
+                elements.escalationTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No escalations pending review.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
-            notificationList.innerHTML = notifications.slice(0, 5).map(notification => `
-                <li class="notification-item">
+            elements.escalationTableBody.innerHTML = escalations.map(escalation => `
+                <tr>
+                    <td>${escalation.order_id}</td>
+                    <td>${escalation.issue_type}</td>
+                    <td>${escalation.escalated_by}</td>
+                    <td>${escalation.date}</td>
+                    <td><span class="status-badge status-${escalation.status.toLowerCase()}">${escalation.status}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm review-escalation-btn" data-order-id="${escalation.order_id}">
+                            Review
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function updateAssignmentsTable() {
+            const unassignedOrders = orders.filter(order => !order.assigned_agent);
+            
+            if (!unassignedOrders.length) {
+                elements.unassignedTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                            No unassigned orders available.
+                        </td>
+                    </tr>
+                `;
+            } else {
+                elements.unassignedTableBody.innerHTML = unassignedOrders.map(order => `
+                    <tr>
+                        <td><input type="checkbox" class="order-checkbox" value="${order.id}"></td>
+                        <td>${order.id}</td>
+                        <td>${order.issue_type || 'N/A'}</td>
+                        <td>${order.employee || 'N/A'}</td>
+                        <td>${order.chefz || 'N/A'}</td>
+                        <td>${order.order_status || 'N/A'}</td>
+                        <td>${order.requested_delivery_date || 'N/A'}</td>
+                        <td>${order.payment_type || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function updateAgentSelects() {
+            const agentSelect = document.getElementById('agent-select');
+            const agentFilter = document.getElementById('agent-filter');
+            
+            agentSelect.innerHTML = '<option value="">Select Agent</option>';
+            agentFilter.innerHTML = '<option value="all">All Agents</option>';
+            
+            agents.forEach(agent => {
+                agentSelect.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+                agentFilter.innerHTML += `<option value="${agent.id}">${agent.name}</option>`;
+            });
+        }
+
+        function updateNotifications() {
+            if (!notifications.length) {
+                elements.notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+                document.getElementById('notification-count').textContent = '0';
+                return;
+            }
+
+            const unreadCount = notifications.filter(n => !n.read).length;
+            document.getElementById('notification-count').textContent = unreadCount;
+            
+            elements.notificationList.innerHTML = notifications.slice(0, 5).map(notification => `
+                <li class="notification-item ${notification.read ? '' : 'unread'}">
                     <strong>${notification.title}</strong><br>
                     ${notification.message}
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+                        ${new Date(notification.created_at).toLocaleDateString()}
+                    </div>
                 </li>
             `).join('');
         }
 
-        function updateCharts() {
+        function initializeCharts() {
             // Set Chart.js defaults
             Chart.defaults.font.family = 'Poppins';
-            Chart.defaults.color = '#e6edf3';
+            Chart.defaults.color = '#8b949e';
+            Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(26, 26, 26, 0.9)';
+            Chart.defaults.plugins.tooltip.titleColor = '#ffffff';
+            Chart.defaults.plugins.tooltip.bodyColor = '#8b949e';
+            Chart.defaults.plugins.tooltip.borderColor = '#2d2d2d';
+            Chart.defaults.plugins.tooltip.borderWidth = 1;
 
             // Personal Performance Chart
             const personalCtx = document.getElementById('personalPerformanceChart').getContext('2d');
-            if (charts.personalPerformance) charts.personalPerformance.destroy();
-            
             charts.personalPerformance = new Chart(personalCtx, {
                 type: 'line',
                 data: {
-                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
-                    datasets: [{
-                        label: 'Completed Reviews',
-                        data: [8, 12, 9, 15, 12],
-                        backgroundColor: 'rgba(0, 191, 255, 0.2)',
-                        borderColor: 'rgba(0, 191, 255, 1)',
-                        tension: 0.3,
-                        fill: true,
-                    }]
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [
+                        {
+                            label: 'Your Reviews',
+                            data: [25, 32, 28, 35, 40, 30, 38],
+                            borderColor: '#00bfff',
+                            backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        },
+                        {
+                            label: 'Team Average',
+                            data: [20, 25, 22, 28, 30, 25, 32],
+                            borderColor: '#00d97e',
+                            backgroundColor: 'rgba(0, 217, 126, 0.1)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3
+                        }
+                    ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: true },
-                        title: { 
-                            display: true, 
-                            text: 'Personal Review Performance (Last 5 Days)',
-                            color: '#fff',
-                            font: { size: 14, weight: '600' }
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                color: '#ffffff',
+                                usePointStyle: true,
+                                padding: 20
+                            }
                         }
                     },
                     scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        },
                         y: {
                             beginAtZero: true,
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                        },
-                        x: {
-                            grid: { display: false }
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
                         }
                     }
                 }
             });
 
             // Team Error Types Chart
-            const teamErrorCtx = document.getElementById('teamErrorTypesChart').getContext('2d');
-            if (charts.teamErrorTypes) charts.teamErrorTypes.destroy();
-            
-            charts.teamErrorTypes = new Chart(teamErrorCtx, {
-                type: 'pie',
+            const errorCtx = document.getElementById('teamErrorTypesChart').getContext('2d');
+            charts.teamErrorTypes = new Chart(errorCtx, {
+                type: 'doughnut',
                 data: {
-                    labels: ['Missing Item', 'Driver Behavior', 'Spillage', 'Wrong Item'],
+                    labels: ['Missing Items', 'Wrong Orders', 'Late Delivery', 'Quality Issues', 'Other'],
                     datasets: [{
-                        data: [45, 25, 15, 15],
-                        backgroundColor: ['#dc3545', '#ffc107', '#17a2b8', '#6f42c1'],
-                        borderColor: 'var(--card-bg)',
-                        borderWidth: 4,
+                        data: [35, 25, 20, 15, 5],
+                        backgroundColor: [
+                            '#00bfff',
+                            '#00d97e',
+                            '#f6c343',
+                            '#e63757',
+                            '#6b5aed'
+                        ],
+                        borderColor: '#1a1a1a',
+                        borderWidth: 3,
+                        hoverOffset: 15
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    cutout: '65%',
                     plugins: {
-                        legend: { position: 'bottom' },
-                        title: { 
-                            display: true, 
-                            text: 'Common Team Error Types',
-                            color: '#fff',
-                            font: { size: 14, weight: '600' }
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#ffffff',
+                                padding: 20,
+                                usePointStyle: true
+                            }
                         }
                     }
                 }
             });
 
             // Agent Accuracy Chart
-            const agentAccuracyCtx = document.getElementById('agentAccuracyChart').getContext('2d');
-            if (charts.agentAccuracy) charts.agentAccuracy.destroy();
-            
-            charts.agentAccuracy = new Chart(agentAccuracyCtx, {
+            const accuracyCtx = document.getElementById('agentAccuracyChart').getContext('2d');
+            charts.agentAccuracy = new Chart(accuracyCtx, {
                 type: 'bar',
                 data: {
-                    labels: agents.map(a => a.name),
+                    labels: ['Ahmed Ali', 'Sara Mohamed', 'Mohammed Hassan', 'Lina Samir', 'Omar Khaled'],
                     datasets: [{
-                        label: 'Accuracy Rate (%)',
-                        data: [98.2, 97.5, 99.1, 96.8],
-                        backgroundColor: 'rgba(0, 191, 255, 0.6)',
-                        borderWidth: 1,
-                        borderRadius: 4,
+                        label: 'Accuracy Rate %',
+                        data: [98.2, 97.5, 96.8, 99.1, 95.7],
+                        backgroundColor: '#00bfff',
+                        borderColor: '#00a4d9',
+                        borderWidth: 2,
+                        borderRadius: 8
                     }]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: { display: false },
-                        title: { 
-                            display: true, 
-                            text: 'Agent Accuracy Rate (This Month)',
-                            color: '#fff',
-                            font: { size: 14, weight: '600' }
+                        legend: {
+                            display: false
                         }
                     },
                     scales: {
-                        y: {
-                            min: 95,
-                            grid: { color: 'rgba(255,255,255,0.1)' }
-                        },
                         x: {
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-
-            // Reviews vs Errors Chart
-            const reviewsErrorsCtx = document.getElementById('reviewsVsErrorsChart').getContext('2d');
-            if (charts.reviewsVsErrors) charts.reviewsVsErrors.destroy();
-            
-            charts.reviewsVsErrors = new Chart(reviewsErrorsCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Correct Reviews', 'Confirmed Errors'],
-                    datasets: [{
-                        data: [5412, 123],
-                        backgroundColor: ['#28a745', '#dc3545'],
-                        borderColor: 'var(--card-bg)',
-                        borderWidth: 4,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        title: { 
-                            display: true, 
-                            text: 'Team Overall Performance',
-                            color: '#fff',
-                            font: { size: 14, weight: '600' }
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e',
+                                callback: function(value) {
+                                    return value + '%';
+                                }
+                            }
                         }
                     }
                 }
             });
         }
-        
-        // NEW function to update agent charts based on filter
-        function updateAgentPerformanceCharts(agentId) {
-            // Mock data for different agents
-            const agentData = {
-                'all': { accuracy: [98.2, 97.5, 99.1, 96.8], reviews: [5412, 123] },
-                '1': { accuracy: [98.2], reviews: [1350, 25] },
-                '2': { accuracy: [97.5], reviews: [1290, 32] },
-                '3': { accuracy: [99.1], reviews: [1410, 13] },
-                '4': { accuracy: [96.8], reviews: [1362, 53] }
-            };
-
-            const data = agentData[agentId] || agentData['all'];
-
-            // Update Agent Accuracy Chart
-            if (charts.agentAccuracy) {
-                if (agentId === 'all') {
-                    charts.agentAccuracy.data.labels = agents.map(a => a.name);
-                    charts.agentAccuracy.data.datasets[0].data = data.accuracy;
-                } else {
-                    const selectedAgent = agents.find(a => a.id === agentId);
-                    charts.agentAccuracy.data.labels = [selectedAgent.name];
-                    charts.agentAccuracy.data.datasets[0].data = data.accuracy;
-                }
-                charts.agentAccuracy.update();
-            }
-
-            // Update Reviews vs Errors Chart
-            if (charts.reviewsVsErrors) {
-                charts.reviewsVsErrors.data.datasets[0].data = data.reviews;
-                const selectedAgent = agents.find(a => a.id === agentId);
-                const title = agentId === 'all' ? 'Team Overall Performance' : `${selectedAgent.name}'s Performance`;
-                charts.reviewsVsErrors.options.plugins.title.text = title;
-                charts.reviewsVsErrors.update();
-            }
-        }
-
-        function addReviewButtonListeners() {
-            document.querySelectorAll('.review-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const orderId = e.target.closest('tr').dataset.orderId;
-                    const escalationData = escalations.find(o => o.id === orderId);
-                    
-                    elements.modalOrderId.textContent = escalationData.id;
-                    elements.modalBodyContent.innerHTML = `
-                        <div class="escalation-details">
-                            <div class="detail-item">
-                                <strong>Issue Type</strong>
-                                <span>${escalationData.issue}</span>
-                            </div>
-                            <div class="detail-item">
-                                <strong>Escalated By</strong>
-                                <span>${escalationData.escalatedBy}</span>
-                            </div>
-                            <div class="detail-item" style="grid-column: span 2;">
-                                <strong>Agent's Comment</strong>
-                                <span>${escalationData.comment}</span>
-                            </div>
-                        </div>
-                        <hr style="border-color: var(--border-color); margin: 20px 0;">
-                        <div class="feedback-form">
-                            <label for="feedback-comment" style="font-weight: 500; margin-bottom: 8px; display:block;">Your Feedback & Final Decision:</label>
-                            <textarea id="feedback-comment" rows="4" placeholder="e.g., I agree with the agent's assessment..."></textarea>
-                            <div class="feedback-actions">
-                                <button class="btn btn-danger" onclick="handleDecision('${escalationData.id}', 'Error')">Confirm Error</button>
-                                <button class="btn btn-success" onclick="handleDecision('${escalationData.id}', 'Correct')">Mark as Correct</button>
-                            </div>
-                        </div>`;
-                    showModal('review-modal');
-                });
-            });
-        }
-
-        // Global function for decision handling
-        window.handleDecision = (orderId, decision) => {
-            const escalation = escalations.find(o => o.id === orderId);
-            escalation.status = 'Reviewed';
-            const feedback = document.getElementById('feedback-comment').value;
-            
-            alert(`Decision for ${orderId} logged as '${decision}'. Feedback: ${feedback || 'N/A'}`);
-            hideModal('review-modal');
-            renderEscalations();
-        };
 
         // Event Listeners
         function setupEventListeners() {
@@ -2262,20 +2249,34 @@
                     e.preventDefault();
                     const tabId = link.getAttribute('data-tab');
                     
+                    // Update active states
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
                     
                     document.getElementById(tabId).classList.add('active');
-                    link.parentElement.classList.add('active');
+                    link.classList.add('active');
                     
-                    document.getElementById('page-title').textContent = link.textContent.trim();
+                    // Update page title
+                    const tabText = link.textContent.trim();
+                    elements.pageTitle.textContent = tabText;
                     
-                    // Close mobile menu if open
+                    // Close mobile menu
                     document.getElementById('sidebar').classList.remove('mobile-open');
                 });
             });
 
-            // Notifications Dropdown
+            // Search Functionality
+            document.getElementById('global-search').addEventListener('input', (e) => {
+                performSearch(e.target.value);
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.search-input-container')) {
+                    elements.searchResults.classList.remove('show');
+                }
+            });
+
+            // Notifications
             document.getElementById('notification-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 document.getElementById('notification-dropdown').classList.toggle('show');
@@ -2285,68 +2286,62 @@
                 document.getElementById('notification-dropdown').classList.remove('show');
             });
 
-            // Escalation Filters
-            document.getElementById('escalation-search').addEventListener('input', renderEscalations);
-            document.getElementById('escalation-status-filter').addEventListener('change', renderEscalations);
-            
-            // Agent Performance Filter - MODIFIED
-            document.getElementById('agent-filter').addEventListener('change', (e) => {
-                updateAgentPerformanceCharts(e.target.value);
-            });
-
-            // Modal Close
-            document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
-            });
-
-            // Profile Save
-            document.getElementById('save-profile-btn').addEventListener('click', async () => {
-                const newName = document.getElementById('profile-fullname').value;
-                
-                // Update UI
-                elements.sidebarUsername.textContent = newName;
-                elements.sidebarAvatar.textContent = getInitials(newName);
-                elements.welcomeUserH2.textContent = `Welcome, ${newName.split(' ')[0]}!`;
-                
-                alert('Profile updated successfully!');
-            });
-
-            // KPI Update
-            document.getElementById('update-kpi-btn').addEventListener('click', () => {
-                alert('KPI targets updated successfully!');
-            });
-
-            // Settings Save
-            document.getElementById('save-settings-btn').addEventListener('click', () => {
-                alert('Settings saved successfully!');
-            });
-
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    await signOut();
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Logout error:', error);
-                }
-            });
-
             // Mobile Menu
             document.getElementById('mobile-menu-btn').addEventListener('click', () => {
                 document.getElementById('sidebar').classList.toggle('mobile-open');
             });
 
+            // Profile Save
+            document.getElementById('save-profile-btn').addEventListener('click', () => {
+                const newName = document.getElementById('profile-fullname').value;
+                elements.sidebarUsername.textContent = newName;
+                elements.sidebarAvatar.textContent = getInitials(newName);
+                elements.welcomeUserH2.textContent = `Welcome back, ${newName.split(' ')[0]}!`;
+                showToast('Success', 'Profile updated successfully!', 'success');
+            });
+
             // Assign Orders
             document.getElementById('assign-btn').addEventListener('click', () => {
                 const selectedAgent = document.getElementById('agent-select').value;
-                const checkedBoxes = document.querySelectorAll('.assign-checkbox:checked');
+                const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked'))
+                    .map(cb => cb.value);
                 
-                if (checkedBoxes.length === 0) {
-                    alert('Please select orders to assign.');
+                if (!selectedAgent) {
+                    showToast('Error', 'Please select an agent to assign orders to', 'error');
                     return;
                 }
                 
-                alert(`${checkedBoxes.length} order(s) assigned to ${selectedAgent}.`);
+                if (selectedOrders.length === 0) {
+                    showToast('Error', 'Please select at least one order to assign', 'error');
+                    return;
+                }
+                
+                showToast('Success', `Assigned ${selectedOrders.length} orders to agent`, 'success');
+                
+                // In real app, this would be API call to update assignments
+                selectedOrders.forEach(orderId => {
+                    const checkbox = document.querySelector(`.order-checkbox[value="${orderId}"]`);
+                    if (checkbox) {
+                        checkbox.closest('tr').remove();
+                    }
+                });
+                
+                // Update counts
+                const remainingOrders = document.querySelectorAll('.order-checkbox').length;
+                elements.unassignedCount.textContent = remainingOrders;
+            });
+
+            // Select All Checkbox
+            document.getElementById('select-all-checkbox').addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.order-checkbox');
+                checkboxes.forEach(cb => {
+                    cb.checked = e.target.checked;
+                });
+            });
+
+            // Update KPI Targets
+            document.getElementById('update-kpi-btn').addEventListener('click', () => {
+                showToast('Success', 'KPI targets updated successfully!', 'success');
             });
 
             // Generate Report
@@ -2355,11 +2350,73 @@
                 const startDate = document.getElementById('report-start-date').value;
                 const endDate = document.getElementById('report-end-date').value;
                 
-                alert(`Generating ${reportType} report from ${startDate} to ${endDate}`);
+                document.getElementById('reports-content').innerHTML = `
+                    <h4>${reportType} Report</h4>
+                    <p>Date Range: ${startDate} to ${endDate}</p>
+                    <div style="margin-top: 20px;">
+                        <div class="skeleton" style="height: 200px; border-radius: 8px;"></div>
+                    </div>
+                `;
+                
+                showToast('Success', 'Report generated successfully!', 'success');
+            });
+
+            // Settings Save
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
+                showToast('Success', 'Settings saved successfully!', 'success');
+            });
+
+            // Help Buttons
+            document.getElementById('view-docs-btn').addEventListener('click', () => {
+                showToast('Info', 'Opening documentation...', 'info');
+            });
+
+            document.getElementById('contact-support-btn').addEventListener('click', () => {
+                showToast('Info', 'Opening support contact form...', 'info');
+            });
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                showModal('logout-modal');
+            });
+
+            document.getElementById('confirm-logout-btn').addEventListener('click', async () => {
+                try {
+                    await signOut();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Logout error:', error);
+                    showToast('Error', 'Failed to logout', 'error');
+                }
+            });
+
+            // Review Escalation Buttons
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('review-escalation-btn')) {
+                    const orderId = e.target.getAttribute('data-order-id');
+                    elements.modalOrderId.textContent = orderId;
+                    showModal('review-modal');
+                }
+            });
+
+            // Modal Close Buttons
+            document.querySelectorAll('.modal-close-btn, .btn-secondary[data-modal-id]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    hideModal(btn.dataset.modalId);
+                });
+            });
+
+            // Close modals when clicking outside
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        hideModal(modal.id);
+                    }
+                });
             });
         }
 
-        // Auto-refresh data
+        // Auto-refresh
         function startAutoRefresh() {
             setInterval(() => {
                 loadOrders();
