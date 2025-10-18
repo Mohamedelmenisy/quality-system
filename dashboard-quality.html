@@ -1,579 +1,643 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quality Command Center</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Arial' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quality Command Center | QualityX</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary: #00bfff;
-            --primary-dark: #007BFF;
-            --bg: #121212;
+            --primary-color: #00bfff;
+            --primary-color-darker: #007BFF;
+            --bg-color: #121212;
             --sidebar-bg: #1a1a1a;
             --card-bg: #1a1a1a;
-            --text: #e6edf3;
-            --text-muted: #8b949e;
-            --border: #333;
-            --success: #28a745;
-            --warning: #ffc107;
-            --danger: #dc3545;
-            --info: #17a2b8;
-            --radius: 8px;
-            --font: 'Inter', sans-serif;
+            --text-color: #e6edf3;
+            --text-muted-color: #8b949e;
+            --border-color: #333;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --font-body: 'Poppins', sans-serif;
+            --border-radius-base: 0.75rem;
         }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.6; }
-        
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); font-size: 16px; }
         .layout { display: flex; min-height: 100vh; }
-        
-        /* Sidebar */
         .sidebar {
-            width: 240px; background: var(--sidebar-bg); border-right: 1px solid var(--border);
-            display: flex; flex-direction: column; position: fixed; height: 100%; z-index: 1000;
+            width: 250px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 1.5rem 0; position: fixed; height: 100%; z-index: 1000;
+            transition: width 0.3s ease;
         }
-        .sidebar-header { padding: 20px; border-bottom: 1px solid var(--border); }
-        .sidebar-title { color: var(--primary); font-size: 20px; font-weight: 700; }
-        .nav-group { padding: 20px 0; border-bottom: 1px solid var(--border); }
-        .nav-group-title { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 10px; padding: 0 20px; }
-        .nav-item { display: flex; align-items: center; gap: 12px; padding: 12px 20px; color: var(--text-muted); text-decoration: none; transition: all 0.2s; }
-        .nav-item:hover, .nav-item.active { background: rgba(0, 191, 255, 0.1); color: var(--primary); }
-        .nav-item svg { width: 18px; height: 18px; }
+        .sidebar-header {
+            padding: 0 1.5rem 1.5rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .sidebar-logo { height: 32px; fill: var(--primary-color); }
+        .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
+        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
+        .nav-group { margin-bottom: 1.5rem; padding: 0 1.5rem; }
+        .nav-group-title {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--text-muted-color); font-weight: 600; margin-bottom: 0.75rem;
+        }
+        .sidebar-nav { list-style: none; }
+        .sidebar-nav a {
+            display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; margin: 0.25rem 0;
+            text-decoration: none; color: var(--text-muted-color); font-weight: 500; border-radius: 0.5rem;
+            transition: all 0.2s ease; cursor: pointer;
+        }
+        .sidebar-nav a:hover { background-color: rgba(0, 191, 255, 0.1); color: var(--primary-color); }
+        .sidebar-nav li.active a { background-color: var(--primary-color); color: black; font-weight: 600; }
+        .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .user-profile-widget { display: flex; align-items: center; gap: 12px; }
+        .avatar-initials {
+            width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color);
+            color: black; font-weight: 700; font-size: 1rem;
+            display: inline-flex; align-items: center; justify-content: center;
+        }
+        .user-info .user-name { font-weight: 600; font-size: 1rem; }
+        .user-info .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
+        .user-status { font-size: 0.75rem; color: var(--success-color); margin-top: 2px; }
+
+        .main-wrapper { flex-grow: 1; margin-left: 250px; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        .topbar {
+            background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 900;
+        }
+        .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
+        .topbar-actions { display: flex; align-items: center; gap: 1rem; }
+        .notification-bell { position: relative; }
+        .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 22px; cursor: pointer; }
+        .main-content { padding: 2rem; flex-grow: 1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
         
-        /* Main Content */
-        .main { flex: 1; margin-left: 240px; display: flex; flex-direction: column; min-height: 100vh; }
-        .topbar { background: var(--sidebar-bg); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; }
-        .page-title { font-size: 24px; font-weight: 700; }
-        .topbar-actions { display: flex; align-items: center; gap: 16px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; }
+        .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
+        .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
+        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+        .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
         
-        /* Content */
-        .content { padding: 24px; flex: 1; }
+        .results-table-container { overflow-x: auto; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; }
+        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
+        .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-align: center; display: inline-block; text-transform: capitalize; }
+        .status-pending { background-color: var(--info-color); color: white; }
+        .status-in_progress { background-color: var(--primary-color); color: black; }
+        .status-completed { background-color: var(--success-color); color: white; }
+        .status-escalated { background-color: var(--warning-color); color: black; }
+        .status-error { background-color: var(--danger-color); color: white; }
         
-        /* Cards */
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
-        .card-header { display: flex; justify-content: between; align-items: center; margin-bottom: 16px; }
-        .card-title { font-size: 18px; font-weight: 600; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+        .filter-bar .filter-group { display: flex; align-items: center; gap: 0.5rem;}
+        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted-color); }
+        .filter-bar select, .filter-bar input { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; }
         
-        /* KPI Grid */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .kpi-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-        .kpi-title { font-size: 14px; color: var(--text-muted); margin-bottom: 8px; }
-        .kpi-value { font-size: 28px; font-weight: 700; margin-bottom: 4px; }
-        .kpi-change { font-size: 12px; font-weight: 500; }
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-primary { background-color: var(--primary-color); color: black; }
+        .btn-secondary { background-color: #333; color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; }
+        .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
+        .modal-body .form-group { margin-bottom: 1rem; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .modal-body textarea, .modal-body select, .modal-body input { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; font-family: inherit; resize: vertical;}
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
+
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .team-member-card { background-color: #222; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
+        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
+        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
+
+        .pagination-controls { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
+        .placeholder { text-align: center; padding: 3rem; color: var(--text-muted-color); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
         
-        /* Tables */
-        .table-container { overflow-x: auto; }
-        .table { width: 100%; border-collapse: collapse; }
-        .table th { background: #2c2c2c; padding: 12px 16px; text-align: left; font-size: 12px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; }
-        .table td { padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .table tr:hover { background: #2c2c2c; }
-        
-        /* Badges */
-        .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; }
-        .badge-success { background: var(--success); color: white; }
-        .badge-error { background: var(--danger); color: white; }
-        .badge-warning { background: var(--warning); color: black; }
-        .badge-info { background: var(--info); color: white; }
-        
-        /* Buttons */
-        .btn { padding: 8px 16px; border-radius: var(--radius); border: none; cursor: pointer; font-weight: 500; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px; }
-        .btn-primary { background: var(--primary); color: black; }
-        .btn-secondary { background: #333; color: white; }
-        .btn-danger { background: var(--danger); color: white; }
-        .btn-sm { padding: 6px 12px; font-size: 12px; }
-        
-        /* Forms */
-        .form-group { margin-bottom: 16px; }
-        .form-label { display: block; margin-bottom: 8px; font-weight: 500; }
-        .form-control { width: 100%; background: #2c2c2c; border: 1px solid var(--border); border-radius: var(--radius); color: var(--text); padding: 8px 12px; }
-        
-        /* Toast */
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: var(--card-bg); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin-bottom: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
-        
-        /* Footer */
-        .footer { background: var(--sidebar-bg); border-top: 1px solid var(--border); padding: 16px 24px; text-align: center; color: var(--text-muted); font-size: 14px; }
-        
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar { width: 60px; }
-            .sidebar .nav-text { display: none; }
-            .main { margin-left: 60px; }
-            .kpi-grid { grid-template-columns: 1fr; }
+        #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
+        .toast { padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; opacity: 0; transform: translateY(20px); transition: all 0.3s ease; font-weight: 500; }
+        .toast.show { opacity: 1; transform: translateY(0); }
+        .toast-success { background-color: var(--success-color); }
+        .toast-error { background-color: var(--danger-color); }
+        .toast-info { background-color: var(--info-color); }
+
+        .footer { padding: 1.5rem 2rem; text-align: center; color: var(--text-muted-color); border-top: 1px solid var(--border-color); margin-top: auto; }
+
+        @media (max-width: 992px) {
+            .sidebar { width: 70px; }
+            .sidebar .sidebar-title, .sidebar .nav-group-title, .sidebar .user-info, .sidebar-nav a span { display: none; }
+            .sidebar-nav a { justify-content: center; }
+            .main-wrapper { margin-left: 70px; }
+            .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
         }
     </style>
 </head>
 <body>
+    <div id="toast-container"></div>
     <div class="layout">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="sidebar-title">QualityX</div>
+        <aside class="sidebar" id="sidebar">
+            <div>
+                <div class="sidebar-header">
+                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path><path d="M12 22V12" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <h1 class="sidebar-title">QualityX</h1>
+                </div>
+
+                <div class="sidebar-nav-container">
+                    <div class="nav-group">
+                        <h2 class="nav-group-title">Menu</h2>
+                        <ul class="sidebar-nav">
+                            <li class="active"><a data-tab="dashboard">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/></svg>
+                                <span>Dashboard</span></a></li>
+                            <li><a data-tab="my-assigned-orders">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                                <span>Assigned Orders</span></a></li>
+                            <li><a data-tab="team-scheduling">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                <span>Team Scheduling</span></a></li>
+                            <li><a data-tab="team-members">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                <span>Team Members</span></a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            
-            <div class="nav-group">
-                <div class="nav-group-title">Menu</div>
-                <a href="#" class="nav-item active" data-tab="dashboard">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/>
-                    </svg>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="orders">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                    </svg>
-                    <span class="nav-text">Assigned Orders</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="schedule">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-                    </svg>
-                    <span class="nav-text">Team Schedule</span>
-                </a>
-            </div>
-            
-            <div class="nav-group">
-                <div class="nav-group-title">Account</div>
-                <a href="#" class="nav-item" data-tab="profile">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-                    </svg>
-                    <span class="nav-text">Profile</span>
-                </a>
-                <a href="#" class="nav-item" data-tab="settings">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                    </svg>
-                    <span class="nav-text">Settings</span>
-                </a>
+
+            <div class="sidebar-footer">
+                <div class="user-profile-widget">
+                    <div class="avatar-initials" id="sidebar-avatar-initials">...</div>
+                    <div class="user-info">
+                        <div class="user-name" id="sidebar-username">Loading...</div>
+                        <div class="user-role" id="sidebar-userrole">Quality Agent</div>
+                    </div>
+                </div>
             </div>
         </aside>
 
-        <!-- Main Content -->
-        <div class="main">
-            <!-- Topbar -->
+        <div class="main-wrapper">
             <header class="topbar">
-                <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                 <h2 class="page-title" id="page-title">Dashboard</h2>
                 <div class="topbar-actions">
-                    <div id="userWelcome">Welcome, <span id="userName">Loading...</span></div>
-                    <button class="btn btn-primary" id="newReviewBtn">New Review</button>
+                    <button id="new-review-btn" class="btn btn-primary">New Review</button>
                 </div>
             </header>
 
-            <!-- Content -->
-            <main class="content">
-                <!-- Dashboard Tab -->
+            <main class="main-content">
+                <!-- Dashboard -->
                 <div id="dashboard" class="tab-content active">
+                    <div id="welcome-message" style="margin-bottom: 1.5rem;">
+                        <h2 style="font-size: 1.75rem; font-weight: 700;">Welcome, <span id="welcome-username">...</span>!</h2>
+                        <p style="color: var(--text-muted-color);">Your central hub for monitoring quality and driving team excellence.</p>
+                    </div>
                     <div class="kpi-grid">
-                        <div class="kpi-card">
-                            <div class="kpi-title">Today's Reviews</div>
-                            <div class="kpi-value" id="todayReviews">0</div>
-                            <div class="kpi-change" style="color: var(--success);">Loading...</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-title">Open Cases</div>
-                            <div class="kpi-value" id="openCases">0</div>
-                            <div class="kpi-change" style="color: var(--warning);">Loading...</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-title">Quality Score</div>
-                            <div class="kpi-value" id="qualityScore">0%</div>
-                            <div class="kpi-change" style="color: var(--success);">Loading...</div>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-title">Escalation Rate</div>
-                            <div class="kpi-value" id="escalationRate">0%</div>
-                            <div class="kpi-change" style="color: var(--danger);">Loading...</div>
-                        </div>
+                        <div class="kpi-card"><div class="kpi-title">Today's Reviews</div><div class="kpi-value" id="kpi-reviews">0</div></div>
+                        <div class="kpi-card"><div class="kpi-title">Open Cases</div><div class="kpi-value" id="kpi-open-cases">0</div></div>
+                        <div class="kpi-card"><div class="kpi-title">Avg. Quality Score</div><div class="kpi-value" id="kpi-quality-score">0%</div></div>
+                        <div class="kpi-card"><div class="kpi-title">Escalation Rate</div><div class="kpi-value" id="kpi-escalation-rate">0%</div></div>
                     </div>
-
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Recent Activity</h2>
-                        </div>
-                        <div class="table-container">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Action</th>
-                                        <th>Status</th>
-                                        <th>Time</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="activityTable">
-                                    <!-- Activity data will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
+                    <div class="placeholder"><h3>Dashboard charts and recent activity will be implemented here.</h3></div>
                 </div>
-
-                <!-- Orders Tab -->
-                <div id="orders" class="tab-content">
-                    <div class="card">
-                        <div class="card-header">
-                            <h2 class="card-title">Assigned Orders</h2>
-                            <div style="display: flex; gap: 12px; align-items: center;">
-                                <input type="text" id="searchOrders" class="form-control" placeholder="Search orders..." style="width: 200px;">
-                                <select id="filterStatus" class="form-control" style="width: 150px;">
-                                    <option value="">All Status</option>
+                
+                <!-- Assigned Orders -->
+                <div id="my-assigned-orders" class="tab-content">
+                    <div class="widget">
+                        <h3>Assigned Orders</h3>
+                        <div class="filter-bar">
+                             <div class="filter-group">
+                                <input type="search" id="orders-search-input" placeholder="Search by Order ID..." class="form-control">
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-status">Status:</label>
+                                <select id="filter-status" class="form-control">
+                                    <option value="all">All</option>
                                     <option value="pending">Pending</option>
                                     <option value="in_progress">In Progress</option>
                                     <option value="completed">Completed</option>
-                                    <option value="escalated">Escalated</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label for="filter-issue-type">Issue Type:</label>
+                                <select id="filter-issue-type" class="form-control">
+                                    <option value="all">All Types</option>
                                 </select>
                             </div>
                         </div>
-                        <div class="table-container">
-                            <table class="table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Issue Type</th>
-                                        <th>Assigned Date</th>
-                                        <th>Status</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="ordersTable">
-                                    <!-- Orders data will be loaded here -->
-                                </tbody>
+
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead><tr><th>Order ID</th><th>Issue Type</th><th>Assigned On</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody id="orders-table-body"><tr_loading></tr></tbody>
                             </table>
                         </div>
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 16px;">
-                            <div id="paginationInfo">Showing 0 orders</div>
-                            <div style="display: flex; gap: 8px;">
-                                <button class="btn btn-secondary" id="prevPage">Previous</button>
-                                <button class="btn btn-secondary" id="nextPage">Next</button>
+                        <div class="pagination-controls">
+                            <span id="pagination-info">Showing 0-0 of 0</span>
+                            <div style="display: flex; gap: 0.5rem;">
+                                <button id="prev-page-btn" class="btn btn-secondary" disabled>Previous</button>
+                                <button id="next-page-btn" class="btn btn-secondary" disabled>Next</button>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Add other tabs content here -->
-                <div id="schedule" class="tab-content">
-                    <div class="card">
-                        <h2 class="card-title">Team Schedule</h2>
-                        <p>Schedule functionality will be implemented with real data</p>
+                <!-- Team Scheduling -->
+                <div id="team-scheduling" class="tab-content">
+                    <div class="widget">
+                        <h3>Team Schedule</h3>
+                        <div class="results-table-container">
+                            <table class="results-table" id="schedule-table">
+                                <!-- Schedule will be rendered by JS -->
+                            </table>
+                        </div>
                     </div>
                 </div>
 
-                <div id="profile" class="tab-content">
-                    <div class="card">
-                        <h2 class="card-title">User Profile</h2>
-                        <p>Profile management will be implemented with real data</p>
+                <!-- Team Members -->
+                <div id="team-members" class="tab-content">
+                    <div class="widget">
+                        <h3>Team Members</h3>
+                        <div class="team-grid" id="team-grid">
+                            <!-- Team members will be rendered by JS -->
+                        </div>
                     </div>
                 </div>
-
-                <div id="settings" class="tab-content">
-                    <div class="card">
-                        <h2 class="card-title">Settings</h2>
-                        <p>Settings management will be implemented with real data</p>
-                    </div>
-                </div>
+                
+                <!-- Other Placeholders -->
+                <div id="reports" class="tab-content"><div class="placeholder"><h3>Reports & Analytics feature is under development.</h3></div></div>
+                <div id="profile" class="tab-content"><div class="placeholder"><h3>Profile editing is under development.</h3></div></div>
+                <div id="settings" class="tab-content"><div class="placeholder"><h3>Settings management is under development.</h3></div></div>
+                <div id="help" class="tab-content"><div class="placeholder"><h3>Help Center is under development.</h3></div></div>
             </main>
 
-            <!-- Footer -->
             <footer class="footer">
-                <div>© 2025 QualityX System. All rights reserved.</div>
+                &copy; 2025 Mohamed Elmenisy. All rights reserved.
             </footer>
         </div>
     </div>
-
-    <!-- Toast Container -->
-    <div class="toast-container" id="toastContainer"></div>
+    
+    <!-- Modals Container -->
+    <div id="modals-container"></div>
 
     <script>
-        // Toast System
-        function showToast(message, type = 'info') {
-            const toast = document.createElement('div');
-            toast.className = 'toast';
-            toast.style.borderLeft = `4px solid ${getToastColor(type)}`;
-            toast.textContent = message;
-            
-            const container = document.getElementById('toastContainer');
-            container.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
-
-        function getToastColor(type) {
-            const colors = {
-                success: '#28a745',
-                error: '#dc3545',
-                warning: '#ffc107',
-                info: '#17a2b8'
-            };
-            return colors[type] || colors.info;
-        }
-
-        // API Integration
-        class QualityAPI {
-            static async getUserData() {
-                // This will be replaced with actual Supabase call
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        resolve({
-                            name: 'Mohamed Elmenisy',
-                            role: 'Quality Agent',
-                            stats: {
-                                todayReviews: 42,
-                                openCases: 6,
-                                qualityScore: 98.2,
-                                escalationRate: 2.1
-                            }
-                        });
-                    }, 500);
-                });
-            }
-
-            static async getAssignedOrders(page = 1, search = '', status = '') {
-                // This will be replaced with actual Supabase call
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        const orders = [
-                            { id: 'CZ-84382', issue: 'Missing Item', date: '2025-07-30', status: 'pending' },
-                            { id: 'CZ-84381', issue: 'Wrong Item', date: '2025-07-30', status: 'in_progress' },
-                            { id: 'CZ-84380', issue: 'Driver Behavior', date: '2025-07-30', status: 'pending' },
-                            { id: 'CZ-84375', issue: 'Missing Item', date: '2025-07-28', status: 'completed' },
-                            { id: 'CZ-84374', issue: 'Wrong Order', date: '2025-07-28', status: 'escalated' }
-                        ];
-                        
-                        // Filter based on search and status
-                        let filtered = orders.filter(order => 
-                            order.id.toLowerCase().includes(search.toLowerCase()) &&
-                            (status === '' || order.status === status)
-                        );
-                        
-                        resolve({
-                            orders: filtered,
-                            total: filtered.length,
-                            page: page,
-                            totalPages: Math.ceil(filtered.length / 10)
-                        });
-                    }, 300);
-                });
-            }
-
-            static async submitReview(orderId, decision, comments) {
-                // This will be replaced with actual Supabase call
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        showToast(`Order ${orderId} marked as ${decision}`, 'success');
-                        resolve({ success: true });
-                    }, 500);
-                });
-            }
-
-            static async escalateOrder(orderId, toRole, notes) {
-                // This will be replaced with actual Supabase call
-                return new Promise(resolve => {
-                    setTimeout(() => {
-                        showToast(`Order ${orderId} escalated to ${toRole}`, 'warning');
-                        resolve({ success: true });
-                    }, 500);
-                });
-            }
-        }
-
-        // Application State
-        class AppState {
-            constructor() {
-                this.currentUser = null;
-                this.currentPage = 1;
-                this.ordersSearch = '';
-                this.ordersStatus = '';
-                this.autoRefresh = true;
-            }
-
-            async initialize() {
-                await this.loadUserData();
-                this.setupEventListeners();
-                this.startAutoRefresh();
-            }
-
-            async loadUserData() {
-                try {
-                    this.currentUser = await QualityAPI.getUserData();
-                    this.updateUI();
-                } catch (error) {
-                    showToast('Failed to load user data', 'error');
-                }
-            }
-
-            async loadOrders() {
-                try {
-                    const result = await QualityAPI.getAssignedOrders(
-                        this.currentPage,
-                        this.ordersSearch,
-                        this.ordersStatus
-                    );
-                    this.renderOrders(result.orders);
-                    this.updatePagination(result);
-                } catch (error) {
-                    showToast('Failed to load orders', 'error');
-                }
-            }
-
-            updateUI() {
-                if (this.currentUser) {
-                    document.getElementById('userName').textContent = this.currentUser.name;
-                    document.getElementById('todayReviews').textContent = this.currentUser.stats.todayReviews;
-                    document.getElementById('openCases').textContent = this.currentUser.stats.openCases;
-                    document.getElementById('qualityScore').textContent = this.currentUser.stats.qualityScore + '%';
-                    document.getElementById('escalationRate').textContent = this.currentUser.stats.escalationRate + '%';
-                }
-            }
-
-            renderOrders(orders) {
-                const tbody = document.getElementById('ordersTable');
-                tbody.innerHTML = orders.map(order => `
-                    <tr>
-                        <td>${order.id}</td>
-                        <td>${order.issue}</td>
-                        <td>${order.date}</td>
-                        <td><span class="badge badge-${this.getStatusBadge(order.status)}">${this.formatStatus(order.status)}</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-primary" onclick="app.reviewOrder('${order.id}', 'correct')">Correct</button>
-                            <button class="btn btn-sm btn-danger" onclick="app.reviewOrder('${order.id}', 'error')">Error</button>
-                            <button class="btn btn-sm btn-secondary" onclick="app.escalateOrder('${order.id}')">Escalate</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-
-            getStatusBadge(status) {
-                const badges = {
-                    pending: 'warning',
-                    in_progress: 'info',
-                    completed: 'success',
-                    escalated: 'danger'
-                };
-                return badges[status] || 'info';
-            }
-
-            formatStatus(status) {
-                const statusMap = {
-                    pending: 'Pending',
-                    in_progress: 'In Progress',
-                    completed: 'Completed',
-                    escalated: 'Escalated'
-                };
-                return statusMap[status] || status;
-            }
-
-            updatePagination(result) {
-                document.getElementById('paginationInfo').textContent = 
-                    `Showing ${result.orders.length} of ${result.total} orders`;
-                
-                document.getElementById('prevPage').disabled = this.currentPage === 1;
-                document.getElementById('nextPage').disabled = this.currentPage === result.totalPages;
-            }
-
-            async reviewOrder(orderId, decision) {
-                if (confirm(`Are you sure you want to mark order ${orderId} as ${decision}?`)) {
-                    await QualityAPI.submitReview(orderId, decision, '');
-                    await this.loadOrders();
-                }
-            }
-
-            async escalateOrder(orderId) {
-                const toRole = prompt('Escalate to (Helper/Senior/Manager):', 'Helper');
-                if (toRole) {
-                    const notes = prompt('Add escalation notes:');
-                    await QualityAPI.escalateOrder(orderId, toRole, notes || '');
-                    await this.loadOrders();
-                }
-            }
-
-            setupEventListeners() {
-                // Tab navigation
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.addEventListener('click', (e) => {
-                        e.preventDefault();
-                        const tab = item.getAttribute('data-tab');
-                        this.switchTab(tab);
+    document.addEventListener('DOMContentLoaded', () => {
+        
+        // --- API SERVICE (Mock Simulation) ---
+        // This simulates talking to your Supabase backend.
+        // Replace the logic inside these functions with actual `fetch` calls.
+        const ApiService = {
+            getCurrentUser: async () => {
+                // SIMULATE API CALL
+                return new Promise(resolve => setTimeout(() => resolve({
+                    id: 'uuid-user-123',
+                    name: 'Mohamed Elmenisy',
+                    role: 'Quality Agent',
+                    kpis: { reviews: 42, openCases: 6, qualityScore: 98.2, escalationRate: 2.1 }
+                }), 500));
+            },
+            getAssignedOrders: async ({ page = 1, limit = 10, search = '', status = 'all' }) => {
+                // SIMULATE API CALL
+                console.log(`Fetching orders: page=${page}, search=${search}, status=${status}`);
+                return new Promise(resolve => setTimeout(() => {
+                    // This is fake data. In reality, this comes from your database.
+                    const allOrders = [
+                        { assignmentId: 'assign-1', orderId: 'CZ-84382', issueType: 'Missing Item', assignedOn: '2025-10-19T10:00:00Z', status: 'pending' },
+                        { assignmentId: 'assign-2', orderId: 'CZ-84381', issueType: 'Wrong Item', assignedOn: '2025-10-19T09:30:00Z', status: 'in_progress' },
+                        { assignmentId: 'assign-3', orderId: 'CZ-84380', issueType: 'Driver Behavior', assignedOn: '2025-10-19T09:00:00Z', status: 'pending' },
+                        { assignmentId: 'assign-4', orderId: 'CZ-84375', issueType: 'Missing Item', assignedOn: '2025-10-18T15:00:00Z', status: 'completed' },
+                        { assignmentId: 'assign-5', orderId: 'CZ-84374', issueType: 'Wrong Order', assignedOn: '2025-10-18T14:00:00Z', status: 'completed' },
+                        { assignmentId: 'assign-6', orderId: 'CZ-84371', issueType: 'Spillage', assignedOn: '2025-10-17T11:00:00Z', status: 'escalated' },
+                    ];
+                    
+                    let filtered = allOrders.filter(o => {
+                        const searchMatch = search.length < 2 ? true : o.orderId.toLowerCase().includes(search.toLowerCase());
+                        const statusMatch = status === 'all' ? true : o.status === status;
+                        return searchMatch && statusMatch;
                     });
-                });
 
-                // Orders search and filter
-                document.getElementById('searchOrders').addEventListener('input', (e) => {
-                    this.ordersSearch = e.target.value;
-                    this.currentPage = 1;
-                    this.loadOrders();
-                });
+                    const totalItems = filtered.length;
+                    const paginated = filtered.slice((page - 1) * limit, page * limit);
 
-                document.getElementById('filterStatus').addEventListener('change', (e) => {
-                    this.ordersStatus = e.target.value;
-                    this.currentPage = 1;
-                    this.loadOrders();
-                });
-
-                // Pagination
-                document.getElementById('prevPage').addEventListener('click', () => {
-                    if (this.currentPage > 1) {
-                        this.currentPage--;
-                        this.loadOrders();
-                    }
-                });
-
-                document.getElementById('nextPage').addEventListener('click', () => {
-                    this.currentPage++;
-                    this.loadOrders();
-                });
-
-                // New review button
-                document.getElementById('newReviewBtn').addEventListener('click', () => {
-                    showToast('New review functionality will be implemented', 'info');
-                });
+                    resolve({
+                        data: paginated,
+                        total: totalItems,
+                        page: page,
+                        limit: limit,
+                        totalPages: Math.ceil(totalItems / limit)
+                    });
+                }, 800));
+            },
+            getOrderDetails: async (orderId) => {
+                // SIMULATE API CALL
+                return new Promise(resolve => setTimeout(() => resolve({
+                    id: orderId,
+                    employee_name: 'Nisrin Abdullah-CU',
+                    reason: 'Damaged Order',
+                    details: 'Customer reported the cake was crushed upon arrival.',
+                    amount: 77.00,
+                    compensation_against: 'Store',
+                    chefz: 'Cakeology Rawabi',
+                    status: 'Delivered'
+                }), 500));
+            },
+            submitReview: async (payload) => {
+                // SIMULATE API CALL
+                console.log('Submitting Review:', payload);
+                return new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
+            },
+             getTeamMembers: async () => {
+                return new Promise(resolve => setTimeout(() => resolve([
+                    { name: "Fahad Al-Qahtani", role: "Quality Agent", color: "#00bfff"},
+                    { name: "Noura Al-Dossari", role: "Quality Agent", color: "#ff69b4"},
+                    { name: "Ahmed Khan", role: "Senior Quality Agent", color: "#28a745"},
+                    { name: "Ali Al-Mansoori", role: "Quality Manager", color: "#ffc107"},
+                ]), 500));
             }
+        };
 
-            switchTab(tabName) {
-                // Update active nav item
-                document.querySelectorAll('.nav-item').forEach(item => {
-                    item.classList.remove('active');
-                });
-                document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        // --- GLOBAL STATE MANAGEMENT ---
+        const AppState = {
+            currentUser: null,
+            orders: {
+                data: [],
+                page: 1,
+                totalPages: 1,
+                limit: 10,
+                search: '',
+                status: 'all'
+            },
+            team: {
+                members: [],
+                schedule: []
+            },
+            autoRefreshInterval: null,
+        };
 
-                // Update page title
-                document.getElementById('pageTitle').textContent = 
-                    tabName.charAt(0).toUpperCase() + tabName.slice(1);
+        // --- UTILITY & RENDERING FUNCTIONS ---
+        const showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast toast-${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.classList.add('show');
+                setTimeout(() => {
+                    toast.classList.remove('show');
+                    setTimeout(() => toast.remove(), 300);
+                }, 4000);
+            }, 10);
+        };
 
-                // Show correct tab content
-                document.querySelectorAll('.tab-content').forEach(tab => {
-                    tab.classList.remove('active');
-                });
-                document.getElementById(tabName).classList.add('active');
+        const getInitials = (name) => {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : (names[0]?.[0] || '').toUpperCase();
+        };
 
-                // Load data for the tab
-                if (tabName === 'orders') {
-                    this.loadOrders();
-                }
+        const renderUI = () => {
+            if (AppState.currentUser) {
+                const user = AppState.currentUser;
+                document.getElementById('sidebar-username').textContent = user.name;
+                document.getElementById('welcome-username').textContent = user.name;
+                document.getElementById('sidebar-avatar-initials').textContent = getInitials(user.name);
+                document.getElementById('kpi-reviews').textContent = user.kpis.reviews;
+                document.getElementById('kpi-open-cases').textContent = user.kpis.openCases;
+                document.getElementById('kpi-quality-score').textContent = `${user.kpis.qualityScore}%`;
+                document.getElementById('kpi-escalation-rate').textContent = `${user.kpis.escalationRate}%`;
             }
+        };
 
-            startAutoRefresh() {
-                if (this.autoRefresh) {
-                    setInterval(() => {
-                        this.loadUserData();
-                        if (document.getElementById('orders').classList.contains('active')) {
-                            this.loadOrders();
-                        }
-                    }, 30000); // 30 seconds
-                }
+        const renderOrders = () => {
+            const tbody = document.getElementById('orders-table-body');
+            const { data } = AppState.orders;
+            if (data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">No orders found.</td></tr>`;
+                return;
             }
+            tbody.innerHTML = data.map(order => `
+                <tr>
+                    <td>${order.orderId}</td>
+                    <td>${order.issueType}</td>
+                    <td>${new Date(order.assignedOn).toLocaleDateString()}</td>
+                    <td><span class="status-badge status-${order.status}">${order.status.replace('_', ' ')}</span></td>
+                    <td style="display: flex; gap: 0.5rem;">
+                        <button class="btn btn-secondary btn-sm" data-action="view" data-order-id="${order.orderId}">View</button>
+                        <button class="btn btn-primary btn-sm" data-action="review" data-order-id="${order.orderId}">Review</button>
+                    </td>
+                </tr>
+            `).join('');
+        };
+        
+        const renderTeamMembers = () => {
+            const grid = document.getElementById('team-grid');
+            grid.innerHTML = AppState.team.members.map(member => `
+                 <div class="team-member-card">
+                    <div class="team-member-avatar-initials" style="background-color: ${member.color};">${getInitials(member.name)}</div>
+                    <div class="team-member-name">${member.name}</div>
+                    <div class="team-member-role">${member.role}</div>
+                </div>
+            `).join('');
+        };
+
+        const renderPagination = () => {
+            const { page, totalPages, data, total } = AppState.orders;
+            const start = total === 0 ? 0 : (page - 1) * 10 + 1;
+            const end = start + data.length - 1;
+            document.getElementById('pagination-info').textContent = `Showing ${start}-${end} of ${total}`;
+            document.getElementById('prev-page-btn').disabled = page <= 1;
+            document.getElementById('next-page-btn').disabled = page >= totalPages;
+        };
+        
+        const createModal = (id, title, bodyHtml, footerHtml) => {
+            const modal = document.createElement('div');
+            modal.className = 'modal-overlay';
+            modal.id = id;
+            modal.innerHTML = `
+                <div class="modal-box">
+                    <div class="modal-header">
+                        <h3 class="modal-title">${title}</h3>
+                        <button class="modal-close-btn">&times;</button>
+                    </div>
+                    <div class="modal-body">${bodyHtml}</div>
+                    <div class="modal-footer">${footerHtml}</div>
+                </div>
+            `;
+            document.getElementById('modals-container').appendChild(modal);
+            
+            modal.querySelector('.modal-close-btn').addEventListener('click', () => modal.classList.remove('show'));
+            modal.addEventListener('click', (e) => {
+                if(e.target === modal) modal.classList.remove('show');
+            });
+
+            return modal;
         }
 
-        // Initialize application
-        const app = new AppState();
-        document.addEventListener('DOMContentLoaded', () => {
-            app.initialize();
+        // --- DATA FETCHING & LOGIC ---
+        const loadInitialData = async () => {
+            AppState.currentUser = await ApiService.getCurrentUser();
+            AppState.team.members = await ApiService.getTeamMembers();
+            renderUI();
+            renderTeamMembers();
+            switchTab('dashboard');
+        };
+
+        const fetchAndRenderOrders = async () => {
+            const tbody = document.getElementById('orders-table-body');
+            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading orders...</td></tr>`;
+            const result = await ApiService.getAssignedOrders(AppState.orders);
+            AppState.orders.data = result.data;
+            AppState.orders.totalPages = result.totalPages;
+            AppState.orders.total = result.total;
+            renderOrders();
+            renderPagination();
+        };
+
+        // --- EVENT HANDLERS ---
+        const handleTabSwitch = (tabId) => {
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            document.querySelector(`a[data-tab="${tabId}"]`).parentElement.classList.add('active');
+
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            
+            const title = document.querySelector(`a[data-tab="${tabId}"] span`).textContent;
+            document.getElementById('page-title').textContent = title;
+            
+            if (tabId === 'my-assigned-orders') {
+                fetchAndRenderOrders();
+            }
+        };
+
+        const handleOrderAction = async (e) => {
+            const button = e.target.closest('button[data-action]');
+            if (!button) return;
+
+            const action = button.dataset.action;
+            const orderId = button.dataset.orderId;
+
+            if (action === 'view') {
+                const details = await ApiService.getOrderDetails(orderId);
+                const viewModal = createModal('view-order-modal', `Order Details: ${orderId}`, 
+                `<div><strong>Original Employee:</strong> ${details.employee_name}</div>
+                 <div><strong>Reason:</strong> ${details.reason}</div>
+                 <div><strong>Details:</strong> ${details.details}</div>`, 
+                `<button class="btn btn-secondary" id="close-view-modal">Close</button>`);
+                viewModal.classList.add('show');
+                viewModal.querySelector('#close-view-modal').addEventListener('click', () => viewModal.remove());
+            }
+            
+            if (action === 'review') {
+                const reviewModal = createModal('review-order-modal', `Review Order: ${orderId}`,
+                `<form id="review-form">
+                    <div class="form-group">
+                        <label for="action_correctness">Action Correctness</label>
+                        <select id="action_correctness" class="form-control" required>
+                            <option value="correct">Correct Action</option>
+                            <option value="error">Error in Action</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="error_cause">Error Cause (if any)</label>
+                        <input type="text" id="error_cause" class="form-control">
+                    </div>
+                     <div class="form-group">
+                        <label for="modification_details">Comments</label>
+                        <textarea id="modification_details" class="form-control" rows="4"></textarea>
+                    </div>
+                </form>`,
+                `<button class="btn btn-secondary" id="cancel-review">Cancel</button>
+                 <button type="submit" form="review-form" class="btn btn-primary">Submit Review</button>`);
+                
+                reviewModal.classList.add('show');
+                reviewModal.querySelector('#cancel-review').addEventListener('click', () => reviewModal.remove());
+                reviewModal.querySelector('#review-form').addEventListener('submit', async (ev) => {
+                    ev.preventDefault();
+                    button.textContent = "Submitting...";
+                    button.disabled = true;
+                    await ApiService.submitReview({
+                        orderId,
+                        correctness: document.getElementById('action_correctness').value,
+                        cause: document.getElementById('error_cause').value,
+                        details: document.getElementById('modification_details').value
+                    });
+                    showToast(`Review for order ${orderId} submitted successfully.`, 'success');
+                    reviewModal.remove();
+                    fetchAndRenderOrders();
+                });
+            }
+        };
+
+        // --- INITIALIZATION & EVENT LISTENERS ---
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                handleTabSwitch(link.dataset.tab);
+            });
         });
+
+        document.getElementById('orders-table-body').addEventListener('click', handleOrderAction);
+        
+        let searchTimeout;
+        document.getElementById('orders-search-input').addEventListener('input', (e) => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const searchTerm = e.target.value;
+                if(searchTerm.length === 0 || searchTerm.length >= 2) {
+                    AppState.orders.page = 1;
+                    AppState.orders.search = searchTerm;
+                    fetchAndRenderOrders();
+                }
+            }, 500); // Debounce
+        });
+        
+        document.getElementById('filter-status').addEventListener('change', (e) => {
+            AppState.orders.page = 1;
+            AppState.orders.status = e.target.value;
+            fetchAndRenderOrders();
+        });
+
+        document.getElementById('prev-page-btn').addEventListener('click', () => {
+            if (AppState.orders.page > 1) {
+                AppState.orders.page--;
+                fetchAndRenderOrders();
+            }
+        });
+
+        document.getElementById('next-page-btn').addEventListener('click', () => {
+            if (AppState.orders.page < AppState.orders.totalPages) {
+                AppState.orders.page++;
+                fetchAndRenderOrders();
+            }
+        });
+
+        // Start the application
+        loadInitialData();
+        
+        // Setup Auto-Refresh
+        AppState.autoRefreshInterval = setInterval(() => {
+            showToast('Auto-refreshing data...', 'info');
+            loadInitialData(); // Reload user KPIs
+            if (document.getElementById('my-assigned-orders').classList.contains('active')) {
+                fetchAndRenderOrders(); // Reload orders if on the orders tab
+            }
+        }, 30000);
+
+    });
     </script>
 </body>
 </html>
