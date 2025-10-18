@@ -517,6 +517,39 @@
             grid-template-columns: 1fr 1fr;
             gap: 2rem;
         }
+        
+        /* Modern Toggle Switch Style - NEW */
+        .form-group.toggle input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            position: relative;
+            width: 50px;
+            height: 28px;
+            background-color: #333;
+            border-radius: 28px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            vertical-align: middle;
+        }
+        .form-group.toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background-color: white;
+            top: 3px;
+            left: 3px;
+            transition: transform 0.3s ease;
+        }
+        .form-group.toggle input[type="checkbox"]:checked {
+            background-color: var(--primary-color);
+        }
+        .form-group.toggle input[type="checkbox"]:checked::before {
+            transform: translateX(22px);
+        }
+
 
         /* Modal */
         .modal-overlay {
@@ -637,6 +670,16 @@
             background-size: 200% 100%;
             animation: loading 1.5s infinite;
             border-radius: 4px;
+        }
+        
+        /* Footer - NEW */
+        .site-footer {
+            text-align: center;
+            padding: 1.5rem;
+            margin-top: auto; /* Pushes footer to the bottom */
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            border-top: 1px solid var(--border-color);
         }
 
         @keyframes loading {
@@ -887,10 +930,8 @@
                                 </thead>
                                 <tbody id="escalation-table-body">
                                     <tr>
-                                        <td colspan="6" style="text-align: center; padding: 40px;">
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; width: 70%; margin: 0 auto;"></div>
+                                        <td colspan="6" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            Loading escalations...
                                         </td>
                                     </tr>
                                 </tbody>
@@ -946,10 +987,8 @@
                                 </thead>
                                 <tbody id="unassigned-table-body">
                                     <tr>
-                                        <td colspan="8" style="text-align: center; padding: 40px;">
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; width: 70%; margin: 0 auto;"></div>
+                                        <td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            No unassigned orders available.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -981,10 +1020,8 @@
                                 </thead>
                                 <tbody id="assigned-table-body">
                                     <tr>
-                                        <td colspan="4" style="text-align: center; padding: 40px;">
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; margin-bottom: 10px;"></div>
-                                            <div class="skeleton" style="height: 20px; width: 70%; margin: 0 auto;"></div>
+                                        <td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                                            No assigned orders to display.
                                         </td>
                                     </tr>
                                 </tbody>
@@ -1040,8 +1077,8 @@
                                 Generate Report
                             </button>
                         </div>
-                        <div id="reports-content">
-                            <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-base);"></div>
+                        <div id="reports-content" style="text-align: center; padding: 40px; color: var(--text-muted);">
+                           Please select your criteria and generate a report to see the results.
                         </div>
                     </div>
                 </div>
@@ -1141,6 +1178,10 @@
                     </div>
                 </div>
             </main>
+            
+            <footer class="site-footer">
+                © 2025 Mohamed Elmenisy. All rights reserved.
+            </footer>
         </div>
     </div>
 
@@ -1351,7 +1392,7 @@
                     <td><span class="status-badge ${statusClass}">${esc.status}</span></td>
                     <td><button class="btn btn-primary review-btn">Review</button></td>
                 </tr>`;
-            }).join('') || '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No escalations found</td></tr>';
+            }).join('') || '<tr><td colspan="6" style="text-align: center; color: var(--text-muted); padding: 40px;">No escalations found</td></tr>';
 
             elements.escalationCount.textContent = filteredData.length;
             addReviewButtonListeners();
@@ -1518,6 +1559,42 @@
                 }
             });
         }
+        
+        // NEW function to update agent charts based on filter
+        function updateAgentPerformanceCharts(agentId) {
+            // Mock data for different agents
+            const agentData = {
+                'all': { accuracy: [98.2, 97.5, 99.1, 96.8], reviews: [5412, 123] },
+                '1': { accuracy: [98.2], reviews: [1350, 25] },
+                '2': { accuracy: [97.5], reviews: [1290, 32] },
+                '3': { accuracy: [99.1], reviews: [1410, 13] },
+                '4': { accuracy: [96.8], reviews: [1362, 53] }
+            };
+
+            const data = agentData[agentId] || agentData['all'];
+
+            // Update Agent Accuracy Chart
+            if (charts.agentAccuracy) {
+                if (agentId === 'all') {
+                    charts.agentAccuracy.data.labels = agents.map(a => a.name);
+                    charts.agentAccuracy.data.datasets[0].data = data.accuracy;
+                } else {
+                    const selectedAgent = agents.find(a => a.id === agentId);
+                    charts.agentAccuracy.data.labels = [selectedAgent.name];
+                    charts.agentAccuracy.data.datasets[0].data = data.accuracy;
+                }
+                charts.agentAccuracy.update();
+            }
+
+            // Update Reviews vs Errors Chart
+            if (charts.reviewsVsErrors) {
+                charts.reviewsVsErrors.data.datasets[0].data = data.reviews;
+                const selectedAgent = agents.find(a => a.id === agentId);
+                const title = agentId === 'all' ? 'Team Overall Performance' : `${selectedAgent.name}'s Performance`;
+                charts.reviewsVsErrors.options.plugins.title.text = title;
+                charts.reviewsVsErrors.update();
+            }
+        }
 
         function addReviewButtonListeners() {
             document.querySelectorAll('.review-btn').forEach(btn => {
@@ -1600,6 +1677,11 @@
             // Escalation Filters
             document.getElementById('escalation-search').addEventListener('input', renderEscalations);
             document.getElementById('escalation-status-filter').addEventListener('change', renderEscalations);
+            
+            // Agent Performance Filter - MODIFIED
+            document.getElementById('agent-filter').addEventListener('change', (e) => {
+                updateAgentPerformanceCharts(e.target.value);
+            });
 
             // Modal Close
             document.querySelectorAll('.modal-close-btn').forEach(btn => {
