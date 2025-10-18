@@ -3,1298 +3,267 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quality Command Center - QualityX</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <title>Quality Command Center</title>
+    <!-- MODIFIED: New, custom favicon with a 'Q' design, using the primary color for better branding. -->
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
         :root {
             --primary-color: #00bfff;
-            --primary-hover: #00a4d9;
-            --primary-dark: #007BFF;
-            --primary-gradient: linear-gradient(135deg, #00bfff 0%, #007BFF 100%);
-            --bg-color: #0a0a0a;
-            --sidebar-bg: #151515;
+            --primary-color-darker: #007BFF;
+            --bg-color: #121212;
+            --sidebar-bg: #1a1a1a;
             --card-bg: #1a1a1a;
-            --card-hover: #222222;
-            --text-color: #ffffff;
-            --text-muted: #8b949e;
-            --border-color: #2d2d2d;
-            --success-color: #00d97e;
-            --warning-color: #f6c343;
-            --danger-color: #e63757;
-            --info-color: #39afd1;
-            --purple: #6b5aed;
-            --border-radius-base: 12px;
-            --border-radius-sm: 8px;
-            --shadow-sm: 0 2px 4px rgba(0,0,0,0.3);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.4), 0 2px 4px -1px rgba(0,0,0,0.3);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.5), 0 4px 6px -2px rgba(0,0,0,0.4);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.6), 0 10px 10px -5px rgba(0,0,0,0.5);
-            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --text-color: #e6edf3;
+            --text-muted-color: #8b949e;
+            --border-color: #333;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --info-color: #17a2b8;
+            --font-body: 'Poppins', sans-serif;
+            --border-radius-base: 0.75rem;
         }
-
-        * { 
-            margin: 0; 
-            padding: 0; 
-            box-sizing: border-box; 
-        }
-
-        html { 
-            scroll-behavior: smooth; 
-        }
-
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        ::-webkit-scrollbar-track {
-            background: var(--sidebar-bg);
-        }
-
-        ::-webkit-scrollbar-thumb {
-            background: var(--primary-color);
-            border-radius: 10px;
-        }
-
-        /* Layout */
-        .layout {
-            display: flex;
-            min-height: 100vh;
-        }
-
-        /* Sidebar */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
+        .layout { display: flex; min-height: 100vh; }
         .sidebar {
-            width: 280px;
-            background: var(--sidebar-bg);
-            border-right: 1px solid var(--border-color);
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100vh;
-            z-index: 1000;
-            transition: var(--transition);
-            box-shadow: var(--shadow-lg);
+            width: 250px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+            display: flex; flex-direction: column; padding: 1.5rem 0; position: fixed; height: 100%; z-index: 1000;
         }
-
         .sidebar-header {
-            padding: 24px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
+            padding: 0 1.5rem 1.5rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
             border-bottom: 1px solid var(--border-color);
-            background: rgba(0, 191, 255, 0.05);
         }
-
-        .sidebar-logo {
-            height: 36px;
-            width: 36px;
-            background: var(--primary-gradient);
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: 800;
-            font-size: 18px;
-        }
-
-        .sidebar-title {
-            font-size: 1.5rem;
-            background: var(--primary-gradient);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-
-        .sidebar-nav-container {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px 0;
-        }
-
-        .nav-group {
-            margin-bottom: 32px;
-            padding: 0 20px;
-        }
-
+        .sidebar-logo { height: 32px; fill: var(--primary-color); }
+        .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
+        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
+        .nav-group { margin-bottom: 1.5rem; padding: 0 1.5rem; }
         .nav-group-title {
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            color: var(--text-muted);
-            font-weight: 600;
-            margin-bottom: 16px;
-            padding-left: 8px;
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--text-muted-color); font-weight: 600; margin-bottom: 0.75rem;
         }
-
-        .sidebar-nav {
-            list-style: none;
-        }
-
+        .sidebar-nav { list-style: none; }
         .sidebar-nav a {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            padding: 14px 16px;
-            margin: 4px 0;
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 500;
-            border-radius: var(--border-radius-sm);
-            transition: var(--transition);
-            cursor: pointer;
-            position: relative;
-            overflow: hidden;
+            display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; margin: 0.25rem 0;
+            text-decoration: none; color: var(--text-muted-color); font-weight: 500; border-radius: 0.5rem;
+            transition: all 0.2s ease; cursor: pointer;
         }
-
-        .sidebar-nav a::before {
-            content: '';
-            position: absolute;
-            left: 0;
-            top: 0;
-            height: 100%;
-            width: 3px;
-            background: var(--primary-gradient);
-            transform: scaleY(0);
-            transition: var(--transition);
-        }
-
-        .sidebar-nav a:hover {
-            background: rgba(0, 191, 255, 0.1);
-            color: var(--text-color);
-            transform: translateX(4px);
-        }
-
-        .sidebar-nav a:hover::before {
-            transform: scaleY(1);
-        }
-
-        .sidebar-nav a.active {
-            background: rgba(0, 191, 255, 0.15);
-            color: var(--text-color);
-            box-shadow: var(--shadow-sm);
-        }
-
-        .sidebar-nav a.active::before {
-            transform: scaleY(1);
-        }
-
-        .sidebar-footer {
-            padding: 20px;
-            border-top: 1px solid var(--border-color);
-            background: rgba(0, 0, 0, 0.3);
-        }
-
-        .user-profile-widget {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
+        .sidebar-nav a:hover { background-color: rgba(0, 191, 255, 0.1); color: var(--primary-color); }
+        .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
+        .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
+        .user-profile-widget { display: flex; align-items: center; gap: 12px; }
         .avatar-initials {
-            width: 48px;
-            height: 48px;
-            border-radius: 12px;
-            background: var(--primary-gradient);
-            color: white;
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: var(--shadow-md);
-            transition: var(--transition);
+            width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color);
+            color: black; font-weight: 700; font-size: 1rem;
+            display: inline-flex; align-items: center; justify-content: center;
         }
+        .user-info .user-name { font-weight: 600; font-size: 1rem; }
+        .user-info .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
+        .user-status { font-size: 0.75rem; color: var(--success-color); margin-top: 2px; }
 
-        .user-profile-widget:hover .avatar-initials {
-            transform: scale(1.05);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .user-info .user-name {
-            font-weight: 600;
-            font-size: 1rem;
-            margin-bottom: 2px;
-        }
-
-        .user-info .user-role {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            margin-bottom: 4px;
-        }
-
-        .user-status {
-            font-size: 0.75rem;
-            color: var(--success-color);
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .user-status::before {
-            content: '';
-            width: 6px;
-            height: 6px;
-            background: var(--success-color);
-            border-radius: 50%;
-            animation: pulse 2s infinite;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        /* Main Wrapper */
-        .main-wrapper {
-            flex-grow: 1;
-            margin-left: 280px;
-            display: flex;
-            flex-direction: column;
-            transition: var(--transition);
-            background: var(--bg-color);
-        }
-
-        /* Topbar */
+        .main-wrapper { flex-grow: 1; margin-left: 250px; display: flex; flex-direction: column; }
         .topbar {
-            background: rgba(26, 26, 26, 0.8);
-            backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 20px 32px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            position: sticky;
-            top: 0;
-            z-index: 999;
-            flex-wrap: wrap;
-            gap: 16px;
+            background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+            position: sticky; top: 0; z-index: 900;
         }
-
-        .topbar-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .page-title {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--text-color) 0%, var(--text-muted) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .topbar-actions {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        /* Search */
-        #search-bar {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            color: var(--text-color);
-            padding: 12px 16px;
-            width: 280px;
-            font-size: 14px;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-        }
-
-        #search-bar:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
-            background: rgba(255, 255, 255, 0.08);
-        }
-
-        /* Notifications */
-        .notification-bell {
-            position: relative;
-        }
-
-        .notification-btn {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            color: var(--text-muted);
-            width: 44px;
-            height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: var(--transition);
-            position: relative;
-        }
-
-        .notification-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-            border-color: var(--primary-color);
-            transform: translateY(-1px);
-        }
-
-        .notification-badge {
-            position: absolute;
-            top: -6px;
-            right: -6px;
-            background: var(--danger-color);
-            color: white;
-            font-size: 11px;
-            font-weight: 700;
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 2px 8px rgba(230, 55, 87, 0.4);
-            animation: pulse 2s infinite;
-        }
-
-        .notification-dropdown {
-            display: none;
-            position: absolute;
-            right: 0;
-            top: 120%;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            width: 380px;
-            box-shadow: var(--shadow-xl);
-            z-index: 1010;
-            backdrop-filter: blur(20px);
-        }
-
-        .notification-dropdown.show {
-            display: block;
-            animation: slideDown 0.3s ease;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translateY(-10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .notification-header {
-            padding: 20px;
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .notification-list {
-            list-style: none;
-            max-height: 400px;
-            overflow-y: auto;
-        }
-
-        .notification-item {
-            padding: 16px 20px;
-            border-bottom: 1px solid var(--border-color);
-            font-size: 14px;
-            transition: var(--transition);
-            cursor: pointer;
-        }
-
-        .notification-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        .notification-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Buttons */
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: var(--border-radius-base);
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 14px;
-            transition: var(--transition);
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            text-decoration: none;
-        }
-
-        .btn-primary {
-            background: var(--primary-gradient);
-            color: white;
-            box-shadow: var(--shadow-md);
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .btn-secondary {
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-color);
-            border: 1px solid var(--border-color);
-            backdrop-filter: blur(10px);
-        }
-
-        .btn-secondary:hover {
-            background: rgba(255, 255, 255, 0.15);
-            transform: translateY(-1px);
-        }
-
-        .btn-success {
-            background: var(--success-color);
-            color: white;
-        }
-
-        .btn-danger {
-            background: var(--danger-color);
-            color: white;
-        }
-
-        .btn-sm {
-            padding: 8px 16px;
-            font-size: 13px;
-        }
-
-        /* Main Content */
-        .main-content {
-            padding: 32px;
-            flex-grow: 1;
-        }
-
-        /* Welcome Section */
-        #welcome-message {
-            background: var(--primary-gradient);
-            border-radius: var(--border-radius-base);
-            padding: 40px;
-            margin-bottom: 32px;
-            color: white;
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-        }
-
-        #welcome-message::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            right: 0;
-            width: 200px;
-            height: 200px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 50%;
-            transform: translate(30%, -30%);
-        }
-
-        #welcome-message h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            position: relative;
-            z-index: 1;
-        }
-
-        #welcome-message p {
-            font-size: 16px;
-            opacity: 0.9;
-            position: relative;
-            z-index: 1;
-        }
-
-        /* KPI Grid */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
-        .kpi-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            padding: 24px;
-            text-align: center;
-            transition: var(--transition);
-            position: relative;
-            overflow: hidden;
-            box-shadow: var(--shadow-md);
-        }
-
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 4px;
-            height: 100%;
-            background: var(--primary-gradient);
-            transform: scaleY(0);
-            transition: var(--transition);
-        }
-
-        .kpi-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            background: var(--card-hover);
-        }
-
-        .kpi-card:hover::before {
-            transform: scaleY(1);
-        }
-
-        .kpi-card .kpi-title {
-            font-size: 14px;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 12px;
-            font-weight: 600;
-        }
-
-        .kpi-card .kpi-value {
-            font-size: 36px;
-            font-weight: 700;
-            margin: 8px 0;
-            background: linear-gradient(135deg, var(--text-color) 0%, var(--text-muted) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .kpi-card .kpi-change {
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        /* Dashboard Grid */
-        .dashboard-grid {
-            display: grid;
-            grid-template-columns: repeat(12, 1fr);
-            gap: 24px;
-            margin-bottom: 32px;
-        }
-
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        #search-bar { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; width: 250px; }
+        .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
+        .topbar-actions { display: flex; align-items: center; gap: 1rem; }
+        .notification-bell { position: relative; }
+        .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 22px; cursor: pointer; }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; }
+        .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .notification-item:last-child { border-bottom: none; }
+        .main-content { padding: 2rem; flex-grow: 1; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; }
+        .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
+        .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
         .grid-col-span-12 { grid-column: span 12; }
-        .grid-col-span-8 { grid-column: span 8; }
         .grid-col-span-4 { grid-column: span 4; }
-        .grid-col-span-6 { grid-column: span 6; }
+        .grid-col-span-8 { grid-column: span 8; }
+        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); }
+        .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
+        .chart-container { height: 350px; width: 100%; }
+        .chart-container img { width: 100%; height: 100%; }
+        .activity-feed { list-style: none; }
+        .activity-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-text { font-size: 0.9rem; }
+        .activity-text strong { color: var(--text-color); }
+        .activity-time { font-size: 0.8rem; color: var(--text-muted-color); margin-top: 4px; }
 
-        /* Widgets */
-        .widget {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            padding: 24px;
-            box-shadow: var(--shadow-md);
-            transition: var(--transition);
-        }
+        .results-table-container { overflow-x: auto; }
+        .results-table { width: 100%; border-collapse: collapse; }
+        .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; }
+        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
+        .results-table tbody tr:last-child td { border-bottom: none; }
+        .results-table tbody tr:hover { background-color: #2c2c2c; }
+        .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-align: center; display: inline-block; }
+        .status-new { background-color: var(--primary-color); color: black;}
+        .status-open { background-color: var(--info-color); }
+        .status-correct { background-color: var(--success-color); }
+        .status-error { background-color: var(--danger-color); }
+        .status-escalated { background-color: var(--warning-color); color: #000; }
+        
+        /* MODIFIED: Consolidated filter bar styles */
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 1.5rem; border: 1px solid var(--border-color);}
+        .filter-bar .filter-group { display: flex; align-items: center; gap: 0.5rem;}
+        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted-color); margin-right: 0.25rem; }
+        .filter-bar select, .filter-bar input[type="date"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        
+        /* ADDED: New, improved search input styles */
+        .search-input-container { position: relative; }
+        .search-input-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted-color); }
+        .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px 8px 38px; width: 250px; }
+        
+        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
+        .btn-primary { background-color: var(--primary-color); color: black; }
+        .btn-secondary { background-color: #333; color: white; }
+        .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 
-        .widget:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
+        /* ADDED: Modal styles */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
+        .modal-title { font-size: 1.25rem; font-weight: 700; }
+        .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
+        .modal-body .form-group { margin-bottom: 1rem; }
+        .modal-body label { display: block; margin-bottom: 0.5rem; font-weight: 500; }
+        .modal-body textarea, .modal-body select, .modal-body input { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; font-family: inherit; resize: vertical;}
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
 
-        .widget h3 {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 20px;
-            color: var(--text-color);
-        }
+        /* ADDED: Improved view order modal styles */
+        .order-details-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .detail-item { background: #2c2c2c; padding: 1rem; border-radius: 8px; }
+        .detail-item strong { display: block; color: var(--primary-color); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;}
+        .detail-item p { margin: 0; font-size: 1rem; }
 
-        /* Charts */
-        .chart-container {
-            position: relative;
-            height: 320px;
-            width: 100%;
-        }
-
-        /* Activity Feed */
-        .activity-feed {
-            list-style: none;
-        }
-
-        .activity-item {
-            display: flex;
-            gap: 16px;
-            padding: 20px 0;
-            border-bottom: 1px solid var(--border-color);
-            transition: var(--transition);
-        }
-
-        .activity-item:hover {
-            background: rgba(255, 255, 255, 0.02);
-            margin: 0 -24px;
-            padding: 20px 24px;
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
-            font-size: 18px;
-        }
-
-        .activity-text {
-            flex-grow: 1;
-            font-size: 14px;
-        }
-
-        .activity-text strong {
-            color: var(--text-color);
-        }
-
-        .activity-time {
-            font-size: 12px;
-            color: var(--text-muted);
-            margin-top: 4px;
-        }
-
-        /* Filter Bar */
-        .filter-bar {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            padding: 20px;
-            margin-bottom: 24px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            align-items: center;
-            box-shadow: var(--shadow-md);
-        }
-
-        .filter-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .filter-bar label {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-muted);
-            white-space: nowrap;
-        }
-
-        .filter-bar select,
-        .filter-bar input {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-sm);
-            color: var(--text-color);
-            padding: 10px 12px;
-            font-size: 14px;
-            transition: var(--transition);
-            min-width: 160px;
-        }
-
-        .filter-bar select:focus,
-        .filter-bar input:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.1);
-        }
-
-        /* Search Input Container */
-        .search-input-container {
-            position: relative;
-            flex-grow: 1;
-        }
-
-        .search-input-container .search-icon {
-            position: absolute;
-            left: 14px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-muted);
-            z-index: 1;
-        }
-
-        .search-input-container input[type="search"] {
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            color: var(--text-color);
-            padding: 12px 16px 12px 44px;
-            width: 100%;
-            font-size: 14px;
-            transition: var(--transition);
-            backdrop-filter: blur(10px);
-        }
-
-        /* Tables */
-        .results-table-container {
-            overflow-x: auto;
-            border-radius: var(--border-radius-base);
-            border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-md);
-        }
-
-        .results-table {
-            width: 100%;
-            border-collapse: collapse;
-            min-width: 800px;
-        }
-
-        .results-table thead th {
-            padding: 16px 20px;
-            text-align: left;
-            background: #2c2c2c;
-            font-size: 12px;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            font-weight: 600;
-            white-space: nowrap;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .results-table tbody td {
-            padding: 16px 20px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
-            white-space: nowrap;
-        }
-
-        .results-table tbody tr:last-child td {
-            border-bottom: none;
-        }
-
-        .results-table tbody tr:hover {
-            background: rgba(255, 255, 255, 0.05);
-        }
-
-        /* Status Badges */
-        .status-badge {
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 600;
-            color: white;
-            text-align: center;
-            display: inline-block;
-        }
-
-        .status-new { background: var(--primary-color); color: black; }
-        .status-open { background: var(--info-color); }
-        .status-correct { background: var(--success-color); }
-        .status-error { background: var(--danger-color); }
-        .status-escalated { background: var(--warning-color); color: black; }
-
-        /* Schedule Table */
-        .schedule-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .schedule-controls {
-            display: none;
-            gap: 12px;
-        }
-
-        .schedule-controls.active {
-            display: flex;
-        }
-
-        .schedule-table-container {
-            overflow-x: auto;
-            border-radius: var(--border-radius-base);
-            border: 1px solid var(--border-color);
-        }
-
-        .schedule-table {
-            width: 100%;
-            border-collapse: collapse;
-            text-align: center;
-            min-width: 800px;
-        }
-
-        .schedule-table th,
-        .schedule-table td {
-            padding: 16px;
-            border: 1px solid var(--border-color);
-        }
-
-        .schedule-table thead th {
-            background: #2c2c2c;
-            font-weight: 600;
-            color: var(--text-muted);
-        }
-
-        .schedule-table .member-name {
-            font-weight: 600;
-            text-align: left;
-        }
-
-        .schedule-table .shift-cell {
-            cursor: not-allowed;
-            transition: var(--transition);
-        }
-
-        .schedule-table.edit-mode .shift-cell {
-            cursor: pointer;
-            background: rgba(0, 191, 255, 0.1);
-        }
-
-        .shift-time {
-            display: block;
-            font-weight: 500;
-        }
-
+        .schedule-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .schedule-controls { display: none; gap: 1rem; }
+        .schedule-controls.active { display: flex; }
+        .schedule-table-container { overflow-x: auto; }
+        .schedule-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
+        .schedule-table thead th { background-color: #2c2c2c; font-weight: 600; }
+        .schedule-table .member-name { font-weight: 600; text-align: left; }
+        .schedule-table .shift-cell { cursor: not-allowed; transition: background-color 0.2s ease; }
+        .schedule-table.edit-mode .shift-cell { cursor: pointer; background-color: rgba(0, 191, 255, 0.1); }
+        .shift-time { display: block; font-weight: 500; }
         .shift-leave { color: var(--warning-color); font-weight: 600; }
         .shift-sick { color: var(--danger-color); font-weight: 600; }
-        .shift-off { color: var(--text-muted); }
+        .shift-off { color: var(--text-muted-color); }
 
-        /* Team Grid */
-        .team-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 24px;
-        }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .team-member-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
+        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
+        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
+        
+        /* ADDED: New, professional settings page styles */
+        .settings-layout { display: flex; gap: 2rem; }
+        .settings-nav { flex: 0 0 200px; }
+        .settings-nav ul { list-style: none; }
+        .settings-nav a { display: block; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-muted-color); border-radius: 8px; font-weight: 500; }
+        .settings-nav a:hover { background-color: #2c2c2c; color: var(--text-color); }
+        .settings-nav a.active { background-color: var(--primary-color); color: black; }
+        .settings-content { flex-grow: 1; }
+        .settings-section { display: none; }
+        .settings-section.active { display: block; animation: fadeIn 0.4s ease; }
+        .settings-section h4 { font-size: 1.5rem; margin-bottom: 0.5rem; color: var(--text-color); }
+        .settings-section p.section-description { font-size: 1rem; color: var(--text-muted-color); margin-bottom: 2rem; }
+        .setting-card { background-color: #222; padding: 1.5rem; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .setting-item:last-child { border-bottom: none; }
+        .setting-item-content span { display: block; font-weight: 500; }
+        .setting-item-content p { font-size: 0.9rem; color: var(--text-muted-color); margin-top: 4px; }
+        .toggle-switch .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3c3c3c; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; color: var(--text-muted-color); }
+        .form-group input, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
+        .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
 
-        .team-member-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-            padding: 24px;
-            text-align: center;
-            transition: var(--transition);
-            box-shadow: var(--shadow-md);
+        /* ADDED: New modern theme selector styles */
+        .theme-selector { display: flex; background-color: #2c2c2c; border-radius: 8px; padding: 4px; }
+        .theme-selector .theme-option {
+            flex: 1; text-align: center; padding: 6px 10px; border-radius: 6px;
+            cursor: pointer; font-weight: 500; transition: background-color 0.2s, color 0.2s;
+            border: 1px solid transparent;
         }
+        .theme-selector .theme-option.active {
+            background-color: var(--primary-color); color: black; border-color: var(--primary-color);
+        }
+        .theme-selector .theme-option:not(.active):hover { background-color: #3c3c3c; }
 
-        .team-member-card:hover {
-            transform: translateY(-4px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-color);
-        }
-
-        .team-member-avatar-initials {
-            width: 80px;
-            height: 80px;
-            border-radius: 20px;
-            margin: 0 auto 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            font-weight: 700;
-            color: white;
-            background: var(--primary-gradient);
-            box-shadow: var(--shadow-md);
-        }
-
-        .team-member-name {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 8px;
-        }
-
-        .team-member-role {
-            color: var(--primary-color);
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        /* Tabs */
-        .tab-content {
-            display: none;
-            animation: fadeIn 0.5s ease;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* Mobile Menu */
-        .mobile-menu-btn {
-            display: none;
-            background: var(--primary-gradient);
-            border: none;
-            color: white;
-            width: 44px;
-            height: 44px;
-            border-radius: var(--border-radius-base);
-            cursor: pointer;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            position: fixed;
-            top: 20px;
-            left: 20px;
-            z-index: 1100;
-            box-shadow: var(--shadow-lg);
-        }
-
-        /* Toast Messages */
-        .toast-container {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            z-index: 9999;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-
-        .toast {
-            padding: 16px 20px;
-            border-radius: var(--border-radius-base);
-            color: white;
-            font-weight: 500;
-            box-shadow: var(--shadow-lg);
-            transform: translateX(100%);
-            opacity: 0;
-            transition: all 0.3s ease;
-            max-width: 350px;
-        }
-
-        .toast.show {
-            transform: translateX(0);
-            opacity: 1;
-        }
-
-        .toast.success {
-            background: var(--success-color);
-        }
-
-        .toast.error {
-            background: var(--danger-color);
-        }
-
-        .toast.warning {
-            background: var(--warning-color);
-            color: black;
-        }
-
-        .toast.info {
-            background: var(--info-color);
-        }
-
-        /* Confirmation Modal */
-        .confirmation-modal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            backdrop-filter: blur(5px);
-        }
-
-        .confirmation-modal.show {
-            display: flex;
-        }
-
-        .confirmation-content {
-            background: var(--card-bg);
-            border-radius: var(--border-radius-base);
-            padding: 30px;
-            max-width: 450px;
-            width: 90%;
-            box-shadow: var(--shadow-xl);
-            border: 1px solid var(--border-color);
-        }
-
-        .confirmation-content h3 {
-            margin-bottom: 15px;
-            font-size: 20px;
-        }
-
-        .confirmation-content p {
-            margin-bottom: 25px;
-            color: var(--text-muted);
-        }
-
-        .confirmation-buttons {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-
-        /* Footer */
-        .footer {
-            background: var(--sidebar-bg);
-            border-top: 1px solid var(--border-color);
-            padding: 20px 32px;
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 14px;
-        }
-
-        /* Loading States */
-        .loading { opacity: 0.7; pointer-events: none; }
-        .skeleton {
-            background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
-            background-size: 200% 100%;
-            animation: loading 1.5s infinite;
-            border-radius: 4px;
-        }
-
-        @keyframes loading {
-            0% { background-position: 200% 0; }
-            100% { background-position: -200% 0; }
-        }
-
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .dashboard-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .grid-col-span-8,
-            .grid-col-span-4 {
-                grid-column: span 12;
-            }
-        }
-
-        @media (max-width: 1024px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-            
-            .sidebar.mobile-open {
-                transform: translateX(0);
-            }
-            
-            .main-wrapper {
-                margin-left: 0;
-                width: 100%;
-            }
-            
-            .mobile-menu-btn {
-                display: flex;
-            }
-            
-            .kpi-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 768px) {
-            .main-content {
-                padding: 20px;
-            }
-            
-            .topbar {
-                padding: 16px 20px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .topbar-left {
-                justify-content: space-between;
-            }
-            
-            #search-bar {
-                width: 100%;
-            }
-            
-            .kpi-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .filter-bar {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .filter-group {
-                flex-direction: column;
-                align-items: stretch;
-            }
-            
-            .notification-dropdown {
-                width: 320px;
-                right: -50px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .widget {
-                padding: 20px;
-            }
-            
-            .page-title {
-                font-size: 20px;
-            }
-            
-            #welcome-message h2 {
-                font-size: 24px;
-            }
-            
-            .btn {
-                padding: 10px 20px;
-                font-size: 13px;
-            }
-            
-            .schedule-header {
-                flex-direction: column;
-                gap: 16px;
-                align-items: stretch;
-            }
-        }
     </style>
 </head>
 <body class="dark">
-    <!-- Toast Container -->
-    <div class="toast-container" id="toast-container"></div>
-
-    <!-- Confirmation Modal -->
-    <div class="confirmation-modal" id="confirmation-modal">
-        <div class="confirmation-content">
-            <h3 id="confirmation-title">Confirm Action</h3>
-            <p id="confirmation-message">Are you sure you want to perform this action?</p>
-            <div class="confirmation-buttons">
-                <button class="btn btn-secondary" id="confirmation-cancel">Cancel</button>
-                <button class="btn btn-primary" id="confirmation-confirm">Confirm</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Mobile Menu Button -->
-    <button class="mobile-menu-btn" id="mobile-menu-btn">☰</button>
-
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div>
                 <div class="sidebar-header">
-                    <div class="sidebar-logo">Q</div>
+                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                        <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
                     <h1 class="sidebar-title">QualityX</h1>
                 </div>
 
                 <div class="sidebar-nav-container">
                     <div class="nav-group">
-                        <h2 class="nav-group-title">Quality Operations</h2>
+                        <h2 class="nav-group-title">Menu</h2>
                         <ul class="sidebar-nav">
                             <li class="active"><a data-tab="dashboard">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M3 3v18h18"/>
-                                    <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/>
-                                </svg>
-                                Quality Dashboard
-                            </a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/></svg>
+                                Dashboard</a></li>
                             <li><a data-tab="my-assigned-orders">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/>
-                                    <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
-                                </svg>
-                                My Assigned Orders
-                            </a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                                Assigned Orders</a></li>
                             <li><a data-tab="team-scheduling">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                                    <line x1="16" y1="2" x2="16" y2="6"/>
-                                    <line x1="8" y1="2" x2="8" y2="6"/>
-                                    <line x1="3" y1="10" x2="21" y2="10"/>
-                                </svg>
-                                Team Schedule
-                            </a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                Team Scheduling</a></li>
                             <li><a data-tab="team-members">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="9" cy="7" r="4"/>
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                                </svg>
-                                Team Members
-                            </a></li>
-                        </ul>
-                    </div>
-
-                    <div class="nav-group">
-                        <h2 class="nav-group-title">Analytics</h2>
-                        <ul class="sidebar-nav">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Team Members</a></li>
                             <li><a data-tab="reports">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
-                                    <path d="M22 12A10 10 0 0 0 12 2v10z"/>
-                                </svg>
-                                Reports & Analytics
-                            </a></li>
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg>
+                                Reports & Analytics</a></li>
                         </ul>
                     </div>
-
-                    <div class="nav-group">
+                     <div class="nav-group">
                         <h2 class="nav-group-title">Account</h2>
-                        <ul class="sidebar-nav">
+                         <ul class="sidebar-nav">
                             <li><a data-tab="profile">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="12" cy="7" r="4"/>
-                                </svg>
-                                My Profile
-                            </a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                Profile</a></li>
                             <li><a data-tab="settings">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <circle cx="12" cy="12" r="3"/>
-                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-                                </svg>
-                                Settings
-                            </a></li>
-                            <li><a id="logout-btn">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                                    <polyline points="16 17 21 12 16 7"/>
-                                    <line x1="21" y1="12" x2="9" y2="12"/>
-                                </svg>
-                                Logout
-                            </a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                Settings</a></li>
+                            <li><a data-tab="help">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                                Get Help</a></li>
                         </ul>
                     </div>
                 </div>
@@ -1302,11 +271,11 @@
 
             <div class="sidebar-footer">
                 <div class="user-profile-widget">
-                    <div class="avatar-initials" id="user-avatar">ME</div>
+                    <div class="avatar-initials" id="sidebar-avatar-initials">FA</div>
                     <div class="user-info">
-                        <div class="user-name" id="user-name">Mohamed Elmenisy</div>
-                        <div class="user-role" id="user-role">Quality Agent</div>
-                        <div class="user-status">Online</div>
+                        <div class="user-name" id="sidebar-username">Fahad Al-Qahtani</div>
+                        <div class="user-role" id="sidebar-userrole">Quality Agent</div>
+                        <div class="user-status" id="sidebar-userstatus">● Connected</div>
                     </div>
                 </div>
             </div>
@@ -1314,1081 +283,973 @@
 
         <div class="main-wrapper">
             <header class="topbar">
-                <div class="topbar-left">
-                    <h1 class="page-title" id="page-title">Quality Dashboard</h1>
-                </div>
-
+                 <h2 class="page-title" id="page-title">Dashboard</h2>
                 <div class="topbar-actions">
-                    <div class="search-input-container">
-                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="11" cy="11" r="8"/>
-                            <path d="m21 21-4.35-4.35"/>
-                        </svg>
-                        <input type="search" id="search-bar" placeholder="Search orders, agents, or issues...">
-                    </div>
-
-                    <div class="notification-bell">
-                        <button class="notification-btn" id="notification-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-                                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-                            </svg>
+                     <div class="notification-bell">
+                        <button id="notification-btn" class="notification-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
                         </button>
-                        <span class="notification-badge">3</span>
-                        <div class="notification-dropdown" id="notification-dropdown">
-                            <div class="notification-header">
-                                <span>Notifications</span>
-                                <button class="btn btn-sm btn-secondary">Mark all as read</button>
-                            </div>
+                         <div id="notification-dropdown" class="notification-dropdown">
+                            <div class="notification-header">Notifications</div>
                             <ul class="notification-list">
-                                <li class="notification-item">
-                                    <div>New order #12345 requires your review</div>
-                                    <div class="activity-time">5 minutes ago</div>
-                                </li>
-                                <li class="notification-item">
-                                    <div>Order #12346 has been escalated by Agent</div>
-                                    <div class="activity-time">1 hour ago</div>
-                                </li>
-                                <li class="notification-item">
-                                    <div>Your accuracy rate improved to 98.2%</div>
-                                    <div class="activity-time">2 hours ago</div>
-                                </li>
+                                <li class="notification-item">3 new orders were assigned to you.</li>
+                                <li class="notification-item">Report for June 2025 is ready.</li>
                             </ul>
                         </div>
-                    </div>
-
-                    <button class="btn btn-primary" id="new-review-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 5v14M5 12h14"/>
-                        </svg>
-                        New Review
-                    </button>
+                     </div>
+                    <button id="new-review-btn" class="btn btn-primary">New Review</button>
                 </div>
             </header>
 
             <main class="main-content">
-                <!-- Dashboard Tab -->
+                <!-- Dashboard -->
                 <div id="dashboard" class="tab-content active">
-                    <div id="welcome-message">
-                        <h2>Welcome back, Mohamed!</h2>
-                        <p>You have <strong>15 new orders</strong> assigned to you today. Your current accuracy rate is <strong>98.2%</strong>.</p>
+                    <div id="welcome-message" style="margin-bottom: 1rem;">
+                        <h2 style="font-size: 1.75rem; font-weight: 700;">Welcome, Fahad Al-Qahtani!</h2>
+                        <p style="color: var(--text-muted-color);">Your central hub for monitoring quality and driving team excellence.</p>
                     </div>
 
-                    <!-- KPI Grid -->
+                    <!-- ADDED: Global search bar for the dashboard -->
+                    <div class="filter-bar">
+                         <div class="search-input-container" style="width: 100%;">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="dashboard-search-input" placeholder="Search anything... (e.g., Order ID, Issue Type, Member Name)" style="width: 100%; padding-top: 10px; padding-bottom: 10px;">
+                        </div>
+                    </div>
+
+
                     <div class="kpi-grid">
                         <div class="kpi-card">
-                            <div class="kpi-title">Orders Assigned</div>
-                            <div class="kpi-value" id="orders-assigned">15</div>
-                            <div class="kpi-change">+2 from yesterday</div>
+                            <div class="kpi-title">Today's Reviews</div>
+                            <div class="kpi-value">42</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+5 from yesterday</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">Accuracy Rate</div>
-                            <div class="kpi-value" id="accuracy-rate">98.2%</div>
-                            <div class="kpi-change">+0.5% this week</div>
+                            <div class="kpi-title">Open Cases</div>
+                            <div class="kpi-value">6</div>
+                             <div class="kpi-change" style="color: var(--warning-color);">2 Escalated</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">Avg. Processing Time</div>
-                            <div class="kpi-value" id="avg-time">4.2m</div>
-                            <div class="kpi-change">-0.3m improvement</div>
+                            <div class="kpi-title">Avg. Quality Score</div>
+                            <div class="kpi-value">98.2%</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+0.5% vs last week</div>
                         </div>
                         <div class="kpi-card">
-                            <div class="kpi-title">Escalations</div>
-                            <div class="kpi-value" id="escalations">2</div>
-                            <div class="kpi-change">-1 from last week</div>
+                            <div class="kpi-title">Escalation Rate</div>
+                            <div class="kpi-value">2.1%</div>
+                            <div class="kpi-change" style="color: var(--danger-color);">-0.2% vs last week</div>
                         </div>
                     </div>
-
-                    <!-- Dashboard Grid -->
                     <div class="dashboard-grid">
-                        <!-- Main Content Area -->
                         <div class="widget grid-col-span-8">
-                            <h3>Performance Overview</h3>
+                            <h3>Monthly Performance</h3>
                             <div class="chart-container">
-                                <canvas id="performance-chart"></canvas>
+                                <img src="https://quickchart.io/chart?c={type:'line',options:{legend:{display:true,labels:{fontColor:'white'}},scales:{xAxes:[{gridLines:{color:'rgba(255,255,255,0.1)'},ticks:{fontColor:'white'}}],yAxes:[{ticks:{precision:0,fontColor:'white'},gridLines:{color:'rgba(255,255,255,0.1)'}}]}},data:{labels:['Feb','Mar','Apr','May','Jun','Jul'],datasets:[{label:'Correct',data:[5300,5100,5400,4900,5200,5412],backgroundColor:'rgba(40,167,69,0.3)',borderColor:'%2328a745',fill:true,pointRadius:4,pointBackgroundColor:'%2328a745'},{label:'Errors',data:[210,180,240,150,140,123],backgroundColor:'rgba(220,53,69,0.3)',borderColor:'%23dc3545',fill:true,pointRadius:4,pointBackgroundColor:'%23dc3545'}]}}" alt="Reviews per month chart">
                             </div>
                         </div>
-
-                        <!-- Sidebar Widgets -->
-                        <div class="grid-col-span-4">
-                            <div class="widget">
-                                <h3>Recent Activity</h3>
-                                <ul class="activity-feed" id="recent-activity">
-                                    <li class="activity-item">
-                                        <div class="activity-icon" style="background: rgba(0, 191, 255, 0.2); color: var(--primary-color);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                                <polyline points="22 4 12 14.01 9 11.01"/>
-                                            </svg>
-                                        </div>
-                                        <div class="activity-text">
-                                            <strong>Order #12345</strong> marked as Correct
-                                            <div class="activity-time">10 minutes ago</div>
-                                        </div>
-                                    </li>
-                                    <li class="activity-item">
-                                        <div class="activity-icon" style="background: rgba(230, 55, 87, 0.2); color: var(--danger-color);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <circle cx="12" cy="12" r="10"/>
-                                                <line x1="15" y1="9" x2="9" y2="15"/>
-                                                <line x1="9" y1="9" x2="15" y2="15"/>
-                                            </svg>
-                                        </div>
-                                        <div class="activity-text">
-                                            <strong>Order #12346</strong> marked as Error
-                                            <div class="activity-time">1 hour ago</div>
-                                        </div>
-                                    </li>
-                                    <li class="activity-item">
-                                        <div class="activity-icon" style="background: rgba(246, 195, 67, 0.2); color: var(--warning-color);">
-                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                                <line x1="12" y1="9" x2="12" y2="13"/>
-                                                <line x1="12" y1="17" x2="12.01" y2="17"/>
-                                            </svg>
-                                        </div>
-                                        <div class="activity-text">
-                                            <strong>Order #12347</strong> escalated to Senior
-                                            <div class="activity-time">2 hours ago</div>
-                                        </div>
-                                    </li>
-                                </ul>
-                            </div>
+                        <div class="widget grid-col-span-4">
+                             <h3>Issue Types (Last 30 Days)</h3>
+                             <div class="chart-container" style="height: 200px; margin-bottom: 1.5rem;">
+                                <img src="https://quickchart.io/chart?c={type:'doughnut',data:{datasets:[{data:[45,25,18,12],backgroundColor:['%2300bfff', '%23dc3545', '%23ffc107', '%2317a2b8']}],labels:['Missing Item','Wrong Item','Spillage','Driver Behavior']},options:{legend:{position:'right',labels:{fontColor:'white'}},plugins:{datalabels:{display:false},doughnutlabel:{labels:[{text:'Total',font:{size:20}},{text:'291'}]}}}}" alt="Issue types chart"/>
+                             </div>
+                             <h3>Recent Activity</h3>
+                             <ul class="activity-feed">
+                                 <li class="activity-item">
+                                    <div class="activity-icon" style="background: var(--danger-color);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></div>
+                                    <div class="activity-text">You marked order <strong>CZ-84360</strong> as Error.<div class="activity-time">15 minutes ago</div></div>
+                                 </li>
+                                 <li class="activity-item">
+                                     <div class="activity-icon" style="background: var(--primary-color-darker);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg></div>
+                                    <div class="activity-text">3 new orders were assigned to you.<div class="activity-time">2 hours ago</div></div>
+                                 </li>
+                                  <li class="activity-item">
+                                     <div class="activity-icon" style="background: var(--success-color);"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg></div>
+                                     <div class="activity-text">Noura Al-Dossari marked order <strong>CZ-84365</strong> as Correct.<div class="activity-time">Yesterday</div></div>
+                                 </li>
+                             </ul>
                         </div>
                     </div>
                 </div>
-
-                <!-- My Assigned Orders Tab -->
+                
+                <!-- Assigned Orders -->
                 <div id="my-assigned-orders" class="tab-content">
-                    <div class="widget">
-                        <div class="schedule-header">
-                            <h3>My Assigned Orders</h3>
-                            <div class="filter-bar">
-                                <div class="filter-group">
-                                    <label for="status-filter">Status:</label>
-                                    <select id="status-filter">
-                                        <option value="all">All Status</option>
-                                        <option value="new">New</option>
-                                        <option value="in-progress">In Progress</option>
-                                        <option value="completed">Completed</option>
-                                        <option value="escalated">Escalated</option>
-                                    </select>
-                                </div>
-                                <div class="filter-group">
-                                    <label for="priority-filter">Priority:</label>
-                                    <select id="priority-filter">
-                                        <option value="all">All Priorities</option>
-                                        <option value="high">High</option>
-                                        <option value="medium">Medium</option>
-                                        <option value="low">Low</option>
-                                    </select>
-                                </div>
-                                <div class="filter-group">
-                                    <label for="date-filter">Date:</label>
-                                    <input type="date" id="date-filter">
-                                </div>
-                            </div>
+                    <div class="filter-bar">
+                         <!-- MODIFIED: Search bar appearance improved with an icon -->
+                         <div class="filter-group search-input-container">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" id="orders-search-input" placeholder="Search by ID, issue...">
                         </div>
+                        <div class="filter-group">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="All">All</option>
+                                <option value="New">New</option>
+                                <option value="Open">Open</option>
+                                <option value="Completed">Completed</option>
+                                <option value="Escalated">Escalated</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label for="filter-issue-type">Issue:</label>
+                             <select id="filter-issue-type">
+                                <option value="All">All Types</option>
+                                <!-- Options will be populated by JS -->
+                            </select>
+                        </div>
+                         <div class="filter-group">
+                            <label for="filter-from-date">From:</label>
+                            <input type="date" id="filter-from-date">
+                        </div>
+                        <div class="filter-group">
+                             <label for="filter-to-date">To:</label>
+                            <input type="date" id="filter-to-date">
+                        </div>
+                        <button class="btn btn-secondary" id="export-csv-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Export CSV
+                        </button>
+                    </div>
 
+                    <div class="widget">
+                         <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
                         <div class="results-table-container">
                             <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Issue Type</th>
-                                        <th>Status</th>
-                                        <th>Assigned Date</th>
-                                        <th>Priority</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="orders-table-body">
-                                    <!-- Orders will be populated here -->
-                                </tbody>
+                                <thead><tr><th>Request ID</th><th>Issue Type</th><th>Date Assigned</th><th>Status</th><th>Actions</th></tr></thead>
+                                <tbody id="orders-table-body"></tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Team Scheduling Tab -->
+                <!-- Team Scheduling -->
                 <div id="team-scheduling" class="tab-content">
                     <div class="widget">
                         <div class="schedule-header">
-                            <h3>Team Schedule</h3>
-                            <div>
-                                <button class="btn btn-secondary" id="add-member-btn">Add Member</button>
-                                <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
-                                <div class="schedule-controls" id="schedule-controls">
-                                    <button class="btn btn-secondary" id="cancel-schedule-btn">Cancel</button>
-                                    <button class="btn btn-primary" id="save-schedule-btn">Save Changes</button>
-                                </div>
-                            </div>
+                             <h3>Weekly Team Schedule</h3>
+                              <div>
+                                 <!-- MODIFIED: Add member button now triggers a modal -->
+                                 <button class="btn btn-secondary" id="add-member-btn" style="margin-right: 1rem;">Add Member</button>
+                                 <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
+                                 <div class="schedule-controls" id="schedule-controls">
+                                     <button class="btn btn-secondary" id="cancel-schedule-btn">Cancel</button>
+                                     <button class="btn btn-primary" id="save-schedule-btn">Save Changes</button>
+                                 </div>
+                             </div>
                         </div>
                         <div class="schedule-table-container">
-                            <table class="schedule-table" id="schedule-table">
+                             <table class="schedule-table" id="schedule-table">
                                 <thead>
-                                    <tr>
-                                        <th>Member</th>
-                                        <th>Monday</th>
-                                        <th>Tuesday</th>
-                                        <th>Wednesday</th>
-                                        <th>Thursday</th>
-                                        <th>Friday</th>
-                                        <th>Saturday</th>
-                                        <th>Sunday</th>
-                                    </tr>
+                                    <tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr>
                                 </thead>
                                 <tbody id="schedule-table-body">
-                                    <!-- Schedule will be populated here -->
+                                    <tr>
+                                        <td class="member-name">Fahad Al-Qahtani</td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="On Leave"><span class="shift-leave">On Leave</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                    </tr>
+                                     <tr>
+                                        <td class="member-name">Noura Al-Dossari</td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="11:00 - 19:00"><span class="shift-time">11:00 - 19:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                    </tr>
+                                     <tr>
+                                        <td class="member-name">Ahmed Khan</td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="09:00 - 17:00"><span class="shift-time">09:00 - 17:00</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                        <td class="shift-cell" data-original-value="14:00 - 22:00"><span class="shift-time">14:00 - 22:00</span></td>
+                                    </tr>
                                 </tbody>
-                            </table>
+                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Team Members Tab -->
+                <!-- Team Members -->
                 <div id="team-members" class="tab-content">
                     <div class="widget">
                         <h3>Team Members</h3>
                         <div class="team-grid" id="team-grid">
-                            <!-- Team members will be populated here -->
+                           <!-- Team members are rendered by JS -->
                         </div>
                     </div>
                 </div>
-
-                <!-- Reports Tab -->
-                <div id="reports" class="tab-content">
-                    <div class="widget">
-                        <h3>Reports & Analytics</h3>
-                        <div class="chart-container">
-                            <canvas id="reports-chart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Tab -->
+                
+                <div id="reports" class="tab-content"><div class="placeholder-content" style="padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color);"><h3>Reports & Analytics feature is under development.</h3></div></div>
+                <div id="help" class="tab-content"><div class="placeholder-content" style="padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color);"><h3>Help Center is under development.</h3></div></div>
+                
+                <!-- Profile Tab Content -->
                 <div id="profile" class="tab-content">
                     <div class="widget">
-                        <h3>My Profile</h3>
-                        <div class="dashboard-grid">
-                            <div class="grid-col-span-6">
-                                <div class="form-group">
-                                    <label for="profile-name">Full Name</label>
-                                    <input type="text" id="profile-name" value="Mohamed Elmenisy" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="profile-email">Email</label>
-                                    <input type="email" id="profile-email" value="mohamed@qualityx.com" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="profile-role">Role</label>
-                                    <input type="text" id="profile-role" value="Quality Agent" class="form-control" readonly>
-                                </div>
-                            </div>
-                            <div class="grid-col-span-6">
-                                <div class="form-group">
-                                    <label for="profile-department">Department</label>
-                                    <input type="text" id="profile-department" value="Quality Control" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="profile-phone">Phone</label>
-                                    <input type="tel" id="profile-phone" value="+1234567890" class="form-control">
-                                </div>
-                                <div class="form-group">
-                                    <label for="profile-join-date">Join Date</label>
-                                    <input type="text" id="profile-join-date" value="2024-01-15" class="form-control" readonly>
-                                </div>
-                            </div>
+                        <h3>Edit Profile</h3>
+                        <div class="form-group">
+                            <label for="profile-photo">Profile Picture</label>
+                            <input type="file" id="profile-photo" accept="image/*" />
                         </div>
-                        <div class="schedule-header" style="margin-top: 20px;">
-                            <button class="btn btn-secondary">Cancel</button>
-                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                        <div class="form-group">
+                            <label for="profile-fullname">Full Name</label>
+                            <input type="text" id="profile-fullname" value="Fahad Al-Qahtani">
                         </div>
+                         <div class="form-group">
+                            <label for="profile-jobtitle">Job Title</label>
+                            <input type="text" id="profile-jobtitle" value="Quality Agent">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-email">Email Address</label>
+                            <input type="email" id="profile-email" value="fahad.qahtani@example.com" />
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-phone">Phone Number</label>
+                            <input type="tel" id="profile-phone" value="+966 50 123 4567">
+                        </div>
+                         <div class="page-actions">
+                             <button class="btn btn-secondary">Cancel</button>
+                             <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                         </div>
                     </div>
                 </div>
 
-                <!-- Settings Tab -->
+                <!-- Settings -->
                 <div id="settings" class="tab-content">
                     <div class="widget">
-                        <h3>Settings</h3>
-                        <div class="dashboard-grid">
-                            <div class="grid-col-span-6">
-                                <h4>Notification Preferences</h4>
-                                <div class="setting-item">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span>Email Notifications</span>
-                                </div>
-                                <div class="setting-item">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" checked>
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span>Push Notifications</span>
-                                </div>
-                                <div class="setting-item">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox">
-                                        <span class="slider"></span>
-                                    </label>
-                                    <span>SMS Notifications</span>
-                                </div>
-                            </div>
-                            <div class="grid-col-span-6">
-                                <h4>Appearance</h4>
-                                <div class="setting-item">
-                                    <label for="theme-select">Theme</label>
-                                    <select id="theme-select" class="form-control">
-                                        <option value="dark">Dark</option>
-                                        <option value="light">Light</option>
-                                        <option value="auto">Auto</option>
-                                    </select>
-                                </div>
-                                <div class="setting-item">
-                                    <label for="language-select">Language</label>
-                                    <select id="language-select" class="form-control">
-                                        <option value="en">English</option>
-                                        <option value="ar">Arabic</option>
-                                    </select>
-                                </div>
+                        <h3>Application Settings</h3>
+                        <p style="color: var(--text-muted-color); margin-top:-0.5rem; margin-bottom: 2rem;">Manage your profile, security, notifications, and interface preferences.</p>
+                        <div class="settings-layout">
+                            <nav class="settings-nav">
+                                <ul>
+                                    <li><a href="#" class="active" data-section="security">Security</a></li>
+                                    <li><a href="#" data-section="notifications">Notifications</a></li>
+                                    <li><a href="#" data-section="appearance">Appearance</a></li>
+                                    <li><a href="#" data-section="language">Language & Region</a></li>
+                                </ul>
+                            </nav>
+                            <div class="settings-content">
+                                <!-- Security Section -->
+                                <section id="settings-section-security" class="settings-section active">
+                                    <h4>Security</h4>
+                                    <p class="section-description">Manage your account's security settings.</p>
+                                    <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Password</span>
+                                                <p>Change your password regularly to keep your account secure.</p>
+                                            </div>
+                                            <button class="btn btn-secondary">Change Password</button>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Two-Factor Authentication (2FA)</span>
+                                                <p>Add an extra layer of security to your account.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Notifications Section -->
+                                <section id="settings-section-notifications" class="settings-section">
+                                    <h4>Notifications</h4>
+                                    <p class="section-description">Select how and when you want to be notified.</p>
+                                     <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>In-App Notifications</span>
+                                                <p>Receive alerts directly within the application.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Email Notifications</span>
+                                                <p>Get important notifications sent to your email address.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                         <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>New Order Assigned</span>
+                                                <p>Notify me when a new order is added to my queue.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Appearance Section -->
+                                <section id="settings-section-appearance" class="settings-section">
+                                    <h4>Appearance</h4>
+                                    <p class="section-description">Customize the look and feel of the application.</p>
+                                     <div class="setting-card">
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Theme</span>
+                                                <p>Choose between light and dark themes.</p>
+                                            </div>
+                                            <!-- MODIFIED: Replaced select with a modern button group -->
+                                            <div class="theme-selector" id="theme-selector">
+                                                <div class="theme-option active" data-theme="dark">Dark</div>
+                                                <div class="theme-option" data-theme="light">Light</div>
+                                                <div class="theme-option" data-theme="system">System</div>
+                                            </div>
+                                        </div>
+                                        <div class="setting-item">
+                                            <div class="setting-item-content">
+                                                <span>Compact Table View</span>
+                                                <p>Reduce row height to see more items at once.</p>
+                                            </div>
+                                            <div class="toggle-switch">
+                                                <label class="switch"><input type="checkbox"><span class="slider"></span></label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <!-- Language Section -->
+                                <section id="settings-section-language" class="settings-section">
+                                    <h4>Language & Region</h4>
+                                    <p class="section-description">Set your preferred language and time zone.</p>
+                                     <div class="setting-card">
+                                         <div class="form-group">
+                                             <label for="language-select">Language</label>
+                                             <select id="language-select"><option>English</option><option>العربية</option></select>
+                                         </div>
+                                         <div class="form-group" style="margin-bottom:0;">
+                                             <label for="timezone-select">Time Zone</label>
+                                             <select id="timezone-select"><option>(UTC+03:00) Riyadh</option><option>(UTC-05:00) New York</option></select>
+                                         </div>
+                                    </div>
+                                </section>
                             </div>
                         </div>
-                        <div class="schedule-header" style="margin-top: 20px;">
-                            <button class="btn btn-secondary">Reset</button>
-                            <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
-                        </div>
+                         <div class="page-actions">
+                             <button class="btn btn-secondary">Discard</button>
+                             <button class="btn btn-primary" onclick="alert('Settings saved successfully!')">Save Changes</button>
+                         </div>
                     </div>
                 </div>
 
             </main>
-
-            <footer class="footer">
-                © 2025 Mohamed Elmenisy. All rights reserved.
-            </footer>
+        </div>
+    </div>
+    
+    <!-- ADDED: All Modals -->
+    <!-- New Review Modal -->
+    <div class="modal-overlay" id="new-review-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Create a New Review</h3>
+                <button class="modal-close-btn" data-modal-id="new-review-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="review-order-id">Order ID</label>
+                    <input type="text" id="review-order-id" placeholder="e.g., CZ-12345">
+                </div>
+                <div class="form-group">
+                    <label for="review-feedback">Feedback</label>
+                    <textarea id="review-feedback" rows="5" placeholder="Write your feedback here..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="new-review-modal">Cancel</button>
+                 <button class="btn btn-primary" onclick="alert('Review Submitted!')">Submit</button>
+            </div>
         </div>
     </div>
 
-    <script>
-        // Global variables
-        let currentUser = null;
-        let orders = [];
-        let filteredOrders = [];
-        let teamMembers = [];
-        let scheduleData = [];
+    <!-- Escalate Order Modal -->
+    <div class="modal-overlay" id="escalate-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Escalate Order</h3>
+                <button class="modal-close-btn" data-modal-id="escalate-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem;">You are escalating order <strong id="escalate-order-id-display" style="color: var(--primary-color);"></strong>.</p>
+                <div class="form-group">
+                    <label for="escalate-role-select">Escalate To</label>
+                    <select id="escalate-role-select">
+                        <option value="Helper">Send to Helper</option>
+                        <option value="Senior">Send to Senior</option>
+                        <option value="Supervisor">Send to Supervisor</option>
+                        <option value="Manager">Send to Manager</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="escalate-notes">Add Escalation Notes (Optional)</label>
+                    <textarea id="escalate-notes" rows="4" placeholder="Provide context or specific instructions for the escalation..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="escalate-order-modal">Cancel</button>
+                 <button class="btn btn-primary" id="confirm-escalate-btn">Confirm Escalation</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Error Order Modal -->
+    <div class="modal-overlay" id="error-order-modal">
+        <div class="modal-box">
+            <div class="modal-header" style="border-color: var(--danger-color);">
+                <h3 class="modal-title" style="color: var(--danger-color);">Mark Order as Error</h3>
+                <button class="modal-close-btn" data-modal-id="error-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p style="margin-bottom: 1.5rem;">You are marking order <strong id="error-order-id-display" style="color: var(--primary-color);"></strong> as an error. Please provide a detailed comment.</p>
+                <div class="form-group">
+                    <label for="error-comments">Error Details & Comments</label>
+                    <textarea id="error-comments" rows="5" placeholder="Explain the reason for the error classification..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="error-order-modal">Cancel</button>
+                 <button class="btn btn-danger" id="confirm-error-btn">Confirm Error</button>
+            </div>
+        </div>
+    </div>
 
-        // Initialize the dashboard
-        document.addEventListener('DOMContentLoaded', function() {
-            initializeDashboard();
-            setupEventListeners();
-            loadUserData();
-            loadOrders();
-            loadTeamMembers();
-            loadScheduleData();
-            initializeCharts();
+    <!-- View Order Modal -->
+    <div class="modal-overlay" id="view-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Order Details: <span id="view-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-order-modal">×</button>
+            </div>
+            <div class="modal-body" id="view-order-body">
+                <!-- Details will be populated by JS in a new, beautiful format -->
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-primary modal-close-btn" data-modal-id="view-order-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule Edit Modal -->
+    <div class="modal-overlay" id="schedule-modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="schedule-modal-title">Edit Shift</h3>
+                <button class="modal-close-btn" data-modal-id="schedule-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="shift-select">Select new status for the day:</label>
+                    <select id="shift-select">
+                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
+                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
+                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Sick Leave">Sick Leave</option>
+                        <option value="Off">Off</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="schedule-modal">Cancel</button>
+                 <button class="btn btn-primary" id="schedule-modal-save">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADDED: New Modal for adding a team member -->
+    <div class="modal-overlay" id="add-member-modal">
+        <div class="modal-box" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Team Member</h3>
+                <button class="modal-close-btn" data-modal-id="add-member-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-member-name">Full Name</label>
+                    <input type="text" id="new-member-name" placeholder="e.g., Omar Hassan">
+                </div>
+                <div class="form-group">
+                    <label for="new-member-role">Role</label>
+                    <input type="text" id="new-member-role" placeholder="e.g., Quality Agent">
+                </div>
+            </div>
+            <div class="modal-footer">
+                 <button class="btn btn-secondary modal-close-btn" data-modal-id="add-member-modal">Cancel</button>
+                 <button class="btn btn-primary" id="add-member-save-btn">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- Global State & Data ---
+        const sampleOrders = [
+            { id: 'CZ-84382', issue: 'Missing Item', status: 'New', date: '2025-07-30', details: 'Customer claims the main course was missing from the bag. Restaurant insists it was packed.', comments: ''},
+            { id: 'CZ-84381', issue: 'Wrong Item', status: 'New', date: '2025-07-30', details: 'Customer received diet coke instead of regular coke.', comments: ''},
+            { id: 'CZ-84380', issue: 'Driver Behavior', status: 'New', date: '2025-07-30', details: 'Customer reported driver was late and impolite.', comments: ''},
+            { id: 'CZ-84375', issue: 'Missing Item', status: 'Open', date: '2025-07-28', details: 'Side dish and drink missing from combo meal.', comments: ''},
+            { id: 'CZ-84374', issue: 'Wrong Order', status: 'Open', date: '2025-07-28', details: 'Customer received a completely different person\'s order.', comments: ''},
+            { id: 'CZ-84373', issue: 'Cold Food', status: 'Open', date: '2025-07-27', details: 'Food was reported to be cold on arrival. Delivery time was within expected range.', comments: ''},
+            { id: 'CZ-84371', issue: 'Spillage', status: 'Escalated', date: '2025-07-26', details: 'Major spillage of soup inside the delivery bag. Customer requests a full refund. Escalated to Senior Agent.', escalatedTo: 'Senior', comments: 'Needs manager approval for full refund.'},
+            { id: 'CZ-84365', issue: 'Wrong Item', status: 'Correct', date: '2025-07-24', details: 'Customer received a different sandwich. We contacted the restaurant and issued a partial refund.', comments: 'Resolved with partial credit.'},
+            { id: 'CZ-84360', issue: 'Driver Behavior', status: 'Error', date: '2025-07-23', details: 'Customer reported rude behavior from the driver. Driver has been issued a warning.', comments: 'Driver behavior confirmed via GPS logs showing extended stop. Warning issued.'},
+            { id: 'CZ-84359', issue: 'Spillage', status: 'Correct', date: '2025-07-29', details: 'Minor drink spillage. Customer was compensated with credits.', comments: 'Customer satisfied with apology and credits.'},
+        ];
+
+        // MODIFIED: Team Members data is now a mutable let variable
+        let teamMembers = [
+            { name: "Fahad Al-Qahtani", role: "Quality Agent", color: "#00bfff"},
+            { name: "Noura Al-Dossari", role: "Quality Agent", color: "#ff69b4"},
+            { name: "Ahmed Khan", role: "Senior Quality Agent", color: "#28a745"},
+            { name: "Ali Al-Mansoori", role: "Quality Manager", color: "#ffc107"},
+        ];
+
+        // --- Helper Functions ---
+        const getInitials = (name) => {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : `${names[0][0]}`.toUpperCase();
+        };
+
+        const showModal = (modalId) => document.getElementById(modalId)?.classList.add('show');
+        const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('show');
+        
+        // --- Core Application Logic ---
+        
+        // Tab Switching Logic
+        const pageTitle = document.getElementById('page-title');
+        document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            link.addEventListener('click', (e) => {
+                const tabId = link.dataset.tab;
+                if (!tabId) return;
+                e.preventDefault();
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+                document.getElementById(tabId)?.classList.add('active');
+                link.parentElement.classList.add('active');
+                pageTitle.textContent = link.textContent.trim();
+            });
         });
 
-        // Initialize dashboard components
-        function initializeDashboard() {
-            console.log('Initializing Quality Dashboard...');
-            
-            // Set active tab
-            setActiveTab('dashboard');
-            
-            // Show welcome message with user data
-            updateWelcomeMessage();
-        }
-
-        // Setup event listeners
-        function setupEventListeners() {
-            // Mobile menu toggle
-            document.getElementById('mobile-menu-btn').addEventListener('click', toggleMobileMenu);
-            
-            // Search functionality
-            document.getElementById('search-bar').addEventListener('input', handleSearch);
-            
-            // Filter functionality
-            document.getElementById('status-filter').addEventListener('change', applyFilters);
-            document.getElementById('priority-filter').addEventListener('change', applyFilters);
-            document.getElementById('date-filter').addEventListener('change', applyFilters);
-            
-            // Notification dropdown
-            document.getElementById('notification-btn').addEventListener('click', toggleNotifications);
-            
-            // New Review button
-            document.getElementById('new-review-btn').addEventListener('click', function() {
-                showToast('Opening new review interface...', 'info');
-            });
-            
-            // Logout button
-            document.getElementById('logout-btn').addEventListener('click', confirmLogout);
-            
-            // Navigation tabs
-            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const tab = this.getAttribute('data-tab');
-                    setActiveTab(tab);
-                });
-            });
-            
-            // Schedule editing
-            document.getElementById('edit-schedule-btn').addEventListener('click', enterEditMode);
-            document.getElementById('cancel-schedule-btn').addEventListener('click', exitEditMode);
-            document.getElementById('save-schedule-btn').addEventListener('click', saveSchedule);
-            
-            // Add member button
-            document.getElementById('add-member-btn').addEventListener('click', function() {
-                showToast('Add member functionality will be implemented', 'info');
-            });
-            
-            // Save buttons
-            document.getElementById('save-profile-btn').addEventListener('click', function() {
-                showToast('Profile updated successfully!', 'success');
-            });
-            
-            document.getElementById('save-settings-btn').addEventListener('click', function() {
-                showToast('Settings saved successfully!', 'success');
-            });
-            
-            // Confirmation modal
-            document.getElementById('confirmation-cancel').addEventListener('click', closeConfirmationModal);
-            
-            // Close notification dropdown when clicking outside
-            document.addEventListener('click', function(e) {
-                if (!e.target.closest('.notification-bell')) {
-                    document.getElementById('notification-dropdown').classList.remove('show');
-                }
-            });
-        }
-
-        // Load user data
-        async function loadUserData() {
-            try {
-                // Mock user data
-                currentUser = {
-                    id: 'user-001',
-                    name: 'Mohamed Elmenisy',
-                    email: 'mohamed@qualityx.com',
-                    role: 'agent',
-                    department: 'Quality Control',
-                    avatar: 'ME'
-                };
-                
-                updateUserInterface();
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                showToast('Error loading user data', 'error');
+        // Notifications Dropdown
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        notificationBtn.addEventListener('click', () => notificationDropdown.classList.toggle('show'));
+        document.addEventListener('click', (e) => {
+            if (!notificationBtn.parentElement.contains(e.target)) {
+                notificationDropdown.classList.remove('show');
             }
-        }
+        });
 
-        // Load orders
-        async function loadOrders() {
-            try {
-                // Mock orders data
-                orders = [
-                    {
-                        id: 'ORD-001',
-                        orderId: '12345',
-                        issueType: 'Missing Item',
-                        status: 'new',
-                        assignedDate: '2025-01-15',
-                        priority: 'high',
-                        description: 'Customer reported missing drink from order',
-                        value: 25.00,
-                        compensationAgainstId: 'COMP-001',
-                        isPaid: true,
-                        employee: 'Mohamed Elmenisy',
-                        chefz: 'Burger King',
-                        orderStatus: 'Delivered'
-                    },
-                    {
-                        id: 'ORD-002',
-                        orderId: '12346',
-                        issueType: 'Wrong Order',
-                        status: 'in-progress',
-                        assignedDate: '2025-01-15',
-                        priority: 'medium',
-                        description: 'Customer received wrong sandwich',
-                        value: 15.50,
-                        compensationAgainstId: 'COMP-002',
-                        isPaid: false,
-                        employee: 'Mohamed Elmenisy',
-                        chefz: 'McDonald\'s',
-                        orderStatus: 'Delivered'
-                    },
-                    {
-                        id: 'ORD-003',
-                        orderId: '12347',
-                        issueType: 'Late Delivery',
-                        status: 'escalated',
-                        assignedDate: '2025-01-14',
-                        priority: 'high',
-                        description: 'Order delivered 45 minutes late',
-                        value: 30.00,
-                        compensationAgainstId: 'COMP-003',
-                        isPaid: true,
-                        employee: 'Mohamed Elmenisy',
-                        chefz: 'Pizza Hut',
-                        orderStatus: 'Delivered'
-                    },
-                    {
-                        id: 'ORD-004',
-                        orderId: '12348',
-                        issueType: 'Quality Issue',
-                        status: 'completed',
-                        assignedDate: '2025-01-14',
-                        priority: 'low',
-                        description: 'Food arrived cold',
-                        value: 18.75,
-                        compensationAgainstId: 'COMP-004',
-                        isPaid: true,
-                        employee: 'Mohamed Elmenisy',
-                        chefz: 'KFC',
-                        orderStatus: 'Delivered'
-                    }
-                ];
-                
-                filteredOrders = [...orders];
-                renderOrdersTable();
-            } catch (error) {
-                console.error('Error loading orders:', error);
-                showToast('Error loading orders', 'error');
-            }
-        }
+        // --- Assigned Orders Table & Filtering ---
+        const ordersTableBody = document.getElementById('orders-table-body');
+        const ordersCountEl = document.getElementById('orders-count');
+        const filterStatusSelect = document.getElementById('filter-status');
+        const filterIssueTypeSelect = document.getElementById('filter-issue-type');
+        const searchInput = document.getElementById('orders-search-input');
+        const fromDateInput = document.getElementById('filter-from-date');
+        const toDateInput = document.getElementById('filter-to-date');
 
-        // Load team members
-        async function loadTeamMembers() {
-            try {
-                // Mock team members data
-                teamMembers = [
-                    {
-                        id: 'TM-001',
-                        name: 'Mohamed Elmenisy',
-                        role: 'Quality Agent',
-                        department: 'Quality Control',
-                        avatar: 'ME',
-                        status: 'active'
-                    },
-                    {
-                        id: 'TM-002',
-                        name: 'Ahmed Hassan',
-                        role: 'Senior Agent',
-                        department: 'Quality Control',
-                        avatar: 'AH',
-                        status: 'active'
-                    },
-                    {
-                        id: 'TM-003',
-                        name: 'Sarah Johnson',
-                        role: 'Quality Agent',
-                        department: 'Quality Control',
-                        avatar: 'SJ',
-                        status: 'active'
-                    },
-                    {
-                        id: 'TM-004',
-                        name: 'Mike Wilson',
-                        role: 'Team Lead',
-                        department: 'Quality Control',
-                        avatar: 'MW',
-                        status: 'active'
-                    }
-                ];
-                
-                renderTeamMembers();
-            } catch (error) {
-                console.error('Error loading team members:', error);
-                showToast('Error loading team members', 'error');
-            }
+        function populateIssueFilter() {
+             const issueTypes = [...new Set(sampleOrders.map(o => o.issue))];
+             filterIssueTypeSelect.innerHTML = '<option value="All">All Types</option>';
+             issueTypes.sort().forEach(type => {
+                 const option = document.createElement('option');
+                 option.value = type;
+                 option.textContent = type;
+                 filterIssueTypeSelect.appendChild(option);
+             });
         }
-
-        // Load schedule data
-        async function loadScheduleData() {
-            try {
-                // Mock schedule data
-                scheduleData = [
-                    {
-                        member: 'Mohamed Elmenisy',
-                        monday: '09:00 - 17:00',
-                        tuesday: '09:00 - 17:00',
-                        wednesday: '09:00 - 17:00',
-                        thursday: '09:00 - 17:00',
-                        friday: '09:00 - 17:00',
-                        saturday: 'Off',
-                        sunday: 'Off'
-                    },
-                    {
-                        member: 'Ahmed Hassan',
-                        monday: '11:00 - 19:00',
-                        tuesday: '11:00 - 19:00',
-                        wednesday: '11:00 - 19:00',
-                        thursday: '11:00 - 19:00',
-                        friday: '11:00 - 19:00',
-                        saturday: 'Off',
-                        sunday: 'Off'
-                    },
-                    {
-                        member: 'Sarah Johnson',
-                        monday: '09:00 - 17:00',
-                        tuesday: '09:00 - 17:00',
-                        wednesday: 'Off',
-                        thursday: 'Off',
-                        friday: '14:00 - 22:00',
-                        saturday: '14:00 - 22:00',
-                        sunday: '14:00 - 22:00'
-                    }
-                ];
-                
-                renderScheduleTable();
-            } catch (error) {
-                console.error('Error loading schedule data:', error);
-                showToast('Error loading schedule data', 'error');
-            }
-        }
-
-        // Update user interface with user data
-        function updateUserInterface() {
-            if (currentUser) {
-                document.getElementById('user-name').textContent = currentUser.name;
-                document.getElementById('user-role').textContent = currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1);
-                document.getElementById('user-avatar').textContent = currentUser.avatar;
-            }
-        }
-
-        // Update welcome message
-        function updateWelcomeMessage() {
-            const welcomeMessage = document.getElementById('welcome-message');
-            if (currentUser) {
-                const pendingOrders = orders.filter(order => order.status === 'new' || order.status === 'in-progress').length;
-                welcomeMessage.querySelector('h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
-                welcomeMessage.querySelector('p').innerHTML = `You have <strong>${pendingOrders} orders</strong> assigned to you today. Your current accuracy rate is <strong>98.2%</strong>.`;
-            }
-        }
-
-        // Render orders table
+        
         function renderOrdersTable() {
-            const tableBody = document.getElementById('orders-table-body');
-            tableBody.innerHTML = '';
-            
-            if (filteredOrders.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" style="text-align: center; padding: 40px;">
-                            No orders found matching your criteria.
-                        </td>
-                    </tr>
-                `;
-                return;
+            if (!ordersTableBody) return;
+
+            const currentStatusFilter = filterStatusSelect.value;
+            const currentIssueFilter = filterIssueTypeSelect.value;
+            const currentSearchTerm = searchInput.value.toLowerCase();
+            const currentFromDate = fromDateInput.value;
+            const currentToDate = toDateInput.value;
+
+            let filteredOrders = sampleOrders;
+
+            // 1. Filter by Status
+            filteredOrders = filteredOrders.filter(order => {
+                if (currentStatusFilter === 'All') return true;
+                if (currentStatusFilter === 'Completed') return ['Correct', 'Error'].includes(order.status);
+                return order.status === currentStatusFilter;
+            });
+
+            // 2. Filter by Issue Type
+            if (currentIssueFilter !== 'All') {
+                filteredOrders = filteredOrders.filter(order => order.issue === currentIssueFilter);
             }
-            
-            filteredOrders.forEach(order => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td>${order.orderId}</td>
-                    <td>${order.issueType}</td>
-                    <td><span class="status-badge status-${order.status}">${getStatusText(order.status)}</span></td>
-                    <td>${formatDate(order.assignedDate)}</td>
-                    <td><span class="priority-${order.priority}">${order.priority.toUpperCase()}</span></td>
-                    <td>
-                        <button class="btn btn-sm btn-primary" onclick="reviewOrder('${order.id}')">Review</button>
-                        <button class="btn btn-sm btn-secondary" onclick="viewOrderDetails('${order.id}')">Details</button>
-                    </td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
 
-        // Render team members
-        function renderTeamMembers() {
-            const teamGrid = document.getElementById('team-grid');
-            teamGrid.innerHTML = '';
-            
-            teamMembers.forEach(member => {
-                const card = document.createElement('div');
-                card.className = 'team-member-card';
-                card.innerHTML = `
-                    <div class="team-member-avatar-initials">${member.avatar}</div>
-                    <div class="team-member-name">${member.name}</div>
-                    <div class="team-member-role">${member.role}</div>
-                    <div style="margin-top: 12px; font-size: 14px; color: var(--text-muted);">${member.department}</div>
-                    <div class="status-badge status-${member.status}" style="margin-top: 8px;">${member.status.toUpperCase()}</div>
-                `;
-                teamGrid.appendChild(card);
-            });
-        }
-
-        // Render schedule table
-        function renderScheduleTable() {
-            const tableBody = document.getElementById('schedule-table-body');
-            tableBody.innerHTML = '';
-            
-            scheduleData.forEach(schedule => {
-                const row = document.createElement('tr');
-                row.innerHTML = `
-                    <td class="member-name">${schedule.member}</td>
-                    <td class="shift-cell"><span class="shift-time">${schedule.monday}</span></td>
-                    <td class="shift-cell"><span class="shift-time">${schedule.tuesday}</span></td>
-                    <td class="shift-cell"><span class="shift-time">${schedule.wednesday}</span></td>
-                    <td class="shift-cell"><span class="shift-time">${schedule.thursday}</span></td>
-                    <td class="shift-cell"><span class="shift-time">${schedule.friday}</span></td>
-                    <td class="shift-cell"><span class="${schedule.saturday === 'Off' ? 'shift-off' : 'shift-time'}">${schedule.saturday}</span></td>
-                    <td class="shift-cell"><span class="${schedule.sunday === 'Off' ? 'shift-off' : 'shift-time'}">${schedule.sunday}</span></td>
-                `;
-                tableBody.appendChild(row);
-            });
-        }
-
-        // Handle search functionality
-        function handleSearch(e) {
-            const searchTerm = e.target.value.toLowerCase();
-            
-            if (searchTerm.length === 0) {
-                filteredOrders = [...orders];
-            } else {
-                filteredOrders = orders.filter(order => 
-                    order.orderId.toLowerCase().includes(searchTerm) ||
-                    order.issueType.toLowerCase().includes(searchTerm) ||
-                    order.description.toLowerCase().includes(searchTerm) ||
-                    order.employee.toLowerCase().includes(searchTerm) ||
-                    order.chefz.toLowerCase().includes(searchTerm)
+            // 3. Filter by Search Term
+            if (currentSearchTerm) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.id.toLowerCase().includes(currentSearchTerm) || 
+                    order.issue.toLowerCase().includes(currentSearchTerm)
                 );
             }
-            
-            renderOrdersTable();
-        }
 
-        // Apply filters to orders
-        function applyFilters() {
-            const statusFilter = document.getElementById('status-filter').value;
-            const priorityFilter = document.getElementById('priority-filter').value;
-            const dateFilter = document.getElementById('date-filter').value;
-            
-            filteredOrders = orders.filter(order => {
-                let statusMatch = statusFilter === 'all' || order.status === statusFilter;
-                let priorityMatch = priorityFilter === 'all' || order.priority === priorityFilter;
-                let dateMatch = !dateFilter || order.assignedDate === dateFilter;
-                
-                return statusMatch && priorityMatch && dateMatch;
-            });
-            
-            renderOrdersTable();
-        }
-
-        // Set active tab
-        function setActiveTab(tabName) {
-            // Update navigation
-            document.querySelectorAll('.sidebar-nav a').forEach(link => {
-                link.classList.remove('active');
-                if (link.getAttribute('data-tab') === tabName) {
-                    link.classList.add('active');
-                }
-            });
-            
-            // Update page title
-            const pageTitle = document.getElementById('page-title');
-            switch(tabName) {
-                case 'dashboard':
-                    pageTitle.textContent = 'Quality Dashboard';
-                    break;
-                case 'my-assigned-orders':
-                    pageTitle.textContent = 'My Assigned Orders';
-                    break;
-                case 'team-scheduling':
-                    pageTitle.textContent = 'Team Schedule';
-                    break;
-                case 'team-members':
-                    pageTitle.textContent = 'Team Members';
-                    break;
-                case 'reports':
-                    pageTitle.textContent = 'Reports & Analytics';
-                    break;
-                case 'profile':
-                    pageTitle.textContent = 'My Profile';
-                    break;
-                case 'settings':
-                    pageTitle.textContent = 'Settings';
-                    break;
-                default:
-                    pageTitle.textContent = 'Quality Dashboard';
+            // 4. Filter by Date Range
+            if (currentFromDate) {
+                filteredOrders = filteredOrders.filter(order => new Date(order.date) >= new Date(currentFromDate));
+            }
+            if (currentToDate) {
+                filteredOrders = filteredOrders.filter(order => new Date(order.date) <= new Date(currentToDate));
             }
             
-            // Hide all tab contents
-            document.querySelectorAll('.tab-content').forEach(tab => {
-                tab.classList.remove('active');
+            ordersCountEl.textContent = filteredOrders.length;
+            ordersTableBody.innerHTML = filteredOrders.map(order => {
+                const statusClass = `status-${order.status.toLowerCase()}`;
+                const actionsHtml = `<td style="display: flex; gap: 0.5rem;">
+                    <button class="btn btn-secondary btn-sm" data-action="view" data-order-id="${order.id}">View</button>
+                    <button class="btn btn-primary btn-sm" data-action="correct" data-order-id="${order.id}">Correct</button>
+                    <button class="btn btn-danger btn-sm" data-action="error" data-order-id="${order.id}">Error</button>
+                    <button class="btn btn-secondary btn-sm" style="background-color: var(--warning-color); color: black;" data-action="escalate" data-order-id="${order.id}">Escalate</button>
+                </td>`;
+
+                return `<tr>
+                    <td>${order.id}</td>
+                    <td>${order.issue}</td>
+                    <td>${order.date}</td>
+                    <td><span class="status-badge ${statusClass}">${order.escalatedTo ? `${order.status} to ${order.escalatedTo}` : order.status}</span></td>
+                    ${actionsHtml}
+                </tr>`;
+            }).join('');
+        }
+
+        // --- Event Listeners for Order Filters ---
+        [filterStatusSelect, filterIssueTypeSelect, fromDateInput, toDateInput].forEach(el => {
+            el?.addEventListener('change', renderOrdersTable);
+        });
+        searchInput?.addEventListener('keyup', renderOrdersTable);
+
+        // --- Event Listeners for Order Actions ---
+        ordersTableBody?.addEventListener('click', e => {
+            const button = e.target.closest('button');
+            if (!button) return;
+            
+            const action = button.dataset.action;
+            const orderId = button.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+
+            if (!order) return;
+
+            switch (action) {
+                case 'view':
+                    document.getElementById('view-order-id').textContent = order.id;
+                    document.getElementById('view-order-body').innerHTML = `
+                        <div class="order-details-grid">
+                            <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${order.status.toLowerCase()}">${order.escalatedTo ? `${order.status} to ${order.escalatedTo}` : order.status}</span></p></div>
+                            <div class="detail-item"><strong>Issue Type</strong><p>${order.issue}</p></div>
+                            <div class="detail-item"><strong>Date Assigned</strong><p>${order.date}</p></div>
+                        </div>
+                        <div class="detail-item" style="margin-top: 1.5rem;"><strong>Details</strong><p>${order.details}</p></div>
+                         ${order.comments ? `<div class="detail-item" style="margin-top: 1.5rem; background-color: #333;"><p style="font-style: italic;">${order.comments}</p></div>` : ''}
+                    `;
+                    showModal('view-order-modal');
+                    break;
+                case 'correct':
+                    order.status = 'Correct';
+                    order.escalatedTo = null;
+                    order.comments = 'Marked as correct by agent.';
+                    renderOrdersTable();
+                    break;
+                case 'error':
+                    document.getElementById('error-order-id-display').textContent = order.id;
+                    document.getElementById('confirm-error-btn').dataset.orderId = order.id;
+                    document.getElementById('error-comments').value = '';
+                    showModal('error-order-modal');
+                    break;
+                case 'escalate':
+                    document.getElementById('escalate-order-id-display').textContent = order.id;
+                    document.getElementById('confirm-escalate-btn').dataset.orderId = order.id;
+                    document.getElementById('escalate-notes').value = '';
+                    showModal('escalate-order-modal');
+                    break;
+            }
+        });
+        
+        document.getElementById('confirm-error-btn')?.addEventListener('click', e => {
+            const orderId = e.target.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+            if(order) {
+                const comments = document.getElementById('error-comments').value;
+                if (!comments) {
+                    alert('Please provide a comment before marking as an error.');
+                    return;
+                }
+                order.status = 'Error';
+                order.escalatedTo = null;
+                order.comments = comments;
+                hideModal('error-order-modal');
+                renderOrdersTable();
+            }
+        });
+
+        document.getElementById('confirm-escalate-btn')?.addEventListener('click', e => {
+            const orderId = e.target.dataset.orderId;
+            const order = sampleOrders.find(o => o.id === orderId);
+            if(order) {
+                const role = document.getElementById('escalate-role-select').value;
+                const notes = document.getElementById('escalate-notes').value;
+                order.status = 'Escalated';
+                order.escalatedTo = role;
+                order.comments = notes;
+                alert(`Order ${orderId} escalated to ${role}.`);
+                hideModal('escalate-order-modal');
+                renderOrdersTable();
+            }
+        });
+        
+        // Modal Management
+        document.getElementById('new-review-btn')?.addEventListener('click', () => showModal('new-review-modal'));
+        document.querySelectorAll('.modal-close-btn').forEach(btn => {
+            btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
+        });
+        
+        // CSV Export
+        document.getElementById('export-csv-btn')?.addEventListener('click', () => {
+             // Re-run filter logic to get currently visible data for export
+            const currentStatusFilter = filterStatusSelect.value;
+            const currentIssueFilter = filterIssueTypeSelect.value;
+            const currentSearchTerm = searchInput.value.toLowerCase();
+            const currentFromDate = fromDateInput.value;
+            const currentToDate = toDateInput.value;
+
+            let filteredOrders = sampleOrders;
+            filteredOrders = filteredOrders.filter(order => {
+                if (currentStatusFilter === 'All') return true;
+                if (currentStatusFilter === 'Completed') return ['Correct', 'Error'].includes(order.status);
+                return order.status === currentStatusFilter;
             });
+            if (currentIssueFilter !== 'All') filteredOrders = filteredOrders.filter(order => order.issue === currentIssueFilter);
+            if (currentSearchTerm) filteredOrders = filteredOrders.filter(order => order.id.toLowerCase().includes(currentSearchTerm) || order.issue.toLowerCase().includes(currentSearchTerm));
+            if (currentFromDate) filteredOrders = filteredOrders.filter(order => new Date(order.date) >= new Date(currentFromDate));
+            if (currentToDate) filteredOrders = filteredOrders.filter(order => new Date(order.date) <= new Date(currentToDate));
+
+            if(filteredOrders.length === 0) {
+                alert("No data to export.");
+                return;
+            }
+
+            const headers = ['Request ID', 'Issue Type', 'Date Assigned', 'Status', 'Escalated To', 'Details', 'Comments'];
+            const csvRows = [headers.join(',')];
             
-            // Show active tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            showToast(`Switched to ${getTabDisplayName(tabName)}`, 'info');
-        }
+            filteredOrders.forEach(order => {
+                const values = [order.id, order.issue, order.date, order.status, order.escalatedTo || 'N/A', `"${order.details.replace(/"/g, '""')}"`, `"${(order.comments || '').replace(/"/g, '""')}"`];
+                csvRows.push(values.join(','));
+            });
 
-        // Get display name for tab
-        function getTabDisplayName(tabName) {
-            const tabNames = {
-                'dashboard': 'Dashboard',
-                'my-assigned-orders': 'My Assigned Orders',
-                'team-scheduling': 'Team Schedule',
-                'team-members': 'Team Members',
-                'reports': 'Reports & Analytics',
-                'profile': 'My Profile',
-                'settings': 'Settings'
-            };
-            
-            return tabNames[tabName] || tabName;
-        }
+            const csvString = csvRows.join('\n');
+            const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            const url = URL.createObjectURL(blob);
+            link.setAttribute('href', url);
+            link.setAttribute('download', 'orders_export.csv');
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
 
-        // Get status text for display
-        function getStatusText(status) {
-            const statusMap = {
-                'new': 'New',
-                'in-progress': 'In Progress',
-                'completed': 'Completed',
-                'escalated': 'Escalated'
-            };
-            
-            return statusMap[status] || status;
+        // Team Members Rendering
+        function renderTeamMembers() {
+            const grid = document.getElementById('team-grid');
+            if(!grid) return;
+            // Generate a random color for new members
+            const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+            grid.innerHTML = teamMembers.map(member => `
+                 <div class="team-member-card">
+                    <div class="team-member-avatar-initials" style="background-color: ${member.color || randomColor()};">
+                        ${getInitials(member.name)}
+                    </div>
+                    <div class="team-member-name">${member.name}</div>
+                    <div class="team-member-role">${member.role}</div>
+                </div>
+            `).join('');
         }
-
-        // Format date for display
-        function formatDate(dateString) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
+        
+        // Profile Page Logic
+        const saveProfileBtn = document.getElementById('save-profile-btn');
+        if (saveProfileBtn) {
+            saveProfileBtn.addEventListener('click', () => {
+                const newName = document.getElementById('profile-fullname').value;
+                document.getElementById('sidebar-username').textContent = newName;
+                document.getElementById('sidebar-userrole').textContent = document.getElementById('profile-jobtitle').value;
+                document.getElementById('sidebar-avatar-initials').textContent = getInitials(newName);
+                const welcomeMessageH2 = document.querySelector('#welcome-message h2');
+                if (welcomeMessageH2) welcomeMessageH2.textContent = `Welcome, ${newName}!`;
+                alert('Profile updated successfully!');
+            });
         }
+        
+        // Settings Page Navigation Logic
+        const settingsNavLinks = document.querySelectorAll('.settings-nav a');
+        const settingsSections = document.querySelectorAll('.settings-section');
+        settingsNavLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const sectionId = `settings-section-${link.dataset.section}`;
+                settingsNavLinks.forEach(l => l.classList.remove('active'));
+                settingsSections.forEach(s => s.classList.remove('active'));
+                link.classList.add('active');
+                document.getElementById(sectionId)?.classList.add('active');
+            });
+        });
 
-        // Toggle mobile menu
-        function toggleMobileMenu() {
-            document.getElementById('sidebar').classList.toggle('mobile-open');
-        }
+        // ADDED: Modern Theme Selector Logic
+        const themeSelector = document.getElementById('theme-selector');
+        themeSelector?.addEventListener('click', (e) => {
+            const target = e.target.closest('.theme-option');
+            if(target) {
+                themeSelector.querySelector('.active').classList.remove('active');
+                target.classList.add('active');
+                // You would add theme-switching logic here
+                console.log(`Theme changed to: ${target.dataset.theme}`);
+            }
+        });
 
-        // Toggle notifications dropdown
-        function toggleNotifications() {
-            document.getElementById('notification-dropdown').classList.toggle('show');
-        }
 
-        // Enter edit mode for schedule
+        // --- Team Scheduling Logic ---
+        const editScheduleBtn = document.getElementById('edit-schedule-btn');
+        const saveScheduleBtn = document.getElementById('save-schedule-btn');
+        const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+        const scheduleTable = document.getElementById('schedule-table');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const scheduleControls = document.getElementById('schedule-controls');
+        
+        const scheduleModal = document.getElementById('schedule-modal');
+        const scheduleModalSave = document.getElementById('schedule-modal-save');
+        const shiftSelect = document.getElementById('shift-select');
+        let activeCell = null;
+
         function enterEditMode() {
-            document.getElementById('schedule-table').classList.add('edit-mode');
-            document.getElementById('edit-schedule-btn').style.display = 'none';
-            document.getElementById('schedule-controls').classList.add('active');
-            showToast('Schedule editing mode activated', 'info');
-        }
-
-        // Exit edit mode for schedule
-        function exitEditMode() {
-            document.getElementById('schedule-table').classList.remove('edit-mode');
-            document.getElementById('edit-schedule-btn').style.display = 'inline-block';
-            document.getElementById('schedule-controls').classList.remove('active');
-            showToast('Schedule editing cancelled', 'warning');
-        }
-
-        // Save schedule changes
-        function saveSchedule() {
-            document.getElementById('schedule-table').classList.remove('edit-mode');
-            document.getElementById('edit-schedule-btn').style.display = 'inline-block';
-            document.getElementById('schedule-controls').classList.remove('active');
-            showToast('Schedule saved successfully!', 'success');
-        }
-
-        // Confirm logout
-        function confirmLogout() {
-            showConfirmationModal(
-                'Confirm Logout',
-                'Are you sure you want to log out?',
-                () => {
-                    showToast('Successfully logged out', 'success');
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 1500);
-                }
-            );
-        }
-
-        // Review order
-        function reviewOrder(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (order) {
-                showToast(`Reviewing order ${order.orderId}`, 'info');
-                // In a full implementation, this would open a review modal
-            }
-        }
-
-        // View order details
-        function viewOrderDetails(orderId) {
-            const order = orders.find(o => o.id === orderId);
-            if (order) {
-                showToast(`Viewing details for order ${order.orderId}`, 'info');
-                // In a full implementation, this would open a details modal
-            }
-        }
-
-        // Show confirmation modal
-        function showConfirmationModal(title, message, confirmCallback) {
-            document.getElementById('confirmation-title').textContent = title;
-            document.getElementById('confirmation-message').textContent = message;
-            
-            const confirmButton = document.getElementById('confirmation-confirm');
-            confirmButton.onclick = function() {
-                closeConfirmationModal();
-                confirmCallback();
-            };
-            
-            document.getElementById('confirmation-modal').classList.add('show');
-        }
-
-        // Close confirmation modal
-        function closeConfirmationModal() {
-            document.getElementById('confirmation-modal').classList.remove('show');
-        }
-
-        // Show toast message
-        function showToast(message, type = 'info') {
-            const toastContainer = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            
-            toastContainer.appendChild(toast);
-            
-            // Show toast
-            setTimeout(() => {
-                toast.classList.add('show');
-            }, 10);
-            
-            // Hide toast after 5 seconds
-            setTimeout(() => {
-                toast.classList.remove('show');
-                setTimeout(() => {
-                    toastContainer.removeChild(toast);
-                }, 300);
-            }, 5000);
-        }
-
-        // Initialize charts
-        function initializeCharts() {
-            // Performance Chart
-            const performanceCtx = document.getElementById('performance-chart').getContext('2d');
-            new Chart(performanceCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Correct', 'Error', 'Escalated'],
-                    datasets: [{
-                        data: [78, 12, 10],
-                        backgroundColor: [
-                            'rgba(0, 217, 126, 0.8)',
-                            'rgba(230, 55, 87, 0.8)',
-                            'rgba(246, 195, 67, 0.8)'
-                        ],
-                        borderColor: [
-                            'rgba(0, 217, 126, 1)',
-                            'rgba(230, 55, 87, 1)',
-                            'rgba(246, 195, 67, 1)'
-                        ],
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#ffffff',
-                                font: {
-                                    family: 'Poppins',
-                                    size: 12
-                                }
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rgba(26, 26, 26, 0.9)',
-                            titleColor: '#ffffff',
-                            bodyColor: '#ffffff',
-                            borderColor: 'rgba(255, 255, 255, 0.1)',
-                            borderWidth: 1
-                        }
-                    },
-                    cutout: '70%'
-                }
+            if (!scheduleTable) return;
+            scheduleTable.classList.add('edit-mode');
+            editScheduleBtn.style.display = 'none';
+            scheduleControls.style.display = 'flex';
+            scheduleTable.querySelectorAll('.shift-cell').forEach(cell => {
+                cell.dataset.originalValue = cell.textContent.trim();
             });
-
-            // Reports Chart
-            const reportsCtx = document.getElementById('reports-chart').getContext('2d');
-            new Chart(reportsCtx, {
-                type: 'bar',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [{
-                        label: 'Orders Reviewed',
-                        data: [120, 150, 180, 200, 170, 220],
-                        backgroundColor: 'rgba(0, 191, 255, 0.8)',
-                        borderColor: 'rgba(0, 191, 255, 1)',
-                        borderWidth: 1
-                    }, {
-                        label: 'Accuracy Rate %',
-                        data: [95, 96, 98, 97, 98, 99],
-                        backgroundColor: 'rgba(0, 217, 126, 0.8)',
-                        borderColor: 'rgba(0, 217, 126, 1)',
-                        borderWidth: 1,
-                        type: 'line',
-                        yAxisID: 'y1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: {
-                                display: true,
-                                text: 'Orders Reviewed',
-                                color: '#ffffff'
-                            },
-                            ticks: {
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        },
-                        y1: {
-                            position: 'right',
-                            beginAtZero: true,
-                            max: 100,
-                            title: {
-                                display: true,
-                                text: 'Accuracy Rate %',
-                                color: '#ffffff'
-                            },
-                            ticks: {
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                drawOnChartArea: false
-                            }
-                        },
-                        x: {
-                            ticks: {
-                                color: '#ffffff'
-                            },
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            }
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#ffffff'
-                            }
-                        }
-                    }
+        }
+        
+        function exitEditMode(save = false) {
+             if (!scheduleTable) return;
+            scheduleTable.classList.remove('edit-mode');
+            editScheduleBtn.style.display = 'inline-flex';
+            scheduleControls.style.display = 'none';
+            
+            scheduleTable.querySelectorAll('.shift-cell').forEach(cell => {
+                if (!save) {
+                    updateCellContent(cell, cell.dataset.originalValue);
+                } else {
+                     cell.dataset.originalValue = cell.textContent.trim();
                 }
             });
         }
+        
+        function updateCellContent(cell, value) {
+            let className = 'shift-time';
+            if(value === 'Off') className = 'shift-off';
+            else if(value === 'On Leave') className = 'shift-leave';
+            else if(value === 'Sick Leave') className = 'shift-sick';
+            cell.innerHTML = `<span class="${className}">${value}</span>`;
+        }
+        
+        if (editScheduleBtn) editScheduleBtn.addEventListener('click', enterEditMode);
+        if (cancelScheduleBtn) cancelScheduleBtn.addEventListener('click', () => exitEditMode(false));
+        if (saveScheduleBtn) {
+            saveScheduleBtn.addEventListener('click', () => {
+                exitEditMode(true);
+                alert("Schedule saved successfully!");
+            });
+        }
+        
+        if (scheduleTable) {
+            scheduleTable.addEventListener('click', (e) => {
+                const cell = e.target.closest('.shift-cell');
+                if (scheduleTable.classList.contains('edit-mode') && cell) {
+                    activeCell = cell;
+                    const currentValue = cell.textContent.trim();
+                    shiftSelect.value = currentValue;
+                    showModal('schedule-modal');
+                }
+            });
+        }
+        
+        if(scheduleModalSave) {
+            scheduleModalSave.addEventListener('click', () => {
+                if(activeCell) {
+                    const newValue = shiftSelect.value;
+                    updateCellContent(activeCell, newValue);
+                    activeCell.dataset.originalValue = newValue;
+                }
+                hideModal('schedule-modal');
+            });
+        }
+
+        // --- ADDED: Add Member Functionality ---
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const addMemberModalSaveBtn = document.getElementById('add-member-save-btn');
+        const newMemberNameInput = document.getElementById('new-member-name');
+        const newMemberRoleInput = document.getElementById('new-member-role');
+
+        addMemberBtn?.addEventListener('click', () => {
+            newMemberNameInput.value = ''; // Clear previous input
+            newMemberRoleInput.value = '';
+            showModal('add-member-modal');
+        });
+
+        addMemberModalSaveBtn?.addEventListener('click', () => {
+            const name = newMemberNameInput.value.trim();
+            const role = newMemberRoleInput.value.trim();
+            if (name && role) {
+                // Add to teamMembers array
+                const randomColor = () => '#' + Math.floor(Math.random()*16777215).toString(16).padStart(6, '0');
+                teamMembers.push({ name, role, color: randomColor() });
+                
+                // Add row to schedule table
+                const newRow = document.createElement('tr');
+                let offCells = '';
+                for (let i = 0; i < 7; i++) {
+                    offCells += `<td class="shift-cell" data-original-value="Off"><span class="shift-off">Off</span></td>`;
+                }
+                newRow.innerHTML = `<td class="member-name">${name}</td>${offCells}`;
+                scheduleTableBody.appendChild(newRow);
+
+                // Re-render team members page
+                renderTeamMembers();
+                
+                hideModal('add-member-modal');
+            } else {
+                alert('Please fill in both name and role for the new member.');
+            }
+        });
+        
+        
+        // --- Initial Calls ---
+        populateIssueFilter();
+        renderOrdersTable();
+        renderTeamMembers();
+        document.getElementById('sidebar-avatar-initials').textContent = getInitials(document.getElementById('sidebar-username').textContent);
+    });
     </script>
 </body>
 </html>
