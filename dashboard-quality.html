@@ -7,7 +7,6 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module" src="./api-client.js"></script>
     <style>
         :root {
             --primary-color: #00bfff;
@@ -1237,15 +1236,23 @@
                                 </svg>
                                 My Assigned Orders
                             </a></li>
-                            <li><a data-tab="order-review">
+                            <li><a data-tab="team-scheduling">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-                                    <polyline points="14 2 14 8 20 8"/>
-                                    <line x1="16" y1="13" x2="8" y2="13"/>
-                                    <line x1="16" y1="17" x2="8" y2="17"/>
-                                    <polyline points="10 9 9 9 8 9"/>
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                                    <line x1="16" y1="2" x2="16" y2="6"/>
+                                    <line x1="8" y1="2" x2="8" y2="6"/>
+                                    <line x1="3" y1="10" x2="21" y2="10"/>
                                 </svg>
-                                Order Review
+                                Team Schedule
+                            </a></li>
+                            <li><a data-tab="team-members">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="9" cy="7" r="4"/>
+                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                </svg>
+                                Team Members
                             </a></li>
                         </ul>
                     </div>
@@ -1253,14 +1260,6 @@
                     <div class="nav-group">
                         <h2 class="nav-group-title">Analytics</h2>
                         <ul class="sidebar-nav">
-                            <li><a data-tab="performance">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <line x1="18" y1="20" x2="18" y2="10"/>
-                                    <line x1="12" y1="20" x2="12" y2="4"/>
-                                    <line x1="6" y1="20" x2="6" y2="14"/>
-                                </svg>
-                                Performance Metrics
-                            </a></li>
                             <li><a data-tab="reports">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M21.21 15.89A10 10 0 1 1 8 2.83"/>
@@ -1272,24 +1271,29 @@
                     </div>
 
                     <div class="nav-group">
-                        <h2 class="nav-group-title">Management</h2>
+                        <h2 class="nav-group-title">Account</h2>
                         <ul class="sidebar-nav">
-                            <li><a data-tab="team-management">
+                            <li><a data-tab="profile">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-                                    <circle cx="9" cy="7" r="4"/>
-                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-                                    <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                                    <circle cx="12" cy="7" r="4"/>
                                 </svg>
-                                Team Management
+                                My Profile
                             </a></li>
-                            <li><a data-tab="escalations">
+                            <li><a data-tab="settings">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                    <line x1="12" y1="9" x2="12" y2="13"/>
-                                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
                                 </svg>
-                                Escalations
+                                Settings
+                            </a></li>
+                            <li><a id="logout-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+                                    <polyline points="16 17 21 12 16 7"/>
+                                    <line x1="21" y1="12" x2="9" y2="12"/>
+                                </svg>
+                                Logout
                             </a></li>
                         </ul>
                     </div>
@@ -1311,7 +1315,7 @@
         <div class="main-wrapper">
             <header class="topbar">
                 <div class="topbar-left">
-                    <h1 class="page-title">Quality Command Center</h1>
+                    <h1 class="page-title" id="page-title">Quality Dashboard</h1>
                 </div>
 
                 <div class="topbar-actions">
@@ -1353,52 +1357,109 @@
                         </div>
                     </div>
 
-                    <button class="btn btn-primary" id="logout-btn">
+                    <button class="btn btn-primary" id="new-review-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-                            <polyline points="16 17 21 12 16 7"/>
-                            <line x1="21" y1="12" x2="9" y2="12"/>
+                            <path d="M12 5v14M5 12h14"/>
                         </svg>
-                        Logout
+                        New Review
                     </button>
                 </div>
             </header>
 
             <main class="main-content">
-                <!-- Welcome Section -->
-                <div id="welcome-message">
-                    <h2>Welcome back, Mohamed!</h2>
-                    <p>You have <strong>15 new orders</strong> assigned to you today. Your current accuracy rate is <strong>98.2%</strong>.</p>
+                <!-- Dashboard Tab -->
+                <div id="dashboard" class="tab-content active">
+                    <div id="welcome-message">
+                        <h2>Welcome back, Mohamed!</h2>
+                        <p>You have <strong>15 new orders</strong> assigned to you today. Your current accuracy rate is <strong>98.2%</strong>.</p>
+                    </div>
+
+                    <!-- KPI Grid -->
+                    <div class="kpi-grid">
+                        <div class="kpi-card">
+                            <div class="kpi-title">Orders Assigned</div>
+                            <div class="kpi-value" id="orders-assigned">15</div>
+                            <div class="kpi-change">+2 from yesterday</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Accuracy Rate</div>
+                            <div class="kpi-value" id="accuracy-rate">98.2%</div>
+                            <div class="kpi-change">+0.5% this week</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Avg. Processing Time</div>
+                            <div class="kpi-value" id="avg-time">4.2m</div>
+                            <div class="kpi-change">-0.3m improvement</div>
+                        </div>
+                        <div class="kpi-card">
+                            <div class="kpi-title">Escalations</div>
+                            <div class="kpi-value" id="escalations">2</div>
+                            <div class="kpi-change">-1 from last week</div>
+                        </div>
+                    </div>
+
+                    <!-- Dashboard Grid -->
+                    <div class="dashboard-grid">
+                        <!-- Main Content Area -->
+                        <div class="widget grid-col-span-8">
+                            <h3>Performance Overview</h3>
+                            <div class="chart-container">
+                                <canvas id="performance-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Sidebar Widgets -->
+                        <div class="grid-col-span-4">
+                            <div class="widget">
+                                <h3>Recent Activity</h3>
+                                <ul class="activity-feed" id="recent-activity">
+                                    <li class="activity-item">
+                                        <div class="activity-icon" style="background: rgba(0, 191, 255, 0.2); color: var(--primary-color);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                                <polyline points="22 4 12 14.01 9 11.01"/>
+                                            </svg>
+                                        </div>
+                                        <div class="activity-text">
+                                            <strong>Order #12345</strong> marked as Correct
+                                            <div class="activity-time">10 minutes ago</div>
+                                        </div>
+                                    </li>
+                                    <li class="activity-item">
+                                        <div class="activity-icon" style="background: rgba(230, 55, 87, 0.2); color: var(--danger-color);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <circle cx="12" cy="12" r="10"/>
+                                                <line x1="15" y1="9" x2="9" y2="15"/>
+                                                <line x1="9" y1="9" x2="15" y2="15"/>
+                                            </svg>
+                                        </div>
+                                        <div class="activity-text">
+                                            <strong>Order #12346</strong> marked as Error
+                                            <div class="activity-time">1 hour ago</div>
+                                        </div>
+                                    </li>
+                                    <li class="activity-item">
+                                        <div class="activity-icon" style="background: rgba(246, 195, 67, 0.2); color: var(--warning-color);">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                                                <line x1="12" y1="9" x2="12" y2="13"/>
+                                                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                                            </svg>
+                                        </div>
+                                        <div class="activity-text">
+                                            <strong>Order #12347</strong> escalated to Senior
+                                            <div class="activity-time">2 hours ago</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- KPI Grid -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-title">Orders Assigned</div>
-                        <div class="kpi-value" id="orders-assigned">15</div>
-                        <div class="kpi-change">+2 from yesterday</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-title">Accuracy Rate</div>
-                        <div class="kpi-value" id="accuracy-rate">98.2%</div>
-                        <div class="kpi-change">+0.5% this week</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-title">Avg. Processing Time</div>
-                        <div class="kpi-value" id="avg-time">4.2m</div>
-                        <div class="kpi-change">-0.3m improvement</div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-title">Escalations</div>
-                        <div class="kpi-value" id="escalations">2</div>
-                        <div class="kpi-change">-1 from last week</div>
-                    </div>
-                </div>
-
-                <!-- Dashboard Grid -->
-                <div class="dashboard-grid">
-                    <!-- Main Content Area -->
-                    <div class="widget grid-col-span-8">
+                <!-- My Assigned Orders Tab -->
+                <div id="my-assigned-orders" class="tab-content">
+                    <div class="widget">
                         <div class="schedule-header">
                             <h3>My Assigned Orders</h3>
                             <div class="filter-bar">
@@ -1446,61 +1507,160 @@
                             </table>
                         </div>
                     </div>
+                </div>
 
-                    <!-- Sidebar Widgets -->
-                    <div class="grid-col-span-4">
-                        <div class="widget">
-                            <h3>Performance Overview</h3>
-                            <div class="chart-container">
-                                <canvas id="performance-chart"></canvas>
+                <!-- Team Scheduling Tab -->
+                <div id="team-scheduling" class="tab-content">
+                    <div class="widget">
+                        <div class="schedule-header">
+                            <h3>Team Schedule</h3>
+                            <div>
+                                <button class="btn btn-secondary" id="add-member-btn">Add Member</button>
+                                <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
+                                <div class="schedule-controls" id="schedule-controls">
+                                    <button class="btn btn-secondary" id="cancel-schedule-btn">Cancel</button>
+                                    <button class="btn btn-primary" id="save-schedule-btn">Save Changes</button>
+                                </div>
                             </div>
                         </div>
-
-                        <div class="widget">
-                            <h3>Recent Activity</h3>
-                            <ul class="activity-feed" id="recent-activity">
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(0, 191, 255, 0.2); color: var(--primary-color);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                            <polyline points="22 4 12 14.01 9 11.01"/>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        <strong>Order #12345</strong> marked as Correct
-                                        <div class="activity-time">10 minutes ago</div>
-                                    </div>
-                                </li>
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(230, 55, 87, 0.2); color: var(--danger-color);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <circle cx="12" cy="12" r="10"/>
-                                            <line x1="15" y1="9" x2="9" y2="15"/>
-                                            <line x1="9" y1="9" x2="15" y2="15"/>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        <strong>Order #12346</strong> marked as Error
-                                        <div class="activity-time">1 hour ago</div>
-                                    </div>
-                                </li>
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: rgba(246, 195, 67, 0.2); color: var(--warning-color);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                                            <line x1="12" y1="9" x2="12" y2="13"/>
-                                            <line x1="12" y1="17" x2="12.01" y2="17"/>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        <strong>Order #12347</strong> escalated to Senior
-                                        <div class="activity-time">2 hours ago</div>
-                                    </div>
-                                </li>
-                            </ul>
+                        <div class="schedule-table-container">
+                            <table class="schedule-table" id="schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                        <th>Sunday</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-table-body">
+                                    <!-- Schedule will be populated here -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Team Members Tab -->
+                <div id="team-members" class="tab-content">
+                    <div class="widget">
+                        <h3>Team Members</h3>
+                        <div class="team-grid" id="team-grid">
+                            <!-- Team members will be populated here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reports Tab -->
+                <div id="reports" class="tab-content">
+                    <div class="widget">
+                        <h3>Reports & Analytics</h3>
+                        <div class="chart-container">
+                            <canvas id="reports-chart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="profile" class="tab-content">
+                    <div class="widget">
+                        <h3>My Profile</h3>
+                        <div class="dashboard-grid">
+                            <div class="grid-col-span-6">
+                                <div class="form-group">
+                                    <label for="profile-name">Full Name</label>
+                                    <input type="text" id="profile-name" value="Mohamed Elmenisy" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-email">Email</label>
+                                    <input type="email" id="profile-email" value="mohamed@qualityx.com" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-role">Role</label>
+                                    <input type="text" id="profile-role" value="Quality Agent" class="form-control" readonly>
+                                </div>
+                            </div>
+                            <div class="grid-col-span-6">
+                                <div class="form-group">
+                                    <label for="profile-department">Department</label>
+                                    <input type="text" id="profile-department" value="Quality Control" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-phone">Phone</label>
+                                    <input type="tel" id="profile-phone" value="+1234567890" class="form-control">
+                                </div>
+                                <div class="form-group">
+                                    <label for="profile-join-date">Join Date</label>
+                                    <input type="text" id="profile-join-date" value="2024-01-15" class="form-control" readonly>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="schedule-header" style="margin-top: 20px;">
+                            <button class="btn btn-secondary">Cancel</button>
+                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settings" class="tab-content">
+                    <div class="widget">
+                        <h3>Settings</h3>
+                        <div class="dashboard-grid">
+                            <div class="grid-col-span-6">
+                                <h4>Notification Preferences</h4>
+                                <div class="setting-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span>Email Notifications</span>
+                                </div>
+                                <div class="setting-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span>Push Notifications</span>
+                                </div>
+                                <div class="setting-item">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox">
+                                        <span class="slider"></span>
+                                    </label>
+                                    <span>SMS Notifications</span>
+                                </div>
+                            </div>
+                            <div class="grid-col-span-6">
+                                <h4>Appearance</h4>
+                                <div class="setting-item">
+                                    <label for="theme-select">Theme</label>
+                                    <select id="theme-select" class="form-control">
+                                        <option value="dark">Dark</option>
+                                        <option value="light">Light</option>
+                                        <option value="auto">Auto</option>
+                                    </select>
+                                </div>
+                                <div class="setting-item">
+                                    <label for="language-select">Language</label>
+                                    <select id="language-select" class="form-control">
+                                        <option value="en">English</option>
+                                        <option value="ar">Arabic</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="schedule-header" style="margin-top: 20px;">
+                            <button class="btn btn-secondary">Reset</button>
+                            <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
+                        </div>
+                    </div>
+                </div>
+
             </main>
 
             <footer class="footer">
@@ -1514,6 +1674,8 @@
         let currentUser = null;
         let orders = [];
         let filteredOrders = [];
+        let teamMembers = [];
+        let scheduleData = [];
 
         // Initialize the dashboard
         document.addEventListener('DOMContentLoaded', function() {
@@ -1521,6 +1683,8 @@
             setupEventListeners();
             loadUserData();
             loadOrders();
+            loadTeamMembers();
+            loadScheduleData();
             initializeCharts();
         });
 
@@ -1551,16 +1715,40 @@
             // Notification dropdown
             document.getElementById('notification-btn').addEventListener('click', toggleNotifications);
             
+            // New Review button
+            document.getElementById('new-review-btn').addEventListener('click', function() {
+                showToast('Opening new review interface...', 'info');
+            });
+            
             // Logout button
             document.getElementById('logout-btn').addEventListener('click', confirmLogout);
             
             // Navigation tabs
-            document.querySelectorAll('.sidebar-nav a').forEach(link => {
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
                     const tab = this.getAttribute('data-tab');
                     setActiveTab(tab);
                 });
+            });
+            
+            // Schedule editing
+            document.getElementById('edit-schedule-btn').addEventListener('click', enterEditMode);
+            document.getElementById('cancel-schedule-btn').addEventListener('click', exitEditMode);
+            document.getElementById('save-schedule-btn').addEventListener('click', saveSchedule);
+            
+            // Add member button
+            document.getElementById('add-member-btn').addEventListener('click', function() {
+                showToast('Add member functionality will be implemented', 'info');
+            });
+            
+            // Save buttons
+            document.getElementById('save-profile-btn').addEventListener('click', function() {
+                showToast('Profile updated successfully!', 'success');
+            });
+            
+            document.getElementById('save-settings-btn').addEventListener('click', function() {
+                showToast('Settings saved successfully!', 'success');
             });
             
             // Confirmation modal
@@ -1574,11 +1762,10 @@
             });
         }
 
-        // Load user data from Supabase
+        // Load user data
         async function loadUserData() {
             try {
-                // In a real implementation, this would fetch from Supabase
-                // For now, we'll use mock data
+                // Mock user data
                 currentUser = {
                     id: 'user-001',
                     name: 'Mohamed Elmenisy',
@@ -1595,11 +1782,10 @@
             }
         }
 
-        // Load orders from Supabase
+        // Load orders
         async function loadOrders() {
             try {
-                // In a real implementation, this would fetch from Supabase
-                // For now, we'll use mock data
+                // Mock orders data
                 orders = [
                     {
                         id: 'ORD-001',
@@ -1660,21 +1846,6 @@
                         employee: 'Mohamed Elmenisy',
                         chefz: 'KFC',
                         orderStatus: 'Delivered'
-                    },
-                    {
-                        id: 'ORD-005',
-                        orderId: '12349',
-                        issueType: 'Missing Item',
-                        status: 'new',
-                        assignedDate: '2025-01-15',
-                        priority: 'medium',
-                        description: 'Missing fries from combo meal',
-                        value: 8.00,
-                        compensationAgainstId: 'COMP-005',
-                        isPaid: false,
-                        employee: 'Mohamed Elmenisy',
-                        chefz: 'Burger King',
-                        orderStatus: 'Delivered'
                     }
                 ];
                 
@@ -1683,6 +1854,96 @@
             } catch (error) {
                 console.error('Error loading orders:', error);
                 showToast('Error loading orders', 'error');
+            }
+        }
+
+        // Load team members
+        async function loadTeamMembers() {
+            try {
+                // Mock team members data
+                teamMembers = [
+                    {
+                        id: 'TM-001',
+                        name: 'Mohamed Elmenisy',
+                        role: 'Quality Agent',
+                        department: 'Quality Control',
+                        avatar: 'ME',
+                        status: 'active'
+                    },
+                    {
+                        id: 'TM-002',
+                        name: 'Ahmed Hassan',
+                        role: 'Senior Agent',
+                        department: 'Quality Control',
+                        avatar: 'AH',
+                        status: 'active'
+                    },
+                    {
+                        id: 'TM-003',
+                        name: 'Sarah Johnson',
+                        role: 'Quality Agent',
+                        department: 'Quality Control',
+                        avatar: 'SJ',
+                        status: 'active'
+                    },
+                    {
+                        id: 'TM-004',
+                        name: 'Mike Wilson',
+                        role: 'Team Lead',
+                        department: 'Quality Control',
+                        avatar: 'MW',
+                        status: 'active'
+                    }
+                ];
+                
+                renderTeamMembers();
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                showToast('Error loading team members', 'error');
+            }
+        }
+
+        // Load schedule data
+        async function loadScheduleData() {
+            try {
+                // Mock schedule data
+                scheduleData = [
+                    {
+                        member: 'Mohamed Elmenisy',
+                        monday: '09:00 - 17:00',
+                        tuesday: '09:00 - 17:00',
+                        wednesday: '09:00 - 17:00',
+                        thursday: '09:00 - 17:00',
+                        friday: '09:00 - 17:00',
+                        saturday: 'Off',
+                        sunday: 'Off'
+                    },
+                    {
+                        member: 'Ahmed Hassan',
+                        monday: '11:00 - 19:00',
+                        tuesday: '11:00 - 19:00',
+                        wednesday: '11:00 - 19:00',
+                        thursday: '11:00 - 19:00',
+                        friday: '11:00 - 19:00',
+                        saturday: 'Off',
+                        sunday: 'Off'
+                    },
+                    {
+                        member: 'Sarah Johnson',
+                        monday: '09:00 - 17:00',
+                        tuesday: '09:00 - 17:00',
+                        wednesday: 'Off',
+                        thursday: 'Off',
+                        friday: '14:00 - 22:00',
+                        saturday: '14:00 - 22:00',
+                        sunday: '14:00 - 22:00'
+                    }
+                ];
+                
+                renderScheduleTable();
+            } catch (error) {
+                console.error('Error loading schedule data:', error);
+                showToast('Error loading schedule data', 'error');
             }
         }
 
@@ -1738,6 +1999,46 @@
             });
         }
 
+        // Render team members
+        function renderTeamMembers() {
+            const teamGrid = document.getElementById('team-grid');
+            teamGrid.innerHTML = '';
+            
+            teamMembers.forEach(member => {
+                const card = document.createElement('div');
+                card.className = 'team-member-card';
+                card.innerHTML = `
+                    <div class="team-member-avatar-initials">${member.avatar}</div>
+                    <div class="team-member-name">${member.name}</div>
+                    <div class="team-member-role">${member.role}</div>
+                    <div style="margin-top: 12px; font-size: 14px; color: var(--text-muted);">${member.department}</div>
+                    <div class="status-badge status-${member.status}" style="margin-top: 8px;">${member.status.toUpperCase()}</div>
+                `;
+                teamGrid.appendChild(card);
+            });
+        }
+
+        // Render schedule table
+        function renderScheduleTable() {
+            const tableBody = document.getElementById('schedule-table-body');
+            tableBody.innerHTML = '';
+            
+            scheduleData.forEach(schedule => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="member-name">${schedule.member}</td>
+                    <td class="shift-cell"><span class="shift-time">${schedule.monday}</span></td>
+                    <td class="shift-cell"><span class="shift-time">${schedule.tuesday}</span></td>
+                    <td class="shift-cell"><span class="shift-time">${schedule.wednesday}</span></td>
+                    <td class="shift-cell"><span class="shift-time">${schedule.thursday}</span></td>
+                    <td class="shift-cell"><span class="shift-time">${schedule.friday}</span></td>
+                    <td class="shift-cell"><span class="${schedule.saturday === 'Off' ? 'shift-off' : 'shift-time'}">${schedule.saturday}</span></td>
+                    <td class="shift-cell"><span class="${schedule.sunday === 'Off' ? 'shift-off' : 'shift-time'}">${schedule.sunday}</span></td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
         // Handle search functionality
         function handleSearch(e) {
             const searchTerm = e.target.value.toLowerCase();
@@ -1785,34 +2086,41 @@
             });
             
             // Update page title
-            const pageTitle = document.querySelector('.page-title');
+            const pageTitle = document.getElementById('page-title');
             switch(tabName) {
                 case 'dashboard':
-                    pageTitle.textContent = 'Quality Command Center';
+                    pageTitle.textContent = 'Quality Dashboard';
                     break;
                 case 'my-assigned-orders':
                     pageTitle.textContent = 'My Assigned Orders';
                     break;
-                case 'order-review':
-                    pageTitle.textContent = 'Order Review';
+                case 'team-scheduling':
+                    pageTitle.textContent = 'Team Schedule';
                     break;
-                case 'performance':
-                    pageTitle.textContent = 'Performance Metrics';
+                case 'team-members':
+                    pageTitle.textContent = 'Team Members';
                     break;
                 case 'reports':
                     pageTitle.textContent = 'Reports & Analytics';
                     break;
-                case 'team-management':
-                    pageTitle.textContent = 'Team Management';
+                case 'profile':
+                    pageTitle.textContent = 'My Profile';
                     break;
-                case 'escalations':
-                    pageTitle.textContent = 'Escalations';
+                case 'settings':
+                    pageTitle.textContent = 'Settings';
                     break;
                 default:
-                    pageTitle.textContent = 'Quality Command Center';
+                    pageTitle.textContent = 'Quality Dashboard';
             }
             
-            // In a full implementation, we would load the appropriate content for each tab
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show active tab content
+            document.getElementById(tabName).classList.add('active');
+            
             showToast(`Switched to ${getTabDisplayName(tabName)}`, 'info');
         }
 
@@ -1821,11 +2129,11 @@
             const tabNames = {
                 'dashboard': 'Dashboard',
                 'my-assigned-orders': 'My Assigned Orders',
-                'order-review': 'Order Review',
-                'performance': 'Performance Metrics',
+                'team-scheduling': 'Team Schedule',
+                'team-members': 'Team Members',
                 'reports': 'Reports & Analytics',
-                'team-management': 'Team Management',
-                'escalations': 'Escalations'
+                'profile': 'My Profile',
+                'settings': 'Settings'
             };
             
             return tabNames[tabName] || tabName;
@@ -1859,13 +2167,36 @@
             document.getElementById('notification-dropdown').classList.toggle('show');
         }
 
+        // Enter edit mode for schedule
+        function enterEditMode() {
+            document.getElementById('schedule-table').classList.add('edit-mode');
+            document.getElementById('edit-schedule-btn').style.display = 'none';
+            document.getElementById('schedule-controls').classList.add('active');
+            showToast('Schedule editing mode activated', 'info');
+        }
+
+        // Exit edit mode for schedule
+        function exitEditMode() {
+            document.getElementById('schedule-table').classList.remove('edit-mode');
+            document.getElementById('edit-schedule-btn').style.display = 'inline-block';
+            document.getElementById('schedule-controls').classList.remove('active');
+            showToast('Schedule editing cancelled', 'warning');
+        }
+
+        // Save schedule changes
+        function saveSchedule() {
+            document.getElementById('schedule-table').classList.remove('edit-mode');
+            document.getElementById('edit-schedule-btn').style.display = 'inline-block';
+            document.getElementById('schedule-controls').classList.remove('active');
+            showToast('Schedule saved successfully!', 'success');
+        }
+
         // Confirm logout
         function confirmLogout() {
             showConfirmationModal(
                 'Confirm Logout',
                 'Are you sure you want to log out?',
                 () => {
-                    // In a real implementation, this would call the logout API
                     showToast('Successfully logged out', 'success');
                     setTimeout(() => {
                         window.location.href = 'login.html';
@@ -1980,6 +2311,81 @@
                         }
                     },
                     cutout: '70%'
+                }
+            });
+
+            // Reports Chart
+            const reportsCtx = document.getElementById('reports-chart').getContext('2d');
+            new Chart(reportsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Orders Reviewed',
+                        data: [120, 150, 180, 200, 170, 220],
+                        backgroundColor: 'rgba(0, 191, 255, 0.8)',
+                        borderColor: 'rgba(0, 191, 255, 1)',
+                        borderWidth: 1
+                    }, {
+                        label: 'Accuracy Rate %',
+                        data: [95, 96, 98, 97, 98, 99],
+                        backgroundColor: 'rgba(0, 217, 126, 0.8)',
+                        borderColor: 'rgba(0, 217, 126, 1)',
+                        borderWidth: 1,
+                        type: 'line',
+                        yAxisID: 'y1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Orders Reviewed',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        },
+                        y1: {
+                            position: 'right',
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Accuracy Rate %',
+                                color: '#ffffff'
+                            },
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                drawOnChartArea: false
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                color: '#ffffff'
+                            },
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#ffffff'
+                            }
+                        }
+                    }
                 }
             });
         }
