@@ -933,6 +933,16 @@
             font-size: 14px;
             font-weight: 500;
         }
+        
+        /* Placeholder Content */
+        .placeholder-content {
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-muted);
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius-base);
+        }
+
 
         /* Tabs */
         .tab-content {
@@ -1105,7 +1115,7 @@
                     <div class="nav-group">
                         <h2 class="nav-group-title">Quality Operations</h2>
                         <ul class="sidebar-nav">
-                            <li class="active"><a data-tab="dashboard">
+                            <li><a class="active" data-tab="dashboard">
                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                                     <path d="M3 3v18h18"/>
                                     <path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/>
@@ -1199,6 +1209,7 @@
         <div class="main-wrapper">
             <header class="topbar">
                 <div class="topbar-left">
+                     <button class="mobile-menu-btn" id="mobile-menu-btn-header" style="display: none;">☰</button>
                     <h2 class="page-title" id="page-title">Quality Dashboard</h2>
                 </div>
                 <div class="topbar-actions">
@@ -1210,25 +1221,13 @@
                                 <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
                             </svg>
                         </button>
-                        <div class="notification-badge" id="notification-count">3</div>
+                        <div class="notification-badge" id="notification-count">0</div>
                         <div id="notification-dropdown" class="notification-dropdown">
                             <div class="notification-header">
                                 <span>Notifications</span>
-                                <small style="color: var(--text-muted); font-weight: 400;">3 unread</small>
                             </div>
                             <ul class="notification-list" id="notification-list">
-                                <li class="notification-item">
-                                    <strong>New Orders Assigned</strong><br>
-                                    5 new orders were assigned to you
-                                </li>
-                                <li class="notification-item">
-                                    <strong>Quality Alert</strong><br>
-                                    High priority order requires review
-                                </li>
-                                <li class="notification-item">
-                                    <strong>System Update</strong><br>
-                                    New quality guidelines available
-                                </li>
+                                <li class="notification-item">No new notifications</li>
                             </ul>
                         </div>
                     </div>
@@ -1244,12 +1243,6 @@
             <main class="main-content">
                 <!-- Dashboard Tab -->
                 <div id="dashboard" class="tab-content active">
-                    <div id="welcome-message">
-                        <h2 id="welcome-user-h2">Welcome to Quality Command Center!</h2>
-                        <p>Your central hub for monitoring quality and driving team excellence.</p>
-                    </div>
-
-                    <!-- Global Search -->
                     <div class="filter-bar">
                         <div class="search-input-container" style="width: 100%;">
                             <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1263,23 +1256,23 @@
                     <div class="kpi-grid">
                         <div class="kpi-card">
                             <div class="kpi-title">Today's Reviews</div>
-                            <div class="kpi-value" id="reviews-today">42</div>
-                            <div class="kpi-change" style="color: var(--success-color);">+5 from yesterday</div>
+                            <div class="kpi-value" id="reviews-today">0</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+0 from yesterday</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-title">Open Cases</div>
-                            <div class="kpi-value" id="open-cases" style="color: var(--warning-color);">6</div>
-                            <div class="kpi-change" style="color: var(--warning-color);">2 Escalated</div>
+                            <div class="kpi-value" id="open-cases">0</div>
+                            <div class="kpi-change" style="color: var(--warning-color);">0 Escalated</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-title">Avg. Quality Score</div>
-                            <div class="kpi-value" id="quality-score" style="color: var(--success-color);">98.2%</div>
-                            <div class="kpi-change" style="color: var(--success-color);">+0.5% vs last week</div>
+                            <div class="kpi-value" id="quality-score">0%</div>
+                            <div class="kpi-change" style="color: var(--success-color);">+0% vs last week</div>
                         </div>
                         <div class="kpi-card">
                             <div class="kpi-title">Escalation Rate</div>
-                            <div class="kpi-value" id="escalation-rate">2.1%</div>
-                            <div class="kpi-change" style="color: var(--danger-color);">-0.2% vs last week</div>
+                            <div class="kpi-value" id="escalation-rate">0%</div>
+                            <div class="kpi-change" style="color: var(--danger-color);">-0% vs last week</div>
                         </div>
                     </div>
 
@@ -1292,60 +1285,116 @@
                         </div>
                         <div class="widget grid-col-span-4">
                             <h3>Issue Types Distribution</h3>
-                            <div class="chart-container" style="height: 200px; margin-bottom: 24px;">
+                            <div class="chart-container">
                                 <canvas id="issueTypesChart"></canvas>
                             </div>
-                            <h3>Recent Activity</h3>
-                            <ul class="activity-feed">
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: var(--danger-color);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <line x1="18" y1="6" x2="6" y2="18"></line>
-                                            <line x1="6" y1="6" x2="18" y2="18"></line>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        You marked order <strong>CZ-84360</strong> as Error.
-                                        <div class="activity-time">15 minutes ago</div>
-                                    </div>
-                                </li>
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: var(--primary-dark);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/>
-                                            <rect x="8" y="2" width="8" height="4" rx="1" ry="1"/>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        3 new orders were assigned to you.
-                                        <div class="activity-time">2 hours ago</div>
-                                    </div>
-                                </li>
-                                <li class="activity-item">
-                                    <div class="activity-icon" style="background: var(--success-color);">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                            <polyline points="20 6 9 17 4 12"></polyline>
-                                        </svg>
-                                    </div>
-                                    <div class="activity-text">
-                                        Noura Al-Dossari marked order <strong>CZ-84365</strong> as Correct.
-                                        <div class="activity-time">Yesterday</div>
-                                    </div>
-                                </li>
-                            </ul>
                         </div>
                     </div>
                 </div>
 
-                <!-- Other tabs content would continue here -->
+                <!-- My Assigned Orders Tab -->
                 <div id="my-assigned-orders" class="tab-content">
                     <div class="widget">
-                        <h3>My Assigned Orders</h3>
-                        <div class="skeleton" style="height: 400px; border-radius: var(--border-radius-base);"></div>
+                         <h3>My Assigned Orders</h3>
+                         <div class="filter-bar">
+                             <div class="filter-group">
+                                 <label for="order-status-filter">Status</label>
+                                 <select id="order-status-filter">
+                                     <option>All</option>
+                                     <option>New</option>
+                                     <option>Open</option>
+                                     <option>Completed</option>
+                                 </select>
+                             </div>
+                             <div class="filter-group" style="flex-grow: 1;">
+                                 <input type="search" placeholder="Search by Order ID..." style="width: 100%;">
+                             </div>
+                         </div>
+                         <div class="results-table-container">
+                             <table class="results-table">
+                                 <thead>
+                                     <tr>
+                                         <th>Order ID</th>
+                                         <th>Date Assigned</th>
+                                         <th>Status</th>
+                                         <th>Action</th>
+                                     </tr>
+                                 </thead>
+                                 <tbody>
+                                     <tr><td colspan="4" style="text-align: center; padding: 40px; color: var(--text-muted);">No assigned orders found.</td></tr>
+                                 </tbody>
+                             </table>
+                         </div>
                     </div>
                 </div>
 
-                <!-- Add other tabs content similarly -->
+                <!-- Team Schedule Tab -->
+                <div id="team-scheduling" class="tab-content">
+                    <div class="widget">
+                         <div class="schedule-header">
+                            <h3>Team Schedule: <span id="current-week">This Week</span></h3>
+                            <div>
+                                <button class="btn btn-secondary btn-sm" id="edit-schedule-btn">Edit Schedule</button>
+                                <div class="schedule-controls" id="schedule-controls-container">
+                                    <button class="btn btn-danger btn-sm" id="cancel-schedule-btn">Cancel</button>
+                                    <button class="btn btn-success btn-sm" id="save-schedule-btn">Save Changes</button>
+                                </div>
+                            </div>
+                         </div>
+                         <div class="schedule-table-container">
+                             <table class="schedule-table" id="schedule-table">
+                                 <thead>
+                                     <tr><th>Member</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th></tr>
+                                 </thead>
+                                 <tbody>
+                                     <tr><td colspan="8" style="text-align: center; padding: 40px; color: var(--text-muted);">Schedule data is unavailable.</td></tr>
+                                 </tbody>
+                             </table>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- Team Members Tab -->
+                 <div id="team-members" class="tab-content">
+                    <div class="widget">
+                        <h3>Team Members</h3>
+                        <div class="team-grid">
+                             <div class="placeholder-content" style="grid-column: 1 / -1;">No team members to display.</div>
+                        </div>
+                    </div>
+                 </div>
+
+                <!-- Reports & Analytics Tab -->
+                <div id="reports" class="tab-content">
+                    <div class="widget">
+                        <h3>Reports & Analytics</h3>
+                         <div class="placeholder-content">Analytics and reporting features will be available here.</div>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div id="profile" class="tab-content">
+                     <div class="widget">
+                        <h3>My Profile</h3>
+                         <div class="placeholder-content">Profile editing form will be available here.</div>
+                    </div>
+                </div>
+
+                <!-- Settings Tab -->
+                <div id="settings" class="tab-content">
+                     <div class="widget">
+                        <h3>Settings</h3>
+                         <div class="placeholder-content">Application and user settings will be configured here.</div>
+                    </div>
+                </div>
+                
+                 <!-- Help Tab -->
+                <div id="help" class="tab-content">
+                     <div class="widget">
+                        <h3>Help & Support</h3>
+                         <div class="placeholder-content">Help documentation and support contact information will be here.</div>
+                    </div>
+                </div>
 
             </main>
         </div>
@@ -1403,8 +1452,8 @@
             return {
                 reviewsToday: todayReviews,
                 openCases: openCases,
-                qualityScore: 98.2,
-                escalationRate: 2.1
+                qualityScore: 0,
+                escalationRate: 0
             };
         };
 
@@ -1419,11 +1468,9 @@
 
                 userData = await getUserData(currentUser.email);
                 
-                // Update UI with user data
                 elements.sidebarAvatar.textContent = getInitials(userData.name);
                 elements.sidebarUsername.textContent = userData.name;
                 elements.sidebarUserrole.textContent = 'Quality Agent';
-                elements.welcomeUserH2.textContent = `Welcome, ${userData.name.split(' ')[0]}!`;
                 
             } catch (error) {
                 console.error('Error loading user data:', error);
@@ -1457,8 +1504,8 @@
             
             elements.reviewsToday.textContent = kpis.reviewsToday;
             elements.openCases.textContent = kpis.openCases;
-            elements.qualityScore.textContent = `${kpis.qualityScore}%`;
-            elements.escalationRate.textContent = `${kpis.escalationRate}%`;
+            elements.qualityScore.textContent = `${kpis.qualityScore.toFixed(1)}%`;
+            elements.escalationRate.textContent = `${kpis.escalationRate.toFixed(1)}%`;
         }
 
         function updateNotifications() {
@@ -1480,7 +1527,6 @@
         }
 
         function initializeCharts() {
-            // Set Chart.js defaults
             Chart.defaults.font.family = 'Poppins';
             Chart.defaults.color = '#8b949e';
             Chart.defaults.plugins.tooltip.backgroundColor = 'rgba(26, 26, 26, 0.9)';
@@ -1498,7 +1544,7 @@
                     datasets: [
                         {
                             label: 'Correct Decisions',
-                            data: [5300, 5100, 5400, 4900, 5200, 5412],
+                            data: [], // Start with empty data
                             borderColor: '#00d97e',
                             backgroundColor: 'rgba(0, 217, 126, 0.1)',
                             fill: true,
@@ -1506,7 +1552,7 @@
                         },
                         {
                             label: 'Errors Found',
-                            data: [210, 180, 240, 150, 140, 123],
+                            data: [], // Start with empty data
                             borderColor: '#e63757',
                             backgroundColor: 'rgba(230, 55, 87, 0.1)',
                             fill: true,
@@ -1550,7 +1596,7 @@
                 data: {
                     labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'],
                     datasets: [{
-                        data: [45, 25, 15, 15],
+                        data: [], // Start with empty data
                         backgroundColor: [
                             '#00bfff',
                             '#e63757',
@@ -1584,14 +1630,13 @@
                     const tabId = link.getAttribute('data-tab');
                     
                     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    document.querySelectorAll('.sidebar-nav li').forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
                     
                     document.getElementById(tabId)?.classList.add('active');
-                    link.parentElement.classList.add('active');
+                    link.classList.add('active');
                     
-                    elements.pageTitle.textContent = link.textContent.trim();
+                    document.getElementById('page-title').textContent = link.textContent.trim();
                     
-                    // Close mobile menu
                     document.getElementById('sidebar').classList.remove('mobile-open');
                 });
             });
@@ -1611,19 +1656,14 @@
                 alert('Opening new review interface...');
             });
 
-            // Search
-            document.getElementById('dashboard-search-input').addEventListener('input', (e) => {
-                console.log('Searching for:', e.target.value);
-            });
-
-            document.getElementById('search-bar').addEventListener('input', (e) => {
-                console.log('Global search:', e.target.value);
-            });
-
             // Mobile Menu
+            document.getElementById('mobile-menu-btn-header').addEventListener('click', () => {
+                 document.getElementById('sidebar').classList.toggle('mobile-open');
+            });
             document.getElementById('mobile-menu-btn').addEventListener('click', () => {
                 document.getElementById('sidebar').classList.toggle('mobile-open');
             });
+
 
             // Logout
             document.getElementById('logout-btn').addEventListener('click', async () => {
@@ -1639,23 +1679,22 @@
         // Auto-refresh
         function startAutoRefresh() {
             setInterval(() => {
-                loadOrders();
-                loadNotifications();
+                // loadOrders(); // Disabling auto-refresh to keep UI clean for now
+                // loadNotifications();
             }, 30000);
         }
 
         // Initialize Application
         async function init() {
-            await loadUserData();
-            await loadOrders();
-            await loadNotifications();
+            // await loadUserData(); // Disabling data loading to show clean initial state
+            // await loadOrders();
+            // await loadNotifications();
+            initializeCharts(); // Still initialize charts with empty data
             setupEventListeners();
-            startAutoRefresh();
             
             console.log('✅ Quality Agent Dashboard initialized successfully');
         }
 
-        // Start the application
         document.addEventListener('DOMContentLoaded', init);
     </script>
 </body>
