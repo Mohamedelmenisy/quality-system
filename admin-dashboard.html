@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - QualityX</title>
-        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -29,11 +28,34 @@
             color: var(--text-color);
             min-height: 100vh;
             padding: 40px 20px;
+            position: relative;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 25px;
+            right: 25px;
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .logout-btn:hover {
+            background: var(--primary-color);
+            color: #000;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
         }
         
         .admin-header {
             text-align: center;
             margin-bottom: 40px;
+            padding-top: 20px;
         }
         
         .admin-title {
@@ -47,6 +69,14 @@
             font-size: 1.1rem;
             color: var(--text-secondary);
             font-weight: 400;
+            margin-bottom: 15px;
+        }
+        
+        .welcome {
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+            margin-bottom: 25px;
+            font-weight: 400;
         }
         
         .dashboard-container {
@@ -55,6 +85,7 @@
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 25px;
+            margin-bottom: 60px;
         }
         
         .dashboard-card {
@@ -83,8 +114,8 @@
         
         .dashboard-card:hover {
             border-color: var(--primary-color);
-            transform: translateY(-8px);
-            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.1);
+            transform: translateY(-6px);
+            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.15), 0 0 15px rgba(0, 191, 255, 0.25);
         }
         
         .dashboard-card:hover::before {
@@ -92,15 +123,20 @@
         }
         
         .card-icon {
-            font-size: 2.5rem;
-            margin-bottom: 15px;
+            font-size: 2.8rem;
+            margin-bottom: 20px;
             color: var(--primary-color);
+            transition: transform 0.3s ease;
+        }
+        
+        .dashboard-card:hover .card-icon {
+            transform: scale(1.1);
         }
         
         .card-title {
             font-size: 1.4rem;
             font-weight: 600;
-            margin-bottom: 10px;
+            margin-bottom: 12px;
             color: var(--text-color);
         }
         
@@ -115,10 +151,24 @@
             display: inline-block;
             background: var(--primary-color);
             color: #000;
-            padding: 4px 12px;
+            padding: 6px 15px;
             border-radius: 20px;
             font-size: 0.8rem;
             font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding: 20px;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .footer-text {
+            opacity: 0.8;
         }
         
         @media (max-width: 768px) {
@@ -129,13 +179,23 @@
             .admin-title {
                 font-size: 2rem;
             }
+            
+            .logout-btn {
+                position: relative;
+                top: 0;
+                right: 0;
+                margin-bottom: 20px;
+            }
         }
     </style>
 </head>
 <body>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+    
     <div class="admin-header">
         <h1 class="admin-title">Admin Dashboard</h1>
         <p class="admin-subtitle">Full System Access & Management</p>
+        <h2 class="welcome">Welcome back, Admin 👋</h2>
     </div>
     
     <div class="dashboard-container">
@@ -168,6 +228,10 @@
         </div>
     </div>
 
+    <div class="footer">
+        <p class="footer-text">© 2025 Mohamed Elmenisy. All rights reserved.</p>
+    </div>
+
     <script>
         function redirectTo(dashboardType) {
             const pages = {
@@ -179,6 +243,12 @@
             
             if (pages[dashboardType]) {
                 window.location.href = pages[dashboardType];
+            }
+        }
+
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = './login.html';
             }
         }
     </script>
