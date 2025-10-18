@@ -155,7 +155,7 @@
     <div class="form-container">
         <div class="form-header">
             <svg class="form-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5z" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
                 <path d="M12 22V12" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
             <h2 class="form-title">QualityX</h2>
@@ -206,7 +206,7 @@
                 
                 // 3. التحقق من حالة الحساب
                 if (userData.role === 'pending') {
-                    successMessage.textContent = '⏳ Your account is awaiting manager approval.';
+                    successMessage.textContent = '⏳ Your account is awaiting approval.';
                     successMessage.style.backgroundColor = 'var(--warning-bg-color)';
                     successMessage.style.color = 'var(--warning-text-color)';
                     successMessage.style.border = '1px solid var(--warning-text-color)';
@@ -215,26 +215,28 @@
                 }
 
                 // 4. توجيه المستخدم حسب الدور
-                let redirectUrl = './dashboard-quality.html'; // افتراضي
-                
+                let redirectUrl = './dashboard-agent.html'; // افتراضي
+
                 console.log('🎯 User role:', userData.role);
                 
                 switch (userData.role) {
                     case 'admin':
+                        redirectUrl = './admin-dashboard.html';
+                        break;
                     case 'manager':
                         redirectUrl = './dashboard-manager.html';
                         break;
                     case 'senior':
-             redirectUrl = './dashboard-senior-quality.html';
-                        break;
-                    case 'staff':
-                        redirectUrl = './dashboard-agent.html';
+                        redirectUrl = './dashboard-senior.html';
                         break;
                     case 'quality-agent':
                         redirectUrl = './dashboard-quality.html';
                         break;
+                    case 'agent':
+                        redirectUrl = './dashboard-agent.html';
+                        break;
                     default:
-                        redirectUrl = './dashboard-quality.html';
+                        redirectUrl = './dashboard-agent.html';
                 }
 
                 console.log('📍 Redirecting to:', redirectUrl);
@@ -263,4 +265,3 @@
     </script>
 </body>
 </html>
-
