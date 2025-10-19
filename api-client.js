@@ -826,7 +826,79 @@ export async function importOrdersFromCSV(csvData) {
       .select();
 
     if (error) throw error;
+// ==================== REAL-TIME SUBSCRIPTIONS ====================
 
+export function subscribeToNotifications(userId, callback) {
+  try {
+    return supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'notifications',
+          filter: `user_id=eq.${userId}`
+        },
+        callback
+      )
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToNotifications error:', error);
+    // Return a mock subscription object to prevent errors
+    return {
+      unsubscribe: () => {}
+    };
+  }
+}
+
+export function subscribeToAssignments(agentId, callback) {
+  try {
+    return supabase
+      .channel('assignments')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'order_assignments',
+          filter: `quality_agent_id=eq.${agentId}`
+        },
+        callback
+      )
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToAssignments error:', error);
+    // Return a mock subscription object to prevent errors
+    return {
+      unsubscribe: () => {}
+    };
+  }
+}
+
+export function subscribeToEscalations(userId, callback) {
+  try {
+    return supabase
+      .channel('escalations')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'escalations',
+          filter: `escalated_to_id=eq.${userId}`
+        },
+        callback
+      )
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToEscalations error:', error);
+    // Return a mock subscription object to prevent errors
+    return {
+      unsubscribe: () => {}
+    };
+  }
+}
     // Create notifications for new orders
     const qualityAgents = await getTeamMembers('quality');
     for (const agent of qualityAgents) {
@@ -846,50 +918,3 @@ export async function importOrdersFromCSV(csvData) {
 
 // ==================== REAL-TIME SUBSCRIPTIONS ====================
 
-export function subscribeToNotifications(userId, callback) {
-  return supabase
-    .channel('notifications')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${userId}`
-      },
-      callback
-    )
-    .subscribe();
-}
-
-export function subscribeToErrors(agentId, callback) {
-  return supabase
-    .channel('errors')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'errors',
-        filter: `employee_id=eq.${agentId}`
-      },
-      callback
-    )
-    .subscribe();
-}
-
-export function subscribeToAssignments(agentId, callback) {
-  return supabase
-    .channel('assignments')
-    .on(
-      'postgres_changes',
-      {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'order_assignments',
-        filter: `quality_agent_id=eq.${agentId}`
-      },
-      callback
-    )
-    .subscribe();
-}
