@@ -811,11 +811,14 @@
                 // Get current user
                 const user = await getCurrentUser();
                 if (!user) {
-                    window.location.href = 'login.html';
+                    // In a real app, you would redirect to a login page
+                    // For now, we'll just show an error
+                    showToast('Could not find user. Please log in.', 'error');
+                    console.error('No authenticated user found.');
                     return;
                 }
                 
-                // Get user profile
+                // Get user profile from your 'users' table
                 const { data: profile, error } = await supabase
                     .from('users')
                     .select('*')
@@ -833,7 +836,7 @@
                 // Update UI with user data
                 updateUserInterface();
                 
-                // Load user data
+                // Load dashboard data
                 await loadAssignedOrders();
                 await loadPerformanceMetrics();
                 await loadTeamMembers();
@@ -849,11 +852,12 @@
                 showToast('Quality Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
-                showToast('Failed to initialize dashboard', 'error');
+                showToast(`Initialization Error: ${error.message}`, 'error');
             }
         }
 
         function updateUserInterface() {
+            if (!currentUser) return;
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
@@ -1116,11 +1120,13 @@
             const notificationList = document.getElementById('notification-list');
             const notificationBadge = document.getElementById('notification-badge');
             
-            if (notifications.length === 0) {
+            const unreadNotifications = notifications.filter(n => !n.is_read);
+
+            if (unreadNotifications.length === 0) {
                 notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
                 notificationBadge.style.display = 'none';
             } else {
-                notificationList.innerHTML = notifications.map(notification => `
+                notificationList.innerHTML = unreadNotifications.map(notification => `
                     <li class="notification-item">
                         <div class="notification-message">
                             <div>${notification.message}</div>
@@ -1132,7 +1138,7 @@
                     </li>
                 `).join('');
                 
-                notificationBadge.textContent = notifications.length;
+                notificationBadge.textContent = unreadNotifications.length;
                 notificationBadge.style.display = 'flex';
                 
                 // Add event listeners to mark as read buttons
@@ -1259,7 +1265,7 @@
 
         // Modal functions
         async function openViewOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1306,7 +1312,7 @@
         }
 
         async function openReviewOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1325,7 +1331,7 @@
         }
 
         async function openEscalateOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1342,6 +1348,7 @@
 
         // Utility function to generate color from string
         function stringToColor(str) {
+            if (!str) return '#cccccc';
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -1410,7 +1417,8 @@
             // Mark all as read
             document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                for (const notification of notifications) {
+                const unread = notifications.filter(n => !n.is_read);
+                for (const notification of unread) {
                     await markNotificationAsRead(notification.id);
                 }
                 await loadNotifications();
@@ -1453,7 +1461,7 @@
                     
                 } catch (error) {
                     console.error('Error submitting review:', error);
-                    showToast('Failed to submit review', 'error');
+                    showToast(`Failed to submit review: ${error.message}`, 'error');
                 }
             });
             
@@ -1473,11 +1481,11 @@
                     // Get senior quality analyst ID
                     const seniorMembers = teamMembers.filter(m => m.role === 'senior');
                     if (seniorMembers.length === 0) {
-                        showToast('No senior quality analysts available', 'error');
+                        showToast('No senior quality analysts available to escalate to.', 'error');
                         return;
                     }
                     
-                    const escalatedToId = seniorMembers[0].id;
+                    const escalatedToId = seniorMembers[0].id; // Simple logic: escalate to the first senior
                     
                     await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
                     
@@ -1487,7 +1495,7 @@
                     
                 } catch (error) {
                     console.error('Error submitting escalation:', error);
-                    showToast('Failed to escalate order', 'error');
+                    showToast(`Failed to escalate order: ${error.message}`, 'error');
                 }
             });
             
@@ -1510,10 +1518,10 @@
                 document.getElementById('schedule-table').classList.remove('edit-mode');
                 document.getElementById('edit-schedule-btn').style.display = 'inline-block';
                 document.getElementById('schedule-controls').style.display = 'none';
-                showToast('Schedule updated successfully', 'success');
+                showToast('Schedule changes saved (demo).', 'success');
             });
             
-            // Save schedule change
+            // Save schedule change from modal
             document.getElementById('save-schedule-change-btn').addEventListener('click', async () => {
                 const userId = document.getElementById('schedule-member').value;
                 const day = document.getElementById('schedule-day').value;
@@ -1524,8 +1532,8 @@
                         user_id: userId,
                         day_of_week: parseInt(day),
                         shift_type: shift,
-                        start_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[0],
-                        end_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[1]
+                        start_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[0].trim(),
+                        end_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[1].trim()
                     }]);
                     
                     showToast('Schedule updated successfully', 'success');
@@ -1534,11 +1542,11 @@
                     
                 } catch (error) {
                     console.error('Error updating schedule:', error);
-                    showToast('Failed to update schedule', 'error');
+                    showToast(`Failed to update schedule: ${error.message}`, 'error');
                 }
             });
             
-            // Add team member
+            // Add team member modal button
             document.getElementById('add-member-btn').addEventListener('click', () => {
                 showModal('add-member-modal');
             });
@@ -1555,8 +1563,8 @@
                     return;
                 }
                 
-                // In a real implementation, this would create a new user
-                showToast('Team member would be added here', 'info');
+                // In a real implementation, this would call a function to create a new user.
+                showToast('This is a demo. Team member would be added here.', 'info');
                 hideModal('add-member-modal');
             });
             
@@ -1567,7 +1575,7 @@
                 }
             });
             
-            // Close modals when clicking outside
+            // Close modals when clicking the overlay
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal-overlay')) {
                     e.target.classList.remove('show');
