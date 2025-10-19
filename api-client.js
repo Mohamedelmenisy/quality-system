@@ -308,6 +308,14 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
       query = query.eq('status', filters.status);
     }
 
+    if (filters.from_date) {
+      query = query.gte('assigned_at', filters.from_date);
+    }
+
+    if (filters.to_date) {
+      query = query.lte('assigned_at', filters.to_date);
+    }
+
     const { data, error } = await query;
     if (error) throw error;
     return data;
@@ -579,6 +587,270 @@ export async function getEscalations(userId = null, filters = {}) {
     return data;
   } catch (error) {
     console.error('GetEscalations error:', error);
+    throw error;
+  }
+}
+
+// ==================== ESCALATION WORKFLOW FUNCTIONS ====================
+
+export async function getHelperEscalations(helperId) {
+  try {
+    console.log('🔍 Fetching escalations for helper:', helperId);
+    
+    const { data, error } = await supabase
+      .from('escalations')
+      .select(`
+        id,
+        notes,
+        created_at,
+        status,
+        order_assignments (
+          id,
+          status,
+          assigned_at,
+          orders (
+            order_id,
+            employee_name,
+            reason,
+            amount,
+            chefz,
+            order_status,
+            requested_delivery_date,
+            payment_type
+          ),
+          users!order_assignments_quality_agent_id_fkey (
+            name,
+            email
+          )
+        )
+      `)
+      .eq('escalated_to_id', helperId)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ GetHelperEscalations error:', error);
+      throw error;
+    }
+
+    console.log('✅ Escalations fetched successfully:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('💥 GetHelperEscalations error:', error);
+    throw error;
+  }
+}
+
+export async function resolveEscalation(escalationId, feedback) {
+  try {
+    console.log('🔄 Resolving escalation:', escalationId);
+    
+    // Get escalation details first
+    const { data: escalationData } = await supabase
+      .from('escalations')
+      .select('escalated_by_id, order_assignments(orders(order_id))')
+      .eq('id', escalationId)
+      .single();
+
+    // Update escalation status and add feedback
+    const { data, error } = await supabase
+      .from('escalations')
+      .update({ 
+        status: 'resolved',
+        notes: feedback,
+        resolved_at: new Date().toISOString()
+      })
+      .eq('id', escalationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification for the original agent
+    if (escalationData) {
+      const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
+      await createNotification(
+        escalationData.escalated_by_id,
+        `Your escalation for order ${orderId} has been resolved. Check the feedback.`,
+        'info'
+      );
+    }
+
+    console.log('✅ Escalation resolved successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 ResolveEscalation error:', error);
+    throw error;
+  }
+}
+
+export async function escalateToSenior(escalationId, seniorId, helperNotes) {
+  try {
+    console.log('🔄 Escalating to senior:', { escalationId, seniorId });
+    
+    // Get current escalation
+    const { data: currentEscalation, error: fetchError } = await supabase
+      .from('escalations')
+      .select('*')
+      .eq('id', escalationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Update escalation to redirect to senior
+    const { data, error } = await supabase
+      .from('escalations')
+      .update({ 
+        escalated_to_id: seniorId,
+        notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', escalationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification for the senior
+    await createNotification(
+      seniorId,
+      `A new escalation requires your review.`,
+      'warning'
+    );
+
+    console.log('✅ Escalation forwarded to senior successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 EscalateToSenior error:', error);
+    throw error;
+  }
+}
+
+// ==================== INQUIRY FUNCTIONS ====================
+
+export async function raiseInquiry(assignmentId, agentId, inquiryText) {
+  try {
+    console.log('🔄 Raising inquiry for assignment:', assignmentId);
+    
+    const { data, error } = await supabase
+      .from('inquiries')
+      .insert({
+        assignment_id: assignmentId,
+        agent_id: agentId,
+        inquiry_text: inquiryText,
+        status: 'pending',
+        created_at: new Date().toISOString()
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Get helpers to notify
+    const helpers = await getTeamMembers('helper');
+    for (const helper of helpers) {
+      await createNotification(
+        helper.id,
+        `A new inquiry has been raised for order review.`,
+        'info'
+      );
+    }
+
+    console.log('✅ Inquiry raised successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 RaiseInquiry error:', error);
+    throw error;
+  }
+}
+
+export async function getHelperInquiries(helperId) {
+  try {
+    console.log('🔍 Fetching inquiries for helper:', helperId);
+    
+    const { data, error } = await supabase
+      .from('inquiries')
+      .select(`
+        id,
+        inquiry_text,
+        status,
+        created_at,
+        order_assignments (
+          id,
+          status,
+          assigned_at,
+          orders (
+            order_id,
+            employee_name,
+            reason,
+            amount,
+            chefz,
+            order_status,
+            requested_delivery_date,
+            payment_type
+          ),
+          users!order_assignments_quality_agent_id_fkey (
+            name,
+            email
+          )
+        )
+      `)
+      .eq('status', 'pending')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('❌ GetHelperInquiries error:', error);
+      throw error;
+    }
+
+    console.log('✅ Inquiries fetched successfully:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('💥 GetHelperInquiries error:', error);
+    throw error;
+  }
+}
+
+export async function respondToInquiry(inquiryId, helperId, response) {
+  try {
+    console.log('🔄 Responding to inquiry:', inquiryId);
+    
+    // Get inquiry details first
+    const { data: inquiryData } = await supabase
+      .from('inquiries')
+      .select('agent_id, order_assignments(orders(order_id))')
+      .eq('id', inquiryId)
+      .single();
+
+    // Update inquiry with response
+    const { data, error } = await supabase
+      .from('inquiries')
+      .update({ 
+        status: 'responded',
+        response_text: response,
+        responded_by_id: helperId,
+        responded_at: new Date().toISOString()
+      })
+      .eq('id', inquiryId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification for the original agent
+    if (inquiryData) {
+      const orderId = inquiryData.order_assignments?.orders?.order_id || 'Unknown';
+      await createNotification(
+        inquiryData.agent_id,
+        `Your inquiry for order ${orderId} has been responded. Check the response.`,
+        'info'
+      );
+    }
+
+    console.log('✅ Inquiry response sent successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 RespondToInquiry error:', error);
     throw error;
   }
 }
@@ -937,6 +1209,29 @@ export function subscribeToEscalations(userId, callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToEscalations error:', error);
+    // Return a mock subscription object to prevent errors
+    return {
+      unsubscribe: () => {}
+    };
+  }
+}
+
+export function subscribeToInquiries(callback) {
+  try {
+    return supabase
+      .channel('inquiries')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'inquiries'
+        },
+        callback
+      )
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToInquiries error:', error);
     // Return a mock subscription object to prevent errors
     return {
       unsubscribe: () => {}
