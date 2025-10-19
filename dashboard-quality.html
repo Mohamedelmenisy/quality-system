@@ -1281,7 +1281,7 @@
             tableBody.innerHTML = helperEscalations.map(escalation => {
                 const orderData = escalation.order_assignments?.orders;
                 const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
-                const escalationDate = formatDateTime(escalation.created_at);
+                const escalationDate = formatDateTime(escalation.escalated_at);
                 const reasonPreview = escalation.notes ? 
                     (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 
                     'No reason provided';
