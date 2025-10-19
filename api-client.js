@@ -527,7 +527,7 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
         escalated_to_id: escalatedToId,
         notes: reason,
         status: 'pending',
-        created_at: new Date()
+        escalated_at: new Date()
       })
       .select()
       .single();
@@ -553,7 +553,7 @@ export async function getEscalations(userId = null, filters = {}) {
     escalated_by:users!escalations_escalated_by_id_fkey (name),
     escalated_to:users!escalations_escalated_to_id_fkey (name)
   `)
-      .order('created_at', { ascending: false });
+      .order('escalated_at', { ascending: false });
 
     if (userId) {
       query = query.eq('escalated_to_id', userId);
