@@ -228,8 +228,9 @@ export async function getUnassignedOrders() {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      // FIX: Changed 'assignment_id' to 'assigned_agent' to match your database schema.
-      .is('assigned_agent', null)
+      // FIX: This now filters for orders that do not have a related entry
+      // in the 'order_assignments' table, which is the correct logic.
+      .is('order_assignments', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
