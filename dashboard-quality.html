@@ -1058,7 +1058,10 @@
                             shifts: {}
                         };
                     }
-                    scheduleByUser[shift.user_id].shifts[shift.day_of_week] = shift;
+// Convert shift_date to day of week (0-6)
+const shiftDate = new Date(shift.shift_date);
+const dayOfWeek = shiftDate.getDay(); // 0=Sunday, 1=Monday, etc.
+scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                 });
 
                 tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
@@ -1539,12 +1542,47 @@
                 const shift = document.getElementById('schedule-shift').value;
                 
                 try {
-                    await updateTeamSchedule([{
-                        user_id: userId,
-                        day_of_week: parseInt(day),
-                        shift_type: shift,
-                        start_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[0],
-                        end_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[1]
+try {
+    // حساب التاريخ بناءً على اليوم
+    const targetDate = new Date();
+    const today = targetDate.getDay(); // 0-6
+    const diff = day - today;
+    targetDate.setDate(targetDate.getDate() + diff);
+    const shiftDate = targetDate.toISOString().split('T')[0];
+
+    // تحديد الـ status بناءً على نوع الشيفت
+    let status = 'scheduled';
+    let startTime = '09:00';
+    let endTime = '17:00';
+
+    if (shift === 'off') {
+        status = 'off';
+        startTime = null;
+        endTime = null;
+    } else if (shift === 'leave') {
+        status = 'leave';
+        startTime = null;
+        endTime = null;
+    } else if (shift === 'sick') {
+        status = 'sick';
+        startTime = null;
+        endTime = null;
+    } else {
+        // إذا كان شيفت عادي، فصل الوقت
+        const times = shift.split('-');
+        if (times.length === 2) {
+            startTime = times[0].trim();
+            endTime = times[1].trim();
+        }
+    }
+
+    await updateTeamSchedule([{
+        user_id: userId,
+        shift_date: shiftDate,                // استخدم shift_date
+        start_time: startTime,                // استخدم start_time
+        end_time: endTime,                    // استخدم end_time
+        status: status                        // استخدم status
+    }]);                      
                     }]);
                     
                     showToast('Schedule updated successfully', 'success');
