@@ -730,7 +730,7 @@
             } else {
                 dashboardTableBody.innerHTML = recentErrors.map(error => {
                     const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
+                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
                     const errorType = error.quality_reviews?.modified_reason || 'Unknown';
                     
                     return `
