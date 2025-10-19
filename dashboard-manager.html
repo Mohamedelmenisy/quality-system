@@ -375,9 +375,19 @@
             </div>
             <div class="header-actions">
                 <div class="search-input-container">
-                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-<input type="search" placeholder="Search reports, teams..." name="no-autofill" id="search-box" autocomplete="off" onfocus="this.setAttribute('autocomplete', 'off'); this.setAttribute('name', 'no-autofill-'+Date.now());">
-                </div>
+    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+    
+    <!-- الحل الشامل والمضمون -->
+    <input type="text" 
+           class="search-field"
+           placeholder="Search reports, teams..."
+           autocomplete="nope"
+           data-lpignore="true"
+           data-form-type="other"
+           name="search-query"
+           id="main-search-field"
+           style="background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 38px; width: 300px;">
+</div>
                 <div class="notification-bell">
                     <button id="notification-btn" class="notification-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
