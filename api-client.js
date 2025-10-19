@@ -4,8 +4,10 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// الرجاء التأكد من أن هذه القيم مطابقة تماماً لما هو موجود في لوحة تحكم Supabase
+// Project Settings -> API
 const SUPABASE_URL = "https://otaztiyatvbajswowdgs.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -231,36 +233,39 @@ export async function getUnassignedOrders() {
       .select('order_id');
 
     if (assignedOrdersError) {
-      // It's better to throw the specific error to understand the root cause.
       console.error('Error fetching assigned orders:', assignedOrdersError);
       throw assignedOrdersError;
     }
 
-    // Step 2: Extract just the order IDs into a plain array.
     const assignedOrderIds = assignedOrdersData.map(assignment => assignment.order_id);
 
-    // If there are no assigned orders yet, the array will be empty, which is fine.
-    
-    // Step 3: Fetch all orders where the 'order_id' is NOT IN the list of assigned IDs.
-    const { data, error } = await supabase
+    // Step 2: Fetch all orders where the 'id' is NOT IN the list of assigned IDs.
+    // Note: I'm assuming the foreign key in 'order_assignments' points to the 'id' of an order.
+    // If it points to 'order_id' column, change '.not('id', ...)' to '.not('order_id', ...)'
+    let query = supabase
       .from('orders')
-      .select('*')
-      .not('order_id', 'in', `(${assignedOrderIds.join(',')})`)
-      .order('created_at', { ascending: false });
+      .select('*');
+
+    // Important: Only apply the 'not in' filter if there are actually assigned orders.
+    // An empty 'in' clause can cause errors in some database versions.
+    if (assignedOrderIds.length > 0) {
+      query = query.not('id', 'in', `(${assignedOrderIds.join(',')})`);
+    }
+    
+    const { data, error } = await query.order('created_at', { ascending: false });
     
     if (error) {
-      // This will now show an error if the 'orders' table query fails for any reason.
       console.error('Error fetching unassigned orders:', error);
       throw error;
     }
     
     return data;
   } catch (error) {
-    // This catch block will handle errors from either of the two Supabase calls.
     console.error('GetUnassignedOrders error:', error);
     throw error;
   }
 }
+
 
 export async function assignOrders(orderIds, agentId, assignedById) {
   try {
