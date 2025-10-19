@@ -390,18 +390,18 @@ export async function getAgentErrors(agentId, filters = {}) {
         error_responses (*)
       `)
       .eq('employee_id', agentId)
-      .order('recorded_at', { ascending: false }); // تم التعديل هنا: recorded_at بدلاً من created_at
+      .order('recorded_at', { ascending: false });
 
     if (filters.status) {
       query = query.eq('status', filters.status);
     }
 
     if (filters.from_date) {
-      query = query.gte('recorded_at', filters.from_date); // تم التعديل هنا
+      query = query.gte('recorded_at', filters.from_date);
     }
 
     if (filters.to_date) {
-      query = query.lte('recorded_at', filters.to_date); // تم التعديل هنا
+      query = query.lte('recorded_at', filters.to_date);
     }
 
     const { data, error } = await query;
@@ -459,7 +459,7 @@ export async function getPendingErrors() {
         users!errors_employee_id_fkey (name, email)
       `)
       .eq('status', 'pending_response')
-      .order('recorded_at', { ascending: false }); // تم التعديل هنا
+      .order('recorded_at', { ascending: false });
 
     if (error) throw error;
     return data;
@@ -691,7 +691,6 @@ export async function getPerformanceMetrics(period = 'month', agentId = null) {
         dateFilter.setMonth(dateFilter.getMonth() - 1);
     }
 
-    // Get total orders reviewed - استخدام recorded_at بدلاً من created_at
     const { data: ordersData, error: ordersError } = await supabase
       .from('order_assignments')
       .select('id, status, assigned_at')
@@ -699,15 +698,13 @@ export async function getPerformanceMetrics(period = 'month', agentId = null) {
 
     if (ordersError) throw ordersError;
 
-    // Get errors data - استخدام recorded_at بدلاً من created_at
     const { data: errorsData, error: errorsError } = await supabase
       .from('errors')
-      .select('id, recorded_at, status') // تم التعديل هنا
-      .gte('recorded_at', dateFilter.toISOString()); // تم التعديل هنا
+      .select('id, recorded_at, status')
+      .gte('recorded_at', dateFilter.toISOString());
 
     if (errorsError) throw errorsError;
 
-    // Get quality reviews data
     const { data: reviewsData, error: reviewsError } = await supabase
       .from('quality_reviews')
       .select('id, action_correctness, reviewed_at')
@@ -741,15 +738,15 @@ export async function getErrorTrends(period = '6 months') {
   try {
     const { data, error } = await supabase
       .from('errors')
-      .select('recorded_at, quality_reviews(modified_reason)') // تم التعديل هنا
-      .order('recorded_at', { ascending: true }); // تم التعديل هنا
+      .select('recorded_at, quality_reviews(modified_reason)')
+      .order('recorded_at', { ascending: true });
 
     if (error) throw error;
 
     // Process data for charts
     const monthlyData = {};
     data.forEach(error => {
-      const month = new Date(error.recorded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }); // تم التعديل هنا
+      const month = new Date(error.recorded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       if (!monthlyData[month]) {
         monthlyData[month] = 0;
       }
@@ -826,6 +823,24 @@ export async function importOrdersFromCSV(csvData) {
       .select();
 
     if (error) throw error;
+
+    // Create notifications for new orders
+    const qualityAgents = await getTeamMembers('quality');
+    for (const agent of qualityAgents) {
+      await createNotification(
+        agent.id,
+        `${orders.length} new orders have been imported and are ready for assignment.`,
+        'info'
+      );
+    }
+
+    return data;
+  } catch (error) {
+    console.error('ImportOrdersFromCSV error:', error);
+    throw error;
+  }
+}
+
 // ==================== REAL-TIME SUBSCRIPTIONS ====================
 
 export function subscribeToNotifications(userId, callback) {
@@ -899,22 +914,3 @@ export function subscribeToEscalations(userId, callback) {
     };
   }
 }
-    // Create notifications for new orders
-    const qualityAgents = await getTeamMembers('quality');
-    for (const agent of qualityAgents) {
-      await createNotification(
-        agent.id,
-        `${orders.length} new orders have been imported and are ready for assignment.`,
-        'info'
-      );
-    }
-
-    return data;
-  } catch (error) {
-    console.error('ImportOrdersFromCSV error:', error);
-    throw error;
-  }
-}
-
-// ==================== REAL-TIME SUBSCRIPTIONS ====================
-
