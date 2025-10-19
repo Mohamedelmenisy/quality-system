@@ -173,7 +173,6 @@
         .status-inactive { background-color: var(--red-bg); color: var(--red); }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
         
-        /* === FIX START: Added Modal and Action Button Styles === */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -233,6 +232,19 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
+        /* === FIX START: Make modal cancel button smaller and less prominent === */
+        .modal-footer .btn-secondary {
+            background-color: transparent;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+            font-weight: 500;
+        }
+        .modal-footer .btn-secondary:hover {
+            background-color: var(--border-color);
+            color: var(--text-color);
+        }
+        /* === FIX END === */
+
         .action-btn {
             padding: 6px 12px;
             border-radius: 6px;
@@ -268,7 +280,7 @@
             background-color: var(--green);
             color: white;
         }
-        /* === FIX END === */
+        
 
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
