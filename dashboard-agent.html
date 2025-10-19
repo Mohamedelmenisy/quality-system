@@ -7,26 +7,462 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-   <script type="module">
-    import { 
-        subscribeToNotifications,
-        subscribeToErrors,
-        updateUserProfile
-    } from './api-client.js';
-    // Make functions available globally
-    window.supabase = supabase;
-    window.getCurrentUser = getCurrentUser;
-    window.getUserById = getUserById;
-    window.getAgentErrors = getAgentErrors;
-    window.submitErrorResponse = submitErrorResponse;
-    window.getPerformanceMetrics = getPerformanceMetrics;
-    window.getNotifications = getNotifications;
-    window.markNotificationAsRead = markNotificationAsRead;
-    window.updateUserProfile = updateUserProfile;
-    window.subscribeToNotifications = subscribeToNotifications;
-    window.subscribeToErrors = subscribeToErrors;
-</script>
 
+    <script type="module">
+        // =================================================================
+        //  الجزء الأول: استيراد جميع الأدوات اللازمة من api-client.js
+        // =================================================================
+        import { 
+            supabase, 
+            getCurrentUser, 
+            getUserById, 
+            getAgentErrors, 
+            submitErrorResponse,
+            getPerformanceMetrics,
+            getNotifications,
+            markNotificationAsRead,
+            subscribeToNotifications,
+            subscribeToErrors,
+            updateUserProfile
+        } from './api-client.js';
+
+        // =================================================================
+        //  الجزء الثاني: كل منطق عمل الصفحة موجود هنا الآن
+        // =================================================================
+
+        // Application State
+        let currentUser = null;
+        let userErrors = [];
+        let userPerformance = {
+            errorRate: 0,
+            totalErrors: 0,
+            totalOrders: 0,
+            errorTypes: {}
+        };
+        let notifications = [];
+        let commonErrorsChart = null;
+
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            const removeToast = () => {
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.parentNode?.removeChild(toast), 300);
+                }
+            };
+
+            setTimeout(removeToast, 5000);
+            toast.querySelector('.toast-close').addEventListener('click', removeToast);
+        }
+
+        // Helper Functions
+        function getInitials(name) {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : `${names[0][0]}`.toUpperCase();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+        }
+
+        function showModal(modalId) { document.getElementById(modalId)?.classList.add('show'); }
+        function hideModal(modalId) { document.getElementById(modalId)?.classList.remove('show'); }
+
+        // Main Application Logic
+        async function initApp() {
+            try {
+                const user = await getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                const { data: profile, error } = await supabase.from('users').select('*').eq('id', user.id).single();
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                    throw new Error('Failed to load user profile. Please try again.');
+                }
+                
+                currentUser = { ...user, ...profile };
+                
+                updateUserInterface();
+                initCharts();
+                
+                await Promise.all([
+                    loadUserErrors(),
+                    loadUserPerformance(),
+                    loadNotifications()
+                ]);
+                
+                initRealtimeSubscriptions();
+                showToast('Dashboard loaded successfully', 'success');
+
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast(error.message || 'Failed to initialize dashboard', 'error');
+            }
+        }
+
+        function updateUserInterface() {
+            if (!currentUser) return;
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('sidebar-userrole').textContent = currentUser.role;
+            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
+            
+            document.getElementById('profile-fullname').value = currentUser.name;
+            document.getElementById('profile-email').value = currentUser.email;
+            document.getElementById('profile-phone').value = currentUser.phone || '';
+            document.getElementById('profile-department').value = currentUser.department || 'N/A';
+        }
+
+        async function loadUserErrors(filters = {}) {
+            try {
+                const errors = await getAgentErrors(currentUser.id, filters);
+                userErrors = errors || [];
+                renderErrorTables();
+            } catch (error) {
+                console.error('Error loading user errors:', error);
+                showToast('Failed to load your errors', 'error');
+                userErrors = [];
+                renderErrorTables();
+            }
+        }
+
+        async function loadUserPerformance() {
+            try {
+                const metrics = await getPerformanceMetrics('month', currentUser.id);
+                userPerformance = {
+                    totalOrders: metrics.totalOrders,
+                    totalErrors: metrics.totalErrors,
+                    errorRate: metrics.errorRate,
+                    errorTypes: {}
+                };
+                
+                document.getElementById('error-rate').textContent = `${metrics.errorRate}%`;
+                document.getElementById('error-rate-bar').style.width = `${Math.min(metrics.errorRate, 100)}%`;
+                document.getElementById('error-rate-description').textContent = 
+                    `Based on ${metrics.totalErrors} errors out of ${metrics.totalOrders} reviewed orders.`;
+
+                userErrors.forEach(error => {
+                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                    userPerformance.errorTypes[errorType] = (userPerformance.errorTypes[errorType] || 0) + 1;
+                });
+                
+                updateCharts();
+            } catch (error) {
+                console.error('Error loading user performance:', error);
+            }
+        }
+
+        function renderErrorTables() {
+            const dashboardTableBody = document.getElementById('error-table-body');
+            const myErrorsTableBody = document.getElementById('my-errors-table-body');
+            
+            const renderTable = (tbody, data) => {
+                if (data.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">✅</div><div>No errors found for your account.</div><small>Great job maintaining quality standards!</small></td></tr>`;
+                } else {
+                    tbody.innerHTML = data.map(error => {
+                        const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                        const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
+                        const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                        
+                        return `
+                            <tr>
+                                <td>${orderId}</td>
+                                <td>${formatDate(orderDate)}</td>
+                                <td>${errorType}</td>
+                                <td><span class="status-badge status-${error.status.replace('_response', '')}">${error.status.replace('_', ' ')}</span></td>
+                                <td>
+                                    <button class="action-btn view-error-btn" data-error-id="${error.id}">View</button>
+                                    ${error.status === 'pending_response' ? `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">Reply</button>` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            };
+
+            renderTable(dashboardTableBody, userErrors.slice(0, 5));
+            renderTable(myErrorsTableBody, userErrors);
+
+            document.querySelectorAll('.view-error-btn').forEach(btn => btn.addEventListener('click', () => openViewErrorModal(btn.dataset.errorId)));
+            document.querySelectorAll('.reply-error-btn').forEach(btn => btn.addEventListener('click', () => openReplyErrorModal(btn.dataset.errorId)));
+        }
+
+        function openViewErrorModal(errorId) {
+            const error = userErrors.find(e => e.id === errorId);
+            if (!error) return;
+
+            const order = error.quality_reviews?.order_assignments?.orders;
+            const review = error.quality_reviews;
+            const reviewer = review?.order_assignments?.users?.name;
+            
+            document.getElementById('view-error-id').textContent = order?.order_id || 'N/A';
+            document.getElementById('view-error-body').innerHTML = `
+                <div class="detail-item"><strong>Order ID</strong><p>${order?.order_id || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Date</strong><p>${formatDate(order?.created_at || error.recorded_at)}</p></div>
+                <div class="detail-item"><strong>Error Type</strong><p>${review?.modified_reason || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Description</strong><p>${review?.modification_details || 'No additional details available.'}</p></div>
+                <div class="detail-item"><strong>Reviewed By</strong><p>${reviewer || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status.replace('_response', '')}">${error.status.replace('_', ' ')}</span></p></div>
+                ${error.error_responses?.[0] ? `
+                <div class="detail-item" style="background: var(--green-bg);">
+                    <strong>Your Response</strong>
+                    <p>${error.error_responses[0].response_text}</p>
+                    <small>Submitted on: ${formatDateTime(error.error_responses[0].responded_at)}</small>
+                </div>` : ''}
+            `;
+            showModal('view-error-modal');
+        }
+
+        function openReplyErrorModal(errorId) {
+            const error = userErrors.find(e => e.id === errorId);
+            if (!error) return;
+            
+            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
+            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+            const description = error.quality_reviews?.modification_details || 'No additional details available.';
+
+            document.getElementById('reply-error-id').textContent = orderId;
+            document.getElementById('reply-error-type').textContent = errorType;
+            document.getElementById('reply-error-date').textContent = formatDate(orderDate);
+            document.getElementById('reply-error-description').textContent = description;
+            document.getElementById('error-response').value = '';
+            document.getElementById('submit-response-btn').dataset.errorId = errorId;
+            showModal('reply-error-modal');
+        }
+
+        async function handleResponseSubmission() {
+            const btn = document.getElementById('submit-response-btn');
+            const errorId = btn.dataset.errorId;
+            const responseText = document.getElementById('error-response').value.trim();
+            if (!responseText) {
+                showToast('Please enter your response before submitting', 'warning');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                await submitErrorResponse(errorId, currentUser.id, responseText);
+                showToast('Your response has been submitted successfully', 'success');
+                hideModal('reply-error-modal');
+                await loadUserErrors();
+                await loadUserPerformance();
+            } catch (error) {
+                showToast('Failed to submit your response', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Submit Response';
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                notifications = await getNotifications(currentUser.id) || [];
+                updateNotificationsUI();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notifications = [];
+                updateNotificationsUI();
+            }
+        }
+
+        function updateNotificationsUI() {
+            const list = document.getElementById('notification-list');
+            const badge = document.getElementById('notification-badge');
+            const unreadCount = notifications.filter(n => !n.is_read).length;
+
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
+
+            if (notifications.length === 0) {
+                list.innerHTML = '<li class="notification-item">No new notifications</li>';
+            } else {
+                list.innerHTML = notifications.map(n => `
+                    <li class="notification-item" style="opacity: ${n.is_read ? 0.6 : 1};">
+                        <div class="notification-message">
+                            <div>${n.message}</div>
+                            <div class="notification-time">${formatDateTime(n.created_at)}</div>
+                        </div>
+                        <div class="notification-actions">
+                            ${!n.is_read ? `<button class="mark-read-btn" data-notification-id="${n.id}">Mark read</button>` : ''}
+                        </div>
+                    </li>`).join('');
+                
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        btn.disabled = true;
+                        await markNotificationAsRead(btn.dataset.notificationId);
+                        await loadNotifications();
+                    });
+                });
+            }
+        }
+
+        function initRealtimeSubscriptions() {
+            if (typeof subscribeToNotifications === 'function') {
+                subscribeToNotifications(currentUser.id, (payload) => {
+                    showToast(payload.new.message, 'info', 'New Notification');
+                    loadNotifications();
+                });
+            }
+
+            if (typeof subscribeToErrors === 'function') {
+                subscribeToErrors(currentUser.id, (payload) => {
+                    showToast('A new error has been logged for you', 'warning', 'New Error');
+                    loadUserErrors();
+                    loadUserPerformance();
+                });
+            }
+        }
+
+        function initCharts() {
+            const ctx = document.getElementById('commonErrorsChart').getContext('2d');
+            commonErrorsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'],
+                        borderWidth: 2,
+                        borderColor: '#1a1a1a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: '#e6edf3', font: { family: 'Poppins' } } }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!commonErrorsChart) return;
+            const labels = Object.keys(userPerformance.errorTypes);
+            const data = Object.values(userPerformance.errorTypes);
+            commonErrorsChart.data.labels = labels.length > 0 ? labels : ['No Errors'];
+            commonErrorsChart.data.datasets[0].data = data.length > 0 ? data : [1];
+            commonErrorsChart.data.datasets[0].backgroundColor = data.length > 0 ? ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'] : ['#333'];
+            commonErrorsChart.update();
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabId = tab.dataset.tab;
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                    document.getElementById('page-title-header').textContent = tab.textContent.replace(/[^\w\s]/gi, '').trim();
+                });
+            });
+
+            document.querySelectorAll('.settings-nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                    const sectionId = link.dataset.section;
+                    document.querySelectorAll('.setting-card').forEach(s => s.style.display = 'none');
+                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
+                });
+            });
+            
+            document.getElementById('notification-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('notification-dropdown').classList.toggle('show');
+            });
+            
+            document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                await Promise.all(notifications.filter(n => !n.is_read).map(n => markNotificationAsRead(n.id)));
+                await loadNotifications();
+                showToast('All notifications marked as read', 'success');
+            });
+            
+            document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
+            
+            document.getElementById('save-profile-btn').addEventListener('click', async () => {
+                const name = document.getElementById('profile-fullname').value;
+                const phone = document.getElementById('profile-phone').value;
+                try {
+                    await updateUserProfile(currentUser.id, { name, phone });
+                    currentUser.name = name;
+                    currentUser.phone = phone;
+                    updateUserInterface();
+                    showToast('Profile updated successfully', 'success');
+                } catch (error) {
+                    showToast('Failed to update profile', 'error');
+                }
+            });
+            
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                await supabase.auth.signOut();
+                window.location.href = 'login.html';
+            });
+            
+            document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-bell')) {
+                    document.getElementById('notification-dropdown').classList.remove('show');
+                }
+                if (e.target.classList.contains('modal-overlay')) {
+                    e.target.classList.remove('show');
+                }
+            });
+        });
+    </script>
+    
     <style>
         :root {
             --primary-color: #00bfff;
@@ -89,7 +525,7 @@
         th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: #2c2c2c; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover { background-color: #2c2c2c; }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-transform: capitalize; }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
         .status-responded { background-color: var(--green-bg); color: var(--green); }
         .status-finalized { background-color: var(--red-bg); color: var(--red); }
@@ -98,15 +534,14 @@
         .action-btn.primary { background: var(--primary-color); color: #000; }
         .action-btn.primary:hover { background: var(--primary-hover); }
         .placeholder-content { padding: 40px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
-        
         .search-input-container { position: relative; }
         .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; width: 250px; }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; position: relative; }
-        .notification-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
-        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
+        .notification-badge { position: absolute; top: 0px; right: 0px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; border: 2px solid var(--card-bg); }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 350px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
         .notification-dropdown.show { display: block; }
-        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: between; align-items: center; }
+        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
         .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
         .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
         .notification-item:last-child { border-bottom: none; }
@@ -114,17 +549,16 @@
         .notification-time { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
         .notification-actions { margin-left: 10px; }
         .mark-read-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
-        
         .filter-panel { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; padding: 20px; background: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 30px; border: 1px solid var(--border-color); }
         .filter-group { flex: 1; min-width: 150px; }
         .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
         .filter-group input, .filter-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.3s; }
+        .btn:disabled { background-color: #555; cursor: not-allowed; }
         .btn-primary { background: var(--primary-color); color: #000; }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-secondary { background: #333; color: white; }
         .btn-secondary:hover { background: #444; }
-
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
         .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
@@ -135,13 +569,11 @@
         .detail-item strong { display: block; color: var(--primary-color); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;}
         .detail-item p { margin: 0; font-size: 1rem; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
         .form-group textarea { min-height: 120px; resize: vertical; }
         .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
-        
         .settings-layout { display: flex; gap: 2rem; }
         .settings-nav { flex: 0 0 200px; }
         .settings-nav ul { list-style: none; padding: 0; }
@@ -157,8 +589,6 @@
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
-
-        /* Toast notifications */
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
         .toast.success { border-left: 4px solid var(--green); }
@@ -174,43 +604,7 @@
         .toast-title { font-weight: 600; margin-bottom: 5px; }
         .toast-message { font-size: 14px; color: var(--text-muted); }
         .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
-        
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-
-        /* Loading states */
-        .loading { opacity: 0.6; pointer-events: none; }
-        .loading::after { content: 'Loading...'; display: block; text-align: center; padding: 20px; color: var(--text-muted); }
-
-        /* Responsive design */
-        @media (max-width: 1024px) {
-            .sidebar { width: 220px; }
-            .main-content { margin-left: 220px; width: calc(100% - 220px); }
-        }
-        
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; }
-            .sidebar-title, .nav-group-title, .user-name, .user-role { display: none; }
-            .sidebar-nav a span:not(.icon) { display: none; }
-            .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 15px; }
-            .stats-grid { grid-template-columns: 1fr; }
-            .filter-panel { flex-direction: column; }
-            .filter-group { min-width: 100%; }
-            .header-actions { flex-direction: column; align-items: flex-end; gap: 10px; }
-            .search-input-container input[type="search"] { width: 200px; }
-        }
-        
-        @media (max-width: 480px) {
-            .sidebar { display: none; }
-            .main-content { margin-left: 0; width: 100%; }
-            .modal-box { width: 95%; padding: 1rem; }
-            .table-container { overflow-x: auto; }
-            table { min-width: 600px; }
-        }
-
-        /* Empty state */
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
     </style>
@@ -219,10 +613,7 @@
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
-                <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
-                    <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
+                <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path><path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 <h1 class="sidebar-title">QualityX</h1>
             </div>
             <div class="sidebar-nav-container">
@@ -246,7 +637,7 @@
         </div>
         <div class="sidebar-footer">
             <div class="user-profile-widget">
-                <div class="avatar-initials" id="sidebar-avatar-initials">SA</div>
+                <div class="avatar-initials" id="sidebar-avatar-initials">--</div>
                 <div>
                     <div class="user-name" id="sidebar-username">Loading...</div>
                     <div class="user-role" id="sidebar-userrole">Loading...</div>
@@ -287,7 +678,6 @@
                 <h2 id="welcome-user-h2">Welcome back!</h2>
                 <p>Here's a look at your performance metrics for this month.</p>
             </div>
-
             <section class="stats-grid">
                 <div class="card progress-card">
                     <h3>Your Current Error Rate</h3>
@@ -307,7 +697,6 @@
                     </div>
                 </div>
             </section>
-            
             <section class="filter-panel">
                 <div class="filter-group">
                     <label for="filter-order-id">Order ID</label>
@@ -324,7 +713,6 @@
                 <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
                 <button class="btn btn-secondary" id="reset-filters-btn">Reset</button>
             </section>
-
             <section class="table-container">
                 <h3>Recent Errors Logged</h3>
                 <table>
@@ -339,12 +727,10 @@
                 </table>
             </section>
         </div>
-
         <div id="my-errors" class="tab-content">
             <div class="card">
                 <h3>All My Errors</h3>
                 <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
-                
                 <div class="filter-panel">
                     <div class="filter-group">
                         <label for="my-errors-search">Search</label>
@@ -362,7 +748,6 @@
                     <button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button>
                     <button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button>
                 </div>
-                
                 <div class="table-container">
                     <table>
                         <thead>
@@ -377,7 +762,6 @@
                 </div>
             </div>
         </div>
-
         <div id="profile" class="tab-content">
             <div class="card">
                 <h3>Edit Profile</h3>
@@ -403,7 +787,6 @@
                 </div>
             </div>
         </div>
-        
         <div id="settings" class="tab-content">
             <div class="card">
                 <h3>Account Settings</h3>
@@ -436,7 +819,6 @@
                 </div>
             </div>
         </div>
-        
         <div id="help" class="tab-content">
             <div class="card">
                 <div class="placeholder-content">
@@ -450,23 +832,19 @@
         </div>
     </main>
 
-    <!-- Error Detail Modal -->
     <div class="modal-overlay" id="view-error-modal">
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title">Error Details: <span id="view-error-id" style="color: var(--primary-color);"></span></h3>
                 <button class="modal-close-btn" data-modal-id="view-error-modal">×</button>
             </div>
-            <div class="modal-body" id="view-error-body">
-                <!-- Details will be populated by JavaScript -->
-            </div>
+            <div class="modal-body" id="view-error-body"></div>
             <div class="modal-footer">
                 <button class="btn btn-primary modal-close-btn" data-modal-id="view-error-modal">Close</button>
             </div>
         </div>
     </div>
 
-    <!-- Reply to Error Modal -->
     <div class="modal-overlay" id="reply-error-modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -474,18 +852,9 @@
                 <button class="modal-close-btn" data-modal-id="reply-error-modal">×</button>
             </div>
             <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Error Type</strong>
-                    <p id="reply-error-type">Loading...</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Date</strong>
-                    <p id="reply-error-date">Loading...</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Description</strong>
-                    <p id="reply-error-description">Loading...</p>
-                </div>
+                <div class="detail-item"><strong>Error Type</strong><p id="reply-error-type">Loading...</p></div>
+                <div class="detail-item"><strong>Date</strong><p id="reply-error-date">Loading...</p></div>
+                <div class="detail-item"><strong>Description</strong><p id="reply-error-description">Loading...</p></div>
                 <div class="form-group">
                     <label for="error-response">Your Response *</label>
                     <textarea id="error-response" placeholder="Please provide your response to this error..." required></textarea>
@@ -499,712 +868,6 @@
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
-
-    <script>
-        // Application State
-        let currentUser = null;
-        let userErrors = [];
-        let userPerformance = {
-            errorRate: 0,
-            totalErrors: 0,
-            totalOrders: 0,
-            errorTypes: {}
-        };
-        let notifications = [];
-        let commonErrorsChart = null;
-
-        // Toast Notification System
-        function showToast(message, type = 'info', title = '') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
-            };
-            
-            toast.innerHTML = `
-                <div class="toast-icon">${icons[type]}</div>
-                <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ''}
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close">×</button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }
-            }, 5000);
-            
-            // Close button functionality
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            });
-        }
-
-        // Helper Functions
-        function getInitials(name) {
-            if (!name) return '';
-            const names = name.split(' ');
-            return names.length > 1 ? 
-                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
-                `${names[0][0]}`.toUpperCase();
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { year: 'numeric', month: 'long', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        function formatDateTime(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { 
-                year: 'numeric', 
-                month: 'short', 
-                day: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        function showModal(modalId) {
-            document.getElementById(modalId)?.classList.add('show');
-        }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId)?.classList.remove('show');
-        }
-
-        // Initialize the application
-        async function initApp() {
-            try {
-                showToast('Loading your dashboard...', 'info');
-                
-                // Get current user
-                const user = await getCurrentUser();
-                if (!user) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Get user profile
-                const { data: profile, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (error) {
-                    console.error('Error fetching user profile:', error);
-                    showToast('Failed to load user profile', 'error');
-                    return;
-                }
-                
-                currentUser = { ...user, ...profile };
-                
-                // Update UI with user data
-                updateUserInterface();
-                
-                // Load user data
-                await loadUserErrors();
-                await loadUserPerformance();
-                await loadNotifications();
-                
-                // Initialize real-time subscriptions
-                initRealtimeSubscriptions();
-                
-                // Initialize charts
-                initCharts();
-                
-                showToast('Dashboard loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                showToast('Failed to initialize dashboard', 'error');
-            }
-        }
-
-        function updateUserInterface() {
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
-            document.getElementById('sidebar-username').textContent = currentUser.name;
-            document.getElementById('sidebar-userrole').textContent = currentUser.role;
-            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
-            
-            // Profile form
-            document.getElementById('profile-fullname').value = currentUser.name;
-            document.getElementById('profile-email').value = currentUser.email;
-            document.getElementById('profile-phone').value = currentUser.phone || '';
-            document.getElementById('profile-department').value = currentUser.department || 'N/A';
-        }
-
-        // Load user errors from database
-        async function loadUserErrors(filters = {}) {
-            try {
-                const errors = await getAgentErrors(currentUser.id, filters);
-                userErrors = errors || [];
-                renderErrorTables();
-            } catch (error) {
-                console.error('Error loading user errors:', error);
-                showToast('Failed to load your errors', 'error');
-                userErrors = [];
-                renderErrorTables();
-            }
-        }
-
-        // Load user performance data
-        async function loadUserPerformance() {
-            try {
-                const metrics = await getPerformanceMetrics('month');
-                
-                userPerformance.totalOrders = metrics.totalOrders;
-                userPerformance.totalErrors = metrics.totalErrors;
-                userPerformance.errorRate = metrics.errorRate;
-                
-                // Update UI
-                document.getElementById('error-rate').textContent = `${userPerformance.errorRate}%`;
-                document.getElementById('error-rate-bar').style.width = `${Math.min(userPerformance.errorRate, 100)}%`;
-                document.getElementById('error-rate-description').textContent = 
-                    `Based on ${userPerformance.totalErrors} errors out of ${userPerformance.totalOrders} reviewed orders.`;
-                
-                // Calculate error types for chart
-                userPerformance.errorTypes = {};
-                userErrors.forEach(error => {
-                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-                    userPerformance.errorTypes[errorType] = (userPerformance.errorTypes[errorType] || 0) + 1;
-                });
-                
-                // Update chart data
-                updateCharts();
-            } catch (error) {
-                console.error('Error loading user performance:', error);
-            }
-        }
-
-        // Render error tables
-        function renderErrorTables() {
-            const dashboardTableBody = document.getElementById('error-table-body');
-            const myErrorsTableBody = document.getElementById('my-errors-table-body');
-            
-            // Filter for dashboard (only recent errors)
-            const recentErrors = userErrors.slice(0, 5);
-            
-            if (recentErrors.length === 0) {
-                dashboardTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">✅</div>
-                            <div>No errors found for your account.</div>
-                            <small>Great job maintaining quality standards!</small>
-                        </td>
-                    </tr>
-                `;
-            } else {
-                dashboardTableBody.innerHTML = recentErrors.map(error => {
-                    const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
-                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-                    
-                    return `
-                        <tr>
-                            <td>${orderId}</td>
-                            <td>${formatDate(orderDate)}</td>
-                            <td>${errorType}</td>
-                            <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
-                            <td>
-                                <button class="action-btn view-error-btn" data-error-id="${error.id}">View</button>
-                                ${error.status === 'pending_response' ? 
-                                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">Reply</button>` : 
-                                    ''
-                                }
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-            
-            // My Errors table (all errors)
-            if (userErrors.length === 0) {
-                myErrorsTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">✅</div>
-                            <div>No errors found for your account.</div>
-                            <small>Great job maintaining quality standards!</small>
-                        </td>
-                    </tr>
-                `;
-            } else {
-                myErrorsTableBody.innerHTML = userErrors.map(error => {
-                    const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
-                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-                    
-                    return `
-                        <tr>
-                            <td>${orderId}</td>
-                            <td>${formatDate(orderDate)}</td>
-                            <td>${errorType}</td>
-                            <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
-                            <td>
-                                <button class="action-btn view-error-btn" data-error-id="${error.id}">View</button>
-                                ${error.status === 'pending_response' ? 
-                                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">Reply</button>` : 
-                                    ''
-                                }
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-            }
-            
-            // Add event listeners to buttons
-            document.querySelectorAll('.view-error-btn').forEach(btn => {
-                btn.addEventListener('click', () => openViewErrorModal(btn.dataset.errorId));
-            });
-            
-            document.querySelectorAll('.reply-error-btn').forEach(btn => {
-                btn.addEventListener('click', () => openReplyErrorModal(btn.dataset.errorId));
-            });
-        }
-
-        // Open view error modal
-        async function openViewErrorModal(errorId) {
-            const error = userErrors.find(e => e.id === errorId);
-            if (!error) {
-                showToast('Error details not found', 'error');
-                return;
-            }
-            
-            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
-            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-            const description = error.quality_reviews?.department || 'No additional details available';
-            const reviewer = error.quality_reviews?.order_assignments?.users?.name || 'Unknown';
-            
-            let responseHtml = '';
-            if (error.error_responses && error.error_responses.length > 0) {
-                responseHtml = `
-                    <div class="detail-item" style="background: var(--green-bg);">
-                        <strong>Your Response</strong>
-                        <p>${error.error_responses[0].response_text}</p>
-                        <small>Submitted on: ${formatDateTime(error.error_responses[0].created_at)}</small>
-                    </div>
-                `;
-            }
-            
-            document.getElementById('view-error-id').textContent = orderId;
-            document.getElementById('view-error-body').innerHTML = `
-                <div class="detail-item">
-                    <strong>Order ID</strong>
-                    <p>${orderId}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Date</strong>
-                    <p>${formatDate(orderDate)}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Error Type</strong>
-                    <p>${errorType}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Description</strong>
-                    <p>${description}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Reviewed By</strong>
-                    <p>${reviewer}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Status</strong>
-                    <p><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></p>
-                </div>
-                ${responseHtml}
-            `;
-            
-            showModal('view-error-modal');
-        }
-
-        // Open reply error modal
-        async function openReplyErrorModal(errorId) {
-            const error = userErrors.find(e => e.id === errorId);
-            if (!error) {
-                showToast('Error details not found', 'error');
-                return;
-            }
-            
-            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
-            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-            const description = error.quality_reviews?.department || 'No additional details available';
-            
-            document.getElementById('reply-error-id').textContent = orderId;
-            document.getElementById('reply-error-type').textContent = errorType;
-            document.getElementById('reply-error-date').textContent = formatDate(orderDate);
-            document.getElementById('reply-error-description').textContent = description;
-            document.getElementById('error-response').value = '';
-            
-            // Store the current error ID for submission
-            document.getElementById('submit-response-btn').dataset.errorId = errorId;
-            
-            showModal('reply-error-modal');
-        }
-
-        // Submit error response
-        async function submitErrorResponse(errorId, responseText) {
-            try {
-                await window.submitErrorResponse(errorId, currentUser.id, responseText);
-                showToast('Your response has been submitted successfully', 'success');
-                hideModal('reply-error-modal');
-                
-                // Reload errors to reflect the change
-                await loadUserErrors();
-                await loadUserPerformance();
-                
-                return true;
-            } catch (error) {
-                console.error('Error submitting response:', error);
-                showToast('Failed to submit your response', 'error');
-                return false;
-            }
-        }
-
-        // Load notifications
-        async function loadNotifications() {
-            try {
-                notifications = await getNotifications(currentUser.id);
-                updateNotificationsUI();
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                notifications = [];
-                updateNotificationsUI();
-            }
-        }
-
-        function updateNotificationsUI() {
-            const notificationList = document.getElementById('notification-list');
-            const notificationBadge = document.getElementById('notification-badge');
-            
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
-                notificationBadge.style.display = 'none';
-            } else {
-                notificationList.innerHTML = notifications.map(notification => `
-                    <li class="notification-item">
-                        <div class="notification-message">
-                            <div>${notification.message}</div>
-                            <div class="notification-time">${formatDateTime(notification.created_at)}</div>
-                        </div>
-                        <div class="notification-actions">
-                            <button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button>
-                        </div>
-                    </li>
-                `).join('');
-                
-                notificationBadge.textContent = notifications.length;
-                notificationBadge.style.display = 'flex';
-                
-                // Add event listeners to mark as read buttons
-                document.querySelectorAll('.mark-read-btn').forEach(btn => {
-                    btn.addEventListener('click', async (e) => {
-                        e.stopPropagation();
-                        const notificationId = btn.dataset.notificationId;
-                        await markNotificationAsRead(notificationId);
-                        await loadNotifications();
-                    });
-                });
-            }
-        }
-
-        // Initialize real-time subscriptions
-        function initRealtimeSubscriptions() {
-            // Subscribe to new notifications
-            window.subscribeToNotifications(currentUser.id, (payload) => {
-                console.log('New notification received:', payload);
-                showToast(payload.new.message, 'info', 'New Notification');
-                loadNotifications();
-            });
-            
-            // Subscribe to new errors
-            window.subscribeToErrors(currentUser.id, (payload) => {
-                console.log('New error assigned:', payload);
-                showToast('A new error has been logged against your account', 'warning', 'New Error');
-                loadUserErrors();
-                loadUserPerformance();
-            });
-        }
-
-        // Initialize charts
-        function initCharts() {
-            const ctx = document.getElementById('commonErrorsChart').getContext('2d');
-            commonErrorsChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: [],
-                    datasets: [{
-                        data: [],
-                        backgroundColor: [
-                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
-                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
-                        ],
-                        borderWidth: 0,
-                        borderColor: '#1a1a1a'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#e6edf3',
-                                font: {
-                                    family: 'Poppins',
-                                    size: 12
-                                },
-                                padding: 20
-                            }
-                        },
-                        tooltip: {
-                            backgroundColor: 'rg(26, 26, 26, 0.9)',
-                            titleColor: '#e6edf3',
-                            bodyColor: '#e6edf3',
-                            borderColor: '#333',
-                            borderWidth: 1
-                        }
-                    },
-                    cutout: '60%'
-                }
-            });
-        }
-
-        // Update charts with data
-        function updateCharts() {
-            if (!commonErrorsChart) return;
-            
-            const errorTypes = Object.keys(userPerformance.errorTypes);
-            const errorCounts = Object.values(userPerformance.errorTypes);
-            
-            commonErrorsChart.data.labels = errorTypes;
-            commonErrorsChart.data.datasets[0].data = errorCounts;
-            commonErrorsChart.update();
-        }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize the app
-            initApp();
-            
-            // Tab navigation
-            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active tab
-                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Show corresponding content
-                    const tabId = tab.dataset.tab;
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    // Update page title
-                    document.getElementById('page-title-header').textContent = 
-                        tabId === 'dashboard' ? 'Dashboard' : 
-                        tabId === 'my-errors' ? 'My Errors' : 
-                        tabId === 'profile' ? 'Profile' : 
-                        tabId === 'settings' ? 'Settings' : 
-                        tabId === 'help' ? 'Help' : 'Dashboard';
-                });
-            });
-            
-            // Settings navigation
-            document.querySelectorAll('.settings-nav a').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active settings tab
-                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
-                    link.classList.add('active');
-                    
-                    // Show corresponding section
-                    const sectionId = link.dataset.section;
-                    document.querySelectorAll('.setting-card').forEach(section => section.style.display = 'none');
-                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
-                });
-            });
-            
-            // Notification bell
-            document.getElementById('notification-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('notification-dropdown').classList.toggle('show');
-            });
-            
-            // Mark all as read
-            document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
-                e.stopPropagation();
-                for (const notification of notifications) {
-                    await markNotificationAsRead(notification.id);
-                }
-                await loadNotifications();
-                showToast('All notifications marked as read', 'success');
-            });
-            
-            // Close modals
-            document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const modalId = btn.dataset.modalId;
-                    hideModal(modalId);
-                });
-            });
-            
-            // Submit response button
-            document.getElementById('submit-response-btn').addEventListener('click', async () => {
-                const errorId = document.getElementById('submit-response-btn').dataset.errorId;
-                const responseText = document.getElementById('error-response').value.trim();
-                
-                if (!responseText) {
-                    showToast('Please enter your response before submitting', 'warning');
-                    return;
-                }
-                
-                await submitErrorResponse(errorId, responseText);
-            });
-            
-            // Apply filters for dashboard
-            document.getElementById('apply-filters-btn').addEventListener('click', () => {
-                const orderId = document.getElementById('filter-order-id').value;
-                const fromDate = document.getElementById('filter-from-date').value;
-                const toDate = document.getElementById('filter-to-date').value;
-                
-                loadUserErrors({
-                    order_id: orderId,
-                    from_date: fromDate,
-                    to_date: toDate
-                });
-                
-                showToast('Filters applied', 'success');
-            });
-            
-            // Reset filters for dashboard
-            document.getElementById('reset-filters-btn').addEventListener('click', () => {
-                document.getElementById('filter-order-id').value = '';
-                document.getElementById('filter-from-date').value = '';
-                document.getElementById('filter-to-date').value = '';
-                loadUserErrors();
-                showToast('Filters reset', 'info');
-            });
-            
-            // Apply filters for my errors
-            document.getElementById('apply-my-errors-filters').addEventListener('click', () => {
-                const search = document.getElementById('my-errors-search').value;
-                const status = document.getElementById('my-errors-status').value;
-                
-                const filters = {};
-                if (search) filters.search = search;
-                if (status !== 'all') filters.status = status;
-                
-                loadUserErrors(filters);
-                showToast('Filters applied', 'success');
-            });
-            
-            // Reset filters for my errors
-            document.getElementById('reset-my-errors-filters').addEventListener('click', () => {
-                document.getElementById('my-errors-search').value = '';
-                document.getElementById('my-errors-status').value = 'all';
-                loadUserErrors();
-                showToast('Filters reset', 'info');
-            });
-            
-            // Save profile button
-            document.getElementById('save-profile-btn').addEventListener('click', async () => {
-                const fullName = document.getElementById('profile-fullname').value;
-                const phone = document.getElementById('profile-phone').value;
-                
-                try {
-                    await updateUserProfile(currentUser.id, {
-                        name: fullName,
-                        phone: phone
-                    });
-                    
-                    // Update current user data
-                    currentUser.name = fullName;
-                    currentUser.phone = phone;
-                    updateUserInterface();
-                    
-                    showToast('Profile updated successfully', 'success');
-                } catch (error) {
-                    console.error('Error updating profile:', error);
-                    showToast('Failed to update profile', 'error');
-                }
-            });
-            
-            // Cancel profile button
-            document.getElementById('cancel-profile-btn').addEventListener('click', () => {
-                // Reset form to current user data
-                updateUserInterface();
-                document.querySelector('.sidebar-nav a[data-tab="dashboard"]').click();
-            });
-            
-            // Contact support button
-            document.getElementById('contact-support-btn').addEventListener('click', () => {
-                showToast('Support request would be sent here', 'info');
-            });
-            
-            // Change password button
-            document.getElementById('change-password-btn').addEventListener('click', () => {
-                showToast('Password change functionality would open here', 'info');
-            });
-            
-            // Logout button
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    await supabase.auth.signOut();
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Error during logout:', error);
-                    showToast('Error during logout', 'error');
-                }
-            });
-            
-            // Close notification dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-bell')) {
-                    document.getElementById('notification-dropdown').classList.remove('show');
-                }
-            });
-            
-            // Close modals when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('show');
-                }
-            });
-        });
-    </script>
 </body>
 </html>
