@@ -1542,47 +1542,46 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                 const shift = document.getElementById('schedule-shift').value;
                 
                 try {
-try {
-    // حساب التاريخ بناءً على اليوم
-    const targetDate = new Date();
-    const today = targetDate.getDay(); // 0-6
-    const diff = day - today;
-    targetDate.setDate(targetDate.getDate() + diff);
-    const shiftDate = targetDate.toISOString().split('T')[0];
+                    // حساب التاريخ بناءً على اليوم
+                    const targetDate = new Date();
+                    const today = targetDate.getDay(); // 0-6
+                    const diff = day - today;
+                    targetDate.setDate(targetDate.getDate() + diff);
+                    const shiftDate = targetDate.toISOString().split('T')[0];
 
-    // تحديد الـ status بناءً على نوع الشيفت
-    let status = 'scheduled';
-    let startTime = '09:00';
-    let endTime = '17:00';
+                    // تحديد الـ status بناءً على نوع الشيفت
+                    let status = 'scheduled';
+                    let startTime = '09:00';
+                    let endTime = '17:00';
 
-    if (shift === 'off') {
-        status = 'off';
-        startTime = null;
-        endTime = null;
-    } else if (shift === 'leave') {
-        status = 'leave';
-        startTime = null;
-        endTime = null;
-    } else if (shift === 'sick') {
-        status = 'sick';
-        startTime = null;
-        endTime = null;
-    } else {
-        // إذا كان شيفت عادي، فصل الوقت
-        const times = shift.split('-');
-        if (times.length === 2) {
-            startTime = times[0].trim();
-            endTime = times[1].trim();
-        }
-    }
+                    if (shift === 'off') {
+                        status = 'off';
+                        startTime = null;
+                        endTime = null;
+                    } else if (shift === 'leave') {
+                        status = 'leave';
+                        startTime = null;
+                        endTime = null;
+                    } else if (shift === 'sick') {
+                        status = 'sick';
+                        startTime = null;
+                        endTime = null;
+                    } else {
+                        // إذا كان شيفت عادي، فصل الوقت
+                        const times = shift.split('-');
+                        if (times.length === 2) {
+                            startTime = times[0].trim();
+                            endTime = times[1].trim();
+                        }
+                    }
 
-    await updateTeamSchedule([{
-        user_id: userId,
-        shift_date: shiftDate,                // استخدم shift_date
-        start_time: startTime,                // استخدم start_time
-        end_time: endTime,                    // استخدم end_time
-        status: status                        // استخدم status
-    }]);                      
+                    await updateTeamSchedule([{
+                        user_id: userId,
+                        shift_date: shiftDate,                // استخدم shift_date
+                        start_time: startTime,                // استخدم start_time
+                        end_time: endTime,                    // استخدم end_time
+                        status: status                        // استخدم status
+                    }]);                      
     
                     showToast('Schedule updated successfully', 'success');
                     hideModal('edit-schedule-modal');
@@ -1592,6 +1591,7 @@ try {
                     console.error('Error updating schedule:', error);
                     showToast('Failed to update schedule', 'error');
                 }
+            });
             
             // Add team member
             document.getElementById('add-member-btn').addEventListener('click', () => {
@@ -1632,4 +1632,3 @@ try {
     </script>
 </body>
 </html>
-```
