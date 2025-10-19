@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Manager Dashboard - QualityX</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+:root{--primary-color:#00bfff;--bg-color:#121212;--card-bg:#1a1a1a;--text-color:#e6edf3;--border-color:#333;--border-radius-base:.75rem}
+body{font-family:Poppins, sans-serif;background:var(--bg-color);color:var(--text-color);margin:0}
+.container{padding:20px}
+.card{background:var(--card-bg);padding:16px;border-radius:12px;border:1px solid var(--border-color);margin-bottom:12px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+</style></head><body>
+<div class="container">
+<h1>Manager Dashboard</h1>
+<div class="grid" id="kpis">
+  <div class="card"><h3>Total Orders</h3><div id="total-orders">—</div></div>
+  <div class="card"><h3>Total Errors</h3><div id="total-errors">—</div></div>
+  <div class="card"><h3>Active Agents</h3><div id="active-agents">—</div></div>
+</div>
+<div class="card"><h3>Error Rate Trend</h3><canvas id="mgrTrend" style="height:240px"></canvas></div>
+<script type="module">
+import { supabase, getOrdersSummary, getErrorStats, getActiveAgentsCount } from './api-client.js';
+async function init(){ 
+  try{
+    const orders = await getOrdersSummary();
+    document.getElementById('total-orders').textContent = orders.total || 0;
+    const err = await getErrorStats();
+    document.getElementById('total-errors').textContent = err.total || 0;
+    const act = await getActiveAgentsCount();
+    document.getElementById('active-agents').textContent = act || 0;
+    const ctx = document.getElementById('mgrTrend').getContext('2d');
+    new Chart(ctx, { type:'line', data:{ labels:['1','2','3','4','5'], datasets:[{ label:'Errors', data:[err.byStatus?.pending_response||0, err.byStatus?.responded||0, err.byStatus?.finalized||0, 0,0] }] }, options:{responsive:true} });
+  }catch(e){ console.error(e); }
+}
+init();
+</script>
+</div></body></html>
