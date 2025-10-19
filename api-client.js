@@ -596,7 +596,6 @@ export async function getHelperEscalations(helperId) {
             amount,
             chefz,
             order_status,
-            requested_delivery_date,
             payment_type
           ),
           users!order_assignments_quality_agent_id_fkey (
@@ -772,7 +771,6 @@ export async function getHelperInquiries(helperId) {
             amount,
             chefz,
             order_status,
-            requested_delivery_date,
             payment_type
           ),
           users!order_assignments_quality_agent_id_fkey (
