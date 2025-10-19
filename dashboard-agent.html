@@ -7,32 +7,26 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module">
-        import { 
-            supabase, 
-            getCurrentUser, 
-            getUserById, 
-            getAgentErrors, 
-            submitErrorResponse,
-            getPerformanceMetrics,
-            getNotifications,
-            markNotificationAsRead,
-            subscribeToNotifications,
-            subscribeToErrors,
-            updateUserProfile
-        } from './api-client.js';
-        
-        // Make functions available globally
-        window.supabase = supabase;
-        window.getCurrentUser = getCurrentUser;
-        window.getUserById = getUserById;
-        window.getAgentErrors = getAgentErrors;
-        window.submitErrorResponse = submitErrorResponse;
-        window.getPerformanceMetrics = getPerformanceMetrics;
-        window.getNotifications = getNotifications;
-        window.markNotificationAsRead = markNotificationAsRead;
-        window.updateUserProfile = updateUserProfile;
-    </script>
+   <script type="module">
+    import { 
+        subscribeToNotifications,
+        subscribeToErrors,
+        updateUserProfile
+    } from './api-client.js';
+    // Make functions available globally
+    window.supabase = supabase;
+    window.getCurrentUser = getCurrentUser;
+    window.getUserById = getUserById;
+    window.getAgentErrors = getAgentErrors;
+    window.submitErrorResponse = submitErrorResponse;
+    window.getPerformanceMetrics = getPerformanceMetrics;
+    window.getNotifications = getNotifications;
+    window.markNotificationAsRead = markNotificationAsRead;
+    window.updateUserProfile = updateUserProfile;
+    window.subscribeToNotifications = subscribeToNotifications;
+    window.subscribeToErrors = subscribeToErrors;
+</script>
+
     <style>
         :root {
             --primary-color: #00bfff;
