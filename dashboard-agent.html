@@ -1163,7 +1163,7 @@
                         .from('users')
                         .select('*')
                         .eq('id', userId)
-                        .maybeSingle(); // FIX: Use maybeSingle() to prevent error on 0 rows. Returns null instead.
+                        .maybeSingle(); 
                     if (error) throw error;
                     return data;
                 } catch (error) {
@@ -1179,10 +1179,10 @@
                         .from('errors')
                         .select(`
                             *,
-                            quality_reviews!review_id(*), 
+                            quality_reviews!inner(*),
                             orders!inner(*),
                             users!errors_recorded_by_fkey(name)
-                        `) // FIX: Changed join to be explicit assuming 'review_id' is the foreign key in the 'errors' table. Removed 'inner' to be more robust.
+                        `)
                         .eq('employee_id', userId)
                         .order('created_at', { ascending: false });
                     if (error) throw error;
@@ -1263,7 +1263,7 @@
                     // Get total errors for this user
                     const { data: errors, error: errorsError } = await supabase
                         .from('errors')
-                        .select('id', { count: 'exact' }) // More efficient count
+                        .select('id')
                         .eq('employee_id', userId);
 
                     if (errorsError) throw errorsError;
@@ -1315,9 +1315,12 @@
                 // Set up event listeners
                 setupEventListeners();
                 
-                // Load initial data only if initialization was successful
-                if (currentUser && userData) {
+                // FIX: Load essential data (errors, stats) as long as a user is authenticated,
+                // even if their extended profile data (name, etc.) could not be loaded.
+                if (currentUser) {
                     await loadInitialData();
+                } else {
+                    showToast("Could not authenticate user. Please log in again.", "error");
                 }
                 
             } catch (error) {
@@ -1330,42 +1333,41 @@
             // Get current user
             currentUser = await apiClient.getCurrentUser();
             if (!currentUser) {
-                // In a real app, you might redirect: window.location.href = '/login.html';
                 showToast('You are not logged in.', 'error');
                 return;
             }
 
-            // Get user data
+            // Get user data from the public 'users' table
             userData = await apiClient.getUserData(currentUser.id);
             
-            // Update UI with user data (even if it's null, the function will handle it)
+            // Update the UI with whatever data we have
             updateUserInterface();
         }
 
         function updateUserInterface() {
-            // FIX: Add a guard to handle cases where the user profile doesn't exist.
+            // Handle cases where the user profile from the 'users' table doesn't exist.
             if (!userData) {
                 showToast('Could not load your profile data.', 'error');
                 document.getElementById('sidebar-username').textContent = 'Unknown User';
                 document.getElementById('sidebar-userrole').textContent = 'Agent';
                 document.getElementById('sidebar-avatar-initials').textContent = '!!';
                 document.getElementById('welcome-user-h2').textContent = `Welcome back!`;
-                return; // Stop further execution if no user data
+                // Do not return, to allow the rest of the UI to be set up
+            } else {
+                // Update sidebar user info if userData is available
+                document.getElementById('sidebar-username').textContent = userData.name || 'Agent';
+                document.getElementById('sidebar-userrole').textContent = userData.role || 'Customer Service Agent';
+                
+                // Update avatar initials
+                const initials = getInitials(userData.name);
+                document.getElementById('sidebar-avatar-initials').textContent = initials;
+                
+                // Update welcome message
+                const firstName = userData.name?.split(' ')[0] || 'there';
+                document.getElementById('welcome-user-h2').textContent = `Welcome back, ${firstName}!`;
             }
-
-            // Update sidebar user info
-            document.getElementById('sidebar-username').textContent = userData.name || 'Agent';
-            document.getElementById('sidebar-userrole').textContent = userData.role || 'Customer Service Agent';
             
-            // Update avatar initials
-            const initials = getInitials(userData.name);
-            document.getElementById('sidebar-avatar-initials').textContent = initials;
-            
-            // Update welcome message
-            const firstName = userData.name?.split(' ')[0] || 'there';
-            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${firstName}!`;
-            
-            // Initialize profile form
+            // Always initialize the profile form
             initializeProfileForm();
         }
 
@@ -1375,11 +1377,10 @@
         }
 
         function initializeProfileForm() {
-            if (userData) {
-                document.getElementById('profile-fullname').value = userData.name || '';
-                document.getElementById('profile-email').value = userData.email || '';
-                document.getElementById('profile-phone').value = userData.phone || '';
-            }
+            // The form will be blank if userData is not available, which is acceptable.
+            document.getElementById('profile-fullname').value = userData?.name || '';
+            document.getElementById('profile-email').value = userData?.email || currentUser?.email || ''; // Fallback to auth email
+            document.getElementById('profile-phone').value = userData?.phone || '';
         }
 
         function setupEventListeners() {
@@ -1705,8 +1706,7 @@
 
             rows.forEach(row => {
                 const cells = row.querySelectorAll('td');
-                // FIX: Check for correct number of cells to avoid error on empty/header rows.
-                if (cells.length < 6) return;
+                if (cells.length < 6) return; // Prevent error on empty/header rows.
 
                 const orderId = cells[0].textContent.toLowerCase();
                 const errorType = cells[1].textContent.toLowerCase();
@@ -1906,12 +1906,9 @@
                 return;
             }
 
-            if (!userData) {
-                showToast('Cannot save profile, user data not loaded.', 'error');
-                return;
-            }
-
             try {
+                // In a real app, you might check if a profile exists and create one if not.
+                // For now, we just attempt to update.
                 await apiClient.updateUserProfile(currentUser.id, {
                     name: fullName,
                     email: email,
