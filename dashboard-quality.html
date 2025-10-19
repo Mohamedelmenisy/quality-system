@@ -22,7 +22,15 @@
             getNotifications,
             markNotificationAsRead,
             subscribeToNotifications,
-            subscribeToAssignments
+            subscribeToAssignments,
+            // New functions for escalations
+            getHelperEscalations,
+            resolveEscalation,
+            escalateToSenior,
+            // New functions for inquiries
+            raiseInquiry,
+            getHelperInquiries,
+            respondToInquiry
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -39,6 +47,13 @@
         window.markNotificationAsRead = markNotificationAsRead;
         window.subscribeToNotifications = subscribeToNotifications; 
         window.subscribeToAssignments = subscribeToAssignments;
+        // New functions
+        window.getHelperEscalations = getHelperEscalations;
+        window.resolveEscalation = resolveEscalation;
+        window.escalateToSenior = escalateToSenior;
+        window.raiseInquiry = raiseInquiry;
+        window.getHelperInquiries = getHelperInquiries;
+        window.respondToInquiry = respondToInquiry;
     </script>
     <style>
         :root {
@@ -219,6 +234,7 @@
         }
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .inquiry-badge { background: var(--yellow-bg); color: var(--yellow); padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px; }
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -263,6 +279,14 @@
                         <li><a data-tab="my-assigned-orders"><span>📋</span>Assigned Orders</a></li>
                         <li><a data-tab="team-scheduling"><span>📅</span>Team Scheduling</a></li>
                         <li><a data-tab="team-members"><span>👥</span>Team Members</a></li>
+                    </ul>
+                </div>
+                <!-- New Quality Workflow Section -->
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Quality Workflow</h2>
+                    <ul class="sidebar-nav">
+                        <li><a data-tab="escalations" id="escalations-tab" style="display: none;"><span>🚨</span>Escalations</a></li>
+                        <li><a data-tab="inquiries" id="inquiries-tab" style="display: none;"><span>❓</span>Inquiries</a></li>
                     </ul>
                 </div>
                 <div class="nav-group">
@@ -379,7 +403,9 @@
                     <select id="filter-status">
                         <option value="all">All</option>
                         <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
+                        <option value="completed_today">Completed Today</option>
                     </select>
                 </div>
                 <div class="filter-group">
@@ -417,6 +443,78 @@
                         </thead>
                         <tbody id="orders-table-body">
                             <tr><td colspan="5" class="empty-state">Loading assigned orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Escalations Tab -->
+        <div id="escalations" class="tab-content">
+            <div class="card">
+                <h3>Pending Escalations (<span id="escalations-count">0</span>)</h3>
+                <div class="filter-bar">
+                    <div class="filter-group search-input-container">
+                        <input type="search" id="escalations-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-escalation-date">Date:</label>
+                        <input type="date" id="filter-escalation-date">
+                    </div>
+                    <button class="btn btn-secondary" id="refresh-escalations-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Escalated By</th>
+                                <th>Agent's Reason</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="escalations-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading escalations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Inquiries Tab -->
+        <div id="inquiries" class="tab-content">
+            <div class="card">
+                <h3>Pending Inquiries (<span id="inquiries-count">0</span>)</h3>
+                <div class="filter-bar">
+                    <div class="filter-group search-input-container">
+                        <input type="search" id="inquiries-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-inquiry-date">Date:</label>
+                        <input type="date" id="filter-inquiry-date">
+                    </div>
+                    <button class="btn btn-secondary" id="refresh-inquiries-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Agent</th>
+                                <th>Inquiry</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inquiries-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading inquiries...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -623,6 +721,30 @@
         </div>
     </div>
 
+    <!-- Raise Inquiry Modal -->
+    <div class="modal-overlay" id="raise-inquiry-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Raise Inquiry: <span id="inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="raise-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="inquiry-order-details">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry-text">Your Inquiry *</label>
+                    <textarea id="inquiry-text" placeholder="Describe your question or concern..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="raise-inquiry-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-inquiry-btn">Submit Inquiry</button>
+            </div>
+        </div>
+    </div>
+
     <!-- View Order Modal -->
     <div class="modal-overlay" id="view-order-modal">
         <div class="modal-box">
@@ -635,6 +757,79 @@
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary modal-close-btn" data-modal-id="view-order-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Escalation Modal -->
+    <div class="modal-overlay" id="review-escalation-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Escalation: <span id="review-escalation-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="escalation-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Employee</strong>
+                    <p id="escalation-employee-name">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Issue Type</strong>
+                    <p id="escalation-issue-type">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent's Reason for Escalation</strong>
+                    <p id="agent-escalation-reason">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="helper-feedback">Your Feedback / Final Decision *</label>
+                    <textarea id="helper-feedback" placeholder="Provide your feedback and final decision..." required></textarea>
+                </div>
+                <div class="form-group" id="senior-escalation-section" style="display: none;">
+                    <label for="escalate-to-senior">Escalate to Senior *</label>
+                    <select id="escalate-to-senior" required>
+                        <option value="">Select Senior Quality Analyst</option>
+                    </select>
+                    <label for="senior-escalation-reason" style="margin-top: 10px;">Reason for Escalation to Senior *</label>
+                    <textarea id="senior-escalation-reason" placeholder="Explain why you are escalating this to senior..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="resolve-escalation-btn">Resolve & Send Feedback</button>
+                <button class="btn btn-primary" id="toggle-senior-escalation-btn">Escalate to Senior</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Respond to Inquiry Modal -->
+    <div class="modal-overlay" id="respond-inquiry-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Respond to Inquiry: <span id="respond-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="respond-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="respond-inquiry-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="agent-inquiry-text">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="helper-response">Your Response *</label>
+                    <textarea id="helper-response" placeholder="Provide your response to the agent's inquiry..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="respond-inquiry-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-inquiry-response-btn">Send Response</button>
             </div>
         </div>
     </div>
@@ -733,6 +928,11 @@
         let notifications = [];
         let monthlyPerformanceChart = null;
         let issueTypesChart = null;
+        
+        // New state variables
+        let helperEscalations = [];
+        let helperInquiries = [];
+        let isSeniorEscalationMode = false;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -854,6 +1054,8 @@
                 await loadTeamMembers();
                 await loadTeamSchedule();
                 await loadNotifications();
+                await loadHelperEscalations();
+                await loadHelperInquiries();
                 
                 // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
@@ -873,6 +1075,12 @@
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
+            
+            // Show/hide escalation and inquiry tabs based on role
+            if (currentUser.role === 'helper') {
+                document.getElementById('escalations-tab').style.display = 'flex';
+                document.getElementById('inquiries-tab').style.display = 'flex';
+            }
             
             // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
@@ -953,6 +1161,42 @@
             }
         }
 
+        // Load helper escalations
+        async function loadHelperEscalations() {
+            try {
+                if (currentUser && currentUser.role === 'helper') {
+                    console.log('🔄 Loading escalations for helper...');
+                    helperEscalations = await getHelperEscalations(currentUser.id);
+                    renderEscalationsTable();
+                    document.getElementById('escalations-count').textContent = helperEscalations.length;
+                    console.log('✅ Escalations loaded:', helperEscalations.length);
+                }
+            } catch (error) {
+                console.error('❌ Error loading helper escalations:', error);
+                showToast('Failed to load escalations', 'error');
+                helperEscalations = [];
+                renderEscalationsTable();
+            }
+        }
+
+        // Load helper inquiries
+        async function loadHelperInquiries() {
+            try {
+                if (currentUser && currentUser.role === 'helper') {
+                    console.log('🔄 Loading inquiries for helper...');
+                    helperInquiries = await getHelperInquiries(currentUser.id);
+                    renderInquiriesTable();
+                    document.getElementById('inquiries-count').textContent = helperInquiries.length;
+                    console.log('✅ Inquiries loaded:', helperInquiries.length);
+                }
+            } catch (error) {
+                console.error('❌ Error loading helper inquiries:', error);
+                showToast('Failed to load inquiries', 'error');
+                helperInquiries = [];
+                renderInquiriesTable();
+            }
+        }
+
         // Render orders table
         function renderOrdersTable() {
             const tableBody = document.getElementById('orders-table-body');
@@ -982,7 +1226,8 @@
                                 <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
                                 ${order.status === 'pending' ? 
                                     `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                                     <button class="action-btn escalate-order-btn" data-order-id="${order.id}">Escalate</button>` : 
+                                     <button class="action-btn escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                                     <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
                                     ''
                                 }
                             </td>
@@ -1002,7 +1247,109 @@
                 document.querySelectorAll('.escalate-order-btn').forEach(btn => {
                     btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId));
                 });
+
+                document.querySelectorAll('.raise-inquiry-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId));
+                });
             }
+        }
+
+        // Render escalations table
+        function renderEscalationsTable() {
+            const tableBody = document.getElementById('escalations-table-body');
+            
+            if (!helperEscalations || helperEscalations.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">🚨</div>
+                            <div>No pending escalations.</div>
+                            <small>New escalations will appear here when assigned to you.</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = helperEscalations.map(escalation => {
+                const orderData = escalation.order_assignments?.orders;
+                const agentName = escalation.order_assignments?.users?.name || 'Unknown Agent';
+                const escalationDate = formatDateTime(escalation.created_at);
+                const reasonPreview = escalation.notes ? 
+                    (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 
+                    'No reason provided';
+                
+                return `
+                    <tr>
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${agentName}</td>
+                        <td title="${escalation.notes || ''}">${reasonPreview}</td>
+                        <td>${escalationDate}</td>
+                        <td>
+                            <button class="action-btn primary review-escalation-btn" data-escalation-id="${escalation.id}">
+                                Review
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add event listeners for review buttons
+            document.querySelectorAll('.review-escalation-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const escalationId = this.dataset.escalationId;
+                    openReviewEscalationModal(escalationId);
+                });
+            });
+        }
+
+        // Render inquiries table
+        function renderInquiriesTable() {
+            const tableBody = document.getElementById('inquiries-table-body');
+            
+            if (!helperInquiries || helperInquiries.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">❓</div>
+                            <div>No pending inquiries.</div>
+                            <small>New inquiries will appear here when submitted by agents.</small>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tableBody.innerHTML = helperInquiries.map(inquiry => {
+                const orderData = inquiry.order_assignments?.orders;
+                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+                const inquiryDate = formatDateTime(inquiry.created_at);
+                const inquiryPreview = inquiry.inquiry_text ? 
+                    (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 
+                    'No inquiry text';
+                
+                return `
+                    <tr>
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${agentName}</td>
+                        <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
+                        <td>${inquiryDate}</td>
+                        <td>
+                            <button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">
+                                Respond
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Add event listeners for respond buttons
+            document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const inquiryId = this.dataset.inquiryId;
+                    openRespondInquiryModal(inquiryId);
+                });
+            });
         }
 
         // Render team members
@@ -1058,10 +1405,10 @@
                             shifts: {}
                         };
                     }
-// Convert shift_date to day of week (0-6)
-const shiftDate = new Date(shift.shift_date);
-const dayOfWeek = shiftDate.getDay(); // 0=Sunday, 1=Monday, etc.
-scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
+                    // Convert shift_date to day of week (0-6)
+                    const shiftDate = new Date(shift.shift_date);
+                    const dayOfWeek = shiftDate.getDay(); // 0=Sunday, 1=Monday, etc.
+                    scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                 });
 
                 tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
@@ -1129,6 +1476,22 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
             ).join('');
         }
 
+        // Populate senior dropdown
+        function populateSeniorDropdown() {
+            const seniorSelect = document.getElementById('escalate-to-senior');
+            const seniorMembers = teamMembers.filter(m => m.role === 'senior');
+            
+            if (seniorMembers.length === 0) {
+                seniorSelect.innerHTML = '<option value="">No senior analysts available</option>';
+                return;
+            }
+            
+            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' +
+                seniorMembers.map(member => 
+                    `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`
+                ).join('');
+        }
+
         // Update notifications UI
         function updateNotificationsUI() {
             const notificationList = document.getElementById('notification-list');
@@ -1165,7 +1528,7 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
             }
         }
 
-       // Initialize real-time subscriptions
+        // Initialize real-time subscriptions
         function initRealtimeSubscriptions() {
             try {
                 // Subscribe to new notifications
@@ -1362,6 +1725,93 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
             showModal('escalate-order-modal');
         }
 
+        async function openRaiseInquiryModal(orderAssignmentId) {
+            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
+            if (!orderAssignment) {
+                showToast('Order not found', 'error');
+                return;
+            }
+
+            const order = orderAssignment.orders;
+            document.getElementById('inquiry-order-id').textContent = order.order_id;
+            document.getElementById('inquiry-order-details').textContent = order.reason;
+
+            // Store the assignment ID for submission
+            document.getElementById('submit-inquiry-btn').dataset.assignmentId = orderAssignmentId;
+
+            showModal('raise-inquiry-modal');
+        }
+
+        async function openReviewEscalationModal(escalationId) {
+            try {
+                const escalation = helperEscalations.find(e => e.id === escalationId);
+                if (!escalation) {
+                    showToast('Escalation not found', 'error');
+                    return;
+                }
+
+                const order = escalation.order_assignments?.orders;
+                const agentName = escalation.order_assignments?.users?.name || 'Unknown Agent';
+                
+                // Fill modal with data
+                document.getElementById('review-escalation-order-id').textContent = order?.order_id || 'N/A';
+                document.getElementById('escalation-order-details').textContent = order?.reason || 'No details available';
+                document.getElementById('escalation-employee-name').textContent = order?.employee_name || 'N/A';
+                document.getElementById('escalation-issue-type').textContent = order?.reason || 'N/A';
+                document.getElementById('agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
+
+                // Store the escalation ID for submission
+                document.getElementById('resolve-escalation-btn').dataset.escalationId = escalationId;
+                document.getElementById('toggle-senior-escalation-btn').dataset.escalationId = escalationId;
+
+                // Reset form state
+                resetEscalationModal();
+
+                showModal('review-escalation-modal');
+            } catch (error) {
+                console.error('Error opening escalation modal:', error);
+                showToast('Failed to open escalation details', 'error');
+            }
+        }
+
+        async function openRespondInquiryModal(inquiryId) {
+            try {
+                const inquiry = helperInquiries.find(i => i.id === inquiryId);
+                if (!inquiry) {
+                    showToast('Inquiry not found', 'error');
+                    return;
+                }
+
+                const order = inquiry.order_assignments?.orders;
+                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+                
+                // Fill modal with data
+                document.getElementById('respond-inquiry-order-id').textContent = order?.order_id || 'N/A';
+                document.getElementById('respond-inquiry-order-details').textContent = order?.reason || 'No details available';
+                document.getElementById('agent-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text';
+
+                // Store the inquiry ID for submission
+                document.getElementById('submit-inquiry-response-btn').dataset.inquiryId = inquiryId;
+
+                showModal('respond-inquiry-modal');
+            } catch (error) {
+                console.error('Error opening inquiry modal:', error);
+                showToast('Failed to open inquiry details', 'error');
+            }
+        }
+
+        // Reset escalation modal
+        function resetEscalationModal() {
+            document.getElementById('helper-feedback').value = '';
+            document.getElementById('senior-escalation-section').style.display = 'none';
+            document.getElementById('toggle-senior-escalation-btn').textContent = 'Escalate to Senior';
+            document.getElementById('toggle-senior-escalation-btn').classList.remove('btn-secondary');
+            document.getElementById('toggle-senior-escalation-btn').classList.add('btn-primary');
+            document.getElementById('escalate-to-senior').value = '';
+            document.getElementById('senior-escalation-reason').value = '';
+            isSeniorEscalationMode = false;
+        }
+
         // Utility function to generate color from string
         function stringToColor(str) {
             let hash = 0;
@@ -1401,6 +1851,8 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                         tabId === 'my-assigned-orders' ? 'Assigned Orders' : 
                         tabId === 'team-scheduling' ? 'Team Scheduling' : 
                         tabId === 'team-members' ? 'Team Members' : 
+                        tabId === 'escalations' ? 'Escalations' : 
+                        tabId === 'inquiries' ? 'Inquiries' : 
                         tabId === 'profile' ? 'Profile' : 
                         tabId === 'settings' ? 'Settings' : 
                         tabId === 'help' ? 'Help' : 'Dashboard';
@@ -1511,6 +1963,140 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                     console.error('Error submitting escalation:', error);
                     showToast('Failed to escalate order', 'error');
                 }
+            });
+
+            // Submit inquiry
+            document.getElementById('submit-inquiry-btn').addEventListener('click', async () => {
+                const assignmentId = document.getElementById('submit-inquiry-btn').dataset.assignmentId;
+                const inquiryText = document.getElementById('inquiry-text').value;
+                
+                if (!inquiryText.trim()) {
+                    showToast('Please provide your inquiry', 'warning');
+                    return;
+                }
+                
+                try {
+                    await raiseInquiry(assignmentId, currentUser.id, inquiryText);
+                    
+                    showToast('Inquiry submitted successfully', 'success');
+                    hideModal('raise-inquiry-modal');
+                    await loadAssignedOrders();
+                    
+                } catch (error) {
+                    console.error('Error submitting inquiry:', error);
+                    showToast('Failed to submit inquiry', 'error');
+                }
+            });
+            
+            // Toggle senior escalation section
+            document.getElementById('toggle-senior-escalation-btn').addEventListener('click', () => {
+                const section = document.getElementById('senior-escalation-section');
+                const button = document.getElementById('toggle-senior-escalation-btn');
+                
+                if (!isSeniorEscalationMode) {
+                    section.style.display = 'block';
+                    button.textContent = 'Cancel Senior Escalation';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-secondary');
+                    isSeniorEscalationMode = true;
+                    
+                    // Populate senior dropdown
+                    populateSeniorDropdown();
+                } else {
+                    section.style.display = 'none';
+                    button.textContent = 'Escalate to Senior';
+                    button.classList.remove('btn-secondary');
+                    button.classList.add('btn-primary');
+                    isSeniorEscalationMode = false;
+                }
+            });
+            
+            // Resolve escalation
+            document.getElementById('resolve-escalation-btn').addEventListener('click', async () => {
+                const escalationId = document.getElementById('resolve-escalation-btn').dataset.escalationId;
+                const feedback = document.getElementById('helper-feedback').value;
+                
+                if (!feedback.trim()) {
+                    showToast('Please provide your feedback before resolving', 'warning');
+                    return;
+                }
+                
+                try {
+                    await resolveEscalation(escalationId, feedback);
+                    showToast('Escalation resolved successfully', 'success');
+                    hideModal('review-escalation-modal');
+                    await loadHelperEscalations();
+                } catch (error) {
+                    console.error('Error resolving escalation:', error);
+                    showToast('Failed to resolve escalation', 'error');
+                }
+            });
+
+            // Submit inquiry response
+            document.getElementById('submit-inquiry-response-btn').addEventListener('click', async () => {
+                const inquiryId = document.getElementById('submit-inquiry-response-btn').dataset.inquiryId;
+                const response = document.getElementById('helper-response').value;
+                
+                if (!response.trim()) {
+                    showToast('Please provide your response', 'warning');
+                    return;
+                }
+                
+                try {
+                    await respondToInquiry(inquiryId, currentUser.id, response);
+                    showToast('Response sent successfully', 'success');
+                    hideModal('respond-inquiry-modal');
+                    await loadHelperInquiries();
+                } catch (error) {
+                    console.error('Error responding to inquiry:', error);
+                    showToast('Failed to send response', 'error');
+                }
+            });
+            
+            // Handle senior escalation
+            document.getElementById('escalate-to-senior').addEventListener('change', function() {
+                const seniorId = this.value;
+                const reasonField = document.getElementById('senior-escalation-reason');
+                
+                if (seniorId) {
+                    reasonField.required = true;
+                } else {
+                    reasonField.required = false;
+                }
+            });
+            
+            // Refresh escalations
+            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => {
+                await loadHelperEscalations();
+                showToast('Escalations refreshed', 'info');
+            });
+
+            // Refresh inquiries
+            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => {
+                await loadHelperInquiries();
+                showToast('Inquiries refreshed', 'info');
+            });
+            
+            // Search in escalations
+            document.getElementById('escalations-search-input').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#escalations-table-body tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
+            });
+
+            // Search in inquiries
+            document.getElementById('inquiries-search-input').addEventListener('input', function(e) {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#inquiries-table-body tr');
+                
+                rows.forEach(row => {
+                    const text = row.textContent.toLowerCase();
+                    row.style.display = text.includes(searchTerm) ? '' : 'none';
+                });
             });
             
             // Schedule edit mode
@@ -1628,6 +2214,40 @@ scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                     e.target.classList.remove('show');
                 }
             });
+
+            // Filter orders by status
+            document.getElementById('filter-status').addEventListener('change', function() {
+                const status = this.value;
+                let filters = {};
+                
+                if (status === 'completed_today') {
+                    const today = new Date().toISOString().split('T')[0];
+                    filters = { status: 'completed', from_date: today, to_date: today };
+                } else if (status !== 'all') {
+                    filters = { status: status };
+                }
+                
+                loadAssignedOrders(filters);
+            });
+
+            // Filter by date range
+            document.getElementById('filter-from-date').addEventListener('change', applyDateFilter);
+            document.getElementById('filter-to-date').addEventListener('change', applyDateFilter);
+
+            function applyDateFilter() {
+                const fromDate = document.getElementById('filter-from-date').value;
+                const toDate = document.getElementById('filter-to-date').value;
+                const status = document.getElementById('filter-status').value;
+                
+                let filters = {};
+                if (fromDate) filters.from_date = fromDate;
+                if (toDate) filters.to_date = toDate;
+                if (status !== 'all' && status !== 'completed_today') {
+                    filters.status = status;
+                }
+                
+                loadAssignedOrders(filters);
+            }
         });
     </script>
 </body>
