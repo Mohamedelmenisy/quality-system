@@ -198,7 +198,7 @@ export async function getOrders(filters = {}) {
     let query = supabase
       .from('orders')
       .select('*')
-      .order('created_at', { ascending: false });
+      .order('recorded_at', { ascending: false });
 
     // Apply filters
     if (filters.order_id) {
