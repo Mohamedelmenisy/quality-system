@@ -1237,3 +1237,26 @@ export function subscribeToInquiries(callback) {
     };
   }
 }
+
+export function subscribeToErrors(agentId, callback) {
+  try {
+    return supabase
+      .channel('errors')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'errors',
+          filter: `employee_id=eq.${agentId}`
+        },
+        callback
+      )
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToErrors error:', error);
+    return {
+      unsubscribe: () => {}
+    };
+  }
+}
