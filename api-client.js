@@ -193,6 +193,26 @@ export async function updateUserProfile(userId, updates) {
   }
 }
 
+// ==================== COMPANY EMPLOYEE FUNCTIONS ====================
+
+export async function getCompanyEmployees() {
+  try {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('*')
+      .order('employee_name', { ascending: true });
+
+    if (error) {
+      console.error('Error fetching company employees:', error);
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error('GetCompanyEmployees error:', error);
+    throw error;
+  }
+}
+
 // ==================== ORDER FUNCTIONS ====================
 
 export async function getOrders(filters = {}) {
