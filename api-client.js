@@ -1,5 +1,6 @@
 // ================================
 // api-client.js - QualityX System
+// Complete Unified API Client
 // ================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
@@ -10,16 +11,11 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 // ==================== AUTH FUNCTIONS ====================
-//
-// الأدوار الرسمية المعتمدة في النظام:
-// admin, manager, senior, quality-agent, agent, pending
-// --------------------------------------------------------
 
 export async function signUp(email, password, name, department = null) {
   try {
     console.log('🚀 Starting signup for:', email);
     
-    // 1. Auth signup
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
@@ -40,14 +36,13 @@ export async function signUp(email, password, name, department = null) {
 
     const user = data.user;
     if (user) {
-      // 2. Add to our table
       const { error: insertError } = await supabase
         .from('users')
         .insert({
           id: user.id,
           name: name,
           email: email,
-          role: 'pending', // ← المستخدم الجديد يضاف كـ pending لحين الموافقة
+          role: 'pending',
           department: department,
           first_login: new Date(),
           status: 'offline'
@@ -85,7 +80,6 @@ export async function signIn(email, password) {
     const user = data.user;
     console.log('✅ Login successful, user ID:', user.id);
     
-    // تحديث حالة المستخدم
     const { error: updateError } = await supabase
       .from('users')
       .update({ 
@@ -181,22 +175,390 @@ export async function getUserById(userId) {
   }
 }
 
-// ==================== OTHER FUNCTIONS ====================
-
-export async function getOrders() {
+export async function updateUserProfile(userId, profileData) {
   try {
     const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .order('created_at', { ascending: false });
+      .from('users')
+      .update(profileData)
+      .eq('id', userId)
+      .select();
 
     if (error) throw error;
     return data;
   } catch (error) {
-    console.error('GetOrders error:', error);
+    console.error('Update profile error:', error);
     throw error;
   }
 }
+
+// ==================== ORDER MANAGEMENT FUNCTIONS ====================
+
+export async function importOrdersCSV(file, importedBy) {
+  try {
+    console.log('📤 Starting CSV import...');
+    
+    // Parse CSV file (simplified - in real implementation, use a proper CSV parser)
+    const text = await file.text();
+    const rows = parseCSV(text);
+    
+    const { data, error } = await supabase
+      .from('orders')
+      .insert(rows.map(row => ({
+        ...row,
+        imported_by: importedBy,
+        imported_at: new Date()
+      })));
+
+    if (error) throw error;
+    
+    console.log(`✅ Successfully imported ${rows.length} orders`);
+    return data;
+  } catch (error) {
+    console.error('💥 CSV Import Error:', error);
+    throw error;
+  }
+}
+
+export async function assignOrdersToAgents(orders, agents, assignedBy) {
+  try {
+    const assignments = [];
+    
+    // Distribute orders evenly among agents
+    orders.forEach((order, index) => {
+      const agentIndex = index % agents.length;
+      assignments.push({
+        order_id: order.order_id,
+        quality_agent_id: agents[agentIndex],
+        assigned_by: assignedBy,
+        status: 'pending'
+      });
+    });
+
+    const { data, error } = await supabase
+      .from('order_assignments')
+      .insert(assignments);
+
+    if (error) throw error;
+    
+    console.log(`✅ Successfully assigned ${assignments.length} orders to ${agents.length} agents`);
+    return data;
+  } catch (error) {
+    console.error('💥 Assignment Error:', error);
+    throw error;
+  }
+}
+
+export async function getAssignedOrders(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('order_assignments')
+      .select(`
+        *,
+        orders (*)
+      `)
+      .eq('quality_agent_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get assigned orders error:', error);
+    throw error;
+  }
+}
+
+export async function getUnassignedOrders() {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .is('assigned_to', null)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get unassigned orders error:', error);
+    throw error;
+  }
+}
+
+// ==================== QUALITY REVIEW FUNCTIONS ====================
+
+export async function submitQualityReview(reviewData) {
+  try {
+    const { data, error } = await supabase
+      .from('quality_reviews')
+      .insert([{
+        ...reviewData,
+        reviewed_at: new Date().toISOString()
+      }])
+      .select();
+
+    if (error) throw error;
+
+    // If action is error, create error record
+    if (reviewData.action_correctness === 'error') {
+      await createErrorRecord(reviewData, data[0].id);
+    }
+
+    console.log('✅ Quality review submitted successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 Review Submission Error:', error);
+    throw error;
+  }
+}
+
+async function createErrorRecord(reviewData, reviewId) {
+  try {
+    // Find employee by name mapping
+    const { data: employee, error: employeeError } = await supabase
+      .from('users')
+      .select('id')
+      .ilike('name', `%${reviewData.employee_name}%`)
+      .single();
+
+    if (employeeError || !employee) {
+      throw new Error(`Employee ${reviewData.employee_name} not found in system`);
+    }
+
+    const { data, error } = await supabase
+      .from('errors')
+      .insert({
+        order_id: reviewData.order_id,
+        review_id: reviewId,
+        employee_id: employee.id,
+        recorded_by: reviewData.quality_agent_id,
+        status: 'pending_response'
+      });
+
+    if (error) throw error;
+    
+    console.log('✅ Error record created successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 Create Error Record Error:', error);
+    throw error;
+  }
+}
+
+export async function getQualityReviews(userId, filters = {}) {
+  try {
+    let query = supabase
+      .from('quality_reviews')
+      .select('*')
+      .eq('quality_agent_id', userId);
+
+    // Apply filters
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+    if (filters.dateFrom) {
+      query = query.gte('reviewed_at', filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      query = query.lte('reviewed_at', filters.dateTo);
+    }
+
+    const { data, error } = await query.order('reviewed_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get quality reviews error:', error);
+    throw error;
+  }
+}
+
+// ==================== ERROR MANAGEMENT FUNCTIONS ====================
+
+export async function getUserErrors(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('errors')
+      .select(`
+        *,
+        quality_reviews!inner(*),
+        orders!inner(*),
+        users!errors_recorded_by_fkey(name)
+      `)
+      .eq('employee_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get user errors error:', error);
+    throw error;
+  }
+}
+
+export async function submitErrorResponse(errorId, responseText, respondedBy) {
+  try {
+    const { data, error } = await supabase
+      .from('error_responses')
+      .insert([{
+        error_id: errorId,
+        response_by: respondedBy,
+        response_text: responseText,
+        responded_at: new Date().toISOString()
+      }])
+      .select();
+    
+    if (error) throw error;
+
+    // Update error status to responded
+    const { error: updateError } = await supabase
+      .from('errors')
+      .update({ status: 'responded' })
+      .eq('id', errorId);
+
+    if (updateError) throw updateError;
+
+    console.log('✅ Error response submitted successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 Submit Error Response Error:', error);
+    throw error;
+  }
+}
+
+export async function getErrorResponses(errorId) {
+  try {
+    const { data, error } = await supabase
+      .from('error_responses')
+      .select('*')
+      .eq('error_id', errorId)
+      .order('responded_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get error responses error:', error);
+    throw error;
+  }
+}
+
+// ==================== ESCALATION FUNCTIONS ====================
+
+export async function createEscalation(escalationData) {
+  try {
+    const { data, error } = await supabase
+      .from('escalations')
+      .insert([{
+        ...escalationData,
+        created_at: new Date().toISOString(),
+        status: 'pending'
+      }])
+      .select();
+
+    if (error) throw error;
+    
+    console.log('✅ Escalation created successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 Create Escalation Error:', error);
+    throw error;
+  }
+}
+
+export async function getEscalations(userId, filters = {}) {
+  try {
+    let query = supabase
+      .from('escalations')
+      .select(`
+        *,
+        users!escalations_escalated_by_fkey(name),
+        orders(order_id, reason)
+      `);
+
+    // Apply user-specific filters
+    if (filters.escalated_to) {
+      query = query.eq('escalated_to', userId);
+    }
+    if (filters.escalated_by) {
+      query = query.eq('escalated_by', userId);
+    }
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get escalations error:', error);
+    throw error;
+  }
+}
+
+// ==================== TEAM MANAGEMENT FUNCTIONS ====================
+
+export async function getTeamMembers(filters = {}) {
+  try {
+    let query = supabase
+      .from('users')
+      .select('*')
+      .eq('is_active', true);
+
+    // Apply filters
+    if (filters.role) {
+      query = query.eq('role', filters.role);
+    }
+    if (filters.department) {
+      query = query.eq('department', filters.department);
+    }
+
+    const { data, error } = await query.order('name');
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get team members error:', error);
+    throw error;
+  }
+}
+
+export async function getTeamSchedule(weekStart, weekEnd) {
+  try {
+    const { data, error } = await supabase
+      .from('team_schedule')
+      .select(`
+        *,
+        users(name, role)
+      `)
+      .gte('shift_date', weekStart)
+      .lte('shift_date', weekEnd)
+      .order('shift_date', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Get team schedule error:', error);
+    throw error;
+  }
+}
+
+export async function updateTeamSchedule(scheduleUpdates) {
+  try {
+    const { data, error } = await supabase
+      .from('team_schedule')
+      .upsert(scheduleUpdates)
+      .select();
+
+    if (error) throw error;
+    
+    console.log('✅ Team schedule updated successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 Update Team Schedule Error:', error);
+    throw error;
+  }
+}
+
+// ==================== NOTIFICATION FUNCTIONS ====================
 
 export async function getNotifications(userId) {
   try {
@@ -204,12 +566,205 @@ export async function getNotifications(userId) {
       .from('notifications')
       .select('*')
       .eq('user_id', userId)
-      .order('created_at', { ascending: false });
+      .order('created_at', { ascending: false })
+      .limit(20);
 
     if (error) throw error;
-    return data;
+    return data || [];
   } catch (error) {
-    console.error('GetNotifications error:', error);
+    console.error('Get notifications error:', error);
     throw error;
   }
+}
+
+export async function markNotificationAsRead(notificationId) {
+  try {
+    const { error } = await supabase
+      .from('notifications')
+      .update({ read: true })
+      .eq('id', notificationId);
+
+    if (error) throw error;
+    
+    console.log('✅ Notification marked as read');
+  } catch (error) {
+    console.error('Mark notification as read error:', error);
+    throw error;
+  }
+}
+
+// ==================== ANALYTICS & REPORTING FUNCTIONS ====================
+
+export async function getPerformanceMetrics(timeRange = 'month') {
+  try {
+    // Calculate date range based on timeRange parameter
+    const endDate = new Date();
+    const startDate = new Date();
+    
+    switch (timeRange) {
+      case 'week':
+        startDate.setDate(endDate.getDate() - 7);
+        break;
+      case 'month':
+        startDate.setMonth(endDate.getMonth() - 1);
+        break;
+      case 'quarter':
+        startDate.setMonth(endDate.getMonth() - 3);
+        break;
+      default:
+        startDate.setMonth(endDate.getMonth() - 1);
+    }
+
+    // Get total orders count
+    const { data: ordersData, error: ordersError } = await supabase
+      .from('orders')
+      .select('id', { count: 'exact' })
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+
+    if (ordersError) throw ordersError;
+
+    // Get errors count
+    const { data: errorsData, error: errorsError } = await supabase
+      .from('errors')
+      .select('id', { count: 'exact' })
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString());
+
+    if (errorsError) throw errorsError;
+
+    // Get completed reviews count
+    const { data: reviewsData, error: reviewsError } = await supabase
+      .from('quality_reviews')
+      .select('id', { count: 'exact' })
+      .gte('reviewed_at', startDate.toISOString())
+      .lte('reviewed_at', endDate.toISOString());
+
+    if (reviewsError) throw reviewsError;
+
+    const totalOrders = ordersData?.length || 0;
+    const totalErrors = errorsData?.length || 0;
+    const totalReviews = reviewsData?.length || 0;
+    const errorRate = totalOrders > 0 ? (totalErrors / totalOrders * 100).toFixed(1) : 0;
+
+    return {
+      totalOrders,
+      totalErrors,
+      totalReviews,
+      errorRate: parseFloat(errorRate),
+      timeRange
+    };
+  } catch (error) {
+    console.error('Get performance metrics error:', error);
+    throw error;
+  }
+}
+
+export async function getDepartmentPerformance() {
+  try {
+    // This would aggregate performance by department
+    // For now, return simulated data structure
+    return {
+      departments: [
+        { name: 'Customer Service', score: 96.2, trend: 'up', errors: 45 },
+        { name: 'Logistics', score: 94.8, trend: 'down', errors: 32 },
+        { name: 'Quality', score: 98.1, trend: 'up', errors: 12 }
+      ]
+    };
+  } catch (error) {
+    console.error('Get department performance error:', error);
+    throw error;
+  }
+}
+
+// ==================== UTILITY FUNCTIONS ====================
+
+function parseCSV(csvText) {
+  // Simplified CSV parser - in production, use a proper CSV parsing library
+  const lines = csvText.split('\n');
+  const headers = lines[0].split(',').map(h => h.trim());
+  
+  return lines.slice(1).map(line => {
+    const values = line.split(',').map(v => v.trim());
+    const row = {};
+    headers.forEach((header, index) => {
+      row[header] = values[index] || '';
+    });
+    return row;
+  }).filter(row => row[headers[0]]); // Filter out empty rows
+}
+
+export async function exportDataToCSV(tableName, filters = {}) {
+  try {
+    let query = supabase.from(tableName).select('*');
+    
+    // Apply filters if provided
+    if (filters.dateFrom) {
+      query = query.gte('created_at', filters.dateFrom);
+    }
+    if (filters.dateTo) {
+      query = query.lte('created_at', filters.dateTo);
+    }
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    const { data, error } = await query;
+
+    if (error) throw error;
+
+    // Convert to CSV format
+    if (data.length === 0) {
+      return '';
+    }
+
+    const headers = Object.keys(data[0]);
+    const csvRows = [headers.join(',')];
+    
+    data.forEach(row => {
+      const values = headers.map(header => {
+        const value = row[header] || '';
+        return `"${String(value).replace(/"/g, '""')}"`;
+      });
+      csvRows.push(values.join(','));
+    });
+
+    console.log(`✅ Exported ${data.length} rows from ${tableName}`);
+    return csvRows.join('\n');
+  } catch (error) {
+    console.error('💥 Export Data Error:', error);
+    throw error;
+  }
+}
+
+// ==================== ERROR HANDLING & LOGGING ====================
+
+export function handleApiError(error, context = 'API call') {
+  console.error(`💥 ${context} failed:`, error);
+  
+  // You can add more sophisticated error handling here
+  // such as sending to error tracking service, showing user-friendly messages, etc.
+  
+  throw error;
+}
+
+// ==================== REAL-TIME SUBSCRIPTIONS ====================
+
+export function subscribeToTable(tableName, callback, filters = {}) {
+  return supabase
+    .channel(`public:${tableName}`)
+    .on('postgres_changes', 
+      { 
+        event: '*', 
+        schema: 'public', 
+        table: tableName,
+        ...filters
+      }, 
+      callback
+    )
+    .subscribe();
+}
+
+export function unsubscribeFromChannel(channel) {
+  return supabase.removeChannel(channel);
 }
