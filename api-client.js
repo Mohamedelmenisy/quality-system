@@ -228,7 +228,7 @@ export async function getUnassignedOrders() {
     const { data, error } = await supabase
       .from('orders')
       .select('*')
-      .is('assignment_id', null)
+      .is('assigned_agent', null)
       .order('created_at', { ascending: false });
 
     if (error) throw error;
@@ -241,19 +241,37 @@ export async function getUnassignedOrders() {
 
 export async function assignOrders(orderIds, agentId, assignedById) {
   try {
-    const assignments = orderIds.map(orderId => ({
-      order_id: orderId,
-      quality_agent_id: agentId,
-      assigned_by_id: assignedById,
-      status: 'pending'
-    }));
-
+    // تحديث العمود assigned_agent مباشرة في جدول orders
     const { data, error } = await supabase
-      .from('order_assignments')
-      .insert(assignments)
+      .from('orders')
+      .update({ 
+        assigned_agent: agentId,
+        assigned_by: assignedById,
+        status: 'assigned',
+        updated_at: new Date()
+      })
+      .in('order_id', orderIds)  // استخدام order_id بدلاً من id
       .select();
 
     if (error) throw error;
+    
+    // أيضاً يمكن إضافة سجل في order_assignments إذا كان الجدول موجود
+    try {
+      const assignments = orderIds.map(orderId => ({
+        order_id: orderId,
+        quality_agent_id: agentId,
+        assigned_by_id: assignedById,
+        status: 'pending',
+        assigned_at: new Date()
+      }));
+
+      await supabase
+        .from('order_assignments')
+        .insert(assignments);
+    } catch (assignmentError) {
+      console.log('Order assignments table might not exist, continuing...');
+    }
+
     return data;
   } catch (error) {
     console.error('AssignOrders error:', error);
@@ -264,16 +282,13 @@ export async function assignOrders(orderIds, agentId, assignedById) {
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
-      .from('order_assignments')
-      .select(`
-        *,
-        orders (*),
-        users!order_assignments_quality_agent_id_fkey (name, email)
-      `)
-      .order('assigned_at', { ascending: false });
+      .from('orders')
+      .select('*')
+      .not('assigned_agent', 'is', null)  // الأوردرات المعينة
+      .order('created_at', { ascending: false });
 
     if (agentId) {
-      query = query.eq('quality_agent_id', agentId);
+      query = query.eq('assigned_agent', agentId);
     }
 
     if (filters.status) {
