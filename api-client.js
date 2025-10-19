@@ -43,7 +43,7 @@ export async function signUp(email, password, name, department = null) {
           id: user.id,
           name: name,
           email: email,
-          role: 'pending',
+          role: 'quality',
           department: department,
           first_login: new Date(),
           status: 'offline'
@@ -200,17 +200,17 @@ export async function getOrders(filters = {}) {
     let query = supabase
       .from('orders')
       .select('*')
-      .order('recorded_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     // Apply filters
     if (filters.order_id) {
       query = query.ilike('order_id', `%${filters.order_id}%`);
     }
     if (filters.from_date) {
-      query = query.gte('recorded_at', filters.from_date);
+      query = query.gte('created_at', filters.from_date);
     }
     if (filters.to_date) {
-      query = query.lte('recorded_at', filters.to_date);
+      query = query.lte('created_at', filters.to_date);
     }
     if (filters.status) {
       query = query.eq('status', filters.status);
@@ -227,7 +227,7 @@ export async function getOrders(filters = {}) {
 
 export async function getUnassignedOrders() {
   try {
-    // Step 1: Get all order IDs that are already present in the assignments table.
+    // Get all order IDs that are already assigned
     const { data: assignedOrdersData, error: assignedOrdersError } = await supabase
       .from('order_assignments')
       .select('order_id');
@@ -239,17 +239,13 @@ export async function getUnassignedOrders() {
 
     const assignedOrderIds = assignedOrdersData.map(assignment => assignment.order_id);
 
-    // Step 2: Fetch all orders where the 'id' is NOT IN the list of assigned IDs.
-    // Note: I'm assuming the foreign key in 'order_assignments' points to the 'id' of an order.
-    // If it points to 'order_id' column, change '.not('id', ...)' to '.not('order_id', ...)'
+    // Fetch orders that are not assigned
     let query = supabase
       .from('orders')
       .select('*');
 
-    // Important: Only apply the 'not in' filter if there are actually assigned orders.
-    // An empty 'in' clause can cause errors in some database versions.
     if (assignedOrderIds.length > 0) {
-      query = query.not('id', 'in', `(${assignedOrderIds.join(',')})`);
+      query = query.not('order_id', 'in', `(${assignedOrderIds.map(id => `'${id}'`).join(',')})`);
     }
     
     const { data, error } = await query.order('created_at', { ascending: false });
@@ -265,7 +261,6 @@ export async function getUnassignedOrders() {
     throw error;
   }
 }
-
 
 export async function assignOrders(orderIds, agentId, assignedById) {
   try {
@@ -304,8 +299,15 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
       query = query.eq('quality_agent_id', agentId);
     }
 
-    if (filters.status) {
-      query = query.eq('status', filters.status);
+    if (filters.status && filters.status !== 'all') {
+      if (filters.status === 'completed_today') {
+        const today = new Date().toISOString().split('T')[0];
+        query = query.eq('status', 'completed')
+                    .gte('assigned_at', today)
+                    .lte('assigned_at', today + 'T23:59:59');
+      } else {
+        query = query.eq('status', filters.status);
+      }
     }
 
     if (filters.from_date) {
@@ -313,7 +315,7 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     }
 
     if (filters.to_date) {
-      query = query.lte('assigned_at', filters.to_date);
+      query = query.lte('assigned_at', filters.to_date + 'T23:59:59');
     }
 
     const { data, error } = await query;
@@ -346,26 +348,6 @@ export async function submitReview(assignmentId, reviewData) {
       .from('order_assignments')
       .update({ status: 'completed' })
       .eq('id', assignmentId);
-
-    // If error was found, create error record
-    if (reviewData.action_correctness === 'error') {
-      const assignment = await supabase
-        .from('order_assignments')
-        .select('orders(employee_id)')
-        .eq('id', assignmentId)
-        .single();
-
-      if (assignment.data) {
-        await supabase
-          .from('errors')
-          .insert({
-            review_id: data.id,
-            employee_id: assignment.data.orders.employee_id,
-            status: 'pending_response',
-            recorded_at: new Date()
-          });
-      }
-    }
 
     return data;
   } catch (error) {
@@ -412,7 +394,6 @@ export async function getAgentErrors(agentId, filters = {}) {
           action_correctness,
           department,
           modified_reason,
-          modification_details,
           order_assignments (
             orders (
               order_id,
@@ -544,7 +525,7 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
         assignment_id: assignmentId,
         escalated_by_id: escalatedById,
         escalated_to_id: escalatedToId,
-        reason: reason,
+        notes: reason,
         status: 'pending',
         created_at: new Date()
       })
@@ -565,7 +546,7 @@ export async function getEscalations(userId = null, filters = {}) {
       .from('escalations')
       .select(`
         *,
-        order_assignments (
+        order_assignments!escalations_assignment_id_fkey (
           orders (*),
           users!order_assignments_quality_agent_id_fkey (name)
         ),
@@ -602,9 +583,9 @@ export async function getHelperEscalations(helperId) {
       .select(`
         id,
         notes,
-        created_at,
         status,
-        order_assignments (
+        created_at,
+        order_assignments!escalations_assignment_id_fkey (
           id,
           status,
           assigned_at,
@@ -646,11 +627,16 @@ export async function resolveEscalation(escalationId, feedback) {
     console.log('🔄 Resolving escalation:', escalationId);
     
     // Get escalation details first
-    const { data: escalationData } = await supabase
+    const { data: escalationData, error: fetchError } = await supabase
       .from('escalations')
-      .select('escalated_by_id, order_assignments(orders(order_id))')
+      .select('escalated_by_id, order_assignments!escalations_assignment_id_fkey(orders(order_id))')
       .eq('id', escalationId)
       .single();
+
+    if (fetchError) {
+      console.error('Error fetching escalation details:', fetchError);
+      throw fetchError;
+    }
 
     // Update escalation status and add feedback
     const { data, error } = await supabase
@@ -735,8 +721,8 @@ export async function raiseInquiry(assignmentId, agentId, inquiryText) {
     const { data, error } = await supabase
       .from('inquiries')
       .insert({
-        assignment_id: assignmentId,
-        agent_id: agentId,
+        order_id: assignmentId, // Using order_id field for assignment_id
+        raised_by_id: agentId,
         inquiry_text: inquiryText,
         status: 'pending',
         created_at: new Date().toISOString()
@@ -775,7 +761,7 @@ export async function getHelperInquiries(helperId) {
         inquiry_text,
         status,
         created_at,
-        order_assignments (
+        order_assignments!inquiries_order_id_fkey (
           id,
           status,
           assigned_at,
@@ -816,11 +802,16 @@ export async function respondToInquiry(inquiryId, helperId, response) {
     console.log('🔄 Responding to inquiry:', inquiryId);
     
     // Get inquiry details first
-    const { data: inquiryData } = await supabase
+    const { data: inquiryData, error: fetchError } = await supabase
       .from('inquiries')
-      .select('agent_id, order_assignments(orders(order_id))')
+      .select('raised_by_id, order_assignments!inquiries_order_id_fkey(orders(order_id))')
       .eq('id', inquiryId)
       .single();
+
+    if (fetchError) {
+      console.error('Error fetching inquiry details:', fetchError);
+      throw fetchError;
+    }
 
     // Update inquiry with response
     const { data, error } = await supabase
@@ -841,7 +832,7 @@ export async function respondToInquiry(inquiryId, helperId, response) {
     if (inquiryData) {
       const orderId = inquiryData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
-        inquiryData.agent_id,
+        inquiryData.raised_by_id,
         `Your inquiry for order ${orderId} has been responded. Check the response.`,
         'info'
       );
@@ -887,13 +878,12 @@ export async function getTeamSchedule() {
         users (name, role)
       `)
       .order('user_id')
-      .order('shift_date');  // استخدم shift_date بدل day_of_week
+      .order('shift_date');
 
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('GetTeamSchedule error:', error);
-    // بيانات تجريبية ك fallback
     return [];
   }
 }
@@ -999,13 +989,6 @@ export async function getPerformanceMetrics(period = 'month', agentId = null) {
 
     if (ordersError) throw ordersError;
 
-    const { data: errorsData, error: errorsError } = await supabase
-      .from('errors')
-      .select('id, recorded_at, status')
-      .gte('recorded_at', dateFilter.toISOString());
-
-    if (errorsError) throw errorsError;
-
     const { data: reviewsData, error: reviewsError } = await supabase
       .from('quality_reviews')
       .select('id, action_correctness, reviewed_at')
@@ -1015,23 +998,25 @@ export async function getPerformanceMetrics(period = 'month', agentId = null) {
 
     const totalOrders = ordersData.length;
     const completedOrders = ordersData.filter(o => o.status === 'completed').length;
-    const totalErrors = errorsData.length;
     const correctReviews = reviewsData.filter(r => r.action_correctness === 'correct').length;
     
-    const errorRate = totalOrders > 0 ? (totalErrors / totalOrders * 100).toFixed(2) : 0;
     const accuracyRate = reviewsData.length > 0 ? (correctReviews / reviewsData.length * 100).toFixed(2) : 0;
 
     return {
       totalOrders,
       completedOrders,
-      totalErrors,
-      errorRate: parseFloat(errorRate),
       accuracyRate: parseFloat(accuracyRate),
       pendingReviews: totalOrders - completedOrders
     };
   } catch (error) {
     console.error('GetPerformanceMetrics error:', error);
-    throw error;
+    // Return default values if there's an error
+    return {
+      totalOrders: 0,
+      completedOrders: 0,
+      accuracyRate: 0,
+      pendingReviews: 0
+    };
   }
 }
 
@@ -1161,7 +1146,6 @@ export function subscribeToNotifications(userId, callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToNotifications error:', error);
-    // Return a mock subscription object to prevent errors
     return {
       unsubscribe: () => {}
     };
@@ -1185,7 +1169,6 @@ export function subscribeToAssignments(agentId, callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToAssignments error:', error);
-    // Return a mock subscription object to prevent errors
     return {
       unsubscribe: () => {}
     };
@@ -1209,7 +1192,6 @@ export function subscribeToEscalations(userId, callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToEscalations error:', error);
-    // Return a mock subscription object to prevent errors
     return {
       unsubscribe: () => {}
     };
@@ -1232,7 +1214,6 @@ export function subscribeToInquiries(callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToInquiries error:', error);
-    // Return a mock subscription object to prevent errors
     return {
       unsubscribe: () => {}
     };
