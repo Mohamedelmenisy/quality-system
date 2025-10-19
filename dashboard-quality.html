@@ -161,8 +161,7 @@
 
     </style>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script type="module" src="./api-client.js"></script>
-</head>
+    </head>
 <body class="dark">
     <div class="layout">
         <aside class="sidebar" id="sidebar">
@@ -451,6 +450,7 @@
 
 
     <script type="module">
+        // **هنا يتم استيراد الدوال من api-client.js**
         import { 
             getCurrentUser, 
             getUserData, 
@@ -458,7 +458,7 @@
             getAssignedOrders, 
             getQualityKPIs,
             submitReview
-        } from './api-client.js'; // Import the new functions
+        } from './api-client.js'; // المسار الصحيح لوحدة الجافاسكريبت
 
         let CURRENT_USER_ID = null;
         let ASSIGNED_ORDERS_DATA = [];
