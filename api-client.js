@@ -732,11 +732,11 @@ export async function raiseInquiry(assignmentId, agentId, inquiryText) {
 
     if (error) throw error;
 
-    // Get helpers to notify
-    const helpers = await getTeamMembers('helper');
-    for (const helper of helpers) {
+    // Get 'quality' team members to notify
+    const qualityAgents = await getTeamMembers('quality');
+    for (const agent of qualityAgents) {
       await createNotification(
-        helper.id,
+        agent.id,
         `A new inquiry has been raised for order review.`,
         'info'
       );
