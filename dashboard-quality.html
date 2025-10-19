@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,7 +32,9 @@
             // New functions for inquiries
             raiseInquiry,
             getHelperInquiries,
-            respondToInquiry
+            respondToInquiry,
+            // New function for company employees
+            getCompanyEmployees
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -56,6 +59,7 @@
         window.raiseInquiry = raiseInquiry;
         window.getHelperInquiries = getHelperInquiries;
         window.respondToInquiry = respondToInquiry;
+        window.getCompanyEmployees = getCompanyEmployees;
     </script>
     <style>
         :root {
@@ -237,6 +241,9 @@
         .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
         .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
         .inquiry-badge { background: var(--yellow-bg); color: var(--yellow); padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px; }
+        .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .payment-card { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -281,6 +288,8 @@
                         <li><a data-tab="my-assigned-orders"><span>📋</span>Assigned Orders</a></li>
                         <li><a data-tab="team-scheduling"><span>📅</span>Team Scheduling</a></li>
                         <li><a data-tab="team-members"><span>👥</span>Team Members</a></li>
+                        <li><a data-tab="company-employees"><span>🏢</span>Company Employees</a></li>
+                        <li><a data-tab="payments"><span>💳</span>Payments</a></li>
                     </ul>
                 </div>
                 <!-- New Quality Workflow Section -->
@@ -527,14 +536,6 @@
             <div class="card">
                 <div class="schedule-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                     <h3>Weekly Team Schedule</h3>
-                    <div>
-                        <button class="btn btn-secondary" id="add-member-btn" style="margin-right: 1rem;">Add Member</button>
-                        <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
-                        <div class="schedule-controls" id="schedule-controls" style="display: none; gap: 1rem;">
-                            <button class="btn btn-secondary" id="cancel-schedule-btn">Cancel</button>
-                            <button class="btn btn-primary" id="save-schedule-btn">Save Changes</button>
-                        </div>
-                    </div>
                 </div>
                 <div class="schedule-table-container">
                     <table class="schedule-table" id="schedule-table">
@@ -563,6 +564,47 @@
                 <h3>Team Members</h3>
                 <div class="team-grid" id="team-grid">
                     <div class="empty-state">Loading team members...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="company-employees" class="tab-content">
+            <div class="card">
+                <h3>Company Employees</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee Name</th>
+                                <th>Username</th>
+                                <th>Department</th>
+                                <th>Title</th>
+                                <th>Admin ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading company employees...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="payments" class="tab-content">
+            <div class="card">
+                <h3>Available Payment Methods</h3>
+                <div class="payments-grid">
+                    <div class="payment-card">Visa Master Card</div>
+                    <div class="payment-card">Apple Pay</div>
+                    <div class="payment-card">Mada</div>
+                    <div class="payment-card">Wallet</div>
+                    <div class="payment-card">Wallet & Visa-Master</div>
+                    <div class="payment-card">Wallet & MADA</div>
+                    <div class="payment-card">Wallet & Apple-Pay</div>
+                    <div class="payment-card">Tamara</div>
+                    <div class="payment-card">Wallet & Tamara</div>
+                    <div class="payment-card">Wallet & STC Pay</div>
+                    <div class="payment-card">Other items payment</div>
                 </div>
             </div>
         </div>
@@ -928,6 +970,7 @@
         let teamSchedule = [];
         let performanceMetrics = {};
         let notifications = [];
+        let companyEmployees = [];
         let monthlyPerformanceChart = null;
         let issueTypesChart = null;
         
@@ -1058,6 +1101,7 @@
                 await loadNotifications();
                 await loadHelperEscalations();
                 await loadHelperInquiries();
+                await loadCompanyEmployees();
                 
                 // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
@@ -1080,9 +1124,9 @@
             
             // Show/hide escalation and inquiry tabs based on role
             if (currentUser.role === 'quality' || currentUser.role === 'admin') {
-    document.getElementById('escalations-tab').style.display = 'flex';
-    document.getElementById('inquiries-tab').style.display = 'flex';
-}
+                document.getElementById('escalations-tab').style.display = 'flex';
+                document.getElementById('inquiries-tab').style.display = 'flex';
+            }
             
             // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
@@ -1135,6 +1179,19 @@
                 showToast('Failed to load team members', 'error');
                 teamMembers = [];
                 renderTeamMembers();
+            }
+        }
+
+        // Load company employees
+        async function loadCompanyEmployees() {
+            try {
+                companyEmployees = await getCompanyEmployees();
+                renderCompanyEmployeesTable();
+            } catch (error) {
+                console.error('Error loading company employees:', error);
+                showToast('Failed to load company employees', 'error');
+                companyEmployees = [];
+                renderCompanyEmployeesTable();
             }
         }
 
@@ -1359,6 +1416,32 @@
             });
         }
 
+        // Render company employees table
+        function renderCompanyEmployeesTable() {
+            const tableBody = document.getElementById('employees-table-body');
+
+            if (companyEmployees.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">🏢</div>
+                            <div>No company employees found.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = companyEmployees.map(employee => `
+                    <tr>
+                        <td>${employee.employee_name || 'N/A'}</td>
+                        <td>${employee.employee_username || 'N/A'}</td>
+                        <td>${employee.department || 'N/A'}</td>
+                        <td>${employee.title || 'N/A'}</td>
+                        <td>${employee.admin_id || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
         // Render team members
         function renderTeamMembers() {
             const teamGrid = document.getElementById('team-grid');
@@ -1450,37 +1533,23 @@
                         </tr>
                     `;
                 }).join('');
-                
-                // Add event listeners for edit mode
-                document.querySelectorAll('.shift-cell').forEach(cell => {
-                    cell.addEventListener('click', handleShiftCellClick);
-                });
             }
         }
 
-        // Handle shift cell click for editing
+        // Handle shift cell click for editing - Disabled as per request
         function handleShiftCellClick(event) {
-            if (!document.getElementById('schedule-table').classList.contains('edit-mode')) return;
-            
-            const cell = event.currentTarget;
-            const userId = cell.dataset.userId;
-            const day = cell.dataset.day;
-            const currentShift = cell.dataset.original;
-            
-            // Populate edit modal
-            document.getElementById('schedule-member').value = userId;
-            document.getElementById('schedule-day').value = day;
-            document.getElementById('schedule-shift').value = currentShift;
-            
-            showModal('edit-schedule-modal');
+            // Editing is now disabled
+            return;
         }
 
         // Populate team member dropdowns
         function populateTeamMemberDropdowns() {
             const memberSelect = document.getElementById('schedule-member');
-            memberSelect.innerHTML = teamMembers.map(member => 
-                `<option value="${member.id}">${member.name}</option>`
-            ).join('');
+            if (memberSelect) {
+                memberSelect.innerHTML = teamMembers.map(member => 
+                    `<option value="${member.id}">${member.name}</option>`
+                ).join('');
+            }
         }
 
         // Populate senior dropdown
@@ -1858,6 +1927,8 @@
                         tabId === 'my-assigned-orders' ? 'Assigned Orders' : 
                         tabId === 'team-scheduling' ? 'Team Scheduling' : 
                         tabId === 'team-members' ? 'Team Members' : 
+                        tabId === 'company-employees' ? 'Company Employees' :
+                        tabId === 'payments' ? 'Payments' :
                         tabId === 'escalations' ? 'Escalations' : 
                         tabId === 'inquiries' ? 'Inquiries' : 
                         tabId === 'profile' ? 'Profile' : 
@@ -2104,108 +2175,6 @@
                     const text = row.textContent.toLowerCase();
                     row.style.display = text.includes(searchTerm) ? '' : 'none';
                 });
-            });
-            
-            // Schedule edit mode
-            document.getElementById('edit-schedule-btn').addEventListener('click', () => {
-                document.getElementById('schedule-table').classList.add('edit-mode');
-                document.getElementById('edit-schedule-btn').style.display = 'none';
-                document.getElementById('schedule-controls').style.display = 'flex';
-            });
-            
-            document.getElementById('cancel-schedule-btn').addEventListener('click', () => {
-                document.getElementById('schedule-table').classList.remove('edit-mode');
-                document.getElementById('edit-schedule-btn').style.display = 'inline-block';
-                document.getElementById('schedule-controls').style.display = 'none';
-                loadTeamSchedule(); // Reload to reset changes
-            });
-            
-            document.getElementById('save-schedule-btn').addEventListener('click', async () => {
-                // In a real implementation, this would save all schedule changes
-                document.getElementById('schedule-table').classList.remove('edit-mode');
-                document.getElementById('edit-schedule-btn').style.display = 'inline-block';
-                document.getElementById('schedule-controls').style.display = 'none';
-                showToast('Schedule updated successfully', 'success');
-            });
-            
-            // Save schedule change
-            document.getElementById('save-schedule-change-btn').addEventListener('click', async () => {
-                const userId = document.getElementById('schedule-member').value;
-                const day = document.getElementById('schedule-day').value;
-                const shift = document.getElementById('schedule-shift').value;
-                
-                try {
-                    // حساب التاريخ بناءً على اليوم
-                    const targetDate = new Date();
-                    const today = targetDate.getDay(); // 0-6
-                    const diff = day - today;
-                    targetDate.setDate(targetDate.getDate() + diff);
-                    const shiftDate = targetDate.toISOString().split('T')[0];
-
-                    // تحديد الـ status بناءً على نوع الشيفت
-                    let status = 'scheduled';
-                    let startTime = '09:00';
-                    let endTime = '17:00';
-
-                    if (shift === 'off') {
-                        status = 'off';
-                        startTime = null;
-                        endTime = null;
-                    } else if (shift === 'leave') {
-                        status = 'leave';
-                        startTime = null;
-                        endTime = null;
-                    } else if (shift === 'sick') {
-                        status = 'sick';
-                        startTime = null;
-                        endTime = null;
-                    } else {
-                        // إذا كان شيفت عادي، فصل الوقت
-                        const times = shift.split('-');
-                        if (times.length === 2) {
-                            startTime = times[0].trim();
-                            endTime = times[1].trim();
-                        }
-                    }
-
-                    await updateTeamSchedule([{
-                        user_id: userId,
-                        shift_date: shiftDate,                // استخدم shift_date
-                        start_time: startTime,                // استخدم start_time
-                        end_time: endTime,                    // استخدم end_time
-                        status: status                        // استخدم status
-                    }]);                      
-    
-                    showToast('Schedule updated successfully', 'success');
-                    hideModal('edit-schedule-modal');
-                    await loadTeamSchedule();
-                    
-                } catch (error) {
-                    console.error('Error updating schedule:', error);
-                    showToast('Failed to update schedule', 'error');
-                }
-            });
-            
-            // Add team member
-            document.getElementById('add-member-btn').addEventListener('click', () => {
-                showModal('add-member-modal');
-            });
-            
-            // Submit new team member
-            document.getElementById('submit-new-member-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-member-name').value;
-                const email = document.getElementById('new-member-email').value;
-                const role = document.getElementById('new-member-role').value;
-                const department = document.getElementById('new-member-department').value;
-                
-                if (!name || !email || !role) {
-                    showToast('Please fill all required fields', 'warning');
-                    return;
-                }
-                
-                // In a real implementation, this would create a new user
-                showToast('Team member would be added here', 'info');
-                hideModal('add-member-modal');
             });
             
             // Close notification dropdown when clicking outside
