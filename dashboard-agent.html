@@ -4,10 +4,35 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Performance - QualityX</title>
-    <!-- MODIFIED: Updated favicon to the consistent QualityX 'Q' logo. -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { 
+            supabase, 
+            getCurrentUser, 
+            getUserById, 
+            getAgentErrors, 
+            submitErrorResponse,
+            getPerformanceMetrics,
+            getNotifications,
+            markNotificationAsRead,
+            subscribeToNotifications,
+            subscribeToErrors,
+            updateUserProfile
+        } from './api-client.js';
+        
+        // Make functions available globally
+        window.supabase = supabase;
+        window.getCurrentUser = getCurrentUser;
+        window.getUserById = getUserById;
+        window.getAgentErrors = getAgentErrors;
+        window.submitErrorResponse = submitErrorResponse;
+        window.getPerformanceMetrics = getPerformanceMetrics;
+        window.getNotifications = getNotifications;
+        window.markNotificationAsRead = markNotificationAsRead;
+        window.updateUserProfile = updateUserProfile;
+    </script>
     <style>
         :root {
             --primary-color: #00bfff;
@@ -21,12 +46,15 @@
             --red: #dc3545;
             --red-bg: rgba(220, 53, 69, 0.1);
             --green: #28a745;
+            --green-bg: rgba(40, 167, 69, 0.1);
+            --yellow: #ffc107;
+            --yellow-bg: rgba(255, 193, 7, 0.1);
             --border-radius-base: 0.75rem;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { height: 32px; fill: var(--primary-color); }
         .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
@@ -41,7 +69,7 @@
         .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; }
+        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -57,9 +85,9 @@
         .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
         .progress-card .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .progress-card .progress-label { font-size: 14px; color: var(--text-muted); }
-        .progress-card .progress-value { font-size: 24px; font-weight: 600; color: var(--red); }
+        .progress-card .progress-value { font-size: 24px; font-weight: 600; }
         .progress-bar { width: 100%; height: 10px; background-color: #2c2c2c; border-radius: 5px; overflow: hidden; margin-top: 10px; }
-        .progress-bar-inner { height: 100%; background-color: var(--red); border-radius: 5px; }
+        .progress-bar-inner { height: 100%; border-radius: 5px; transition: width 0.3s ease; }
         .chart-container { position: relative; height: 250px; }
         .table-container { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); }
         table { width: 100%; border-collapse: collapse; }
@@ -67,30 +95,45 @@
         th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: #2c2c2c; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover { background-color: #2c2c2c; }
-        .status-error { background-color: var(--red-bg); color: var(--red); padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-        .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 5px 10px; border-radius: 6px; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
+        .status-responded { background-color: var(--green-bg); color: var(--green); }
+        .status-finalized { background-color: var(--red-bg); color: var(--red); }
+        .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 5px 10px; border-radius: 6px; margin-right: 5px; }
+        .action-btn:hover { background: #444; }
+        .action-btn.primary { background: var(--primary-color); color: #000; }
+        .action-btn.primary:hover { background: var(--primary-hover); }
         .placeholder-content { padding: 40px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
         
         .search-input-container { position: relative; }
         .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; width: 250px; }
         .notification-bell { position: relative; }
-        .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; }
+        .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; position: relative; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
         .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
         .notification-dropdown.show { display: block; }
-        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; }
+        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: between; align-items: center; }
         .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
-        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-message { flex: 1; }
+        .notification-time { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        .notification-actions { margin-left: 10px; }
+        .mark-read-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
         
         .filter-panel { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; padding: 20px; background: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 30px; border: 1px solid var(--border-color); }
         .filter-group { flex: 1; min-width: 150px; }
         .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
-        .filter-group input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
-        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; }
+        .filter-group input, .filter-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.3s; }
         .btn-primary { background: var(--primary-color); color: #000; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #333; color: white; }
+        .btn-secondary:hover { background: #444; }
 
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
         .modal-title { font-size: 1.25rem; font-weight: 700; }
         .modal-close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
@@ -101,7 +144,8 @@
 
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
-        .form-group input { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
+        .form-group textarea { min-height: 120px; resize: vertical; }
         .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
         
         .settings-layout { display: flex; gap: 2rem; }
@@ -120,13 +164,66 @@
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
 
+        /* Toast notifications */
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
+        .toast.success { border-left: 4px solid var(--green); }
+        .toast.error { border-left: 4px solid var(--red); }
+        .toast.warning { border-left: 4px solid var(--yellow); }
+        .toast.info { border-left: 4px solid var(--primary-color); }
+        .toast-icon { font-size: 20px; }
+        .toast.success .toast-icon { color: var(--green); }
+        .toast.error .toast-icon { color: var(--red); }
+        .toast.warning .toast-icon { color: var(--yellow); }
+        .toast.info .toast-icon { color: var(--primary-color); }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; margin-bottom: 5px; }
+        .toast-message { font-size: 14px; color: var(--text-muted); }
+        .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+        
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Loading states */
+        .loading { opacity: 0.6; pointer-events: none; }
+        .loading::after { content: 'Loading...'; display: block; text-align: center; padding: 20px; color: var(--text-muted); }
+
+        /* Responsive design */
+        @media (max-width: 1024px) {
+            .sidebar { width: 220px; }
+            .main-content { margin-left: 220px; width: calc(100% - 220px); }
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar-title, .nav-group-title, .user-name, .user-role { display: none; }
+            .sidebar-nav a span:not(.icon) { display: none; }
+            .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 15px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .filter-panel { flex-direction: column; }
+            .filter-group { min-width: 100%; }
+            .header-actions { flex-direction: column; align-items: flex-end; gap: 10px; }
+            .search-input-container input[type="search"] { width: 200px; }
+        }
+        
+        @media (max-width: 480px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; }
+            .modal-box { width: 95%; padding: 1rem; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 600px; }
+        }
+
+        /* Empty state */
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
     </style>
 </head>
 <body>
-
     <aside class="sidebar">
         <div>
-            <!-- MODIFIED: Sidebar header updated for consistency. -->
             <div class="sidebar-header">
                 <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
@@ -134,8 +231,7 @@
                 </svg>
                 <h1 class="sidebar-title">QualityX</h1>
             </div>
-             <div class="sidebar-nav-container">
-                <!-- MODIFIED: Sidebar navigation restructured into groups. -->
+            <div class="sidebar-nav-container">
                 <div class="nav-group">
                     <h2 class="nav-group-title">Menu</h2>
                     <ul class="sidebar-nav">
@@ -143,47 +239,49 @@
                         <li><a data-tab="my-errors"><span>❌</span>My Errors</a></li>
                     </ul>
                 </div>
-                 <div class="nav-group">
+                <div class="nav-group">
                     <h2 class="nav-group-title">Account</h2>
                     <ul class="sidebar-nav">
                         <li><a data-tab="profile"><span>👤</span>Profile</a></li>
                         <li><a data-tab="settings"><span>⚙️</span>Settings</a></li>
                         <li><a data-tab="help"><span>❓</span>Get Help</a></li>
+                        <li><a id="logout-btn"><span>🚪</span>Logout</a></li>
                     </ul>
                 </div>
             </div>
         </div>
         <div class="sidebar-footer">
-             <div class="user-profile-widget">
-                <!-- MODIFIED: Replaced static image with dynamic initials avatar. -->
+            <div class="user-profile-widget">
                 <div class="avatar-initials" id="sidebar-avatar-initials">SA</div>
                 <div>
-                    <div class="user-name" id="sidebar-username">Sara Ahmed</div>
-                    <div class="user-role">Customer Service Agent</div>
+                    <div class="user-name" id="sidebar-username">Loading...</div>
+                    <div class="user-role" id="sidebar-userrole">Loading...</div>
                 </div>
             </div>
         </div>
     </aside>
 
     <main class="main-content">
-        <!-- MODIFIED: Header now contains welcome message, search, and notifications. -->
         <header>
             <div class="header-left">
                 <h2 class="page-title" id="page-title-header">Dashboard</h2>
             </div>
             <div class="header-actions">
                 <div class="search-input-container">
-                    <input type="search" placeholder="Search my errors...">
+                    <input type="search" id="global-search" placeholder="Search my errors...">
                 </div>
                 <div class="notification-bell">
                     <button id="notification-btn" class="notification-btn">
                         <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
                     </button>
                     <div id="notification-dropdown" class="notification-dropdown">
-                        <div class="notification-header">Notifications</div>
-                        <ul class="notification-list">
-                            <li class="notification-item">A new error was logged for order #19245521.</li>
-                            <li class="notification-item">Your weekly performance summary is ready.</li>
+                        <div class="notification-header">
+                            <span>Notifications</span>
+                            <button id="mark-all-read-btn" class="mark-read-btn">Mark all as read</button>
+                        </div>
+                        <ul class="notification-list" id="notification-list">
+                            <li class="notification-item">Loading notifications...</li>
                         </ul>
                     </div>
                 </div>
@@ -191,10 +289,9 @@
         </header>
 
         <div id="dashboard" class="tab-content active">
-            <!-- ADDED: Welcome message section. -->
             <div id="welcome-message">
-                <h2 id="welcome-user-h2">Welcome back, Sara!</h2>
-                <p>Here’s a look at your performance metrics for this month.</p>
+                <h2 id="welcome-user-h2">Welcome back!</h2>
+                <p>Here's a look at your performance metrics for this month.</p>
             </div>
 
             <section class="stats-grid">
@@ -202,12 +299,12 @@
                     <h3>Your Current Error Rate</h3>
                     <div class="progress-info">
                         <span class="progress-label">This Month</span>
-                        <span class="progress-value">5.8%</span>
+                        <span class="progress-value" id="error-rate">0%</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-bar-inner" style="width: 5.8%;"></div>
+                        <div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div>
                     </div>
-                     <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;">Based on 12 errors out of 205 reviewed orders.</p>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-rate-description">Based on 0 errors out of 0 reviewed orders.</p>
                 </div>
                 <div class="card">
                     <h3>Most Frequent Error Types</h3>
@@ -217,7 +314,6 @@
                 </div>
             </section>
             
-            <!-- ADDED: Filter panel section. -->
             <section class="filter-panel">
                 <div class="filter-group">
                     <label for="filter-order-id">Order ID</label>
@@ -228,10 +324,11 @@
                     <input type="date" id="filter-from-date" style="color-scheme: dark;">
                 </div>
                 <div class="filter-group">
-                     <label for="filter-to-date">To</label>
+                    <label for="filter-to-date">To</label>
                     <input type="date" id="filter-to-date" style="color-scheme: dark;">
                 </div>
-                <button class="btn btn-primary">Apply Filters</button>
+                <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
+                <button class="btn btn-secondary" id="reset-filters-btn">Reset</button>
             </section>
 
             <section class="table-container">
@@ -239,51 +336,80 @@
                 <table>
                     <thead>
                         <tr>
-                            <th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Reviewed By</th><th>Status</th><th>Action</th>
+                            <th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Status</th><th>Action</th>
                         </tr>
                     </thead>
                     <tbody id="error-table-body">
-                        <!-- Rows will be populated by JavaScript -->
+                        <tr><td colspan="5" class="empty-state">Loading your errors...</td></tr>
                     </tbody>
                 </table>
             </section>
         </div>
 
         <div id="my-errors" class="tab-content">
-             <div class="card">
+            <div class="card">
                 <h3>All My Errors</h3>
-                 <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">This section will contain a detailed list and history of all your errors.</p>
-                <div class="placeholder-content">
-                     <h3>Coming Soon</h3>
-                    <p>A comprehensive error tracking feature is under development.</p>
+                <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
+                
+                <div class="filter-panel">
+                    <div class="filter-group">
+                        <label for="my-errors-search">Search</label>
+                        <input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="my-errors-status">Status</label>
+                        <select id="my-errors-status">
+                            <option value="all">All Statuses</option>
+                            <option value="pending_response">Pending Response</option>
+                            <option value="responded">Responded</option>
+                            <option value="finalized">Finalized</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button>
+                    <button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button>
+                </div>
+                
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th><th>Error Date</th><th>Error Type</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="my-errors-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading your errors...</td></tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <!-- ADDED: New Profile tab content. -->
         <div id="profile" class="tab-content">
-             <div class="card">
+            <div class="card">
                 <h3>Edit Profile</h3>
                 <div class="form-group">
                     <label for="profile-fullname">Full Name</label>
-                    <input type="text" id="profile-fullname" value="Sara Ahmed">
+                    <input type="text" id="profile-fullname">
                 </div>
                 <div class="form-group">
                     <label for="profile-email">Email Address</label>
-                    <input type="email" id="profile-email" value="s.ahmed@qualityx.com">
+                    <input type="email" id="profile-email" readonly style="background: #333;">
                 </div>
                 <div class="form-group">
                     <label for="profile-phone">Phone Number</label>
-                    <input type="tel" id="profile-phone" value="+966 50 111 2222">
+                    <input type="tel" id="profile-phone">
                 </div>
-                 <div class="page-actions">
-                     <button class="action-btn" style="padding: 10px 20px;">Cancel</button>
-                     <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-                 </div>
+                <div class="form-group">
+                    <label for="profile-department">Department</label>
+                    <input type="text" id="profile-department" readonly style="background: #333;">
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
+                    <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                </div>
             </div>
         </div>
         
-        <!-- MODIFIED: Settings tab completely redesigned. -->
         <div id="settings" class="tab-content">
             <div class="card">
                 <h3>Account Settings</h3>
@@ -296,39 +422,41 @@
                         </ul>
                     </nav>
                     <div class="settings-content">
-                         <section class="setting-card active" id="settings-section-notifications">
+                        <section class="setting-card active" id="settings-section-notifications">
                             <div class="setting-item">
                                 <span>Email me when an error is logged</span>
-                                <div class="toggle-switch"><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-errors" checked><span class="slider"></span></label></div>
                             </div>
                             <div class="setting-item">
                                 <span>Email me a weekly performance summary</span>
-                                <div class="toggle-switch"><label class="switch"><input type="checkbox" checked><span class="slider"></span></label></div>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-summary" checked><span class="slider"></span></label></div>
                             </div>
-                         </section>
-                         <section class="setting-card" id="settings-section-security" style="display:none;">
+                        </section>
+                        <section class="setting-card" id="settings-section-security" style="display:none;">
                             <div class="setting-item">
                                 <span>Password</span>
-                                <button class="action-btn">Change Password</button>
+                                <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
                             </div>
-                         </section>
+                        </section>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- ADDED: Help tab content -->
         <div id="help" class="tab-content">
-             <div class="card">
-                 <div class="placeholder-content">
-                     <h3>Help Center</h3>
-                     <p>Find answers to common questions or contact support for assistance.</p>
-                 </div>
+            <div class="card">
+                <div class="placeholder-content">
+                    <h3>Help Center</h3>
+                    <p>Find answers to common questions or contact support for assistance.</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
 
-    <!-- ADDED: Modal for viewing error details. -->
+    <!-- Error Detail Modal -->
     <div class="modal-overlay" id="view-error-modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -339,161 +467,750 @@
                 <!-- Details will be populated by JavaScript -->
             </div>
             <div class="modal-footer">
-                 <button class="btn btn-primary modal-close-btn" data-modal-id="view-error-modal">Close</button>
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-error-modal">Close</button>
             </div>
         </div>
     </div>
 
+    <!-- Reply to Error Modal -->
+    <div class="modal-overlay" id="reply-error-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Reply to Error: <span id="reply-error-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="reply-error-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Error Type</strong>
+                    <p id="reply-error-type">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Date</strong>
+                    <p id="reply-error-date">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Description</strong>
+                    <p id="reply-error-description">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="error-response">Your Response *</label>
+                    <textarea id="error-response" placeholder="Please provide your response to this error..." required></textarea>
+                    <small style="color: var(--text-muted);">This response will be reviewed by the quality team.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="reply-error-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-response-btn">Submit Response</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
 
     <script>
-        // --- Sample Data ---
-        const recentErrors = [
-            { id: '#19245521', date: 'July 26, 2025', type: 'Incorrect Information', reviewer: 'Fahad (Quality)', details: 'The agent provided the customer with an outdated return policy link.' },
-            { id: '#19245503', date: 'July 24, 2025', type: 'Policy Violation', reviewer: 'Ali (Quality)', details: 'The agent offered a discount that was not applicable to the customer\'s region.' },
-            { id: '#19245499', date: 'July 22, 2025', type: 'System Entry Error', reviewer: 'Fahad (Quality)', details: 'The customer\'s address was entered with the wrong postal code, causing a delivery delay.' }
-        ];
+        // Application State
+        let currentUser = null;
+        let userErrors = [];
+        let userPerformance = {
+            errorRate: 0,
+            totalErrors: 0,
+            totalOrders: 0,
+            errorTypes: {}
+        };
+        let notifications = [];
+        let commonErrorsChart = null;
 
-        // --- Helper Functions ---
-        const getInitials = (name) => {
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+            
+            // Close button functionality
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
+            });
+        }
+
+        // Helper Functions
+        function getInitials(name) {
             if (!name) return '';
             const names = name.split(' ');
-            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : `${names[0][0]}`.toUpperCase();
-        };
-        const showModal = (modalId) => document.getElementById(modalId)?.classList.add('show');
-        const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('show');
-
-        // --- Tab Switching Logic ---
-        const pageTitleHeaderAgent = document.getElementById('page-title-header');
-        document.querySelectorAll('.sidebar-nav a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                const tabId = link.getAttribute('data-tab');
-                if (!tabId) return;
-                
-                e.preventDefault();
-                
-                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                document.querySelectorAll('.sidebar-nav a').forEach(l => l.classList.remove('active'));
-
-                document.getElementById(tabId).classList.add('active');
-                link.classList.add('active');
-                
-                const tabText = link.textContent.trim().replace(/^[^\w\s]+/, ''); // Remove leading icon/emoji
-                pageTitleHeaderAgent.textContent = tabText;
-            });
-        });
-
-        // --- Notifications Dropdown ---
-        const notificationBtn = document.getElementById('notification-btn');
-        const notificationDropdown = document.getElementById('notification-dropdown');
-        notificationBtn.addEventListener('click', () => notificationDropdown.classList.toggle('show'));
-        document.addEventListener('click', (e) => {
-            if (notificationBtn && !notificationBtn.parentElement.contains(e.target)) {
-                notificationDropdown.classList.remove('show');
-            }
-        });
-
-        // --- Profile Page Logic ---
-        document.getElementById('save-profile-btn')?.addEventListener('click', () => {
-            const newName = document.getElementById('profile-fullname').value;
-            document.getElementById('sidebar-username').textContent = newName;
-            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${newName.split(' ')[0]}!`;
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(newName);
-            alert('Profile updated successfully!');
-        });
-
-        // --- Settings Page Logic ---
-        document.querySelectorAll('.settings-nav a').forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const sectionId = link.dataset.section;
-                document.querySelectorAll('.settings-nav a').forEach(l => l.classList.remove('active'));
-                document.querySelectorAll('.settings-content .setting-card').forEach(s => s.style.display = 'none');
-                link.classList.add('active');
-                document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
-            });
-        });
-        
-        // --- Render Recent Errors Table ---
-        function renderRecentErrors() {
-            const tableBody = document.getElementById('error-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = recentErrors.map(error => `
-                <tr>
-                    <td>${error.id}</td>
-                    <td>${error.date}</td>
-                    <td>${error.type}</td>
-                    <td>${error.reviewer}</td>
-                    <td><span class="status-error">Error Found</span></td>
-                    <td><button class="action-btn" data-order-id="${error.id}">View Details</button></td>
-                </tr>
-            `).join('');
+            return names.length > 1 ? 
+                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
+                `${names[0][0]}`.toUpperCase();
         }
-        
-        // --- View Details Modal Logic ---
-        document.getElementById('error-table-body')?.addEventListener('click', (e) => {
-            if (e.target.matches('.action-btn')) {
-                const orderId = e.target.dataset.orderId;
-                const errorData = recentErrors.find(err => err.id === orderId);
-                if (errorData) {
-                    document.getElementById('view-error-id').textContent = errorData.id;
-                    const body = document.getElementById('view-error-body');
-                    body.innerHTML = `
-                        <div class="detail-item"><strong>Error Type</strong><p>${errorData.type}</p></div>
-                        <div class="detail-item"><strong>Order Date</strong><p>${errorData.date}</p></div>
-                        <div class="detail-item"><strong>Reviewed By</strong><p>${errorData.reviewer}</p></div>
-                        <div class="detail-item" style="background-color: var(--red-bg); border: 1px solid var(--red);">
-                            <strong>Details from Quality Team</strong>
-                            <p>${errorData.details}</p>
-                        </div>
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId)?.classList.add('show');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('show');
+        }
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                showToast('Loading your dashboard...', 'info');
+                
+                // Get current user
+                const user = await getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user profile
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                    showToast('Failed to load user profile', 'error');
+                    return;
+                }
+                
+                currentUser = { ...user, ...profile };
+                
+                // Update UI with user data
+                updateUserInterface();
+                
+                // Load user data
+                await loadUserErrors();
+                await loadUserPerformance();
+                await loadNotifications();
+                
+                // Initialize real-time subscriptions
+                initRealtimeSubscriptions();
+                
+                // Initialize charts
+                initCharts();
+                
+                showToast('Dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('Failed to initialize dashboard', 'error');
+            }
+        }
+
+        function updateUserInterface() {
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('sidebar-userrole').textContent = currentUser.role;
+            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
+            
+            // Profile form
+            document.getElementById('profile-fullname').value = currentUser.name;
+            document.getElementById('profile-email').value = currentUser.email;
+            document.getElementById('profile-phone').value = currentUser.phone || '';
+            document.getElementById('profile-department').value = currentUser.department || 'N/A';
+        }
+
+        // Load user errors from database
+        async function loadUserErrors(filters = {}) {
+            try {
+                const errors = await getAgentErrors(currentUser.id, filters);
+                userErrors = errors || [];
+                renderErrorTables();
+            } catch (error) {
+                console.error('Error loading user errors:', error);
+                showToast('Failed to load your errors', 'error');
+                userErrors = [];
+                renderErrorTables();
+            }
+        }
+
+        // Load user performance data
+        async function loadUserPerformance() {
+            try {
+                const metrics = await getPerformanceMetrics('month');
+                
+                userPerformance.totalOrders = metrics.totalOrders;
+                userPerformance.totalErrors = metrics.totalErrors;
+                userPerformance.errorRate = metrics.errorRate;
+                
+                // Update UI
+                document.getElementById('error-rate').textContent = `${userPerformance.errorRate}%`;
+                document.getElementById('error-rate-bar').style.width = `${Math.min(userPerformance.errorRate, 100)}%`;
+                document.getElementById('error-rate-description').textContent = 
+                    `Based on ${userPerformance.totalErrors} errors out of ${userPerformance.totalOrders} reviewed orders.`;
+                
+                // Calculate error types for chart
+                userPerformance.errorTypes = {};
+                userErrors.forEach(error => {
+                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                    userPerformance.errorTypes[errorType] = (userPerformance.errorTypes[errorType] || 0) + 1;
+                });
+                
+                // Update chart data
+                updateCharts();
+            } catch (error) {
+                console.error('Error loading user performance:', error);
+            }
+        }
+
+        // Render error tables
+        function renderErrorTables() {
+            const dashboardTableBody = document.getElementById('error-table-body');
+            const myErrorsTableBody = document.getElementById('my-errors-table-body');
+            
+            // Filter for dashboard (only recent errors)
+            const recentErrors = userErrors.slice(0, 5);
+            
+            if (recentErrors.length === 0) {
+                dashboardTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">✅</div>
+                            <div>No errors found for your account.</div>
+                            <small>Great job maintaining quality standards!</small>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                dashboardTableBody.innerHTML = recentErrors.map(error => {
+                    const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
+                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                    
+                    return `
+                        <tr>
+                            <td>${orderId}</td>
+                            <td>${formatDate(orderDate)}</td>
+                            <td>${errorType}</td>
+                            <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
+                            <td>
+                                <button class="action-btn view-error-btn" data-error-id="${error.id}">View</button>
+                                ${error.status === 'pending_response' ? 
+                                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">Reply</button>` : 
+                                    ''
+                                }
+                            </td>
+                        </tr>
                     `;
-                    showModal('view-error-modal');
-                }
+                }).join('');
             }
-        });
-
-        document.querySelectorAll('.modal-close-btn').forEach(btn => {
-            btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
-        });
-
-        // --- Chart.js ---
-        Chart.defaults.font.family = 'Poppins';
-        Chart.defaults.color = '#e6edf3';
-        
-        const commonErrorsCtx = document.getElementById('commonErrorsChart').getContext('2d');
-        new Chart(commonErrorsCtx, {
-            type: 'bar',
-            data: {
-                labels: ['Incorrect Info', 'Policy Violation', 'System Entry'],
-                datasets: [{
-                    label: 'Number of Errors',
-                    data: [6, 4, 2],
-                    backgroundColor: [ 'rgba(220, 53, 69, 0.7)', 'rgba(255, 193, 7, 0.7)', 'rgba(0, 123, 255, 0.7)' ],
-                    borderWidth: 0,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                indexAxis: 'y', 
-                responsive: true, 
-                maintainAspectRatio: false, 
-                plugins: { legend: { display: false } },
-                scales: { 
-                    x: { beginAtZero: true, grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { precision: 0 } }, 
-                    y: { grid: { display: false } } 
-                }
+            
+            // My Errors table (all errors)
+            if (userErrors.length === 0) {
+                myErrorsTableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">✅</div>
+                            <div>No errors found for your account.</div>
+                            <small>Great job maintaining quality standards!</small>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                myErrorsTableBody.innerHTML = userErrors.map(error => {
+                    const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                    const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
+                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                    
+                    return `
+                        <tr>
+                            <td>${orderId}</td>
+                            <td>${formatDate(orderDate)}</td>
+                            <td>${errorType}</td>
+                            <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
+                            <td>
+                                <button class="action-btn view-error-btn" data-error-id="${error.id}">View</button>
+                                ${error.status === 'pending_response' ? 
+                                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">Reply</button>` : 
+                                    ''
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
             }
-        });
-        
-        // --- Initial Load ---
+            
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-error-btn').forEach(btn => {
+                btn.addEventListener('click', () => openViewErrorModal(btn.dataset.errorId));
+            });
+            
+            document.querySelectorAll('.reply-error-btn').forEach(btn => {
+                btn.addEventListener('click', () => openReplyErrorModal(btn.dataset.errorId));
+            });
+        }
+
+        // Open view error modal
+        async function openViewErrorModal(errorId) {
+            const error = userErrors.find(e => e.id === errorId);
+            if (!error) {
+                showToast('Error details not found', 'error');
+                return;
+            }
+            
+            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
+            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+            const description = error.quality_reviews?.department || 'No additional details available';
+            const reviewer = error.quality_reviews?.order_assignments?.users?.name || 'Unknown';
+            
+            let responseHtml = '';
+            if (error.error_responses && error.error_responses.length > 0) {
+                responseHtml = `
+                    <div class="detail-item" style="background: var(--green-bg);">
+                        <strong>Your Response</strong>
+                        <p>${error.error_responses[0].response_text}</p>
+                        <small>Submitted on: ${formatDateTime(error.error_responses[0].created_at)}</small>
+                    </div>
+                `;
+            }
+            
+            document.getElementById('view-error-id').textContent = orderId;
+            document.getElementById('view-error-body').innerHTML = `
+                <div class="detail-item">
+                    <strong>Order ID</strong>
+                    <p>${orderId}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Date</strong>
+                    <p>${formatDate(orderDate)}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Error Type</strong>
+                    <p>${errorType}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Description</strong>
+                    <p>${description}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Reviewed By</strong>
+                    <p>${reviewer}</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Status</strong>
+                    <p><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></p>
+                </div>
+                ${responseHtml}
+            `;
+            
+            showModal('view-error-modal');
+        }
+
+        // Open reply error modal
+        async function openReplyErrorModal(errorId) {
+            const error = userErrors.find(e => e.id === errorId);
+            if (!error) {
+                showToast('Error details not found', 'error');
+                return;
+            }
+            
+            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.created_at;
+            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+            const description = error.quality_reviews?.department || 'No additional details available';
+            
+            document.getElementById('reply-error-id').textContent = orderId;
+            document.getElementById('reply-error-type').textContent = errorType;
+            document.getElementById('reply-error-date').textContent = formatDate(orderDate);
+            document.getElementById('reply-error-description').textContent = description;
+            document.getElementById('error-response').value = '';
+            
+            // Store the current error ID for submission
+            document.getElementById('submit-response-btn').dataset.errorId = errorId;
+            
+            showModal('reply-error-modal');
+        }
+
+        // Submit error response
+        async function submitErrorResponse(errorId, responseText) {
+            try {
+                await window.submitErrorResponse(errorId, currentUser.id, responseText);
+                showToast('Your response has been submitted successfully', 'success');
+                hideModal('reply-error-modal');
+                
+                // Reload errors to reflect the change
+                await loadUserErrors();
+                await loadUserPerformance();
+                
+                return true;
+            } catch (error) {
+                console.error('Error submitting response:', error);
+                showToast('Failed to submit your response', 'error');
+                return false;
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                notifications = await getNotifications(currentUser.id);
+                updateNotificationsUI();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notifications = [];
+                updateNotificationsUI();
+            }
+        }
+
+        function updateNotificationsUI() {
+            const notificationList = document.getElementById('notification-list');
+            const notificationBadge = document.getElementById('notification-badge');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+                notificationBadge.style.display = 'none';
+            } else {
+                notificationList.innerHTML = notifications.map(notification => `
+                    <li class="notification-item">
+                        <div class="notification-message">
+                            <div>${notification.message}</div>
+                            <div class="notification-time">${formatDateTime(notification.created_at)}</div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button>
+                        </div>
+                    </li>
+                `).join('');
+                
+                notificationBadge.textContent = notifications.length;
+                notificationBadge.style.display = 'flex';
+                
+                // Add event listeners to mark as read buttons
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const notificationId = btn.dataset.notificationId;
+                        await markNotificationAsRead(notificationId);
+                        await loadNotifications();
+                    });
+                });
+            }
+        }
+
+        // Initialize real-time subscriptions
+        function initRealtimeSubscriptions() {
+            // Subscribe to new notifications
+            window.subscribeToNotifications(currentUser.id, (payload) => {
+                console.log('New notification received:', payload);
+                showToast(payload.new.message, 'info', 'New Notification');
+                loadNotifications();
+            });
+            
+            // Subscribe to new errors
+            window.subscribeToErrors(currentUser.id, (payload) => {
+                console.log('New error assigned:', payload);
+                showToast('A new error has been logged against your account', 'warning', 'New Error');
+                loadUserErrors();
+                loadUserPerformance();
+            });
+        }
+
+        // Initialize charts
+        function initCharts() {
+            const ctx = document.getElementById('commonErrorsChart').getContext('2d');
+            commonErrorsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: [],
+                    datasets: [{
+                        data: [],
+                        backgroundColor: [
+                            '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                            '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
+                        ],
+                        borderWidth: 0,
+                        borderColor: '#1a1a1a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e6edf3',
+                                font: {
+                                    family: 'Poppins',
+                                    size: 12
+                                },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rg(26, 26, 26, 0.9)',
+                            titleColor: '#e6edf3',
+                            bodyColor: '#e6edf3',
+                            borderColor: '#333',
+                            borderWidth: 1
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        // Update charts with data
+        function updateCharts() {
+            if (!commonErrorsChart) return;
+            
+            const errorTypes = Object.keys(userPerformance.errorTypes);
+            const errorCounts = Object.values(userPerformance.errorTypes);
+            
+            commonErrorsChart.data.labels = errorTypes;
+            commonErrorsChart.data.datasets[0].data = errorCounts;
+            commonErrorsChart.update();
+        }
+
+        // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            const initialName = document.getElementById('sidebar-username').textContent;
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(initialName);
-            const firstName = initialName.split(' ')[0];
-            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${firstName}!`;
-            renderRecentErrors();
+            // Initialize the app
+            initApp();
+            
+            // Tab navigation
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Update active tab
+                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    
+                    // Show corresponding content
+                    const tabId = tab.dataset.tab;
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                    
+                    // Update page title
+                    document.getElementById('page-title-header').textContent = 
+                        tabId === 'dashboard' ? 'Dashboard' : 
+                        tabId === 'my-errors' ? 'My Errors' : 
+                        tabId === 'profile' ? 'Profile' : 
+                        tabId === 'settings' ? 'Settings' : 
+                        tabId === 'help' ? 'Help' : 'Dashboard';
+                });
+            });
+            
+            // Settings navigation
+            document.querySelectorAll('.settings-nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Update active settings tab
+                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                    
+                    // Show corresponding section
+                    const sectionId = link.dataset.section;
+                    document.querySelectorAll('.setting-card').forEach(section => section.style.display = 'none');
+                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
+                });
+            });
+            
+            // Notification bell
+            document.getElementById('notification-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('notification-dropdown').classList.toggle('show');
+            });
+            
+            // Mark all as read
+            document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                for (const notification of notifications) {
+                    await markNotificationAsRead(notification.id);
+                }
+                await loadNotifications();
+                showToast('All notifications marked as read', 'success');
+            });
+            
+            // Close modals
+            document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const modalId = btn.dataset.modalId;
+                    hideModal(modalId);
+                });
+            });
+            
+            // Submit response button
+            document.getElementById('submit-response-btn').addEventListener('click', async () => {
+                const errorId = document.getElementById('submit-response-btn').dataset.errorId;
+                const responseText = document.getElementById('error-response').value.trim();
+                
+                if (!responseText) {
+                    showToast('Please enter your response before submitting', 'warning');
+                    return;
+                }
+                
+                await submitErrorResponse(errorId, responseText);
+            });
+            
+            // Apply filters for dashboard
+            document.getElementById('apply-filters-btn').addEventListener('click', () => {
+                const orderId = document.getElementById('filter-order-id').value;
+                const fromDate = document.getElementById('filter-from-date').value;
+                const toDate = document.getElementById('filter-to-date').value;
+                
+                loadUserErrors({
+                    order_id: orderId,
+                    from_date: fromDate,
+                    to_date: toDate
+                });
+                
+                showToast('Filters applied', 'success');
+            });
+            
+            // Reset filters for dashboard
+            document.getElementById('reset-filters-btn').addEventListener('click', () => {
+                document.getElementById('filter-order-id').value = '';
+                document.getElementById('filter-from-date').value = '';
+                document.getElementById('filter-to-date').value = '';
+                loadUserErrors();
+                showToast('Filters reset', 'info');
+            });
+            
+            // Apply filters for my errors
+            document.getElementById('apply-my-errors-filters').addEventListener('click', () => {
+                const search = document.getElementById('my-errors-search').value;
+                const status = document.getElementById('my-errors-status').value;
+                
+                const filters = {};
+                if (search) filters.search = search;
+                if (status !== 'all') filters.status = status;
+                
+                loadUserErrors(filters);
+                showToast('Filters applied', 'success');
+            });
+            
+            // Reset filters for my errors
+            document.getElementById('reset-my-errors-filters').addEventListener('click', () => {
+                document.getElementById('my-errors-search').value = '';
+                document.getElementById('my-errors-status').value = 'all';
+                loadUserErrors();
+                showToast('Filters reset', 'info');
+            });
+            
+            // Save profile button
+            document.getElementById('save-profile-btn').addEventListener('click', async () => {
+                const fullName = document.getElementById('profile-fullname').value;
+                const phone = document.getElementById('profile-phone').value;
+                
+                try {
+                    await updateUserProfile(currentUser.id, {
+                        name: fullName,
+                        phone: phone
+                    });
+                    
+                    // Update current user data
+                    currentUser.name = fullName;
+                    currentUser.phone = phone;
+                    updateUserInterface();
+                    
+                    showToast('Profile updated successfully', 'success');
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    showToast('Failed to update profile', 'error');
+                }
+            });
+            
+            // Cancel profile button
+            document.getElementById('cancel-profile-btn').addEventListener('click', () => {
+                // Reset form to current user data
+                updateUserInterface();
+                document.querySelector('.sidebar-nav a[data-tab="dashboard"]').click();
+            });
+            
+            // Contact support button
+            document.getElementById('contact-support-btn').addEventListener('click', () => {
+                showToast('Support request would be sent here', 'info');
+            });
+            
+            // Change password button
+            document.getElementById('change-password-btn').addEventListener('click', () => {
+                showToast('Password change functionality would open here', 'info');
+            });
+            
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    await supabase.auth.signOut();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    showToast('Error during logout', 'error');
+                }
+            });
+            
+            // Close notification dropdown when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-bell')) {
+                    document.getElementById('notification-dropdown').classList.remove('show');
+                }
+            });
+            
+            // Close modals when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    e.target.classList.remove('show');
+                }
+            });
         });
     </script>
-
-<script type="module">import './api-client.js';</script>
 </body>
 </html>
