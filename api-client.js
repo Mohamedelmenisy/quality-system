@@ -325,7 +325,8 @@ export async function submitReview(assignmentId, reviewData) {
           .insert({
             review_id: data.id,
             employee_id: assignment.data.orders.employee_id,
-            status: 'pending_response'
+            status: 'pending_response',
+            recorded_at: new Date()
           });
       }
     }
@@ -375,23 +376,32 @@ export async function getAgentErrors(agentId, filters = {}) {
           action_correctness,
           department,
           modified_reason,
+          modification_details,
           order_assignments (
-            order_id,
             orders (
               order_id,
               created_at,
               employee_name,
               reason
-            )
+            ),
+            users!order_assignments_quality_agent_id_fkey (name)
           )
         ),
         error_responses (*)
       `)
       .eq('employee_id', agentId)
-      .order('created_at', { ascending: false });
+      .order('recorded_at', { ascending: false }); // تم التعديل هنا: recorded_at بدلاً من created_at
 
     if (filters.status) {
       query = query.eq('status', filters.status);
+    }
+
+    if (filters.from_date) {
+      query = query.gte('recorded_at', filters.from_date); // تم التعديل هنا
+    }
+
+    if (filters.to_date) {
+      query = query.lte('recorded_at', filters.to_date); // تم التعديل هنا
     }
 
     const { data, error } = await query;
@@ -410,7 +420,8 @@ export async function submitErrorResponse(errorId, agentId, responseText) {
       .insert({
         error_id: errorId,
         response_by_id: agentId,
-        response_text: responseText
+        response_text: responseText,
+        responded_at: new Date()
       })
       .select()
       .single();
@@ -441,7 +452,6 @@ export async function getPendingErrors() {
           department,
           modified_reason,
           order_assignments (
-            order_id,
             orders (*)
           )
         ),
@@ -449,7 +459,7 @@ export async function getPendingErrors() {
         users!errors_employee_id_fkey (name, email)
       `)
       .eq('status', 'pending_response')
-      .order('created_at', { ascending: false });
+      .order('recorded_at', { ascending: false }); // تم التعديل هنا
 
     if (error) throw error;
     return data;
@@ -499,7 +509,8 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
         escalated_by_id: escalatedById,
         escalated_to_id: escalatedToId,
         reason: reason,
-        status: 'pending'
+        status: 'pending',
+        created_at: new Date()
       })
       .select()
       .single();
@@ -646,7 +657,8 @@ export async function createNotification(userId, message, type = 'info') {
         user_id: userId,
         message: message,
         type: type,
-        is_read: false
+        is_read: false,
+        created_at: new Date()
       })
       .select()
       .single();
@@ -661,7 +673,7 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ====================
 
-export async function getPerformanceMetrics(period = 'month') {
+export async function getPerformanceMetrics(period = 'month', agentId = null) {
   try {
     let dateFilter = new Date();
     
@@ -679,7 +691,7 @@ export async function getPerformanceMetrics(period = 'month') {
         dateFilter.setMonth(dateFilter.getMonth() - 1);
     }
 
-    // Get total orders reviewed
+    // Get total orders reviewed - استخدام recorded_at بدلاً من created_at
     const { data: ordersData, error: ordersError } = await supabase
       .from('order_assignments')
       .select('id, status, assigned_at')
@@ -687,11 +699,11 @@ export async function getPerformanceMetrics(period = 'month') {
 
     if (ordersError) throw ordersError;
 
-    // Get errors data
+    // Get errors data - استخدام recorded_at بدلاً من created_at
     const { data: errorsData, error: errorsError } = await supabase
       .from('errors')
-      .select('id, created_at, status')
-      .gte('created_at', dateFilter.toISOString());
+      .select('id, recorded_at, status') // تم التعديل هنا
+      .gte('recorded_at', dateFilter.toISOString()); // تم التعديل هنا
 
     if (errorsError) throw errorsError;
 
@@ -729,15 +741,15 @@ export async function getErrorTrends(period = '6 months') {
   try {
     const { data, error } = await supabase
       .from('errors')
-      .select('created_at, quality_reviews(modified_reason)')
-      .order('created_at', { ascending: true });
+      .select('recorded_at, quality_reviews(modified_reason)') // تم التعديل هنا
+      .order('recorded_at', { ascending: true }); // تم التعديل هنا
 
     if (error) throw error;
 
     // Process data for charts
     const monthlyData = {};
     data.forEach(error => {
-      const month = new Date(error.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      const month = new Date(error.recorded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' }); // تم التعديل هنا
       if (!monthlyData[month]) {
         monthlyData[month] = 0;
       }
@@ -804,7 +816,8 @@ export async function importOrdersFromCSV(csvData) {
       order_status: row.order_status,
       requested_delivery_date: row.requested_delivery_date,
       payment_type: row.payment_type,
-      raw_data: row
+      raw_data: row,
+      recorded_at: new Date()
     }));
 
     const { data, error } = await supabase
