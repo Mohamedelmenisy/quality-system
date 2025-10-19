@@ -114,6 +114,20 @@
         .search-input-container { position: relative; }
         .search-input-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
         .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 38px; width: 300px; }
+        
+        /* حل مشكلة الـ autocomplete */
+        .search-input-container input.anti-autofill {
+            background: #2c2c2c !important;
+            border: 1px solid var(--border-color) !important;
+            border-radius: 8px !important;
+            color: var(--text-color) !important;
+            padding: 10px 12px 10px 38px !important;
+            width: 300px !important;
+            -webkit-text-fill-color: var(--text-color) !important;
+            -webkit-box-shadow: 0 0 0px 1000px #2c2c2c inset !important;
+            transition: background-color 5000s ease-in-out 0s !important;
+        }
+        
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; }
         .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
@@ -180,7 +194,7 @@
             width: 100%;
             height: 100%;
             background: rgba(0, 0, 0, 0.7);
-            display: none; /* Hidden by default */
+            display: none;
             align-items: center;
             justify-content: center;
             z-index: 2000;
@@ -188,7 +202,7 @@
             transition: opacity 0.3s ease;
         }
         .modal-overlay.show {
-            display: flex; /* Show when .show class is added */
+            display: flex;
             opacity: 1;
         }
         .modal-box {
@@ -232,7 +246,6 @@
             to { transform: translateY(0); opacity: 1; }
         }
 
-        /* === FIX START: Make modal cancel button smaller and less prominent === */
         .modal-footer .btn-secondary {
             background-color: transparent;
             color: var(--text-muted);
@@ -243,7 +256,6 @@
             background-color: var(--border-color);
             color: var(--text-color);
         }
-        /* === FIX END === */
 
         .action-btn {
             padding: 6px 12px;
@@ -306,6 +318,12 @@
     </style>
 </head>
 <body>
+    <!-- Form وهمي لخداع المتصفح -->
+    <form style="display: none;" autocomplete="off">
+        <input type="email" name="fake-email" value="">
+        <input type="password" name="fake-password" value="">
+    </form>
+
     <aside class="sidebar">
         <div>
             <div class="sidebar-header">
@@ -376,7 +394,11 @@
             <div class="header-actions">
                 <div class="search-input-container">
                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-<input type="search" placeholder="Search reports, teams..." autocomplete="off" name="no-autofill" id="search-box" onfocus="this.removeAttribute('readonly');" readonly>
+                    <input type="text" 
+                           placeholder="Search reports, teams..." 
+                           class="anti-autofill"
+                           id="main-search"
+                           name="search_main">
                 </div>
                 <div class="notification-bell">
                     <button id="notification-btn" class="notification-btn">
@@ -519,7 +541,14 @@
                 <div class="filter-panel">
                     <div class="filter-group">
                         <label>Search Users</label>
-                        <input type="search" id="user-search" placeholder="Search by name or email...">
+                        <div class="search-input-container">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="text" 
+                                   placeholder="Search by name or email..." 
+                                   class="anti-autofill"
+                                   id="user-search"
+                                   name="search_users">
+                        </div>
                     </div>
                     <div class="filter-group">
                         <label>Role</label>
@@ -572,15 +601,15 @@
                 </div>
                 <div class="form-group">
                     <label for="profile-fullname">Full Name</label>
-                    <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi">
+                    <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi" class="anti-autofill" name="profile_name">
                 </div>
                 <div class="form-group">
                     <label for="profile-email">Email Address</label>
-                    <input type="email" id="profile-email" value="n.alotaibi@qualityx.com">
+                    <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" class="anti-autofill" name="profile_email">
                 </div>
                 <div class="form-group">
                     <label for="profile-phone">Phone Number</label>
-                    <input type="tel" id="profile-phone" value="+966 55 555 1234">
+                    <input type="tel" id="profile-phone" value="+966 55 555 1234" class="anti-autofill" name="profile_phone">
                 </div>
                 <div class="page-actions">
                     <button class="btn" style="background: #333; color: white;">Cancel</button>
@@ -659,11 +688,11 @@
             <div class="modal-body">
                 <div class="form-group">
                     <label for="new-user-name">Full Name *</label>
-                    <input type="text" id="new-user-name" placeholder="Enter full name" required>
+                    <input type="text" id="new-user-name" placeholder="Enter full name" required class="anti-autofill" name="new_user_name">
                 </div>
                 <div class="form-group">
                     <label for="new-user-email">Email Address *</label>
-                    <input type="email" id="new-user-email" placeholder="Enter email address" required>
+                    <input type="email" id="new-user-email" placeholder="Enter email address" required class="anti-autofill" name="new_user_email">
                 </div>
                 <div class="form-group">
                     <label for="new-user-role">Role *</label>
@@ -685,7 +714,7 @@
                 </div>
                 <div class="form-group">
                     <label for="new-user-password">Temporary Password *</label>
-                    <input type="password" id="new-user-password" placeholder="Set temporary password" required>
+                    <input type="password" id="new-user-password" placeholder="Set temporary password" required class="anti-autofill" name="new_user_password">
                 </div>
             </div>
             <div class="modal-footer">
@@ -716,6 +745,40 @@
     <div class="toast-container" id="toast-container"></div>
 
     <script>
+        // حل جذري لمشكلة الـ autocomplete
+        function disableAutoComplete() {
+            // جميع حقول الإدخال في الصفحة
+            const allInputs = document.querySelectorAll('input');
+            
+            allInputs.forEach(input => {
+                // تعطيل الـ autocomplete بشكل كامل
+                input.setAttribute('autocomplete', 'new-password');
+                input.setAttribute('autocorrect', 'off');
+                input.setAttribute('autocapitalize', 'off');
+                input.setAttribute('spellcheck', 'false');
+                input.setAttribute('data-lpignore', 'true');
+                
+                // إضافة كلاس خاص لمنع الـ autofill
+                if (input.type !== 'password') {
+                    input.classList.add('anti-autofill');
+                }
+                
+                // منع حفظ البيانات في المتصفح
+                input.addEventListener('focus', function() {
+                    this.removeAttribute('readonly');
+                });
+                
+                input.addEventListener('blur', function() {
+                    this.setAttribute('readonly', 'true');
+                });
+                
+                // تهيئة الحقل كقراءة فقط مؤقتاً
+                input.setAttribute('readonly', 'true');
+            });
+            
+            console.log('تم تعطيل الـ autocomplete لجميع الحقول');
+        }
+
         // Application State
         let currentUser = null;
         let teamMembers = [];
@@ -822,6 +885,9 @@
         async function initApp() {
             try {
                 showToast('Loading Manager Dashboard...', 'info');
+                
+                // تطبيق حل الـ autocomplete أولاً
+                disableAutoComplete();
                 
                 // Get current user
                 const user = await getCurrentUser();
@@ -1148,11 +1214,11 @@
             document.getElementById('edit-user-body').innerHTML = `
                 <div class="form-group">
                     <label for="edit-user-name">Full Name</label>
-                    <input type="text" id="edit-user-name" value="${user.name}">
+                    <input type="text" id="edit-user-name" value="${user.name}" class="anti-autofill" name="edit_user_name">
                 </div>
                 <div class="form-group">
                     <label for="edit-user-email">Email Address</label>
-                    <input type="email" id="edit-user-email" value="${user.email}">
+                    <input type="email" id="edit-user-email" value="${user.email}" class="anti-autofill" name="edit_user_email">
                 </div>
                 <div class="form-group">
                     <label for="edit-user-role">Role</label>
