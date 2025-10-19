@@ -1077,10 +1077,10 @@
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
             // Show/hide escalation and inquiry tabs based on role
-            if (currentUser.role === 'helper') {
-                document.getElementById('escalations-tab').style.display = 'flex';
-                document.getElementById('inquiries-tab').style.display = 'flex';
-            }
+            if (currentUser.role === 'quality' || currentUser.role === 'admin') {
+    document.getElementById('escalations-tab').style.display = 'flex';
+    document.getElementById('inquiries-tab').style.display = 'flex';
+}
             
             // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
@@ -1162,40 +1162,45 @@
         }
 
         // Load helper escalations
-        async function loadHelperEscalations() {
-            try {
-                if (currentUser && currentUser.role === 'helper') {
-                    console.log('🔄 Loading escalations for helper...');
-                    helperEscalations = await getHelperEscalations(currentUser.id);
-                    renderEscalationsTable();
-                    document.getElementById('escalations-count').textContent = helperEscalations.length;
-                    console.log('✅ Escalations loaded:', helperEscalations.length);
-                }
-            } catch (error) {
-                console.error('❌ Error loading helper escalations:', error);
-                showToast('Failed to load escalations', 'error');
-                helperEscalations = [];
-                renderEscalationsTable();
-            }
+      async function loadHelperEscalations() {
+    try {
+        // Check if the user has a role that should see escalations
+        if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+            console.log('🔄 Loading all pending escalations for role:', currentUser.role);
+            // Admins and Quality Agents see ALL pending escalations
+            const escalationsData = await getEscalations(null, { status: 'pending' });
+            
+            helperEscalations = escalationsData;
+            renderEscalationsTable();
+            document.getElementById('escalations-count').textContent = helperEscalations.length;
+            console.log('✅ Escalations loaded:', helperEscalations.length);
         }
-
+    } catch (error) {
+        console.error('❌ Error loading escalations:', error);
+        showToast('Failed to load escalations', 'error');
+        helperEscalations = [];
+        renderEscalationsTable();
+    }
+}
         // Load helper inquiries
-        async function loadHelperInquiries() {
-            try {
-                if (currentUser && currentUser.role === 'helper') {
-                    console.log('🔄 Loading inquiries for helper...');
-                    helperInquiries = await getHelperInquiries(currentUser.id);
-                    renderInquiriesTable();
-                    document.getElementById('inquiries-count').textContent = helperInquiries.length;
-                    console.log('✅ Inquiries loaded:', helperInquiries.length);
-                }
-            } catch (error) {
-                console.error('❌ Error loading helper inquiries:', error);
-                showToast('Failed to load inquiries', 'error');
-                helperInquiries = [];
-                renderInquiriesTable();
-            }
+       async function loadHelperInquiries() {
+    try {
+        // The API function getHelperInquiries already gets all pending inquiries,
+        // so we just need to allow the correct roles to call it.
+        if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+            console.log('🔄 Loading inquiries for role:', currentUser.role);
+            helperInquiries = await getHelperInquiries(currentUser.id); // The function name is fine to keep
+            renderInquiriesTable();
+            document.getElementById('inquiries-count').textContent = helperInquiries.length;
+            console.log('✅ Inquiries loaded:', helperInquiries.length);
         }
+    } catch (error) {
+        console.error('❌ Error loading helper inquiries:', error);
+        showToast('Failed to load inquiries', 'error');
+        helperInquiries = [];
+        renderInquiriesTable();
+    }
+}
 
         // Render orders table
         function renderOrdersTable() {
