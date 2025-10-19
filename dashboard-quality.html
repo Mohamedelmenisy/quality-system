@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Quality Command Center | QualityX</title>
+    <title>Quality Command Center</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -26,12 +26,11 @@
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
-        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); font-size: 16px; }
+        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
         .layout { display: flex; min-height: 100vh; }
         .sidebar {
             width: 250px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
             display: flex; flex-direction: column; padding: 1.5rem 0; position: fixed; height: 100%; z-index: 1000;
-            transition: width 0.3s ease;
         }
         .sidebar-header {
             padding: 0 1.5rem 1.5rem 1.5rem; display: flex; align-items: center; gap: 0.75rem;
@@ -52,7 +51,7 @@
             transition: all 0.2s ease; cursor: pointer;
         }
         .sidebar-nav a:hover { background-color: rgba(0, 191, 255, 0.1); color: var(--primary-color); }
-        .sidebar-nav li.active a { background-color: var(--primary-color); color: black; font-weight: 600; }
+        .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
         .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
         .avatar-initials {
@@ -64,16 +63,24 @@
         .user-info .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
         .user-status { font-size: 0.75rem; color: var(--success-color); margin-top: 2px; }
 
-        .main-wrapper { flex-grow: 1; margin-left: 250px; display: flex; flex-direction: column; transition: margin-left 0.3s ease; }
+        .main-wrapper { flex-grow: 1; margin-left: 250px; display: flex; flex-direction: column; }
         .topbar {
             background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
             padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 900;
         }
+        .topbar-left { display: flex; align-items: center; gap: 1rem; }
+        #search-bar { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; width: 250px; }
         .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
         .topbar-actions { display: flex; align-items: center; gap: 1rem; }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 22px; cursor: pointer; }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; }
+        .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
+        .notification-item:last-child { border-bottom: none; }
         .main-content { padding: 2rem; flex-grow: 1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
@@ -84,35 +91,56 @@
         .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
         .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
         .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
-        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .grid-col-span-12 { grid-column: span 12; }
+        .grid-col-span-4 { grid-column: span 4; }
+        .grid-col-span-8 { grid-column: span 8; }
+        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); }
         .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
-        
+        .chart-container { height: 350px; width: 100%; }
+        .chart-container img { width: 100%; height: 100%; }
+        .activity-feed { list-style: none; }
+        .activity-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-text { font-size: 0.9rem; }
+        .activity-text strong { color: var(--text-color); }
+        .activity-time { font-size: 0.8rem; color: var(--text-muted-color); margin-top: 4px; }
+
         .results-table-container { overflow-x: auto; }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; }
         .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle;}
-        .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-align: center; display: inline-block; text-transform: capitalize; }
-        .status-pending { background-color: var(--info-color); color: white; }
-        .status-in_progress { background-color: var(--primary-color); color: black; }
-        .status-completed { background-color: var(--success-color); color: white; }
-        .status-escalated { background-color: var(--warning-color); color: black; }
-        .status-error { background-color: var(--danger-color); color: white; }
+        .results-table tbody tr:last-child td { border-bottom: none; }
+        .results-table tbody tr:hover { background-color: #2c2c2c; }
+        .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-align: center; display: inline-block; }
+        .status-new { background-color: var(--primary-color); color: black;}
+        .status-open { background-color: var(--info-color); }
+        .status-correct { background-color: var(--success-color); }
+        .status-error { background-color: var(--danger-color); }
+        .status-escalated { background-color: var(--warning-color); color: #000; }
         
-        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; margin-bottom: 1.5rem; }
+        /* MODIFIED: Consolidated filter bar styles */
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 1.5rem; border: 1px solid var(--border-color);}
         .filter-bar .filter-group { display: flex; align-items: center; gap: 0.5rem;}
-        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted-color); }
-        .filter-bar select, .filter-bar input { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; }
+        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted-color); margin-right: 0.25rem; }
+        .filter-bar select, .filter-bar input[type="date"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        
+        /* ADDED: New, improved search input styles */
+        .search-input-container { position: relative; }
+        .search-input-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted-color); }
+        .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px 8px 38px; width: 250px; }
         
         .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .btn-primary { background-color: var(--primary-color); color: black; }
         .btn-secondary { background-color: #333; color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
         .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
 
+        /* ADDED: Modal styles */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 800px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 550px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeIn 0.3s ease; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
         .modal-title { font-size: 1.25rem; font-weight: 700; }
         .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
@@ -121,40 +149,29 @@
         .modal-body textarea, .modal-body select, .modal-body input { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; font-family: inherit; resize: vertical;}
         .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
 
-        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-        .team-member-card { background-color: #222; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
-        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
-        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
-        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
-
-        .pagination-controls { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
-        .placeholder { text-align: center; padding: 3rem; color: var(--text-muted-color); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
+        /* ADDED: Improved view order modal styles */
+        .order-details-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+        .detail-item { background: #2c2c2c; padding: 1rem; border-radius: 8px; }
+        .detail-item strong { display: block; color: var(--primary-color); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;}
+        .detail-item p { margin: 0; font-size: 1rem; }
         
-        #toast-container { position: fixed; bottom: 2rem; right: 2rem; z-index: 9999; display: flex; flex-direction: column; gap: 0.5rem; }
-        .toast { padding: 1rem 1.5rem; border-radius: 0.5rem; color: white; opacity: 0; transform: translateY(20px); transition: all 0.3s ease; font-weight: 500; }
-        .toast.show { opacity: 1; transform: translateY(0); }
-        .toast-success { background-color: var(--success-color); }
-        .toast-error { background-color: var(--danger-color); }
-        .toast-info { background-color: var(--info-color); }
+        .hidden { display: none !important; }
 
-        .footer { padding: 1.5rem 2rem; text-align: center; color: var(--text-muted-color); border-top: 1px solid var(--border-color); margin-top: auto; }
+        /* Existing styles for other tabs are kept for consistency... */
 
-        @media (max-width: 992px) {
-            .sidebar { width: 70px; }
-            .sidebar .sidebar-title, .sidebar .nav-group-title, .sidebar .user-info, .sidebar-nav a span { display: none; }
-            .sidebar-nav a { justify-content: center; }
-            .main-wrapper { margin-left: 70px; }
-            .topbar { flex-direction: column; align-items: flex-start; gap: 1rem; }
-        }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module" src="./api-client.js"></script>
 </head>
-<body>
-    <div id="toast-container"></div>
+<body class="dark">
     <div class="layout">
         <aside class="sidebar" id="sidebar">
             <div>
                 <div class="sidebar-header">
-                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path><path d="M12 22V12" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                        <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
                     <h1 class="sidebar-title">QualityX</h1>
                 </div>
 
@@ -163,481 +180,604 @@
                         <h2 class="nav-group-title">Menu</h2>
                         <ul class="sidebar-nav">
                             <li class="active"><a data-tab="dashboard">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/></svg>
-                                <span>Dashboard</span></a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M18.7 8l-5.1 5.2-2.8-2.7L7 15.2"/></svg>
+                                Dashboard</a></li>
                             <li><a data-tab="my-assigned-orders">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                                <span>Assigned Orders</span></a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                                Assigned Orders</a></li>
                             <li><a data-tab="team-scheduling">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                                <span>Team Scheduling</span></a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                                Team Scheduling</a></li>
                             <li><a data-tab="team-members">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                <span>Team Members</span></a></li>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                                Team Members</a></li>
+                            <li><a data-tab="reports">
+                                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M21.5 22v-6h-6"/><path d="M22 11.5A10 10 0 0 0 3.2 7.2M2 12.5a10 10 0 0 0 18.8 4.2"/></svg>
+                                Reports & Analytics</a></li>
+                        </ul>
+                    </div>
+                     <div class="nav-group">
+                        <h2 class="nav-group-title">Account</h2>
+                         <ul class="sidebar-nav">
+                            <li><a data-tab="profile">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                                Profile</a></li>
+                            <li><a data-tab="settings">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                                Settings</a></li>
+                            <li><a href="#" id="logout-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                                Logout</a></li>
                         </ul>
                     </div>
                 </div>
             </div>
-
             <div class="sidebar-footer">
                 <div class="user-profile-widget">
-                    <div class="avatar-initials" id="sidebar-avatar-initials">...</div>
+                    <div class="avatar-initials" id="sidebar-avatar-initials">QA</div>
                     <div class="user-info">
-                        <div class="user-name" id="sidebar-username">Loading...</div>
-                        <div class="user-role" id="sidebar-userrole">Quality Agent</div>
+                        <span class="user-name" id="sidebar-username">Guest User</span>
+                        <span class="user-role" id="sidebar-user-role">Quality Agent</span>
+                        <span class="user-status">● Online</span>
                     </div>
                 </div>
             </div>
         </aside>
 
-        <div class="main-wrapper">
+        <main class="main-wrapper">
             <header class="topbar">
-                 <h2 class="page-title" id="page-title">Dashboard</h2>
+                <div class="topbar-left">
+                    <h2 class="page-title" id="current-page-title">Dashboard</h2>
+                </div>
                 <div class="topbar-actions">
-                    <button id="new-review-btn" class="btn btn-primary">New Review</button>
+                     <div class="notification-bell">
+                        <button class="notification-btn" id="notification-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        </button>
+                        <div class="notification-dropdown" id="notification-dropdown">
+                            <div class="notification-header">Notifications (0)</div>
+                            <ul class="notification-list" id="notification-list">
+                                <li class="notification-item">No new notifications.</li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
             </header>
 
-            <main class="main-content">
-                <!-- Dashboard -->
-                <div id="dashboard" class="tab-content active">
-                    <div id="welcome-message" style="margin-bottom: 1.5rem;">
-                        <h2 style="font-size: 1.75rem; font-weight: 700;">Welcome, <span id="welcome-username">...</span>!</h2>
-                        <p style="color: var(--text-muted-color);">Your central hub for monitoring quality and driving team excellence.</p>
-                    </div>
+            <div class="main-content">
+                <div class="tab-content active" id="dashboard">
+                    <h1>Welcome back, <span id="welcome-user-name"></span>!</h1>
+                    <p class="section-description" style="color: var(--text-muted-color); margin-top: 0.5rem; margin-bottom: 2rem;">Overview of your key performance indicators and recent activity.</p>
+                    
                     <div class="kpi-grid">
-                        <div class="kpi-card"><div class="kpi-title">Today's Reviews</div><div class="kpi-value" id="kpi-reviews">0</div></div>
-                        <div class="kpi-card"><div class="kpi-title">Open Cases</div><div class="kpi-value" id="kpi-open-cases">0</div></div>
-                        <div class="kpi-card"><div class="kpi-title">Avg. Quality Score</div><div class="kpi-value" id="kpi-quality-score">0%</div></div>
-                        <div class="kpi-card"><div class="kpi-title">Escalation Rate</div><div class="kpi-value" id="kpi-escalation-rate">0%</div></div>
+                        <div class="kpi-card">
+                            <p class="kpi-title">Assignments Due</p>
+                            <p class="kpi-value" id="kpi-open-assignments">...</p>
+                            <p class="kpi-change" style="color: var(--warning-color);">Handle these immediately.</p>
+                        </div>
+                        <div class="kpi-card">
+                            <p class="kpi-title">Reviews Completed (This Month)</p>
+                            <p class="kpi-value" id="kpi-completed-reviews">...</p>
+                            <p class="kpi-change" style="color: var(--success-color);">Keep up the great work!</p>
+                        </div>
+                        <div class="kpi-card">
+                            <p class="kpi-title">Accuracy Rate</p>
+                            <p class="kpi-value">98.5%</p>
+                            <p class="kpi-change" style="color: var(--success-color);">+0.1% vs last month</p>
+                        </div>
+                        <div class="kpi-card">
+                            <p class="kpi-title">Critical Errors Identified</p>
+                            <p class="kpi-value">12</p>
+                            <p class="kpi-change" style="color: var(--danger-color);">-3 errors this month</p>
+                        </div>
                     </div>
-                    <div class="placeholder"><h3>Dashboard charts and recent activity will be implemented here.</h3></div>
-                </div>
-                
-                <!-- Assigned Orders -->
-                <div id="my-assigned-orders" class="tab-content">
-                    <div class="widget">
-                        <h3>Assigned Orders</h3>
-                        <div class="filter-bar">
-                             <div class="filter-group">
-                                <input type="search" id="orders-search-input" placeholder="Search by Order ID..." class="form-control">
-                            </div>
-                            <div class="filter-group">
-                                <label for="filter-status">Status:</label>
-                                <select id="filter-status" class="form-control">
-                                    <option value="all">All</option>
-                                    <option value="pending">Pending</option>
-                                    <option value="in_progress">In Progress</option>
-                                    <option value="completed">Completed</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label for="filter-issue-type">Issue Type:</label>
-                                <select id="filter-issue-type" class="form-control">
-                                    <option value="all">All Types</option>
-                                </select>
+
+                    <div class="dashboard-grid">
+                        <div class="grid-col-span-8 widget">
+                            <h3>Monthly Performance Trend</h3>
+                            <div class="chart-container">
+                                <canvas id="monthlyPerformanceChart"></canvas>
                             </div>
                         </div>
+                        <div class="grid-col-span-4 widget">
+                            <h3>Recent Activity</h3>
+                            <ul class="activity-feed">
+                                <li class="activity-item">
+                                    <div class="activity-icon" style="background-color: rgba(40, 167, 69, 0.2); color: var(--success-color);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.05-8.77"/></svg>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Reviewed order <strong>#87612</strong>: Action **Correct**.</p>
+                                        <p class="activity-time">5 minutes ago</p>
+                                    </div>
+                                </li>
+                                <li class="activity-item">
+                                    <div class="activity-icon" style="background-color: rgba(220, 53, 69, 0.2); color: var(--danger-color);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">Flagged **Critical Error** on order <strong>#87599</strong>.</p>
+                                        <p class="activity-time">2 hours ago</p>
+                                    </div>
+                                </li>
+                                <li class="activity-item">
+                                    <div class="activity-icon" style="background-color: rgba(0, 191, 255, 0.2); color: var(--primary-color);">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20v2.5a2.5 2.5 0 0 1-2.5 2.5H6.5A2.5 2.5 0 0 1 4 19.5z"/><path d="M20 17V8H6.5A2.5 2.5 0 0 0 4 10.5v1.5"/><path d="M20 8H6.5A2.5 2.5 0 0 0 4 10.5v1.5"/></svg>
+                                    </div>
+                                    <div class="activity-content">
+                                        <p class="activity-text">New order **#87650** assigned to you.</p>
+                                        <p class="activity-time">Today, 8:00 AM</p>
+                                    </div>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
 
+                </div>
+
+                <div class="tab-content" id="my-assigned-orders">
+                    <h1>Assigned Orders for Review</h1>
+                    <p class="section-description" style="color: var(--text-muted-color); margin-top: 0.5rem; margin-bottom: 2rem;">A list of all orders assigned to you awaiting quality review.</p>
+                    
+                    <div class="filter-bar">
+                        <div class="search-input-container">
+                             <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            <input type="search" id="order-search" placeholder="Search by Order ID or Employee Name...">
+                        </div>
+                        <div class="filter-group">
+                            <label for="status-filter">Status:</label>
+                            <select id="status-filter">
+                                <option value="all">All Active</option>
+                                <option value="pending">Pending</option>
+                                <option value="in_progress">In Progress</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="widget">
                         <div class="results-table-container">
                             <table class="results-table">
-                                <thead><tr><th>Order ID</th><th>Issue Type</th><th>Assigned On</th><th>Status</th><th>Actions</th></tr></thead>
-                                <tbody id="orders-table-body"><tr_loading></tr></tbody>
-                            </table>
-                        </div>
-                        <div class="pagination-controls">
-                            <span id="pagination-info">Showing 0-0 of 0</span>
-                            <div style="display: flex; gap: 0.5rem;">
-                                <button id="prev-page-btn" class="btn btn-secondary" disabled>Previous</button>
-                                <button id="next-page-btn" class="btn btn-secondary" disabled>Next</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team Scheduling -->
-                <div id="team-scheduling" class="tab-content">
-                    <div class="widget">
-                        <h3>Team Schedule</h3>
-                        <div class="results-table-container">
-                            <table class="results-table" id="schedule-table">
-                                <!-- Schedule will be rendered by JS -->
+                                <thead>
+                                    <tr>
+                                        <th>Assignment ID</th>
+                                        <th>Order ID</th>
+                                        <th>Employee Name (Agent)</th>
+                                        <th>Reason/Type</th>
+                                        <th>Amount</th>
+                                        <th>Assigned Date</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assigned-orders-table-body">
+                                    <tr><td colspan="8" style="text-align: center; color: var(--text-muted-color);">Loading assignments...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Team Members -->
-                <div id="team-members" class="tab-content">
-                    <div class="widget">
-                        <h3>Team Members</h3>
-                        <div class="team-grid" id="team-grid">
-                            <!-- Team members will be rendered by JS -->
-                        </div>
+                <div class="tab-content" id="team-scheduling"><h3>Team Scheduling</h3><p>Content for Team Scheduling.</p></div>
+                <div class="tab-content" id="team-members"><h3>Team Members</h3><p>Content for Team Members.</p></div>
+                <div class="tab-content" id="reports"><h3>Reports & Analytics</h3><p>Content for Reports.</p></div>
+                <div class="tab-content" id="profile"><h3>Profile Settings</h3><p>Content for Profile.</p></div>
+                <div class="tab-content" id="settings"><h3>System Settings</h3><p>Content for Settings.</p></div>
+
+            </div>
+        </main>
+    </div>
+
+    <div class="modal-overlay" id="view-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Order Details: <span id="view-modal-order-id"></span></h2>
+                <button class="modal-close-btn" onclick="hideModal('view-order-modal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="order-details-grid">
+                    <div class="detail-item">
+                        <strong>Employee Name</strong>
+                        <p id="detail-employee-name"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Order Date</strong>
+                        <p id="detail-order-date"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Transaction Amount</strong>
+                        <p id="detail-amount"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Reason for Assignment</strong>
+                        <p id="detail-reason"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Chefs Notes / Summary</strong>
+                        <p id="detail-chefz-notes"></p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Assignment Status</strong>
+                        <p id="detail-assignment-status"></p>
                     </div>
                 </div>
-                
-                <!-- Other Placeholders -->
-                <div id="reports" class="tab-content"><div class="placeholder"><h3>Reports & Analytics feature is under development.</h3></div></div>
-                <div id="profile" class="tab-content"><div class="placeholder"><h3>Profile editing is under development.</h3></div></div>
-                <div id="settings" class="tab-content"><div class="placeholder"><h3>Settings management is under development.</h3></div></div>
-                <div id="help" class="tab-content"><div class="placeholder"><h3>Help Center is under development.</h3></div></div>
-            </main>
-
-            <footer class="footer">
-                &copy; 2025 Mohamed Elmenisy. All rights reserved.
-            </footer>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="hideModal('view-order-modal')">Close</button>
+            </div>
         </div>
     </div>
-    
-    <!-- Modals Container -->
-    <div id="modals-container"></div>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-        
-        // --- API SERVICE (Mock Simulation) ---
-        // This simulates talking to your Supabase backend.
-        // Replace the logic inside these functions with actual `fetch` calls.
-        const ApiService = {
-            getCurrentUser: async () => {
-                // SIMULATE API CALL
-                return new Promise(resolve => setTimeout(() => resolve({
-                    id: 'uuid-user-123',
-                    name: 'Mohamed Elmenisy',
-                    role: 'Quality Agent',
-                    kpis: { reviews: 42, openCases: 6, qualityScore: 98.2, escalationRate: 2.1 }
-                }), 500));
-            },
-            getAssignedOrders: async ({ page = 1, limit = 10, search = '', status = 'all' }) => {
-                // SIMULATE API CALL
-                console.log(`Fetching orders: page=${page}, search=${search}, status=${status}`);
-                return new Promise(resolve => setTimeout(() => {
-                    // This is fake data. In reality, this comes from your database.
-                    const allOrders = [
-                        { assignmentId: 'assign-1', orderId: 'CZ-84382', issueType: 'Missing Item', assignedOn: '2025-10-19T10:00:00Z', status: 'pending' },
-                        { assignmentId: 'assign-2', orderId: 'CZ-84381', issueType: 'Wrong Item', assignedOn: '2025-10-19T09:30:00Z', status: 'in_progress' },
-                        { assignmentId: 'assign-3', orderId: 'CZ-84380', issueType: 'Driver Behavior', assignedOn: '2025-10-19T09:00:00Z', status: 'pending' },
-                        { assignmentId: 'assign-4', orderId: 'CZ-84375', issueType: 'Missing Item', assignedOn: '2025-10-18T15:00:00Z', status: 'completed' },
-                        { assignmentId: 'assign-5', orderId: 'CZ-84374', issueType: 'Wrong Order', assignedOn: '2025-10-18T14:00:00Z', status: 'completed' },
-                        { assignmentId: 'assign-6', orderId: 'CZ-84371', issueType: 'Spillage', assignedOn: '2025-10-17T11:00:00Z', status: 'escalated' },
-                    ];
-                    
-                    let filtered = allOrders.filter(o => {
-                        const searchMatch = search.length < 2 ? true : o.orderId.toLowerCase().includes(search.toLowerCase());
-                        const statusMatch = status === 'all' ? true : o.status === status;
-                        return searchMatch && statusMatch;
-                    });
-
-                    const totalItems = filtered.length;
-                    const paginated = filtered.slice((page - 1) * limit, page * limit);
-
-                    resolve({
-                        data: paginated,
-                        total: totalItems,
-                        page: page,
-                        limit: limit,
-                        totalPages: Math.ceil(totalItems / limit)
-                    });
-                }, 800));
-            },
-            getOrderDetails: async (orderId) => {
-                // SIMULATE API CALL
-                return new Promise(resolve => setTimeout(() => resolve({
-                    id: orderId,
-                    employee_name: 'Nisrin Abdullah-CU',
-                    reason: 'Damaged Order',
-                    details: 'Customer reported the cake was crushed upon arrival.',
-                    amount: 77.00,
-                    compensation_against: 'Store',
-                    chefz: 'Cakeology Rawabi',
-                    status: 'Delivered'
-                }), 500));
-            },
-            submitReview: async (payload) => {
-                // SIMULATE API CALL
-                console.log('Submitting Review:', payload);
-                return new Promise(resolve => setTimeout(() => resolve({ success: true }), 1000));
-            },
-             getTeamMembers: async () => {
-                return new Promise(resolve => setTimeout(() => resolve([
-                    { name: "Fahad Al-Qahtani", role: "Quality Agent", color: "#00bfff"},
-                    { name: "Noura Al-Dossari", role: "Quality Agent", color: "#ff69b4"},
-                    { name: "Ahmed Khan", role: "Senior Quality Agent", color: "#28a745"},
-                    { name: "Ali Al-Mansoori", role: "Quality Manager", color: "#ffc107"},
-                ]), 500));
-            }
-        };
-
-        // --- GLOBAL STATE MANAGEMENT ---
-        const AppState = {
-            currentUser: null,
-            orders: {
-                data: [],
-                page: 1,
-                totalPages: 1,
-                limit: 10,
-                search: '',
-                status: 'all'
-            },
-            team: {
-                members: [],
-                schedule: []
-            },
-            autoRefreshInterval: null,
-        };
-
-        // --- UTILITY & RENDERING FUNCTIONS ---
-        const showToast = (message, type = 'info') => {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast toast-${type}`;
-            toast.textContent = message;
-            container.appendChild(toast);
-            setTimeout(() => {
-                toast.classList.add('show');
-                setTimeout(() => {
-                    toast.classList.remove('show');
-                    setTimeout(() => toast.remove(), 300);
-                }, 4000);
-            }, 10);
-        };
-
-        const getInitials = (name) => {
-            if (!name) return '';
-            const names = name.split(' ');
-            return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : (names[0]?.[0] || '').toUpperCase();
-        };
-
-        const renderUI = () => {
-            if (AppState.currentUser) {
-                const user = AppState.currentUser;
-                document.getElementById('sidebar-username').textContent = user.name;
-                document.getElementById('welcome-username').textContent = user.name;
-                document.getElementById('sidebar-avatar-initials').textContent = getInitials(user.name);
-                document.getElementById('kpi-reviews').textContent = user.kpis.reviews;
-                document.getElementById('kpi-open-cases').textContent = user.kpis.openCases;
-                document.getElementById('kpi-quality-score').textContent = `${user.kpis.qualityScore}%`;
-                document.getElementById('kpi-escalation-rate').textContent = `${user.kpis.escalationRate}%`;
-            }
-        };
-
-        const renderOrders = () => {
-            const tbody = document.getElementById('orders-table-body');
-            const { data } = AppState.orders;
-            if (data.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">No orders found.</td></tr>`;
-                return;
-            }
-            tbody.innerHTML = data.map(order => `
-                <tr>
-                    <td>${order.orderId}</td>
-                    <td>${order.issueType}</td>
-                    <td>${new Date(order.assignedOn).toLocaleDateString()}</td>
-                    <td><span class="status-badge status-${order.status}">${order.status.replace('_', ' ')}</span></td>
-                    <td style="display: flex; gap: 0.5rem;">
-                        <button class="btn btn-secondary btn-sm" data-action="view" data-order-id="${order.orderId}">View</button>
-                        <button class="btn btn-primary btn-sm" data-action="review" data-order-id="${order.orderId}">Review</button>
-                    </td>
-                </tr>
-            `).join('');
-        };
-        
-        const renderTeamMembers = () => {
-            const grid = document.getElementById('team-grid');
-            grid.innerHTML = AppState.team.members.map(member => `
-                 <div class="team-member-card">
-                    <div class="team-member-avatar-initials" style="background-color: ${member.color};">${getInitials(member.name)}</div>
-                    <div class="team-member-name">${member.name}</div>
-                    <div class="team-member-role">${member.role}</div>
-                </div>
-            `).join('');
-        };
-
-        const renderPagination = () => {
-            const { page, totalPages, data, total } = AppState.orders;
-            const start = total === 0 ? 0 : (page - 1) * 10 + 1;
-            const end = start + data.length - 1;
-            document.getElementById('pagination-info').textContent = `Showing ${start}-${end} of ${total}`;
-            document.getElementById('prev-page-btn').disabled = page <= 1;
-            document.getElementById('next-page-btn').disabled = page >= totalPages;
-        };
-        
-        const createModal = (id, title, bodyHtml, footerHtml) => {
-            const modal = document.createElement('div');
-            modal.className = 'modal-overlay';
-            modal.id = id;
-            modal.innerHTML = `
-                <div class="modal-box">
-                    <div class="modal-header">
-                        <h3 class="modal-title">${title}</h3>
-                        <button class="modal-close-btn">&times;</button>
-                    </div>
-                    <div class="modal-body">${bodyHtml}</div>
-                    <div class="modal-footer">${footerHtml}</div>
-                </div>
-            `;
-            document.getElementById('modals-container').appendChild(modal);
-            
-            modal.querySelector('.modal-close-btn').addEventListener('click', () => modal.classList.remove('show'));
-            modal.addEventListener('click', (e) => {
-                if(e.target === modal) modal.classList.remove('show');
-            });
-
-            return modal;
-        }
-
-        // --- DATA FETCHING & LOGIC ---
-        const loadInitialData = async () => {
-            AppState.currentUser = await ApiService.getCurrentUser();
-            AppState.team.members = await ApiService.getTeamMembers();
-            renderUI();
-            renderTeamMembers();
-            switchTab('dashboard');
-        };
-
-        const fetchAndRenderOrders = async () => {
-            const tbody = document.getElementById('orders-table-body');
-            tbody.innerHTML = `<tr><td colspan="5" style="text-align: center; padding: 2rem;">Loading orders...</td></tr>`;
-            const result = await ApiService.getAssignedOrders(AppState.orders);
-            AppState.orders.data = result.data;
-            AppState.orders.totalPages = result.totalPages;
-            AppState.orders.total = result.total;
-            renderOrders();
-            renderPagination();
-        };
-
-        // --- EVENT HANDLERS ---
-        const handleTabSwitch = (tabId) => {
-            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-            document.querySelector(`a[data-tab="${tabId}"]`).parentElement.classList.add('active');
-
-            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            
-            const title = document.querySelector(`a[data-tab="${tabId}"] span`).textContent;
-            document.getElementById('page-title').textContent = title;
-            
-            if (tabId === 'my-assigned-orders') {
-                fetchAndRenderOrders();
-            }
-        };
-
-        const handleOrderAction = async (e) => {
-            const button = e.target.closest('button[data-action]');
-            if (!button) return;
-
-            const action = button.dataset.action;
-            const orderId = button.dataset.orderId;
-
-            if (action === 'view') {
-                const details = await ApiService.getOrderDetails(orderId);
-                const viewModal = createModal('view-order-modal', `Order Details: ${orderId}`, 
-                `<div><strong>Original Employee:</strong> ${details.employee_name}</div>
-                 <div><strong>Reason:</strong> ${details.reason}</div>
-                 <div><strong>Details:</strong> ${details.details}</div>`, 
-                `<button class="btn btn-secondary" id="close-view-modal">Close</button>`);
-                viewModal.classList.add('show');
-                viewModal.querySelector('#close-view-modal').addEventListener('click', () => viewModal.remove());
-            }
-            
-            if (action === 'review') {
-                const reviewModal = createModal('review-order-modal', `Review Order: ${orderId}`,
-                `<form id="review-form">
+    <div class="modal-overlay" id="review-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h2 class="modal-title">Review Order: <span id="review-modal-order-id"></span></h2>
+                <button class="modal-close-btn" onclick="hideModal('review-order-modal')">&times;</button>
+            </div>
+            <form id="review-form">
+                <input type="hidden" id="review-assignment-id" />
+                <input type="hidden" id="review-original-employee-name" />
+                <div class="modal-body">
                     <div class="form-group">
-                        <label for="action_correctness">Action Correctness</label>
-                        <select id="action_correctness" class="form-control" required>
-                            <option value="correct">Correct Action</option>
-                            <option value="error">Error in Action</option>
+                        <label for="action-correctness">Action Correctness *</label>
+                        <select id="action-correctness" required>
+                            <option value="">Select Result</option>
+                            <option value="correct">Action was Correct (صحيح)</option>
+                            <option value="error">Action was Incorrect (خطأ/Error)</option>
                         </select>
                     </div>
+                    <div class="form-group hidden" id="error-type-group">
+                        <label for="error-type">Error Type *</label>
+                        <select id="error-type">
+                            <option value="">Select Error Classification</option>
+                            <option value="policy_violation">Policy Violation (مخالفة سياسة)</option>
+                            <option value="incorrect_information">Incorrect Information (معلومات خاطئة)</option>
+                            <option value="system_entry_error">System Entry Error (خطأ إدخال نظام)</option>
+                            </select>
+                    </div>
                     <div class="form-group">
-                        <label for="error_cause">Error Cause (if any)</label>
-                        <input type="text" id="error_cause" class="form-control">
+                        <label for="review-notes">Review Notes</label>
+                        <textarea id="review-notes" rows="4" placeholder="Enter detailed notes for the outcome..."></textarea>
                     </div>
-                     <div class="form-group">
-                        <label for="modification_details">Comments</label>
-                        <textarea id="modification_details" class="form-control" rows="4"></textarea>
-                    </div>
-                </form>`,
-                `<button class="btn btn-secondary" id="cancel-review">Cancel</button>
-                 <button type="submit" form="review-form" class="btn btn-primary">Submit Review</button>`);
-                
-                reviewModal.classList.add('show');
-                reviewModal.querySelector('#cancel-review').addEventListener('click', () => reviewModal.remove());
-                reviewModal.querySelector('#review-form').addEventListener('submit', async (ev) => {
-                    ev.preventDefault();
-                    button.textContent = "Submitting...";
-                    button.disabled = true;
-                    await ApiService.submitReview({
-                        orderId,
-                        correctness: document.getElementById('action_correctness').value,
-                        cause: document.getElementById('error_cause').value,
-                        details: document.getElementById('modification_details').value
-                    });
-                    showToast(`Review for order ${orderId} submitted successfully.`, 'success');
-                    reviewModal.remove();
-                    fetchAndRenderOrders();
-                });
-            }
-        };
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" onclick="hideModal('review-order-modal')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submit-review-btn">Submit Review</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
-        // --- INITIALIZATION & EVENT LISTENERS ---
-        document.querySelectorAll('.sidebar-nav a').forEach(link => {
-            link.addEventListener('click', (e) => {
+    <div id="toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 2000;"></div>
+
+
+    <script type="module">
+        import { 
+            getCurrentUser, 
+            getUserData, 
+            signOut, 
+            getAssignedOrders, 
+            getQualityKPIs,
+            submitReview
+        } from './api-client.js'; // Import the new functions
+
+        let CURRENT_USER_ID = null;
+        let ASSIGNED_ORDERS_DATA = [];
+
+        // --- Utility Functions ---
+
+        function getInitials(name) {
+            if (!name) return 'GU';
+            const parts = name.split(' ');
+            if (parts.length > 1) {
+                return parts[0][0] + parts[1][0];
+            }
+            return parts[0][0];
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add('show');
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).classList.remove('show');
+        }
+        
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `btn btn-sm text-center toast-${type}`;
+            toast.style.cssText = `
+                margin-bottom: 10px;
+                padding: 10px 15px;
+                border-radius: 8px;
+                background-color: ${type === 'success' ? 'var(--success-color)' : type === 'error' ? 'var(--danger-color)' : 'var(--warning-color)'};
+                color: white;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                opacity: 0;
+                transition: opacity 0.5s ease-in-out;
+            `;
+            toast.textContent = message;
+            
+            toastContainer.appendChild(toast);
+            setTimeout(() => { toast.style.opacity = 1; }, 10); 
+            
+            setTimeout(() => {
+                toast.style.opacity = 0;
+                toast.addEventListener('transitionend', () => toast.remove());
+            }, 5000);
+        }
+
+        // --- Auth & Data Load ---
+
+        async function checkAuthAndLoadData() {
+            try {
+                const user = await getCurrentUser();
+                if (!user) {
+                    console.log("User not logged in, redirecting to login.");
+                    // window.location.href = 'login.html'; // Uncomment this in production
+                    return;
+                }
+                
+                CURRENT_USER_ID = user.id;
+                const userData = await getUserData(CURRENT_USER_ID);
+
+                // Update Sidebar
+                const userName = userData.name || user.email;
+                const userRole = userData.role || 'Quality Agent';
+                
+                document.getElementById('sidebar-username').textContent = userName;
+                document.getElementById('sidebar-user-role').textContent = userRole;
+                document.getElementById('sidebar-avatar-initials').textContent = getInitials(userName);
+                document.getElementById('welcome-user-name').textContent = userName.split(' ')[0];
+
+
+                // Load Dashboard & Assigned Orders Data
+                await loadDashboardData();
+                await loadAssignedOrders();
+
+            } catch (error) {
+                console.error("Error during initial load:", error);
+                showToast("Failed to load user data. Try refreshing.", 'error');
+                // Force logout if user data fetch fails badly
+                // await signOut();
+                // window.location.href = 'login.html';
+            }
+        }
+
+        async function loadDashboardData() {
+            try {
+                const kpis = await getQualityKPIs(CURRENT_USER_ID);
+                document.getElementById('kpi-open-assignments').textContent = kpis.openAssignments;
+                document.getElementById('kpi-completed-reviews').textContent = kpis.totalCompletedReviews;
+                // Initialize Charts (placeholder data for now)
+                initializeCharts(); 
+
+            } catch (error) {
+                console.error("Failed to load KPI data:", error);
+                showToast("Failed to load KPIs.", 'error');
+            }
+        }
+
+        async function loadAssignedOrders() {
+            try {
+                const orders = await getAssignedOrders(CURRENT_USER_ID);
+                ASSIGNED_ORDERS_DATA = orders;
+                renderAssignedOrdersTable(orders);
+            } catch (error) {
+                console.error("Failed to load assigned orders:", error);
+                renderAssignedOrdersTable([]); // Render empty table on failure
+                showToast("Failed to load assigned orders from database.", 'error');
+            }
+        }
+
+
+        // --- Render Functions ---
+
+        function renderAssignedOrdersTable(orders) {
+            const tableBody = document.getElementById('assigned-orders-table-body');
+            tableBody.innerHTML = ''; 
+
+            if (!orders || orders.length === 0) {
+                 tableBody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted-color); padding: 2rem;">No new orders assigned for review. Enjoy your break!</td></tr>';
+                 return;
+            }
+
+            orders.forEach(assignment => {
+                // The actual order data is nested under 'orders' because of the join
+                const order = assignment.orders;
+
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${assignment.id.substring(0, 8)}...</td>
+                    <td>${order.order_id}</td>
+                    <td>${order.employee_name || 'N/A'}</td>
+                    <td>${order.reason || 'Standard Review'}</td>
+                    <td>${order.amount ? `$${order.amount.toFixed(2)}` : 'N/A'}</td>
+                    <td>${formatDate(assignment.assigned_at)}</td>
+                    <td><span class="status-badge status-${assignment.status === 'pending' ? 'new' : 'open'}">${assignment.status.replace('_', ' ')}</span></td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm" onclick="showOrderDetails('${assignment.id}')">View</button>
+                        <button class="btn btn-primary btn-sm" onclick="showReviewModal('${assignment.id}')">Review</button>
+                    </td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+        
+        // --- Modal Handlers ---
+
+        function showOrderDetails(assignmentId) {
+            const assignment = ASSIGNED_ORDERS_DATA.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast("Order data not found.", 'error');
+                return;
+            }
+
+            const order = assignment.orders;
+            
+            document.getElementById('view-modal-order-id').textContent = order.order_id;
+            document.getElementById('detail-employee-name').textContent = order.employee_name || 'N/A';
+            document.getElementById('detail-order-date').textContent = formatDate(order.updated_on_date || order.created_at);
+            document.getElementById('detail-amount').textContent = order.amount ? `$${order.amount.toFixed(2)}` : 'N/A';
+            document.getElementById('detail-reason').textContent = order.reason || 'N/A';
+            document.getElementById('detail-chefz-notes').textContent = order.chefz || 'No specific notes recorded.';
+            document.getElementById('detail-assignment-status').textContent = assignment.status;
+
+            showModal('view-order-modal');
+        }
+
+        function showReviewModal(assignmentId) {
+            const assignment = ASSIGNED_ORDERS_DATA.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast("Assignment data not found.", 'error');
+                return;
+            }
+            
+            const order = assignment.orders;
+
+            document.getElementById('review-modal-order-id').textContent = order.order_id;
+            document.getElementById('review-assignment-id').value = assignmentId;
+            document.getElementById('review-original-employee-name').value = order.employee_name;
+            
+            // Reset form fields
+            document.getElementById('review-form').reset();
+            document.getElementById('error-type-group').classList.add('hidden');
+
+            showModal('review-order-modal');
+        }
+
+        // --- Event Listeners and Logic ---
+
+        document.getElementById('logout-btn').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await signOut();
+            // window.location.href = 'login.html'; // Redirect to login
+            alert("Signed out successfully!"); // Placeholder alert
+        });
+
+        // Tab switching logic
+        document.querySelectorAll('.sidebar-nav a').forEach(item => {
+            item.addEventListener('click', function(e) {
                 e.preventDefault();
-                handleTabSwitch(link.dataset.tab);
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+
+                const tab = this.getAttribute('data-tab');
+                document.getElementById(tab).classList.add('active');
+                this.closest('li').classList.add('active');
+                document.getElementById('current-page-title').textContent = this.textContent.trim();
             });
         });
-
-        document.getElementById('orders-table-body').addEventListener('click', handleOrderAction);
         
-        let searchTimeout;
-        document.getElementById('orders-search-input').addEventListener('input', (e) => {
-            clearTimeout(searchTimeout);
-            searchTimeout = setTimeout(() => {
-                const searchTerm = e.target.value;
-                if(searchTerm.length === 0 || searchTerm.length >= 2) {
-                    AppState.orders.page = 1;
-                    AppState.orders.search = searchTerm;
-                    fetchAndRenderOrders();
+        // Error Type Visibility Toggle
+        document.getElementById('action-correctness').addEventListener('change', (e) => {
+            const errorGroup = document.getElementById('error-type-group');
+            if (e.target.value === 'error') {
+                errorGroup.classList.remove('hidden');
+                document.getElementById('error-type').setAttribute('required', 'required');
+            } else {
+                errorGroup.classList.add('hidden');
+                document.getElementById('error-type').removeAttribute('required');
+            }
+        });
+
+        // Review Submission Handler (Core Transaction)
+        document.getElementById('review-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submit-review-btn');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            const assignmentId = document.getElementById('review-assignment-id').value;
+            const originalEmployeeName = document.getElementById('review-original-employee-name').value;
+            const actionCorrectness = document.getElementById('action-correctness').value;
+            const errorType = document.getElementById('error-type').value;
+            const notes = document.getElementById('review-notes').value;
+            
+            const assignment = ASSIGNED_ORDERS_DATA.find(a => a.id === assignmentId);
+            if (!assignment) {
+                showToast("Critical: Assignment data lost. Please refresh.", 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Review';
+                return;
+            }
+            
+            const orderId = assignment.orders.order_id;
+
+            try {
+                const result = await submitReview(
+                    assignmentId,
+                    orderId,
+                    CURRENT_USER_ID,
+                    actionCorrectness,
+                    `${actionCorrectness === 'error' ? `[Error Type: ${errorType}] ` : ''}${notes}`,
+                    originalEmployeeName // Used for UUID mapping
+                );
+                
+                if (result.success) {
+                    showToast(`Review for Order ${orderId} submitted successfully!`, 'success');
+                    hideModal('review-order-modal');
+                    // Reload data to update tables and KPIs
+                    await loadDashboardData(); 
+                    await loadAssignedOrders();
+                } else {
+                    // Handle specific error from API (e.g., employee not found)
+                    showToast(`Submission Failed: ${result.error.message}`, 'error');
                 }
-            }, 500); // Debounce
-        });
-        
-        document.getElementById('filter-status').addEventListener('change', (e) => {
-            AppState.orders.page = 1;
-            AppState.orders.status = e.target.value;
-            fetchAndRenderOrders();
-        });
 
-        document.getElementById('prev-page-btn').addEventListener('click', () => {
-            if (AppState.orders.page > 1) {
-                AppState.orders.page--;
-                fetchAndRenderOrders();
+            } catch (error) {
+                console.error("Submission Error:", error);
+                showToast("An unexpected error occurred during submission.", 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Review';
             }
         });
 
-        document.getElementById('next-page-btn').addEventListener('click', () => {
-            if (AppState.orders.page < AppState.orders.totalPages) {
-                AppState.orders.page++;
-                fetchAndRenderOrders();
-            }
-        });
+        // Make functions globally accessible for inline HTML calls
+        window.showOrderDetails = showOrderDetails;
+        window.showReviewModal = showReviewModal;
+        window.hideModal = hideModal;
 
-        // Start the application
-        loadInitialData();
-        
-        // Setup Auto-Refresh
-        AppState.autoRefreshInterval = setInterval(() => {
-            showToast('Auto-refreshing data...', 'info');
-            loadInitialData(); // Reload user KPIs
-            if (document.getElementById('my-assigned-orders').classList.contains('active')) {
-                fetchAndRenderOrders(); // Reload orders if on the orders tab
-            }
-        }, 30000);
+        // --- Chart Initialization (Placeholder) ---
+        function initializeCharts() {
+            // Placeholder data for the Monthly Performance Trend Chart
+            const ctx = document.getElementById('monthlyPerformanceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+                    datasets: [{
+                        label: 'Accuracy Rate (%)',
+                        data: [98.2, 98.4, 97.9, 98.5, 98.8, 99.1, 98.9],
+                        borderColor: 'var(--primary-color)',
+                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { min: 95, grid: { color: 'rgba(255, 255, 255, 0.1)' } },
+                        x: { grid: { color: 'rgba(255, 255, 255, 0.1)' } }
+                    }
+                }
+            });
+        }
 
-    });
+
+        // --- Initial Load ---
+        document.addEventListener('DOMContentLoaded', checkAuthAndLoadData);
+
     </script>
 </body>
 </html>
