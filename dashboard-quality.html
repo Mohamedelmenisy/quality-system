@@ -1163,30 +1163,29 @@
         }
 
        // Initialize real-time subscriptions
-function initRealtimeSubscriptions() {
-    try {
-        // Subscribe to new notifications
-        if (typeof window.subscribeToNotifications === 'function') {
-            window.subscribeToNotifications(currentUser.id, (payload) => {
-                console.log('New notification received:', payload);
-                showToast(payload.new.message, 'info', 'New Notification');
-                loadNotifications();
-            });
+        function initRealtimeSubscriptions() {
+            try {
+                // Subscribe to new notifications
+                if (typeof window.subscribeToNotifications === 'function') {
+                    window.subscribeToNotifications(currentUser.id, (payload) => {
+                        console.log('New notification received:', payload);
+                        showToast(payload.new.message, 'info', 'New Notification');
+                        loadNotifications();
+                    });
+                }
+                
+                // Subscribe to new assignments
+                if (typeof window.subscribeToAssignments === 'function') {
+                    window.subscribeToAssignments(currentUser.id, (payload) => {
+                        console.log('New order assigned:', payload);
+                        showToast('A new order has been assigned to you', 'info', 'New Assignment');
+                        loadAssignedOrders();
+                    });
+                }
+            } catch (error) {
+                console.error('Error initializing real-time subscriptions:', error);
+            }
         }
-        
-        // Subscribe to new assignments
-        if (typeof window.subscribeToAssignments === 'function') {
-            window.subscribeToAssignments(currentUser.id, (payload) => {
-                console.log('New order assigned:', payload);
-                showToast('A new order has been assigned to you', 'info', 'New Assignment');
-                loadAssignedOrders();
-            });
-        }
-    } catch (error) {
-        console.error('Error initializing real-time subscriptions:', error);
-        // لا توقف التطبيق إذا فشلت الاشتراكات
-    }
-}
 
         // Initialize charts
         function initCharts() {
@@ -1597,3 +1596,4 @@ function initRealtimeSubscriptions() {
     </script>
 </body>
 </html>
+```
