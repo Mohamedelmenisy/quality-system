@@ -4,10 +4,47 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Senior Quality Portal - QualityX</title>
-    <!-- MODIFIED: Updated favicon to the consistent QualityX 'Q' logo. -->
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { 
+            supabase, 
+            getCurrentUser, 
+            getUserById,
+            getUnassignedOrders,
+            getAssignedOrders,
+            assignOrders,
+            getPendingErrors,
+            submitFinalDecision,
+            getPerformanceMetrics,
+            getTeamMembers,
+            getTeamSchedule,
+            updateTeamSchedule,
+            getNotifications,
+            markNotificationAsRead,
+            subscribeToNotifications,
+            getErrorTrends,
+            getDepartmentPerformance
+        } from './api-client.js';
+        
+        window.supabase = supabase;
+        window.getCurrentUser = getCurrentUser;
+        window.getUserById = getUserById;
+        window.getUnassignedOrders = getUnassignedOrders;
+        window.getAssignedOrders = getAssignedOrders;
+        window.assignOrders = assignOrders;
+        window.getPendingErrors = getPendingErrors;
+        window.submitFinalDecision = submitFinalDecision;
+        window.getPerformanceMetrics = getPerformanceMetrics;
+        window.getTeamMembers = getTeamMembers;
+        window.getTeamSchedule = getTeamSchedule;
+        window.updateTeamSchedule = updateTeamSchedule;
+        window.getNotifications = getNotifications;
+        window.markNotificationAsRead = markNotificationAsRead;
+        window.getErrorTrends = getErrorTrends;
+        window.getDepartmentPerformance = getDepartmentPerformance;
+    </script>
     <style>
         :root {
             --primary-color: #00bfff;
@@ -58,7 +95,7 @@
         .topbar {
             background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
             padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 999; /* Adjusted z-index */
+            position: sticky; top: 0; z-index: 999;
         }
         .header-left { flex-grow: 1; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
@@ -70,13 +107,11 @@
         .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
         .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
         .results-table-container { overflow-x: auto; position: relative; }
-        /* ADDED: visual cue for scrollable tables */
         .results-table-container::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 30px; background: linear-gradient(to right, transparent, var(--card-bg)); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
         .results-table-container.is-scrollable::after { opacity: 1; }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; white-space: nowrap; }
         .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap;}
-        /* MODIFIED: Allow text wrapping in specific columns */
         .results-table .wrap-text { white-space: normal; max-width: 200px; }
         .results-table tbody tr:last-child td { border-bottom: none; }
         .results-table tbody tr:hover { background-color: #2c2c2c; }
@@ -84,6 +119,7 @@
         .btn-primary { background-color: var(--primary-color); color: black; }
         .btn-success { background-color: var(--success-color); color: white; }
         .btn-danger { background-color: var(--danger-color); color: white; }
+        .btn-warning { background-color: var(--warning-color); color: black; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1050; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
         .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
         .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -98,7 +134,7 @@
         .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
-        .chart-container { height: 350px; } /* Increased height for better visibility */
+        .chart-container { height: 350px; }
         .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
         .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); }
         .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; }
@@ -106,6 +142,8 @@
         .status-completed { background-color: var(--success-color); }
         .status-late { background-color: var(--warning-color); color: black; }
         .status-reviewed { background-color: var(--primary-color-darker); }
+        .status-responded { background-color: var(--info-color); }
+        .status-finalized { background-color: var(--success-color); }
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
@@ -117,12 +155,52 @@
         #welcome-message p { color: var(--text-muted-color); }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 24px; cursor: pointer; padding: 5px; }
-        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 1010; /* MODIFIED: Increased z-index */ }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 1010; }
         .notification-dropdown.show { display: block; animation: fadeIn 0.2s; }
         .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; }
         .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
         .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted-color); }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
+        .toast.success { border-left: 4px solid var(--success-color); }
+        .toast.error { border-left: 4px solid var(--danger-color); }
+        .toast.warning { border-left: 4px solid var(--warning-color); }
+        .toast.info { border-left: 4px solid var(--primary-color); }
+        .toast-icon { font-size: 20px; }
+        .toast.success .toast-icon { color: var(--success-color); }
+        .toast.error .toast-icon { color: var(--danger-color); }
+        .toast.warning .toast-icon { color: var(--warning-color); }
+        .toast.info .toast-icon { color: var(--primary-color); }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; margin-bottom: 5px; }
+        .toast-message { font-size: 14px; color: var(--text-muted-color); }
+        .toast-close { background: none; border: none; color: var(--text-muted-color); cursor: pointer; font-size: 18px; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        @media (max-width: 1024px) {
+            .sidebar { width: 220px; }
+            .main-wrapper { margin-left: 220px; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar-title, .nav-group-title, .user-name, .user-role { display: none; }
+            .sidebar-nav a span:not(.icon) { display: none; }
+            .main-wrapper { margin-left: 70px; }
+            .main-content { padding: 1rem; }
+            .kpi-grid, .charts-grid { grid-template-columns: 1fr; }
+            .filter-panel { flex-direction: column; }
+        }
+        @media (max-width: 480px) {
+            .sidebar { display: none; }
+            .main-wrapper { margin-left: 0; }
+            .modal-box { width: 95%; padding: 1rem; }
+            .results-table-container { overflow-x: auto; }
+        }
     </style>
 </head>
 <body class="dark">
@@ -137,37 +215,21 @@
                      <div class="nav-group">
                         <h2 class="nav-group-title">Menu</h2>
                         <ul class="sidebar-nav">
-                            <!-- MODIFIED: "My Dashboard" to "Dashboard" -->
-                            <li class="active"><a data-tab="dashboard">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/></svg>
-                                Dashboard</a></li>
-                            <li><a data-tab="escalations">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg>
-                                Escalations</a></li>
-                            <li><a data-tab="assignments">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 12H16c-.7 2-2 3-4 3s-3.3-1-4-3H2.5"/><path d="M5.5 5.1L2 12v6c0 1.1.9 2 2 2h16a2 2 0 002-2v-6l-3.4-6.9A2 2 0 0016.8 4H7.2a2 2 0 00-1.7 1.1z"/></svg>
-                                Assignments</a></li>
-                            <li><a data-tab="agent-performance">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                                Agent Performance</a></li>
-                            <!-- ADDED: New Sections -->
-                             <li><a data-tab="kpis">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20.94c1.5 0 2.75 1.06 4 2.06 1.25-1 2.5-2.06 4-2.06V6.52c0-1.25-.5-2.5-1.5-3.5-1-1-2.25-1.5-3.5-1.5-1.25 0-2.5.5-3.5 1.5S10 5.27 10 6.52v3.42c0 1.25.5 2.5 1.5 3.5.75.75 1.75 1.25 2.5 1.5v.44z"/></svg>
-                                KPIs</a></li>
-                            <li><a data-tab="reports-analytics">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2v6h6M2.66 15.57a10 10 0 1 0 .57-8.38"/></svg>
-                                Reports & Analytics</a></li>
+                            <li class="active"><a data-tab="dashboard">Dashboard</a></li>
+                            <li><a data-tab="escalations">Escalations</a></li>
+                            <li><a data-tab="assignments">Assignments</a></li>
+                            <li><a data-tab="agent-performance">Agent Performance</a></li>
+                            <li><a data-tab="kpis">KPIs</a></li>
+                            <li><a data-tab="reports-analytics">Reports & Analytics</a></li>
                         </ul>
                     </div>
                     <div class="nav-group">
                         <h2 class="nav-group-title">Account</h2>
                         <ul class="sidebar-nav">
-                             <li><a data-tab="profile"><span>👤</span>Profile</a></li>
-                             <li><a data-tab="settings"><span>⚙️</span>Settings</a></li>
-                             <li><a data-tab="help"><span>❓</span>Get Help</a></li>
-                             <li><a onclick="alert('Logging out...')">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-                                Logout</a></li>
+                             <li><a data-tab="profile">Profile</a></li>
+                             <li><a data-tab="settings">Settings</a></li>
+                             <li><a data-tab="help">Get Help</a></li>
+                             <li><a id="logout-btn">Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -197,9 +259,8 @@
                         </button>
                         <div id="notification-dropdown" class="notification-dropdown">
                             <div class="notification-header">Notifications</div>
-                            <ul class="notification-list">
-                                <li class="notification-item">3 new orders have been escalated to you.</li>
-                                <li class="notification-item">Agent Fahad A. completed his assigned batch.</li>
+                            <ul class="notification-list" id="notification-list">
+                                <li class="notification-item">Loading notifications...</li>
                             </ul>
                         </div>
                     </div>
@@ -207,74 +268,60 @@
             </header>
 
             <main class="main-content">
-                <!-- MODIFIED: Dashboard Tab -->
+                <!-- Dashboard Tab -->
                 <div id="dashboard" class="tab-content active">
                      <div id="welcome-message">
                         <h2 id="welcome-user-h2">Welcome, Khaled!</h2>
                         <p>Here is a summary of your activity and team oversight.</p>
                     </div>
                     <div class="kpi-grid">
-                         <div class="widget"><h3>Reviews Today</h3><p style="font-size: 2rem; font-weight: 700;">12</p></div>
-                         <div class="widget"><h3>Pending Escalations</h3><p style="font-size: 2rem; font-weight: 700; color: var(--warning-color);">3</p></div>
-                         <div class="widget"><h3>Avg. Resolution Time</h3><p style="font-size: 2rem; font-weight: 700;">45 mins</p></div>
-                         <div class="widget"><h3>Team Accuracy</h3><p style="font-size: 2rem; font-weight: 700; color: var(--success-color);">98.1%</p></div>
+                         <div class="widget"><h3>Reviews Today</h3><p style="font-size: 2rem; font-weight: 700;" id="reviews-today">0</p></div>
+                         <div class="widget"><h3>Pending Escalations</h3><p style="font-size: 2rem; font-weight: 700; color: var(--warning-color);" id="pending-escalations">0</p></div>
+                         <div class="widget"><h3>Avg. Resolution Time</h3><p style="font-size: 2rem; font-weight: 700;" id="avg-resolution-time">0 mins</p></div>
+                         <div class="widget"><h3>Team Accuracy</h3><p style="font-size: 2rem; font-weight: 700; color: var(--success-color);" id="team-accuracy">0%</p></div>
                     </div>
-                     <!-- ADDED: New charts for personal performance -->
                      <div class="widget">
-                         <h3>Personal & Team Performance Analysis</h3>
+                         <h3>Team Performance Analysis</h3>
                          <div class="charts-grid">
-                             <div class="chart-container"><canvas id="personalPerformanceChart"></canvas></div>
-                             <div class="chart-container"><canvas id="teamErrorTypesChart"></canvas></div>
+                             <div class="chart-container"><canvas id="teamPerformanceChart"></canvas></div>
+                             <div class="chart-container"><canvas id="errorTrendsChart"></canvas></div>
                          </div>
                      </div>
                 </div>
                 
-                <!-- Escalations -->
+                <!-- Escalations Tab -->
                 <div id="escalations" class="tab-content">
                     <div class="widget">
-                         <h3>Orders Awaiting Your Review (<span id="escalation-count">0</span>)</h3>
-                         <!-- ADDED: Filter for escalations -->
+                         <h3>Pending Agent Responses (<span id="pending-responses-count">0</span>)</h3>
                          <div class="filter-panel">
                              <input type="search" id="escalation-search" placeholder="Search by Order ID...">
                              <select id="escalation-status-filter">
                                  <option value="all">All Statuses</option>
-                                 <option value="Pending">Pending</option>
-                                 <option value="Reviewed">Reviewed</option>
+                                 <option value="pending_response">Pending Response</option>
+                                 <option value="responded">Responded</option>
                              </select>
                          </div>
                         <div class="results-table-container">
                             <table class="results-table">
                                 <thead>
-                                    <tr><th>Order ID</th> <th>Issue Type</th> <th>Escalated By</th> <th>Date</th> <th>Status</th> <th>Action</th></tr>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Agent</th>
+                                        <th>Error Type</th>
+                                        <th>Response</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
                                 </thead>
-                                <tbody id="escalation-table-body"></tbody>
+                                <tbody id="escalation-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading pending responses...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Agent Performance -->
-                <div id="agent-performance" class="tab-content">
-                    <div class="widget">
-                         <h3>Quality Team Performance</h3>
-                         <div class="filter-panel">
-                            <label for="agent-filter" style="font-weight: 500;">Filter by Agent:</label>
-                            <select id="agent-filter">
-                                <option value="all">All Agents</option>
-                                <option value="Fahad A.">Fahad A.</option>
-                                <option value="Ali K.">Ali K.</option>
-                                <option value="Hessa M.">Hessa M.</option>
-                                <option value="Noura S.">Noura S.</option>
-                            </select>
-                         </div>
-                         <div class="charts-grid">
-                            <div class="chart-container"><canvas id="agentAccuracyChart"></canvas></div>
-                             <div class="chart-container"><canvas id="reviewsVsErrorsChart"></canvas></div>
-                         </div>
-                    </div>
-                </div>
-
-                 <!-- Assignments -->
+                <!-- Assignments Tab -->
                 <div id="assignments" class="tab-content">
                     <div class="widget">
                         <h3>Unassigned Orders (<span id="unassigned-count">0</span>)</h3>
@@ -285,9 +332,21 @@
                         </div>
                         <div class="results-table-container">
                             <table class="results-table">
-                                <!-- MODIFIED: Corrected and reordered columns as requested -->
-                                <thead><tr><th><input type="checkbox" id="select-all-checkbox" /></th><th>Order ID</th><th class="wrap-text">Reason</th><th class="wrap-text">Employee</th><th>Chefz</th><th>Order Status</th><th>Requested Delivery Date</th><th>Payment Type</th></tr></thead>
-                                <tbody id="unassigned-table-body"></tbody>
+                                <thead>
+                                    <tr>
+                                        <th><input type="checkbox" id="select-all-checkbox" /></th>
+                                        <th>Order ID</th>
+                                        <th class="wrap-text">Reason</th>
+                                        <th class="wrap-text">Employee</th>
+                                        <th>Chefz</th>
+                                        <th>Order Status</th>
+                                        <th>Requested Delivery Date</th>
+                                        <th>Payment Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="unassigned-table-body">
+                                    <tr><td colspan="8" class="empty-state">Loading unassigned orders...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
@@ -296,50 +355,126 @@
                         <div class="filter-panel">
                              <select id="assigned-status-filter">
                                 <option value="all">All Statuses</option>
-                                <option value="Pending">Pending</option>
-                                <option value="Completed">Completed</option>
-                                <option value="Late">Late</option>
+                                <option value="pending">Pending</option>
+                                <option value="completed">Completed</option>
                              </select>
                              <input type="date" id="assigned-date-filter" style="color-scheme: dark;">
-                             <button id="clear-assigned-filters" class="btn" style="background-color: #333; color: white;">Clear Filters</button>
+                             <button id="clear-assigned-filters" class="btn btn-secondary">Clear Filters</button>
                         </div>
                         <div class="results-table-container">
                             <table class="results-table">
-                                <thead><tr><th>Order ID</th><th>Agent</th><th>Status</th><th>Date Assigned</th></tr></thead>
-                                <tbody id="assigned-table-body"></tbody>
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Agent</th>
+                                        <th>Status</th>
+                                        <th>Date Assigned</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="assigned-table-body">
+                                    <tr><td colspan="5" class="empty-state">Loading assigned orders...</td></tr>
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- Agent Performance Tab -->
+                <div id="agent-performance" class="tab-content">
+                    <div class="widget">
+                         <h3>Quality Team Performance</h3>
+                         <div class="filter-panel">
+                            <label for="agent-filter" style="font-weight: 500;">Filter by Agent:</label>
+                            <select id="agent-filter">
+                                <option value="all">All Agents</option>
+                            </select>
+                         </div>
+                         <div class="charts-grid">
+                            <div class="chart-container"><canvas id="agentAccuracyChart"></canvas></div>
+                             <div class="chart-container"><canvas id="reviewsVsErrorsChart"></canvas></div>
+                         </div>
+                    </div>
+                </div>
+
+                <!-- KPIs Tab -->
+                <div id="kpis" class="tab-content">
+                     <div class="widget">
+                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
+                        <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents will be evaluated.</p>
+                        <div class="settings-grid">
+                            <div class="form-group">
+                                <label for="kpi-accuracy">Minimum Review Accuracy Target (%)</label>
+                                <input type="number" id="kpi-accuracy" value="98" min="0" max="100">
+                            </div>
+                            <div class="form-group">
+                                <label for="kpi-reviews-day">Daily Reviews Target (per agent)</label>
+                                <input type="number" id="kpi-reviews-day" value="25" min="0">
+                            </div>
+                            <div class="form-group">
+                                <label for="kpi-aht">Average Handle Time Target (minutes)</label>
+                                <input type="number" id="kpi-aht" value="5" min="0">
+                            </div>
+                             <div class="form-group">
+                                <label for="kpi-escalation-rate">Allowed Escalation Rate (%)</label>
+                                <input type="number" id="kpi-escalation-rate" value="3" min="0" max="100">
+                            </div>
+                        </div>
+                        <div class="page-actions">
+                             <button class="btn btn-primary" id="update-kpi-btn">Update KPI Targets</button>
+                        </div>
+                    </div>
+                </div>
                 
+                <!-- Reports & Analytics Tab -->
+                <div id="reports-analytics" class="tab-content">
+                     <div class="widget">
+                        <h3>Advanced Reports & Analytics</h3>
+                        <div class="filter-panel">
+                            <select id="report-period">
+                                <option value="7">Last 7 Days</option>
+                                <option value="30" selected>Last 30 Days</option>
+                                <option value="90">Last 90 Days</option>
+                                <option value="365">Last Year</option>
+                            </select>
+                            <select id="report-type">
+                                <option value="performance">Performance Report</option>
+                                <option value="errors">Error Analysis</option>
+                                <option value="department">Department Report</option>
+                            </select>
+                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
+                            <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="analyticsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Profile Tab -->
                 <div id="profile" class="tab-content">
                     <div class="widget">
                         <h3>Edit Profile</h3>
-                        <div class="form-group">
-                            <label for="profile-photo">Profile Picture</label>
-                            <input type="file" id="profile-photo" accept="image/*" />
-                        </div>
                         <div class="form-group">
                             <label for="profile-fullname">Full Name</label>
                             <input type="text" id="profile-fullname" value="Khaled Al-Mutairi">
                         </div>
                         <div class="form-group">
                             <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="k.almutairi@qualityx.com">
+                            <input type="email" id="profile-email" value="k.almutairi@qualityx.com" readonly style="background: #333;">
                         </div>
                         <div class="form-group">
                             <label for="profile-phone">Phone Number</label>
                             <input type="tel" id="profile-phone" value="+966 55 123 5555">
                         </div>
                         <div class="page-actions">
-                             <button class="btn" style="background: #333; color: white;">Cancel</button>
+                             <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
                              <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- MODIFIED: Settings Tab with more options -->
+                <!-- Settings Tab -->
                 <div id="settings" class="tab-content">
                     <div class="widget">
                         <h3>Settings</h3>
@@ -373,56 +508,20 @@
                              </div>
                         </div>
                          <div class="page-actions">
-                             <button class="btn btn-primary">Save Settings</button>
+                             <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
                         </div>
                     </div>
                 </div>
 
-                <!-- ADDED: KPIs Tab -->
-                <div id="kpis" class="tab-content">
-                     <div class="widget">
-                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
-                        <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents will be evaluated.</p>
-                        <div class="settings-grid">
-                            <div class="form-group">
-                                <label for="kpi-accuracy">Minimum Review Accuracy Target (%)</label>
-                                <input type="number" id="kpi-accuracy" value="98">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-reviews-day">Daily Reviews Target (per agent)</label>
-                                <input type="number" id="kpi-reviews-day" value="25">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-aht">Average Handle Time Target (minutes)</label>
-                                <input type="number" id="kpi-aht" value="5">
-                            </div>
-                             <div class="form-group">
-                                <label for="kpi-escalation-rate">Allowed Escalation Rate (%)</label>
-                                <input type="number" id="kpi-escalation-rate" value="3">
-                            </div>
-                        </div>
-                        <div class="page-actions">
-                             <button class="btn btn-primary">Update KPI Targets</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- ADDED: Reports & Analytics Tab -->
-                <div id="reports-analytics" class="tab-content">
-                     <div class="widget">
-                        <h3>Advanced Reports & Analytics</h3>
-                        <div class="placeholder-content">
-                            <h4>Reporting Dashboard</h4>
-                            <p>Generate detailed reports on team performance, common error types, and escalation trends. (Feature in development)</p>
-                        </div>
-                    </div>
-                </div>
-                
+                <!-- Help Tab -->
                 <div id="help" class="tab-content">
                      <div class="widget">
                         <div class="placeholder-content">
                             <h3>Help & Support</h3>
                             <p>Access documentation or contact IT support.</p>
+                            <div style="margin-top: 20px;">
+                                <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -430,250 +529,789 @@
         </div>
     </div>
 
-    <!-- Feedback Modal -->
-    <div id="review-modal" class="modal-overlay">
+    <!-- Final Decision Modal -->
+    <div id="final-decision-modal" class="modal-overlay">
       <div class="modal-box">
         <div class="modal-header">
-            <h3 class="modal-title">Review Escalation: <span id="modal-order-id"></span></h3>
-            <button class="modal-close-btn" data-modal-id="review-modal">×</button>
+            <h3 class="modal-title">Final Decision: Order <span id="decision-order-id" style="color: var(--primary-color);"></span></h3>
+            <button class="modal-close-btn" data-modal-id="final-decision-modal">×</button>
         </div>
-        <div id="modal-body-content">
+        <div id="decision-modal-content">
             <!-- Content Populated by JS -->
         </div>
       </div>
     </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
     
     <script>
-    // --- Helper Functions ---
-    const getInitials = (name) => {
-        if (!name) return '';
-        const names = name.split(' ');
-        return names.length > 1 ? `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : `${names[0][0]}`.toUpperCase();
-    };
-    const showModal = (modalId) => document.getElementById(modalId)?.classList.add('show');
-    const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('show');
+        // Application State
+        let currentUser = null;
+        let pendingErrors = [];
+        let unassignedOrders = [];
+        let assignedOrders = [];
+        let teamMembers = [];
+        let performanceMetrics = {};
+        let notifications = [];
+        let teamPerformanceChart = null;
+        let errorTrendsChart = null;
+        let agentAccuracyChart = null;
+        let reviewsVsErrorsChart = null;
+        let analyticsChart = null;
 
-    // --- Sample Data (English) ---
-    let escalationsData = [
-        { id: 'CZ-84371', issue: 'Spillage', escalatedBy: 'Fahad A.', date: '2025-07-26', comment: 'Customer reported a major spillage. Agent decision seems wrong.', status: 'Pending' },
-        { id: 'CZ-84355', issue: 'Driver Behavior', escalatedBy: 'Ali K.', date: '2025-07-25', comment: 'Complex case. Need senior review on policy interpretation.', status: 'Pending' },
-        { id: 'CZ-84340', issue: 'Missing Item', escalatedBy: 'Fahad A.', date: '2025-07-24', comment: 'The agent marked it correct, but proof suggests otherwise.', status: 'Pending' },
-        { id: 'CZ-84300', issue: 'Wrong Item', escalatedBy: 'Hessa M.', date: '2025-07-23', comment: 'Agent needs feedback on this scenario.', status: 'Reviewed' }
-    ];
-    let unassignedOrdersData = [
-        { orderId: '202389087', reason: 'Late Preparation', employee: 'Ali Alsurayyi-CU', chefz: 'QIS', orderStatus: 'Delivered', requestedDeliveryDate: 'July 11, 2025, 3:48 PM', paymentType: 'Apple Pay' },
-        { orderId: '202496824', reason: 'Mishandling By Driver', employee: 'Mona Magdy-SU', chefz: 'DS40 - Ar Rimal', orderStatus: 'Delivered', requestedDeliveryDate: 'July 11, 2025, 7:11 PM', paymentType: 'Apple Pay' },
-        { orderId: '202444032', reason: 'Missing Item/Addon', employee: 'System', chefz: 'Baskin Robbins', orderStatus: 'Delivered', requestedDeliveryDate: 'July 11, 2025, 9:00 PM', paymentType: 'Apple Pay' },
-        { orderId: '202561955', reason: 'Mishandling By Driver', employee: 'Faisal Alqarni-DU', chefz: 'AZZEZI', orderStatus: 'Delivered', requestedDeliveryDate: 'July 11, 2025, 10:19 PM', paymentType: 'Wallet & MADA' },
-        { orderId: '202580072', reason: 'Mishandling By Driver', employee: 'Bahinour Abdelrasoul-SU', chefz: 'Burgeration', orderStatus: 'Delivered', requestedDeliveryDate: 'July 11, 2025, 11:22 PM', paymentType: 'Apple Pay' }
-    ];
-    let assignedOrdersData = [
-        { id: 'CZ-90050', agent: 'Fahad A.', status: 'Completed', date: '2025-07-27' },
-        { id: 'CZ-90051', agent: 'Ali K.', status: 'Pending', date: '2025-07-27' },
-        { id: 'CZ-90052', agent: 'Hessa M.', status: 'Pending', date: '2025-07-27' },
-        { id: 'CZ-90053', agent: 'Fahad A.', status: 'Late', date: '2025-07-26' },
-    ];
-    const agents = ['Fahad A.', 'Ali K.', 'Hessa M.', 'Noura S.'];
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const initialName = document.getElementById('sidebar-username').textContent;
-        const welcomeName = initialName.split(' ')[0];
-        document.getElementById('sidebar-avatar-initials').textContent = getInitials(initialName);
-        document.getElementById('welcome-user-h2').textContent = `Welcome, ${welcomeName}!`;
-        
-        const pageTitle = document.getElementById('page-title');
-        const tabs = document.querySelectorAll('.sidebar-nav a[data-tab]');
-        const contentAreas = document.querySelectorAll('.tab-content');
-        const notificationBtn = document.getElementById('notification-btn');
-        const notificationDropdown = document.getElementById('notification-dropdown');
-
-        tabs.forEach(tab => {
-            tab.addEventListener('click', (e) => {
-                e.preventDefault();
-                const tabId = tab.dataset.tab;
-                
-                tabs.forEach(t => t.parentElement.classList.remove('active'));
-                tab.parentElement.classList.add('active');
-                
-                contentAreas.forEach(area => area.classList.remove('active'));
-                const activeTab = document.getElementById(tabId);
-                if (activeTab) activeTab.classList.add('active');
-                
-                pageTitle.textContent = tab.textContent.trim().replace(/^[^\w\s]+/, '');
-            });
-        });
-
-        notificationBtn.addEventListener('click', (e) => {
-             e.stopPropagation();
-             notificationDropdown.classList.toggle('show');
-        });
-        document.addEventListener('click', (e) => {
-            if (!notificationBtn.parentElement.contains(e.target)) {
-                notificationDropdown.classList.remove('show');
-            }
-        });
-        
-        document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal('review-modal')));
-
-        // --- Render Functions ---
-        const renderEscalations = () => {
-            const tableBody = document.getElementById('escalation-table-body');
-            const statusFilter = document.getElementById('escalation-status-filter').value;
-            const searchTerm = document.getElementById('escalation-search').value.toLowerCase();
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            const filteredData = escalationsData.filter(order => {
-                const statusMatch = (statusFilter === 'all' || order.status === statusFilter);
-                const searchMatch = (order.id.toLowerCase().includes(searchTerm));
-                return statusMatch && searchMatch;
-            });
-
-            tableBody.innerHTML = filteredData.map(order => {
-                const statusClass = order.status === 'Reviewed' ? 'status-reviewed' : 'status-pending';
-                return `
-                <tr data-order-id="${order.id}">
-                    <td>${order.id}</td><td>${order.issue}</td><td>${order.escalatedBy}</td><td>${order.date}</td>
-                    <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                    <td><button class="btn btn-primary review-btn">Review</button></td>
-                </tr>`;
-            }).join('');
-            document.getElementById('escalation-count').textContent = filteredData.length;
-            addReviewButtonListeners();
-        };
-        
-        const renderAssignments = () => {
-            const unassignedBody = document.getElementById('unassigned-table-body');
-            unassignedBody.innerHTML = unassignedOrdersData.map(order => `
-                <tr>
-                    <td><input type="checkbox" class="assign-checkbox" data-order-id="${order.orderId}"></td>
-                    <td>${order.orderId}</td><td class="wrap-text">${order.reason}</td><td class="wrap-text">${order.employee}</td><td>${order.chefz}</td><td>${order.orderStatus}</td><td>${order.requestedDeliveryDate}</td><td>${order.paymentType}</td>
-                </tr>`).join('');
-            document.getElementById('unassigned-count').textContent = unassignedOrdersData.length;
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
             
-            const agentSelect = document.getElementById('agent-select');
-            agentSelect.innerHTML = agents.map(name => `<option value="${name}">${name}</option>`).join('');
-            renderAssignedTable();
-            updateScrollableTables();
-        };
-
-        const renderAssignedTable = () => {
-            const assignedBody = document.getElementById('assigned-table-body');
-            const statusFilter = document.getElementById('assigned-status-filter').value;
-            const dateFilter = document.getElementById('assigned-date-filter').value;
-
-            let filteredData = assignedOrdersData.filter(order => {
-                const statusMatch = (statusFilter === 'all' || order.status === statusFilter);
-                const dateMatch = (!dateFilter || order.date === dateFilter.replace(/-/g, '/'));
-                return statusMatch && dateMatch;
-            });
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
             
-            const statusClasses = { 'Pending': 'status-pending', 'Completed': 'status-completed', 'Late': 'status-late' };
-            assignedBody.innerHTML = filteredData.map(order => `
-                <tr>
-                    <td>${order.id}</td><td>${order.agent}</td>
-                    <td><span class="status-badge ${statusClasses[order.status]}">${order.status}</span></td>
-                    <td>${order.date}</td>
-                </tr>`).join('');
-        };
-
-        function addReviewButtonListeners() {
-            document.querySelectorAll('.review-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    const orderId = e.target.closest('tr').dataset.orderId;
-                    const orderData = escalationsData.find(o => o.id === orderId);
-                    document.getElementById('modal-order-id').textContent = orderData.id;
-                    const modalBody = document.getElementById('modal-body-content');
-                    modalBody.innerHTML = `
-                        <div class="escalation-details">
-                            <div class="detail-item"><strong>Issue Type</strong><span>${orderData.issue}</span></div>
-                            <div class="detail-item"><strong>Escalated By</strong><span>${orderData.escalatedBy}</span></div>
-                            <div class="detail-item" style="grid-column: span 2;"><strong>Agent's Comment</strong><span>${orderData.comment}</span></div>
-                        </div>
-                        <hr style="border-color: var(--border-color); margin: 20px 0;">
-                        <div class="feedback-form">
-                            <label for="feedback-comment" style="font-weight: 500; margin-bottom: 8px; display:block;">Your Feedback & Final Decision:</label>
-                            <textarea id="feedback-comment" rows="4" placeholder="e.g., I agree with the agent's assessment..."></textarea>
-                            <div class="feedback-actions">
-                                <button class="btn btn-danger" onclick="handleDecision('${orderId}', 'Error')">Confirm Error</button>
-                                <button class="btn btn-success" onclick="handleDecision('${orderId}', 'Correct')">Mark as Correct</button>
-                            </div>
-                        </div>`;
-                    showModal('review-modal');
-                });
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+            
+            // Close button functionality
+            toast.querySelector('.toast-close').addEventListener('click', () => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.parentNode.removeChild(toast);
+                    }
+                }, 300);
             });
         }
-        
-        window.handleDecision = (orderId, decision) => {
-            const order = escalationsData.find(o => o.id === orderId);
-            order.status = 'Reviewed';
-            const feedback = document.getElementById('feedback-comment').value;
-            alert(`Decision for ${orderId} logged as '${decision}'. Feedback: ${feedback || 'N/A'}`);
-            hideModal('review-modal');
-            renderEscalations();
-        };
-        
-        document.getElementById('assign-btn').addEventListener('click', () => {
-            const selectedAgent = document.getElementById('agent-select').value;
-            const checkedBoxes = document.querySelectorAll('.assign-checkbox:checked');
-            if (checkedBoxes.length === 0) {
-                alert('Please select orders to assign.');
+
+        // Helper Functions
+        function getInitials(name) {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? 
+                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
+                `${names[0][0]}`.toUpperCase();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId)?.classList.add('show');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('show');
+        }
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                showToast('Loading Senior Dashboard...', 'info');
+                
+                // Get current user
+                const user = await getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user profile
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                    showToast('Failed to load user profile', 'error');
+                    return;
+                }
+                
+                currentUser = { ...user, ...profile };
+                
+                // Update UI with user data
+                updateUserInterface();
+                
+                // Load data
+                await loadPendingErrors();
+                await loadUnassignedOrders();
+                await loadAssignedOrders();
+                await loadTeamMembers();
+                await loadPerformanceMetrics();
+                await loadNotifications();
+                
+                // Initialize charts
+                initCharts();
+                
+                showToast('Senior Dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('Failed to initialize dashboard', 'error');
+            }
+        }
+
+        function updateUserInterface() {
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name.split(' ')[0]}!`;
+        }
+
+        // Load pending errors with agent responses
+        async function loadPendingErrors(filters = {}) {
+            try {
+                pendingErrors = await getPendingErrors();
+                renderEscalationsTable();
+                document.getElementById('pending-responses-count').textContent = pendingErrors.length;
+            } catch (error) {
+                console.error('Error loading pending errors:', error);
+                showToast('Failed to load pending responses', 'error');
+                pendingErrors = [];
+                renderEscalationsTable();
+            }
+        }
+
+        // Load unassigned orders
+        async function loadUnassignedOrders() {
+            try {
+                unassignedOrders = await getUnassignedOrders();
+                renderUnassignedOrdersTable();
+                document.getElementById('unassigned-count').textContent = unassignedOrders.length;
+            } catch (error) {
+                console.error('Error loading unassigned orders:', error);
+                showToast('Failed to load unassigned orders', 'error');
+                unassignedOrders = [];
+                renderUnassignedOrdersTable();
+            }
+        }
+
+        // Load assigned orders
+        async function loadAssignedOrders(filters = {}) {
+            try {
+                assignedOrders = await getAssignedOrders(null, filters);
+                renderAssignedOrdersTable();
+            } catch (error) {
+                console.error('Error loading assigned orders:', error);
+                showToast('Failed to load assigned orders', 'error');
+                assignedOrders = [];
+                renderAssignedOrdersTable();
+            }
+        }
+
+        // Load team members
+        async function loadTeamMembers() {
+            try {
+                teamMembers = await getTeamMembers();
+                populateAgentSelect();
+                populateAgentFilter();
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                showToast('Failed to load team members', 'error');
+                teamMembers = [];
+            }
+        }
+
+        // Load performance metrics
+        async function loadPerformanceMetrics() {
+            try {
+                performanceMetrics = await getPerformanceMetrics('month');
+                
+                // Update KPI cards
+                document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
+                document.getElementById('pending-escalations').textContent = pendingErrors.length;
+                document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
+                document.getElementById('avg-resolution-time').textContent = '45 mins'; // This would come from actual data
+                
+                // Update charts
+                updateCharts();
+                
+            } catch (error) {
+                console.error('Error loading performance metrics:', error);
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                notifications = await getNotifications(currentUser.id);
+                updateNotificationsUI();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notifications = [];
+                updateNotificationsUI();
+            }
+        }
+
+        // Render escalations table
+        function renderEscalationsTable() {
+            const tableBody = document.getElementById('escalation-table-body');
+            
+            if (pendingErrors.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">✅</div>
+                            <div>No pending responses.</div>
+                            <small>All agent responses have been reviewed.</small>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = pendingErrors.map(error => {
+                    const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                    const agentName = error.users?.name || 'Unknown';
+                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                    const response = error.error_responses && error.error_responses.length > 0 ? 
+                        error.error_responses[0].response_text : 'No response yet';
+                    
+                    return `
+                        <tr>
+                            <td>${orderId}</td>
+                            <td>${agentName}</td>
+                            <td>${errorType}</td>
+                            <td class="wrap-text">${response.substring(0, 100)}${response.length > 100 ? '...' : ''}</td>
+                            <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm review-response-btn" data-error-id="${error.id}">Review</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+                // Add event listeners
+                document.querySelectorAll('.review-response-btn').forEach(btn => {
+                    btn.addEventListener('click', () => openFinalDecisionModal(btn.dataset.errorId));
+                });
+            }
+        }
+
+        // Render unassigned orders table
+        function renderUnassignedOrdersTable() {
+            const tableBody = document.getElementById('unassigned-table-body');
+            
+            if (unassignedOrders.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <div>No unassigned orders.</div>
+                            <small>All orders have been assigned to agents.</small>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = unassignedOrders.map(order => `
+                    <tr>
+                        <td><input type="checkbox" class="order-checkbox" value="${order.order_id}"></td>
+                        <td>${order.order_id}</td>
+                        <td class="wrap-text">${order.reason}</td>
+                        <td class="wrap-text">${order.employee_name}</td>
+                        <td>${order.chefz || 'N/A'}</td>
+                        <td>${order.order_status}</td>
+                        <td>${order.requested_delivery_date || 'N/A'}</td>
+                        <td>${order.payment_type || 'N/A'}</td>
+                    </tr>
+                `).join('');
+                
+                // Add select all functionality
+                document.getElementById('select-all-checkbox').addEventListener('change', function() {
+                    const checkboxes = document.querySelectorAll('.order-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = this.checked;
+                    });
+                });
+            }
+        }
+
+        // Render assigned orders table
+        function renderAssignedOrdersTable() {
+            const tableBody = document.getElementById('assigned-table-body');
+            
+            if (assignedOrders.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">📊</div>
+                            <div>No assigned orders found.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = assignedOrders.map(assignment => {
+                    const order = assignment.orders;
+                    const agent = assignment.users;
+                    
+                    return `
+                        <tr>
+                            <td>${order?.order_id || 'N/A'}</td>
+                            <td>${agent?.name || 'Unknown'}</td>
+                            <td><span class="status-badge status-${assignment.status}">${assignment.status}</span></td>
+                            <td>${formatDate(assignment.assigned_at)}</td>
+                            <td>
+                                <button class="btn btn-secondary btn-sm view-assignment-btn" data-assignment-id="${assignment.id}">View</button>
+                                ${assignment.status === 'pending' ? 
+                                    `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${assignment.id}">Reassign</button>` : 
+                                    ''
+                                }
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Populate agent select dropdown
+        function populateAgentSelect() {
+            const agentSelect = document.getElementById('agent-select');
+            const qualityAgents = teamMembers.filter(member => member.role === 'quality');
+            
+            agentSelect.innerHTML = qualityAgents.map(agent => 
+                `<option value="${agent.id}">${agent.name}</option>`
+            ).join('');
+        }
+
+        // Populate agent filter dropdown
+        function populateAgentFilter() {
+            const agentFilter = document.getElementById('agent-filter');
+            const qualityAgents = teamMembers.filter(member => member.role === 'quality');
+            
+            agentFilter.innerHTML = '<option value="all">All Agents</option>' +
+                qualityAgents.map(agent => 
+                    `<option value="${agent.id}">${agent.name}</option>`
+                ).join('');
+        }
+
+        // Update notifications UI
+        function updateNotificationsUI() {
+            const notificationList = document.getElementById('notification-list');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+            } else {
+                notificationList.innerHTML = notifications.map(notification => 
+                    `<li class="notification-item">${notification.message}</li>`
+                ).join('');
+            }
+        }
+
+        // Open final decision modal
+        async function openFinalDecisionModal(errorId) {
+            const error = pendingErrors.find(e => e.id === errorId);
+            if (!error) {
+                showToast('Error details not found', 'error');
                 return;
             }
-            const idsToAssign = Array.from(checkedBoxes).map(cb => cb.dataset.orderId);
-            unassignedOrdersData = unassignedOrdersData.filter(o => !idsToAssign.includes(o.orderId));
-            const newAssignments = idsToAssign.map(id => ({ id, agent: selectedAgent, status: 'Pending', date: new Date().toLocaleDateString('en-CA') })); // YYYY-MM-DD
-            assignedOrdersData.unshift(...newAssignments);
-            alert(`${idsToAssign.length} order(s) assigned to ${selectedAgent}.`);
-            renderAssignments();
-        });
-        
-        const updateScrollableTables = () => {
-            document.querySelectorAll('.results-table-container').forEach(container => {
-                if (container.scrollWidth > container.clientWidth) {
-                    container.classList.add('is-scrollable');
-                } else {
-                    container.classList.remove('is-scrollable');
+            
+            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+            const agentName = error.users?.name || 'Unknown';
+            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+            const description = error.quality_reviews?.department || 'No additional details';
+            const response = error.error_responses && error.error_responses.length > 0 ? 
+                error.error_responses[0].response_text : 'No response provided';
+            
+            document.getElementById('decision-order-id').textContent = orderId;
+            document.getElementById('decision-modal-content').innerHTML = `
+                <div class="escalation-details">
+                    <div class="detail-item">
+                        <strong>Agent</strong>
+                        <span>${agentName}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Error Type</strong>
+                        <span>${errorType}</span>
+                    </div>
+                    <div class="detail-item" style="grid-column: span 2;">
+                        <strong>Original Issue</strong>
+                        <span>${description}</span>
+                    </div>
+                    <div class="detail-item" style="grid-column: span 2; background: var(--info-color); color: white;">
+                        <strong>Agent's Response</strong>
+                        <span>${response}</span>
+                    </div>
+                </div>
+                <hr style="border-color: var(--border-color); margin: 20px 0;">
+                <div class="feedback-form">
+                    <label for="decision-notes" style="font-weight: 500; margin-bottom: 8px; display:block;">Your Decision & Notes:</label>
+                    <textarea id="decision-notes" rows="4" placeholder="Add your final decision notes..."></textarea>
+                    <div class="feedback-actions">
+                        <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'rejected')">Reject Response</button>
+                        <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'approved')">Approve Response</button>
+                        <button class="btn btn-warning" onclick="handleFinalDecision('${errorId}', 'modified')">Modify Decision</button>
+                    </div>
+                </div>
+            `;
+            
+            showModal('final-decision-modal');
+        }
+
+        // Handle final decision
+        async function handleFinalDecision(errorId, decision) {
+            const notes = document.getElementById('decision-notes').value;
+            
+            try {
+                await submitFinalDecision(errorId, currentUser.id, decision, notes);
+                showToast(`Response ${decision} successfully`, 'success');
+                hideModal('final-decision-modal');
+                await loadPendingErrors();
+                await loadPerformanceMetrics();
+            } catch (error) {
+                console.error('Error submitting final decision:', error);
+                showToast('Failed to submit decision', 'error');
+            }
+        }
+
+        // Initialize charts
+        function initCharts() {
+            // Team Performance Chart
+            const teamCtx = document.getElementById('teamPerformanceChart').getContext('2d');
+            teamPerformanceChart = new Chart(teamCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Team A', 'Team B', 'Team C', 'Team D'],
+                    datasets: [{
+                        label: 'Accuracy Rate (%)',
+                        data: [95.2, 92.8, 97.1, 94.5],
+                        backgroundColor: 'rgba(0, 191, 255, 0.6)',
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: {
+                            min: 90,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#e6edf3' }
+                        }
+                    }
                 }
             });
-        };
-        window.addEventListener('resize', updateScrollableTables);
 
-        // --- Filter Event Listeners ---
-        document.getElementById('escalation-search').addEventListener('input', renderEscalations);
-        document.getElementById('escalation-status-filter').addEventListener('change', renderEscalations);
-        document.getElementById('assigned-status-filter').addEventListener('change', renderAssignedTable);
-        document.getElementById('assigned-date-filter').addEventListener('change', renderAssignedTable);
-        document.getElementById('clear-assigned-filters').addEventListener('click', () => {
-            document.getElementById('assigned-status-filter').value = 'all';
-            document.getElementById('assigned-date-filter').value = '';
-            renderAssignedTable();
+            // Error Trends Chart
+            const trendsCtx = document.getElementById('errorTrendsChart').getContext('2d');
+            errorTrendsChart = new Chart(trendsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [{
+                        label: 'Error Rate %',
+                        data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2],
+                        borderColor: 'rgba(0, 191, 255, 1)',
+                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        }
+                    }
+                }
+            });
+
+            // Agent Accuracy Chart
+            const agentCtx = document.getElementById('agentAccuracyChart').getContext('2d');
+            agentAccuracyChart = new Chart(agentCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Fahad A.', 'Ali K.', 'Hessa M.', 'Noura S.'],
+                    datasets: [{
+                        label: 'Accuracy Rate (%)',
+                        data: [98.2, 97.5, 99.1, 96.8],
+                        backgroundColor: 'rgba(0, 191, 255, 0.6)',
+                        borderWidth: 0,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            min: 95,
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: '#e6edf3' }
+                        }
+                    }
+                }
+            });
+
+            // Reviews vs Errors Chart
+            const reviewsCtx = document.getElementById('reviewsVsErrorsChart').getContext('2d');
+            reviewsVsErrorsChart = new Chart(reviewsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Correct Reviews', 'Confirmed Errors'],
+                    datasets: [{
+                        data: [5412, 123],
+                        backgroundColor: ['#28a745', '#dc3545'],
+                        borderColor: 'var(--card-bg)',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e6edf3' }
+                        }
+                    }
+                }
+            });
+
+            // Analytics Chart
+            const analyticsCtx = document.getElementById('analyticsChart').getContext('2d');
+            analyticsChart = new Chart(analyticsCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+                    datasets: [
+                        {
+                            label: 'Orders Reviewed',
+                            data: [320, 450, 410, 480],
+                            borderColor: '#00bfff',
+                            backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                            fill: true
+                        },
+                        {
+                            label: 'Errors Found',
+                            data: [25, 18, 22, 15],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#e6edf3' }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        },
+                        x: {
+                            grid: { color: 'rgba(255,255,255,0.1)' },
+                            ticks: { color: '#e6edf3' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update charts with data
+        function updateCharts() {
+            // In a real implementation, this would update charts with actual data
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize the app
+            initApp();
+            
+            // Tab navigation
+            const tabs = document.querySelectorAll('.sidebar-nav a[data-tab]');
+            const contentAreas = document.querySelectorAll('.tab-content');
+            const pageTitle = document.getElementById('page-title');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const tabId = tab.dataset.tab;
+                    
+                    tabs.forEach(t => t.parentElement.classList.remove('active'));
+                    tab.parentElement.classList.add('active');
+                    
+                    contentAreas.forEach(area => area.classList.remove('active'));
+                    const activeTab = document.getElementById(tabId);
+                    if (activeTab) activeTab.classList.add('active');
+                    
+                    pageTitle.textContent = tab.textContent.trim();
+                });
+            });
+
+            // Notification bell
+            document.getElementById('notification-btn').addEventListener('click', (e) => {
+                 e.stopPropagation();
+                 document.getElementById('notification-dropdown').classList.toggle('show');
+            });
+
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-bell')) {
+                    document.getElementById('notification-dropdown').classList.remove('show');
+                }
+            });
+            
+            // Close modals
+            document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal('final-decision-modal'));
+            });
+
+            // Assign orders
+            document.getElementById('assign-btn').addEventListener('click', async () => {
+                const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked'))
+                    .map(cb => cb.value);
+                const agentId = document.getElementById('agent-select').value;
+                
+                if (selectedOrders.length === 0) {
+                    showToast('Please select orders to assign', 'warning');
+                    return;
+                }
+                
+                if (!agentId) {
+                    showToast('Please select an agent', 'warning');
+                    return;
+                }
+                
+                try {
+                    await assignOrders(selectedOrders, agentId, currentUser.id);
+                    showToast(`${selectedOrders.length} orders assigned successfully`, 'success');
+                    await loadUnassignedOrders();
+                    await loadAssignedOrders();
+                } catch (error) {
+                    console.error('Error assigning orders:', error);
+                    showToast('Failed to assign orders', 'error');
+                }
+            });
+
+            // Apply filters for assigned orders
+            document.getElementById('assigned-status-filter').addEventListener('change', () => {
+                const status = document.getElementById('assigned-status-filter').value;
+                const date = document.getElementById('assigned-date-filter').value;
+                
+                const filters = {};
+                if (status !== 'all') filters.status = status;
+                if (date) filters.date = date;
+                
+                loadAssignedOrders(filters);
+            });
+
+            document.getElementById('assigned-date-filter').addEventListener('change', () => {
+                document.getElementById('assigned-status-filter').dispatchEvent(new Event('change'));
+            });
+
+            document.getElementById('clear-assigned-filters').addEventListener('click', () => {
+                document.getElementById('assigned-status-filter').value = 'all';
+                document.getElementById('assigned-date-filter').value = '';
+                loadAssignedOrders();
+            });
+
+            // Update KPI targets
+            document.getElementById('update-kpi-btn').addEventListener('click', () => {
+                showToast('KPI targets updated successfully', 'success');
+            });
+
+            // Generate report
+            document.getElementById('generate-report-btn').addEventListener('click', () => {
+                showToast('Report generated successfully', 'success');
+            });
+
+            // Export report
+            document.getElementById('export-report-btn').addEventListener('click', () => {
+                showToast('Report exported to CSV', 'success');
+            });
+
+            // Save profile
+            document.getElementById('save-profile-btn').addEventListener('click', () => {
+                showToast('Profile updated successfully', 'success');
+            });
+
+            // Save settings
+            document.getElementById('save-settings-btn').addEventListener('click', () => {
+                showToast('Settings saved successfully', 'success');
+            });
+
+            // Contact support
+            document.getElementById('contact-support-btn').addEventListener('click', () => {
+                showToast('Support request sent', 'info');
+            });
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                try {
+                    await supabase.auth.signOut();
+                    window.location.href = 'login.html';
+                } catch (error) {
+                    console.error('Error during logout:', error);
+                    showToast('Error during logout', 'error');
+                }
+            });
         });
 
-        document.getElementById('save-profile-btn')?.addEventListener('click', () => {
-            const newName = document.getElementById('profile-fullname').value;
-            document.getElementById('sidebar-username').textContent = newName;
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(newName);
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${newName.split(' ')[0]}!`;
-            alert('Profile updated successfully!');
-        });
-        
-        // --- Chart.js Initializations ---
-        Chart.defaults.font.family = 'Poppins';
-        Chart.defaults.color = '#e6edf3';
-
-        // Dashboard Charts
-        new Chart(document.getElementById('personalPerformanceChart').getContext('2d'), { type: 'line', data: { labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'], datasets: [{ label: 'Completed Reviews', data: [8, 12, 9, 15, 12], backgroundColor: 'rgba(0, 191, 255, 0.2)', borderColor: 'rgba(0, 191, 255, 1)', tension: 0.3, fill: true, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: true }, title: { display: true, text: 'Personal Review Performance (Last 5 Days)', color: '#fff' } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } } });
-        new Chart(document.getElementById('teamErrorTypesChart').getContext('2d'), { type: 'pie', data: { labels: ['Missing Item', 'Driver Behavior', 'Spillage', 'Wrong Item'], datasets: [{ data: [45, 25, 15, 15], backgroundColor: [ '#dc3545', '#ffc107', '#17a2b8', '#6f42c1'], borderColor: 'var(--card-bg)', borderWidth: 4, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Common Team Error Types', color: '#fff' } } } });
-        
-        // Agent Performance Charts
-        new Chart(document.getElementById('agentAccuracyChart').getContext('2d'), { type: 'bar', data: { labels: agents, datasets: [{ label: 'Accuracy Rate (%)', data: [98.2, 97.5, 99.1, 96.8], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 1, borderRadius: 4, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: 'Agent Accuracy Rate (This Month)', color: '#fff' } }, scales: { y: { min: 95, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } } });
-        new Chart(document.getElementById('reviewsVsErrorsChart').getContext('2d'), { type: 'doughnut', data: { labels: ['Correct Reviews', 'Confirmed Errors'], datasets: [{ data: [5412, 123], backgroundColor: ['#28a745', '#dc3545'], borderColor: 'var(--card-bg)', borderWidth: 4, }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' }, title: { display: true, text: 'Team Overall Performance', color: '#fff' } } } });
-        
-        // Initial Render
-        renderEscalations();
-        renderAssignments();
-    });
+        // Make handleFinalDecision available globally
+        window.handleFinalDecision = handleFinalDecision;
     </script>
-
-<script type="module">import './api-client.js';</script>
 </body>
 </html>
