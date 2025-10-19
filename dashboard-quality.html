@@ -1280,7 +1280,7 @@
 
             tableBody.innerHTML = helperEscalations.map(escalation => {
                 const orderData = escalation.order_assignments?.orders;
-                const agentName = escalation.order_assignments?.users?.name || 'Unknown Agent';
+                const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
                 const escalationDate = formatDateTime(escalation.created_at);
                 const reasonPreview = escalation.notes ? 
                     (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 
@@ -1289,7 +1289,7 @@
                 return `
                     <tr>
                         <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
-                        <td>${agentName}</td>
+                       <td>${escalatedByName}</td>
                         <td title="${escalation.notes || ''}">${reasonPreview}</td>
                         <td>${escalationDate}</td>
                         <td>
