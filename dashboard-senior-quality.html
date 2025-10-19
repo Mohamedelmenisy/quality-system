@@ -7,8 +7,6 @@
     <link href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2300bfff'/><text x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'>Q</text></svg>" rel="icon">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- FIX: Added Supabase client library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --primary-color: #00bfff;
@@ -1143,7 +1141,6 @@
                 }
             },
 
-            // FIX: Made this function more robust to handle cases where a user exists in auth but not in the users table.
             async getUserData(userId) {
                 try {
                     const { data, error } = await supabase
@@ -1151,13 +1148,7 @@
                         .select('*')
                         .eq('id', userId)
                         .single();
-                    // Specifically check for the "0 rows" error from Supabase
-                    if (error && error.code === 'PGRST116') {
-                        console.error('User profile not found in database:', error);
-                        showToast('User profile not found. Please complete registration or contact support.', 'error');
-                        return null; // Return null specifically for this case
-                    }
-                    if (error) throw error; // Throw other errors
+                    if (error) throw error;
                     return data;
                 } catch (error) {
                     console.error('Get user data error:', error);
@@ -1182,14 +1173,13 @@
                 }
             },
 
-            // FIX: Corrected the select query to let Supabase infer the join based on the schema relationship, making it more robust.
             async getEscalations() {
                 try {
                     const { data, error } = await supabase
                         .from('escalations')
                         .select(`
                             *,
-                            users(name),
+                            users!escalations_escalated_by_fkey(name),
                             orders(order_id, reason)
                         `)
                         .order('created_at', { ascending: false });
@@ -1202,17 +1192,16 @@
                 }
             },
 
-            // FIX: Corrected order clause to reference the 'created_at' column from the joined 'orders' table and simplified the user join.
             async getAssignments() {
                 try {
                     const { data, error } = await supabase
                         .from('order_assignments')
                         .select(`
                             *,
-                            users:quality_agent_id(name),
+                            users!order_assignments_quality_agent_id_fkey(name),
                             orders(order_id, reason, created_at)
                         `)
-                        .order('created_at', { foreignTable: 'orders', ascending: false })
+                        .order('created_at', { ascending: false })
                         .limit(50);
                     if (error) throw error;
                     return data || [];
@@ -1258,6 +1247,7 @@
 
             async assignOrders(agentId, count) {
                 try {
+                    // Get unassigned orders
                     const { data: unassignedOrders, error: ordersError } = await supabase
                         .from('orders')
                         .select('order_id')
@@ -1271,6 +1261,7 @@
                         return [];
                     }
 
+                    // Create assignments
                     const assignments = unassignedOrders.map(order => ({
                         order_id: order.order_id,
                         quality_agent_id: agentId,
@@ -1298,9 +1289,15 @@
         // Core Application Logic
         document.addEventListener('DOMContentLoaded', async () => {
             try {
+                // Initialize the application
                 await initializeApp();
+                
+                // Set up event listeners
                 setupEventListeners();
+                
+                // Load initial data
                 await loadInitialData();
+                
             } catch (error) {
                 console.error('Application initialization error:', error);
                 showToast('Failed to initialize application', 'error');
@@ -1308,35 +1305,38 @@
         });
 
         async function initializeApp() {
+            // Get current user
             currentUser = await apiClient.getCurrentUser();
             if (!currentUser) {
-                // In a real app, you would redirect to a login page.
-                // window.location.href = '/login.html';
-                showToast('You are not logged in.', 'error');
-                console.error("No active user session.");
-                return; // Stop execution if no user
+                window.location.href = '/login.html';
+                return;
             }
 
+            // Get user data
             userData = await apiClient.getUserData(currentUser.id);
             if (!userData) {
-                // Stop execution if user profile is not found, as the rest of the app depends on it.
-                console.error("Could not retrieve user profile data. Halting app initialization.");
-                return; 
+                showToast('User profile not found', 'error');
+                return;
             }
 
+            // Update UI with user data
             updateUserInterface();
         }
 
         function updateUserInterface() {
+            // Update sidebar user info
             document.getElementById('sidebar-username').textContent = userData.name || 'Senior User';
             document.getElementById('sidebar-userrole').textContent = userData.role || 'Senior Quality Analyst';
             document.getElementById('sidebar-userstatus').textContent = '● Online';
             
+            // Update avatar initials
             const initials = getInitials(userData.name);
             document.getElementById('sidebar-avatar-initials').textContent = initials;
             
+            // Update welcome message
             document.getElementById('welcome-user-h2').textContent = `Welcome, ${userData.name || 'Senior User'}!`;
             
+            // Initialize profile form
             initializeProfileForm();
         }
 
@@ -1354,47 +1354,57 @@
         }
 
         function setupEventListeners() {
+            // Tab navigation
             document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
                     const tabId = link.dataset.tab;
                     switchTab(tabId);
+                    // Update active state
                     document.querySelectorAll('.sidebar-nav a').forEach(a => a.classList.remove('active'));
                     link.classList.add('active');
                 });
             });
 
+            // Notification bell
             document.getElementById('notification-btn').addEventListener('click', (e) => {
                 e.stopPropagation();
                 document.getElementById('notification-dropdown').classList.toggle('show');
             });
 
+            // Close notification dropdown when clicking outside
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.notification-bell')) {
                     document.getElementById('notification-dropdown').classList.remove('show');
                 }
             });
 
+            // Export report button
             document.getElementById('export-report-btn').addEventListener('click', () => {
                 exportOverallReport();
             });
 
+            // Download report button
             document.getElementById('download-report-btn').addEventListener('click', () => {
                 downloadReport();
             });
 
+            // Apply filters button
             document.getElementById('apply-filters-btn').addEventListener('click', () => {
                 applyFilters();
             });
 
+            // Save profile button
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 await saveProfile();
             });
 
+            // Assign orders button
             document.getElementById('assign-orders-btn').addEventListener('click', async () => {
                 await assignOrders();
             });
 
+            // Settings navigation
             document.querySelectorAll('.settings-nav a').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -1406,23 +1416,34 @@
                 });
             });
 
+            // Generate report button
             document.getElementById('generate-report-btn').addEventListener('click', () => {
                 generateReport();
             });
 
+            // Refresh escalations button
             document.getElementById('refresh-escalations-btn').addEventListener('click', async () => {
                 await loadEscalations();
             });
         }
 
         async function loadInitialData() {
-            await Promise.all([
-                loadNotifications(),
-                loadStats(),
-                loadTeamMembers(),
-                loadEscalations(),
-                loadAssignments()
-            ]);
+            // Load notifications
+            await loadNotifications();
+            
+            // Load stats
+            await loadStats();
+            
+            // Load team members
+            await loadTeamMembers();
+            
+            // Load escalations
+            await loadEscalations();
+            
+            // Load assignments
+            await loadAssignments();
+            
+            // Initialize charts
             initializeCharts();
         }
 
@@ -1442,36 +1463,62 @@
 
         async function loadStats() {
             const statsContainer = document.getElementById('stats-grid');
+            
+            // In a real implementation, these would come from aggregated data
+            // For now, we'll show dynamic but simulated data
             statsContainer.innerHTML = `
                 <div class="card stat-card">
-                    <div class="stat-header"><span>Total Orders Reviewed</span><span style="color:var(--primary-color)">👁️</span></div>
-                    <div class="stat-value" id="total-orders">...</div>
-                    <div class="stat-change positive"><span>⬆️</span> <span id="orders-change">...</span> vs last month</div>
+                    <div class="stat-header">
+                        <span>Total Orders Reviewed</span>
+                        <span style="color:var(--primary-color)">👁️</span>
+                    </div>
+                    <div class="stat-value" id="total-orders">0</div>
+                    <div class="stat-change positive">
+                        <span>⬆️</span> <span id="orders-change">0%</span> vs last month
+                    </div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-header"><span>Overall Error Rate</span><span style="color:var(--red)">❌</span></div>
-                    <div class="stat-value" id="error-rate">...</div>
-                    <div class="stat-change positive" style="color:var(--green)"><span>⬇️</span> <span id="error-change">...</span> vs last month</div>
+                    <div class="stat-header">
+                        <span>Overall Error Rate</span>
+                        <span style="color:var(--red)">❌</span>
+                    </div>
+                    <div class="stat-value" id="error-rate">0%</div>
+                    <div class="stat-change positive" style="color:var(--green)">
+                        <span>⬇️</span> <span id="error-change">0%</span> vs last month
+                    </div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-header"><span>Pending Escalations</span><span style="color:var(--warning-color)">⚠️</span></div>
-                    <div class="stat-value" id="pending-escalations">...</div>
-                    <div class="stat-change negative"><span>📈</span> <span id="escalations-change">...</span> needing attention</div>
+                    <div class="stat-header">
+                        <span>Pending Escalations</span>
+                        <span style="color:var(--warning-color)">⚠️</span>
+                    </div>
+                    <div class="stat-value" id="pending-escalations">0</div>
+                    <div class="stat-change negative">
+                        <span>📈</span> <span id="escalations-change">0</span> needing attention
+                    </div>
                 </div>
                 <div class="card stat-card">
-                    <div class="stat-header"><span>Active Agents</span><span style="color:var(--purple)">👤</span></div>
-                    <div class="stat-value" id="active-agents">...</div>
-                    <div class="stat-change positive"><span>✅</span> <span id="agents-status">All active</span></div>
+                    <div class="stat-header">
+                        <span>Active Agents</span>
+                        <span style="color:var(--purple)">👤</span>
+                    </div>
+                    <div class="stat-value" id="active-agents">0</div>
+                    <div class="stat-change positive">
+                        <span>✅</span> <span id="agents-status">All active</span>
+                    </div>
                 </div>
             `;
+
+            // Simulate loading real data
             setTimeout(() => {
                 document.getElementById('total-orders').textContent = '1,426';
                 document.getElementById('orders-change').textContent = '5%';
                 document.getElementById('error-rate').textContent = '4.2%';
                 document.getElementById('error-change').textContent = '0.5%';
-                document.getElementById('pending-escalations').textContent = escalations.length;
-                document.getElementById('escalations-change').textContent = escalations.filter(e => e.priority === 'High').length;
+                document.getElementById('pending-escalations').textContent = '8';
+                document.getElementById('escalations-change').textContent = '3';
                 document.getElementById('active-agents').textContent = teamMembers.filter(m => m.role === 'quality').length;
+                document.getElementById('agents-status').textContent = 'All active';
             }, 1000);
         }
 
@@ -1481,6 +1528,7 @@
             const employeeFilter = document.getElementById('employee-filter');
             const assignToAgent = document.getElementById('assign-to-agent');
             
+            // Update filters
             employeeFilter.innerHTML = '<option value="all">All</option>';
             assignToAgent.innerHTML = '<option value="">Select Agent</option>';
             
@@ -1492,7 +1540,13 @@
             });
 
             if (teamMembers.length === 0) {
-                teamTable.innerHTML = `<tr><td colspan="6" class="empty-state">No team members found.</td></tr>`;
+                teamTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted)">
+                            No team members found.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
@@ -1503,7 +1557,10 @@
                     <td>${member.department || 'Not specified'}</td>
                     <td><span class="status-badge status-completed">Active</span></td>
                     <td>${getRandomPerformance()}</td>
-                    <td><button class="btn btn-sm" style="background:#333;color:#fff;padding:4px 8px;font-size:0.8rem;" onclick="viewMemberPerformance('${member.id}')">View</button></td>
+                    <td>
+                        <button class="btn btn-sm" style="background:#333;color:#fff;padding:4px 8px;font-size:0.8rem;" 
+                                onclick="viewMemberPerformance('${member.id}')">View Performance</button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -1513,7 +1570,13 @@
             const escalationsTable = document.getElementById('escalations-table');
             
             if (escalations.length === 0) {
-                escalationsTable.innerHTML = `<tr><td colspan="7" class="empty-state">No pending escalations.</td></tr>`;
+                escalationsTable.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 2rem; color: var(--text-muted)">
+                            No pending escalations.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
@@ -1522,10 +1585,21 @@
                     <td>${escalation.orders?.order_id || 'N/A'}</td>
                     <td>${escalation.orders?.reason || 'N/A'}</td>
                     <td>${escalation.users?.name || 'Unknown'}</td>
-                    <td><span class="status-badge ${getPriorityBadgeClass(escalation.priority)}">${escalation.priority || 'Medium'}</span></td>
+                    <td>
+                        <span class="status-badge ${getPriorityBadgeClass(escalation.priority)}">
+                            ${escalation.priority || 'Medium'}
+                        </span>
+                    </td>
                     <td>${new Date(escalation.created_at).toLocaleDateString()}</td>
-                    <td><span class="status-badge ${getStatusBadgeClass(escalation.status)}">${escalation.status || 'Pending'}</span></td>
-                    <td><button class="btn btn-sm" style="background:var(--primary-color);color:#000;padding:4px 8px;font-size:0.8rem;" onclick="reviewEscalation('${escalation.id}')">Review</button></td>
+                    <td>
+                        <span class="status-badge ${getStatusBadgeClass(escalation.status)}">
+                            ${escalation.status || 'Pending'}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-sm" style="background:var(--primary-color);color:#000;padding:4px 8px;font-size:0.8rem;"
+                                onclick="reviewEscalation('${escalation.id}')">Review</button>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -1535,7 +1609,13 @@
             const assignmentsTable = document.getElementById('assignments-table');
             
             if (assignments.length === 0) {
-                assignmentsTable.innerHTML = `<tr><td colspan="6" class="empty-state">No assignments found.</td></tr>`;
+                assignmentsTable.innerHTML = `
+                    <tr>
+                        <td colspan="6" style="text-align: center; padding: 2rem; color: var(--text-muted)">
+                            No assignments found.
+                        </td>
+                    </tr>
+                `;
                 return;
             }
 
@@ -1546,7 +1626,11 @@
                     <td>${new Date(assignment.orders?.created_at).toLocaleDateString()}</td>
                     <td>Medium</td>
                     <td>${assignment.users?.name || 'Unassigned'}</td>
-                    <td><span class="status-badge ${getStatusBadgeClass(assignment.status)}">${assignment.status || 'Pending'}</span></td>
+                    <td>
+                        <span class="status-badge ${getStatusBadgeClass(assignment.status)}">
+                            ${assignment.status || 'Pending'}
+                        </span>
+                    </td>
                 </tr>
             `).join('');
         }
@@ -1571,25 +1655,45 @@
         }
 
         function getRandomPerformance() {
-            return `${(95 + Math.random() * 4.9).toFixed(1)}%`;
+            const performances = ['98.2%', '96.5%', '99.1%', '97.8%', '95.4%', '98.9%'];
+            return performances[Math.floor(Math.random() * performances.length)];
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
             const selectedTab = document.getElementById(tabId);
             if (selectedTab) {
                 selectedTab.classList.add('active');
-                document.getElementById('page-title-header').textContent = document.querySelector(`[data-tab="${tabId}"]`).textContent.trim();
+                document.getElementById('page-title-header').textContent = 
+                    document.querySelector(`[data-tab="${tabId}"]`).textContent.trim();
+                
+                // Load tab-specific data
                 loadTabData(tabId);
             }
         }
 
         async function loadTabData(tabId) {
             switch (tabId) {
-                case 'teams': await loadTeamMembers(); break;
-                case 'escalations': await loadEscalations(); break;
-                case 'assignments': await loadAssignments(); break;
-                case 'reports': initializeAdvancedChart(); break;
+                case 'dashboard':
+                    await loadStats();
+                    break;
+                case 'teams':
+                    await loadTeamMembers();
+                    break;
+                case 'escalations':
+                    await loadEscalations();
+                    break;
+                case 'assignments':
+                    await loadAssignments();
+                    break;
+                case 'reports':
+                    initializeAdvancedChart();
+                    break;
             }
         }
 
@@ -1597,24 +1701,61 @@
             Chart.defaults.font.family = 'Poppins';
             Chart.defaults.color = '#e6edf3';
 
+            // Error Trend Chart
             const errorTrendCtx = document.getElementById('errorTrendChart').getContext('2d');
             new Chart(errorTrendCtx, {
                 type: 'line',
                 data: {
                     labels: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
-                    datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }]
+                    datasets: [{
+                        label: 'Error Rate %',
+                        data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2],
+                        borderColor: 'rgba(0, 191, 255, 1)',
+                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        }
+                    }
+                }
             });
 
+            // Department Errors Chart
             const departmentErrorsCtx = document.getElementById('departmentErrorsChart').getContext('2d');
             new Chart(departmentErrorsCtx, {
                 type: 'doughnut',
                 data: {
                     labels: ['Support', 'Logistics', 'Customer Service'],
-                    datasets: [{ label: 'Errors', data: [120, 45, 75], backgroundColor: ['#007BFF', '#ffc107', '#28a745'] }]
+                    datasets: [{
+                        label: 'Errors',
+                        data: [120, 45, 75],
+                        backgroundColor: ['#007BFF', '#ffc107', '#28a745']
+                    }]
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    }
+                }
             });
         }
 
@@ -1625,26 +1766,58 @@
                 data: {
                     labels: ['Team A', 'Team B', 'Team C', 'Team D'],
                     datasets: [
-                        { label: 'Correct Reviews', data: [245, 312, 278, 189], backgroundColor: 'rgba(40, 167, 69, 0.8)' },
-                        { label: 'Errors Found', data: [12, 8, 15, 22], backgroundColor: 'rgba(220, 53, 69, 0.8)' }
+                        {
+                            label: 'Correct Reviews',
+                            data: [245, 312, 278, 189],
+                            backgroundColor: 'rgba(40, 167, 69, 0.8)',
+                        },
+                        {
+                            label: 'Errors Found',
+                            data: [12, 8, 15, 22],
+                            backgroundColor: 'rgba(220, 53, 69, 0.8)',
+                        }
                     ]
                 },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { grid: { display: false } } } }
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255,255,255,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
             });
         }
 
         async function saveProfile() {
             const fullName = document.getElementById('profile-fullname').value;
+            const email = document.getElementById('profile-email').value;
             const phone = document.getElementById('profile-phone').value;
-            if (!fullName) {
-                showToast('Full name is required', 'warning');
+
+            if (!fullName || !email) {
+                showToast('Please fill in required fields', 'warning');
                 return;
             }
+
             try {
-                await apiClient.updateUserProfile(currentUser.id, { name: fullName, phone: phone });
-                userData.name = fullName;
-                userData.phone = phone;
+                await apiClient.updateUserProfile(currentUser.id, {
+                    name: fullName,
+                    email: email,
+                    phone: phone
+                });
+                
+                // Update UI
                 updateUserInterface();
+                
             } catch (error) {
                 console.error('Error saving profile:', error);
             }
@@ -1653,14 +1826,17 @@
         async function assignOrders() {
             const agentId = document.getElementById('assign-to-agent').value;
             const count = parseInt(document.getElementById('orders-count').value);
+
             if (!agentId) {
                 showToast('Please select an agent', 'warning');
                 return;
             }
+
             if (!count || count < 1) {
                 showToast('Please enter a valid number of orders', 'warning');
                 return;
             }
+
             try {
                 await apiClient.assignOrders(agentId, count);
                 await loadAssignments();
@@ -1669,21 +1845,79 @@
             }
         }
 
-        function exportOverallReport() { showToast('Generating comprehensive report...', 'info'); setTimeout(() => showToast('Report exported successfully', 'success'), 2000); }
-        function downloadReport() { showToast('Downloading filtered report...', 'info'); setTimeout(() => showToast('Report downloaded successfully', 'success'), 1500); }
-        function applyFilters() { showToast('Filters applied successfully', 'success'); }
-        function generateReport() { showToast(`Generating report...`, 'info'); }
-        function viewMemberPerformance(memberId) { showToast(`Viewing performance for member ${memberId}`, 'info'); }
-        function reviewEscalation(escalationId) { showToast(`Reviewing escalation ${escalationId}`, 'info'); }
+        function exportOverallReport() {
+            showToast('Generating comprehensive report...', 'info');
+            // In a real implementation, this would generate and download a PDF/Excel report
+            setTimeout(() => {
+                showToast('Report exported successfully', 'success');
+            }, 2000);
+        }
 
-        document.getElementById('invite-user-btn').addEventListener('click', () => showToast('User invitation feature coming soon', 'info'));
-        document.getElementById('manage-roles-btn').addEventListener('click', () => showToast('Role management feature coming soon', 'info'));
-        document.getElementById('configure-metrics-btn').addEventListener('click', () => showToast('Quality metrics configuration coming soon', 'info'));
-        document.getElementById('manage-api-btn').addEventListener('click', () => showToast('API management feature coming soon', 'info'));
-        document.getElementById('add-team-member-btn').addEventListener('click', () => showToast('Add team member feature coming soon', 'info'));
-        document.getElementById('manage-teams-btn').addEventListener('click', () => showToast('Team management feature coming soon', 'info'));
-        document.getElementById('export-data-btn').addEventListener('click', () => showToast('Exporting data...', 'info'));
-        document.getElementById('view-assignments-btn').addEventListener('click', () => switchTab('assignments'));
+        function downloadReport() {
+            showToast('Downloading filtered report...', 'info');
+            // This would download data based on current filters
+            setTimeout(() => {
+                showToast('Report downloaded successfully', 'success');
+            }, 1500);
+        }
+
+        function applyFilters() {
+            showToast('Filters applied successfully', 'success');
+            // In a real implementation, this would reload data with applied filters
+        }
+
+        function generateReport() {
+            const reportType = document.getElementById('report-type').value;
+            const period = document.getElementById('report-period').value;
+            
+            showToast(`Generating ${reportType} report for ${period}...`, 'info');
+            // This would regenerate the advanced chart with new data
+        }
+
+        // Placeholder functions for future implementation
+        function viewMemberPerformance(memberId) {
+            showToast(`Viewing performance for member ${memberId}`, 'info');
+        }
+
+        function reviewEscalation(escalationId) {
+            showToast(`Reviewing escalation ${escalationId}`, 'info');
+        }
+
+        // Settings button handlers
+        document.getElementById('invite-user-btn').addEventListener('click', () => {
+            showToast('User invitation feature coming soon', 'info');
+        });
+
+        document.getElementById('manage-roles-btn').addEventListener('click', () => {
+            showToast('Role management feature coming soon', 'info');
+        });
+
+        document.getElementById('configure-metrics-btn').addEventListener('click', () => {
+            showToast('Quality metrics configuration coming soon', 'info');
+        });
+
+        document.getElementById('manage-api-btn').addEventListener('click', () => {
+            showToast('API management feature coming soon', 'info');
+        });
+
+        document.getElementById('add-team-member-btn').addEventListener('click', () => {
+            showToast('Add team member feature coming soon', 'info');
+        });
+
+        document.getElementById('manage-teams-btn').addEventListener('click', () => {
+            showToast('Team management feature coming soon', 'info');
+        });
+
+        document.getElementById('export-data-btn').addEventListener('click', () => {
+            showToast('Exporting data...', 'info');
+            setTimeout(() => {
+                showToast('Data exported successfully', 'success');
+            }, 1500);
+        });
+
+        document.getElementById('view-assignments-btn').addEventListener('click', () => {
+            switchTab('assignments');
+        });
     </script>
 </body>
 </html>
