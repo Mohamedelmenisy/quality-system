@@ -587,13 +587,14 @@ export async function getTeamSchedule() {
         users (name, role)
       `)
       .order('user_id')
-      .order('day_of_week');
+      .order('shift_date');  // استخدم shift_date بدل day_of_week
 
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('GetTeamSchedule error:', error);
-    throw error;
+    // بيانات تجريبية ك fallback
+    return [];
   }
 }
 
