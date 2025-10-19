@@ -7,6 +7,39 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script type="module">
+        import { 
+            supabase, 
+            getCurrentUser, 
+            getUserById,
+            getAssignedOrders,
+            submitReview,
+            submitEscalation,
+            getPerformanceMetrics,
+            getTeamMembers,
+            getTeamSchedule,
+            updateTeamSchedule,
+            getNotifications,
+            markNotificationAsRead,
+            subscribeToNotifications,
+            subscribeToAssignments
+        } from './api-client.js';
+        
+        window.supabase = supabase;
+        window.getCurrentUser = getCurrentUser;
+        window.getUserById = getUserById;
+        window.getAssignedOrders = getAssignedOrders;
+        window.submitReview = submitReview;
+        window.submitEscalation = submitEscalation;
+        window.getPerformanceMetrics = getPerformanceMetrics;
+        window.getTeamMembers = getTeamMembers;
+        window.getTeamSchedule = getTeamSchedule;
+        window.updateTeamSchedule = updateTeamSchedule;
+        window.getNotifications = getNotifications;
+        window.markNotificationAsRead = markNotificationAsRead;
+        window.subscribeToNotifications = subscribeToNotifications; 
+        window.subscribeToAssignments = subscribeToAssignments;
+    </script>
     <style>
         :root {
             --primary-color: #00bfff;
@@ -690,51 +723,56 @@
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
-          <script>
-           // Application State
-    let currentUser = null;
-    let assignedOrders = [];
-    let teamMembers = [];
-    let teamSchedule = [];
-    let performanceMetrics = {};
-    let notifications = [];
-    let monthlyPerformanceChart = null;
-    let issueTypesChart = null;
+    <script>
+        // Application State
+        let currentUser = null;
+        let assignedOrders = [];
+        let teamMembers = [];
+        let teamSchedule = [];
+        let performanceMetrics = {};
+        let notifications = [];
+        let monthlyPerformanceChart = null;
+        let issueTypesChart = null;
 
-    // تأكد إن api-client.js متحمّل أولاً
-    if (typeof supabase === 'undefined') {
-        console.error('❌ api-client.js not loaded');
-        document.body.innerHTML = '<div style="padding: 20px; color: red;">Error: API client not loaded. Please check console.</div>';
-    }
-
-    // Toast Notification System
-    function showToast(message, type = 'info', title = '') {
-        const container = document.getElementById('toast-container');
-        if (!container) return;
-        
-        const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
-        
-        const icons = {
-            success: '✅',
-            error: '❌',
-            warning: '⚠️',
-            info: 'ℹ️'
-        };
-        
-        toast.innerHTML = `
-            <div class="toast-icon">${icons[type]}</div>
-            <div class="toast-content">
-                ${title ? `<div class="toast-title">${title}</div>` : ''}
-                <div class="toast-message">${message}</div>
-            </div>
-            <button class="toast-close">×</button>
-        `;
-        
-        container.appendChild(toast);
-        
-        const removeToast = () => {
-            if (toast.parentNode) {
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            }, 5000);
+            
+            // Close button functionality
+            toast.querySelector('.toast-close').addEventListener('click', () => {
                 toast.style.opacity = '0';
                 toast.style.transform = 'translateX(100%)';
                 setTimeout(() => {
@@ -742,99 +780,95 @@
                         toast.parentNode.removeChild(toast);
                     }
                 }, 300);
-            }
-        };
-
-        setTimeout(removeToast, 5000);
-        toast.querySelector('.toast-close').addEventListener('click', removeToast);
-    }
-
-    // Helper Functions
-    function getInitials(name) {
-        if (!name) return '';
-        const names = name.split(' ');
-        return names.length > 1 ? 
-            `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
-            `${names[0][0]}`.toUpperCase();
-    }
-
-    function formatDate(dateString) {
-        if (!dateString) return 'N/A';
-        const options = { year: 'numeric', month: 'long', day: 'numeric' };
-        return new Date(dateString).toLocaleDateString('en-US', options);
-    }
-
-    function formatDateTime(dateString) {
-        if (!dateString) return 'N/A';
-        const options = { 
-            year: 'numeric', 
-            month: 'short', 
-            day: 'numeric',
-            hour: '2-digit',
-            minute: '2-digit'
-        };
-        return new Date(dateString).toLocaleDateString('en-US', options);
-    }
-
-    function showModal(modalId) {
-        document.getElementById(modalId)?.classList.add('show');
-    }
-
-    function hideModal(modalId) {
-        document.getElementById(modalId)?.classList.remove('show');
-    }
-
-    // Initialize the application
-    async function initApp() {
-        try {
-            showToast('Loading Quality Dashboard...', 'info');
-            
-            // Get current user
-            const user = await getCurrentUser();
-            if (!user) {
-                window.location.href = 'login.html';
-                return;
-            }
-            
-            // Get user profile
-            const { data: profile, error } = await supabase
-                .from('users')
-                .select('*')
-                .eq('id', user.id)
-                .single();
-            
-            if (error) {
-                console.error('Error fetching user profile:', error);
-                showToast('Failed to load user profile', 'error');
-                return;
-            }
-            
-            currentUser = { ...user, ...profile };
-            
-            // Update UI with user data
-            updateUserInterface();
-            
-            // Load dashboard data
-            await loadAssignedOrders();
-            await loadPerformanceMetrics();
-            await loadTeamMembers();
-            await loadTeamSchedule();
-            await loadNotifications();
-            
-            // Initialize real-time subscriptions
-            initRealtimeSubscriptions();
-            
-            // Initialize charts
-            initCharts();
-            
-            showToast('Quality Dashboard loaded successfully', 'success');
-        } catch (error) {
-            console.error('Error initializing app:', error);
-            showToast('Failed to initialize dashboard', 'error');
+            });
         }
-    }
+
+        // Helper Functions
+        function getInitials(name) {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? 
+                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
+                `${names[0][0]}`.toUpperCase();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            const options = { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return new Date(dateString).toLocaleDateString('en-US', options);
+        }
+
+        function showModal(modalId) {
+            document.getElementById(modalId)?.classList.add('show');
+        }
+
+        function hideModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('show');
+        }
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                showToast('Loading Quality Dashboard...', 'info');
+                
+                // Get current user
+                const user = await getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user profile
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                    showToast('Failed to load user profile', 'error');
+                    return;
+                }
+                
+                currentUser = { ...user, ...profile };
+                
+                // Update UI with user data
+                updateUserInterface();
+                
+                // Load user data
+                await loadAssignedOrders();
+                await loadPerformanceMetrics();
+                await loadTeamMembers();
+                await loadTeamSchedule();
+                await loadNotifications();
+                
+                // Initialize real-time subscriptions
+                initRealtimeSubscriptions();
+                
+                // Initialize charts
+                initCharts();
+                
+                showToast('Quality Dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('Failed to initialize dashboard', 'error');
+            }
+        }
+
         function updateUserInterface() {
-            if (!currentUser) return;
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
@@ -1097,13 +1131,11 @@
             const notificationList = document.getElementById('notification-list');
             const notificationBadge = document.getElementById('notification-badge');
             
-            const unreadNotifications = notifications.filter(n => !n.is_read);
-
-            if (unreadNotifications.length === 0) {
+            if (notifications.length === 0) {
                 notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
                 notificationBadge.style.display = 'none';
             } else {
-                notificationList.innerHTML = unreadNotifications.map(notification => `
+                notificationList.innerHTML = notifications.map(notification => `
                     <li class="notification-item">
                         <div class="notification-message">
                             <div>${notification.message}</div>
@@ -1115,7 +1147,7 @@
                     </li>
                 `).join('');
                 
-                notificationBadge.textContent = unreadNotifications.length;
+                notificationBadge.textContent = notifications.length;
                 notificationBadge.style.display = 'flex';
                 
                 // Add event listeners to mark as read buttons
@@ -1131,25 +1163,30 @@
         }
 
        // Initialize real-time subscriptions
-        function initRealtimeSubscriptions() {
-            try {
-                // Subscribe to new notifications
-                subscribeToNotifications(currentUser.id, (payload) => {
-                    console.log('New notification received:', payload);
-                    showToast(payload.new.message, 'info', 'New Notification');
-                    loadNotifications();
-                });
-                
-                // Subscribe to new assignments
-                subscribeToAssignments(currentUser.id, (payload) => {
-                    console.log('New order assigned:', payload);
-                    showToast('A new order has been assigned to you', 'info', 'New Assignment');
-                    loadAssignedOrders();
-                });
-            } catch (error) {
-                console.error('Error initializing real-time subscriptions:', error);
-            }
+function initRealtimeSubscriptions() {
+    try {
+        // Subscribe to new notifications
+        if (typeof window.subscribeToNotifications === 'function') {
+            window.subscribeToNotifications(currentUser.id, (payload) => {
+                console.log('New notification received:', payload);
+                showToast(payload.new.message, 'info', 'New Notification');
+                loadNotifications();
+            });
         }
+        
+        // Subscribe to new assignments
+        if (typeof window.subscribeToAssignments === 'function') {
+            window.subscribeToAssignments(currentUser.id, (payload) => {
+                console.log('New order assigned:', payload);
+                showToast('A new order has been assigned to you', 'info', 'New Assignment');
+                loadAssignedOrders();
+            });
+        }
+    } catch (error) {
+        console.error('Error initializing real-time subscriptions:', error);
+        // لا توقف التطبيق إذا فشلت الاشتراكات
+    }
+}
 
         // Initialize charts
         function initCharts() {
@@ -1242,7 +1279,7 @@
 
         // Modal functions
         async function openViewOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1289,7 +1326,7 @@
         }
 
         async function openReviewOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1308,7 +1345,7 @@
         }
 
         async function openEscalateOrderModal(orderAssignmentId) {
-            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId);
+            const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) {
                 showToast('Order not found', 'error');
                 return;
@@ -1325,7 +1362,6 @@
 
         // Utility function to generate color from string
         function stringToColor(str) {
-            if (!str) return '#cccccc';
             let hash = 0;
             for (let i = 0; i < str.length; i++) {
                 hash = str.charCodeAt(i) + ((hash << 5) - hash);
@@ -1394,8 +1430,7 @@
             // Mark all as read
             document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                const unread = notifications.filter(n => !n.is_read);
-                for (const notification of unread) {
+                for (const notification of notifications) {
                     await markNotificationAsRead(notification.id);
                 }
                 await loadNotifications();
@@ -1438,7 +1473,7 @@
                     
                 } catch (error) {
                     console.error('Error submitting review:', error);
-                    showToast(`Failed to submit review: ${error.message}`, 'error');
+                    showToast('Failed to submit review', 'error');
                 }
             });
             
@@ -1458,11 +1493,11 @@
                     // Get senior quality analyst ID
                     const seniorMembers = teamMembers.filter(m => m.role === 'senior');
                     if (seniorMembers.length === 0) {
-                        showToast('No senior quality analysts available to escalate to.', 'error');
+                        showToast('No senior quality analysts available', 'error');
                         return;
                     }
                     
-                    const escalatedToId = seniorMembers[0].id; // Simple logic: escalate to the first senior
+                    const escalatedToId = seniorMembers[0].id;
                     
                     await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
                     
@@ -1472,7 +1507,7 @@
                     
                 } catch (error) {
                     console.error('Error submitting escalation:', error);
-                    showToast(`Failed to escalate order: ${error.message}`, 'error');
+                    showToast('Failed to escalate order', 'error');
                 }
             });
             
@@ -1495,10 +1530,10 @@
                 document.getElementById('schedule-table').classList.remove('edit-mode');
                 document.getElementById('edit-schedule-btn').style.display = 'inline-block';
                 document.getElementById('schedule-controls').style.display = 'none';
-                showToast('Schedule changes saved (demo).', 'success');
+                showToast('Schedule updated successfully', 'success');
             });
             
-            // Save schedule change from modal
+            // Save schedule change
             document.getElementById('save-schedule-change-btn').addEventListener('click', async () => {
                 const userId = document.getElementById('schedule-member').value;
                 const day = document.getElementById('schedule-day').value;
@@ -1509,8 +1544,8 @@
                         user_id: userId,
                         day_of_week: parseInt(day),
                         shift_type: shift,
-                        start_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[0].trim(),
-                        end_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[1].trim()
+                        start_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[0],
+                        end_time: shift === 'off' || shift === 'leave' || shift === 'sick' ? null : shift.split('-')[1]
                     }]);
                     
                     showToast('Schedule updated successfully', 'success');
@@ -1519,11 +1554,11 @@
                     
                 } catch (error) {
                     console.error('Error updating schedule:', error);
-                    showToast(`Failed to update schedule: ${error.message}`, 'error');
+                    showToast('Failed to update schedule', 'error');
                 }
             });
             
-            // Add team member modal button
+            // Add team member
             document.getElementById('add-member-btn').addEventListener('click', () => {
                 showModal('add-member-modal');
             });
@@ -1540,8 +1575,8 @@
                     return;
                 }
                 
-                // In a real implementation, this would call a function to create a new user.
-                showToast('This is a demo. Team member would be added here.', 'info');
+                // In a real implementation, this would create a new user
+                showToast('Team member would be added here', 'info');
                 hideModal('add-member-modal');
             });
             
@@ -1552,7 +1587,7 @@
                 }
             });
             
-            // Close modals when clicking the overlay
+            // Close modals when clicking outside
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal-overlay')) {
                     e.target.classList.remove('show');
