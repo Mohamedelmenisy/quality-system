@@ -1,201 +1,215 @@
 // ================================
 // api-client.js - QualityX System
-// (Complete & Merged Version)
 // ================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-// --- SUPABASE CLIENT INITIALIZATION ---
 const SUPABASE_URL = "https://otaztiyatvbajswowdgs.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-// --- 1. AUTHENTICATION FUNCTIONS ---
+// ==================== AUTH FUNCTIONS ====================
+//
+// الأدوار الرسمية المعتمدة في النظام:
+// admin, manager, senior, quality-agent, agent, pending
+// --------------------------------------------------------
 
-/**
- * Signs up a new user and adds them to the 'users' table with a 'pending' role.
- */
 export async function signUp(email, password, name, department = null) {
   try {
-    const { data, error: authError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { name, department } }
+    console.log('🚀 Starting signup for:', email);
+    
+    // 1. Auth signup
+    const { data, error } = await supabase.auth.signUp({
+      email: email,
+      password: password,
+      options: {
+        data: { 
+          name: name,
+          department: department
+        }
+      }
     });
-    if (authError) throw authError;
+
+    if (error) {
+      console.error('❌ Auth signup error:', error);
+      throw error;
+    }
+
+    console.log('✅ Auth signup successful, user:', data.user);
 
     const user = data.user;
     if (user) {
-      const { error: insertError } = await supabase.from('users').insert({
+      // 2. Add to our table
+      const { error: insertError } = await supabase
+        .from('users')
+        .insert({
           id: user.id,
           name: name,
           email: email,
-          role: 'pending',
-          department: department
-      });
-      if (insertError) throw insertError;
+          role: 'pending', // ← المستخدم الجديد يضاف كـ pending لحين الموافقة
+          department: department,
+          first_login: new Date(),
+          status: 'offline'
+        });
+
+      if (insertError) {
+        console.error('❌ Database insert error:', insertError);
+        throw insertError;
+      }
+
+      console.log('✅ User added to database successfully');
     }
+
     return user;
   } catch (error) {
-    console.error('SignUp Error:', error.message);
+    console.error('💥 SignUp Error:', error);
     throw error;
   }
 }
 
-/**
- * Signs in a user and updates their status to 'online'.
- */
 export async function signIn(email, password) {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
+    console.log('🔐 Attempting login for:', email);
     
-    await supabase.from('users').update({ last_seen: new Date(), status: 'online' }).eq('id', data.user.id);
-    return data.user;
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+    if (error) {
+      console.error('❌ Login error:', error);
+      throw error;
+    }
+
+    const user = data.user;
+    console.log('✅ Login successful, user ID:', user.id);
+    
+    // تحديث حالة المستخدم
+    const { error: updateError } = await supabase
+      .from('users')
+      .update({ 
+        last_seen: new Date(), 
+        status: 'online' 
+      })
+      .eq('id', user.id);
+
+    if (updateError) {
+      console.warn('⚠️ Could not update user status:', updateError);
+    } else {
+      console.log('✅ User status updated to online');
+    }
+
+    return user;
   } catch (error) {
-    console.error('SignIn Error:', error.message);
+    console.error('💥 SignIn Error:', error);
     throw error;
   }
 }
 
-/**
- * Signs out the current user.
- */
 export async function signOut() {
   try {
+    console.log('🚪 Logging out user...');
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
+    console.log('✅ Logout successful');
   } catch (error) {
-    console.error('SignOut Error:', error.message);
+    console.error('❌ Logout error:', error);
     throw error;
   }
 }
 
-/**
- * Gets the currently authenticated user session.
- */
 export async function getCurrentUser() {
-  const { data } = await supabase.auth.getUser();
-  return data?.user || null;
-}
-
-
-// --- 2. USER DATA FUNCTIONS ---
-
-/**
- * Fetches a user's profile from the 'users' table by their ID.
- */
-export async function getUserProfile(userId) {
   try {
-    const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-    if (error) throw error;
-    return data;
+    const { data, error } = await supabase.auth.getUser();
+    if (error) {
+      console.error('❌ Get current user error:', error);
+      return null;
+    }
+    return data?.user || null;
   } catch (error) {
-    console.error('GetUserProfile Error:', error.message);
-    throw error;
+    console.error('💥 GetCurrentUser error:', error);
+    return null;
   }
 }
 
+// ==================== USER DATA FUNCTIONS ====================
 
-// --- 3. CORE QUALITYX BUSINESS LOGIC ---
-
-/**
- * Imports orders from a parsed CSV file.
- * NOTE: CSV parsing should be handled before calling this function.
- */
-export async function importOrders(parsedRows, importedByUserId) {
+export async function getUserData(email) {
   try {
-    const ordersToInsert = parsedRows.map(row => ({
-      ...row, // Ensure 'row' has keys matching your 'orders' table columns
-      imported_by: importedByUserId,
-      imported_at: new Date()
-    }));
-
-    const { data, error } = await supabase.from('orders').insert(ordersToInsert).select();
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('ImportOrders Error:', error.message);
-    throw error;
-  }
-}
-
-/**
- * Assigns a list of order IDs to a list of agent IDs.
- */
-export async function assignOrdersToAgents(orderIds, agentIds, assignedByUserId) {
-  try {
-    const assignments = orderIds.map((orderId, index) => ({
-      order_id: orderId,
-      quality_agent_id: agentIds[index % agentIds.length], // Distributes orders evenly
-      assigned_by: assignedByUserId,
-      status: 'pending'
-    }));
-
-    const { data, error } = await supabase.from('order_assignments').insert(assignments).select();
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('AssignOrders Error:', error.message);
-    throw error;
-  }
-}
-
-/**
- * Submits a quality review and creates an error record if necessary.
- */
-export async function submitQualityReview(reviewData) {
-  try {
-    // Step 1: Insert the review
-    const { data: review, error: reviewError } = await supabase
-      .from('quality_reviews')
-      .insert(reviewData)
-      .select()
+    console.log('🔍 Searching for user:', email);
+    
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('email', email)
       .single();
-    if (reviewError) throw reviewError;
 
-    // Step 2: If it's an error, create a corresponding error record
-    if (reviewData.action_correctness === 'error') {
-      const { data: order } = await supabase.from('orders').select('employee_name').eq('order_id', reviewData.order_id).single();
-      if (!order) throw new Error(`Order with ID ${reviewData.order_id} not found.`);
-
-      // Find the employee's ID via mapping
-      const { data: employee } = await supabase.from('users').select('id').eq('name', order.employee_name).single();
-      if (!employee) throw new Error(`Employee '${order.employee_name}' not found in the users table.`);
-
-      const { error: errorRecordError } = await supabase.from('errors').insert({
-        order_id: reviewData.order_id,
-        review_id: review.id,
-        employee_id: employee.id, // The ID of the employee who made the mistake
-        recorded_by: reviewData.quality_agent_id, // The ID of the quality agent recording it
-        status: 'pending_response'
-      });
-      if (errorRecordError) throw errorRecordError;
+    console.log('📊 Query result - Data:', data, 'Error:', error);
+    
+    if (error) {
+      console.error('❌ Get user data error:', error);
+      throw new Error('User data not found in database');
     }
-    return review;
+
+    if (!data) {
+      console.error('❌ No user data found');
+      throw new Error('User data not found in database');
+    }
+
+    console.log('✅ User data found:', data);
+    return data;
   } catch (error) {
-    console.error('SubmitReview Error:', error.message);
+    console.error('💥 GetUserData error:', error);
     throw error;
   }
 }
 
-// --- 4. GENERAL DATA FETCHING FUNCTIONS ---
+export async function getUserById(userId) {
+  try {
+    const { data, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', userId)
+      .single();
 
-/**
- * Fetches notifications for a specific user.
- */
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetUserById error:', error);
+    throw error;
+  }
+}
+
+// ==================== OTHER FUNCTIONS ====================
+
+export async function getOrders() {
+  try {
+    const { data, error } = await supabase
+      .from('orders')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetOrders error:', error);
+    throw error;
+  }
+}
+
 export async function getNotifications(userId) {
-    try {
-        const { data, error } = await supabase
-            .from('notifications')
-            .select('*')
-            .eq('user_id', userId)
-            .order('created_at', { ascending: false });
-        if (error) throw error;
-        return data;
-    } catch (error) {
-        console.error('GetNotifications Error:', error.message);
-        throw error;
-    }
+  try {
+    const { data, error } = await supabase
+      .from('notifications')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetNotifications error:', error);
+    throw error;
+  }
 }
