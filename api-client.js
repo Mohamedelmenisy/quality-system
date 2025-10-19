@@ -544,15 +544,15 @@ export async function getEscalations(userId = null, filters = {}) {
   try {
     let query = supabase
       .from('escalations')
-      .select(`
-        *,
-        order_assignments!escalations_assignment_id_fkey (
-          orders (*),
-          users!order_assignments_quality_agent_id_fkey (name)
-        ),
-        users!escalations_escalated_by_id_fkey (name),
-        users!escalations_escalated_to_id_fkey (name)
-      `)
+     .select(`
+    *,
+    order_assignments!escalations_assignment_id_fkey (
+      orders (*),
+      users!order_assignments_quality_agent_id_fkey (name)
+    ),
+    escalated_by:users!escalations_escalated_by_id_fkey (name),
+    escalated_to:users!escalations_escalated_to_id_fkey (name)
+  `)
       .order('created_at', { ascending: false });
 
     if (userId) {
