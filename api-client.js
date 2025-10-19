@@ -205,10 +205,10 @@ export async function getOrders(filters = {}) {
       query = query.ilike('order_id', `%${filters.order_id}%`);
     }
     if (filters.from_date) {
-      query = query.gte('created_at', filters.from_date);
+      query = query.gte('recorded_at', filters.from_date);
     }
     if (filters.to_date) {
-      query = query.lte('created_at', filters.to_date);
+      query = query.lte('recorded_at', filters.to_date);
     }
     if (filters.status) {
       query = query.eq('status', filters.status);
