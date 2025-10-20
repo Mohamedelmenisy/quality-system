@@ -838,7 +838,6 @@ export async function getHelperInquiries(helperId) {
           )
         )
       `)
-      .eq('status', 'pending')
       .order('created_at', { ascending: false });
 
     if (error) {
