@@ -1012,7 +1012,7 @@
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(100%)';
                     setTimeout(() => {
-                        if (toast.parentNode   {
+                        if (toast.parentNode) { // FIX: Corrected condition from 'if (toast.parentNode {' to 'if (toast.parentNode) {'
                             toast.parentNode.removeChild(toast);
                         }
                     }, 300);
@@ -1507,11 +1507,11 @@
                 tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
                     const shifts = [];
                     for (let day = 1; day <= 7; day++) {
-                        const shift = userSchedule.shifts[day];
+                        const shift = userSchedule.shifts[day % 7]; // Adjust for Sunday being 0
+                        let display = 'Off';
+                        let className = 'shift-off';
+                        
                         if (shift) {
-                            let display = shift.shift_type;
-                            let className = 'shift-time';
-                            
                             if (shift.shift_type === 'off') {
                                 display = 'Off';
                                 className = 'shift-off';
@@ -1521,12 +1521,13 @@
                             } else if (shift.shift_type === 'sick') {
                                 display = 'Sick Leave';
                                 className = 'shift-sick';
+                            } else {
+                                display = shift.shift_type;
+                                className = 'shift-time';
                             }
-                            
-                            shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}" data-original="${shift.shift_type}"><span class="${className}">${display}</span></td>`);
-                        } else {
-                            shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}" data-original="off"><span class="shift-off">Off</span></td>`);
                         }
+                        
+                        shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}"><span class="${className}">${display}</span></td>`);
                     }
                     
                     return `
