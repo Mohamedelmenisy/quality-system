@@ -238,8 +238,9 @@
         .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
         .schedule-table thead th { background-color: #2c2c2c; font-weight: 600; }
         .schedule-table .member-name { font-weight: 600; text-align: left; }
-        .schedule-table .shift-cell { cursor: pointer; transition: background-color 0.2s ease; }
-        .schedule-table .shift-cell:hover { background-color: rgba(0, 191, 255, 0.1); }
+        .schedule-table .shift-cell { cursor: default; transition: background-color 0.2s ease; }
+        .schedule-table.edit-mode .shift-cell { cursor: pointer; }
+        .schedule-table.edit-mode .shift-cell:hover { background-color: rgba(0, 191, 255, 0.1); }
         .shift-time, .shift-leave, .shift-sick, .shift-off { display: block; font-weight: 500; }
         .shift-leave { color: var(--warning-color); }
         .shift-sick { color: var(--danger-color); }
@@ -453,9 +454,15 @@
                 <!-- Team Scheduling Tab -->
                 <div id="team-scheduling" class="tab-content">
                     <div class="widget">
-                        <h3>Weekly Team Schedule</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                             <h3>Weekly Team Schedule</h3>
+                             <div>
+                                 <button id="add-schedule-member-btn" class="btn btn-success">Add Member</button>
+                                 <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
+                             </div>
+                        </div>
                         <div class="schedule-table-container">
-                            <table class="results-table schedule-table">
+                            <table class="results-table schedule-table" id="schedule-table">
                                 <thead>
                                     <tr>
                                         <th>Member</th>
@@ -727,12 +734,12 @@
             <div class="form-group">
                 <label for="shift-select">Shift Status</label>
                 <select id="shift-select">
-                    <option value="09:00-17:00">Shift: 09:00 - 17:00</option>
-                    <option value="11:00-19:00">Shift: 11:00 - 19:00</option>
-                    <option value="14:00-22:00">Shift: 14:00 - 22:00</option>
-                    <option value="on_leave">On Leave</option>
-                    <option value="sick_leave">Sick Leave</option>
-                    <option value="off">Off</option>
+                    <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
+                    <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
+                    <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
+                    <option value="On Leave">On Leave</option>
+                    <option value="Sick Leave">Sick Leave</option>
+                    <option value="Off">Off</option>
                 </select>
             </div>
             <div class="page-actions">
@@ -758,6 +765,7 @@
         let notifications = [];
         let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
+        let isScheduleEditMode = false;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -789,6 +797,7 @@
         const showModal = (modalId) => document.getElementById(modalId)?.classList.add('show');
         const hideModal = (modalId) => document.getElementById(modalId)?.classList.remove('show');
         const stringToColor = (str) => {
+            if (!str) return '#ccc';
             let hash = 0;
             for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             let color = '#';
@@ -860,7 +869,7 @@
         const loadPendingErrors = () => loadData(getPendingErrors, renderEscalationsTable, 'pending-responses-count', pendingErrors);
         const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
         const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), renderAssignedOrdersTable, null, assignedOrders);
-        const loadTeamMembers = () => loadData(getTeamMembers, () => { renderTeamMembers(); populateAgentSelect(); populateAgentFilter(); }, null, teamMembers);
+        const loadTeamMembers = () => loadData(getTeamMembers, () => { renderTeamMembers(); populateAgentSelect(); populateAgentFilter(); renderTeamSchedule(); }, null, teamMembers);
         const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
@@ -941,19 +950,25 @@
 
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
-            const qualityAgents = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior');
-            if(qualityAgents.length === 0) {
+            // We filter for roles that are considered part of the "team"
+            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role ==='senior');
+            
+            if (qualityTeam.length === 0) {
                 grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`;
                 return;
             }
-            grid.innerHTML = qualityAgents.map(member => `
+            
+            grid.innerHTML = qualityTeam.map(member => `
                 <div class="team-member-card">
-                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">${getInitials(member.name)}</div>
+                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">
+                        ${getInitials(member.name)}
+                    </div>
                     <div class="team-member-name">${member.name}</div>
                     <div class="team-member-role">${member.role}</div>
                 </div>
             `).join('');
         }
+
 
         function renderCompanyEmployeesTable() {
             const tableBody = document.getElementById('company-employees-table-body');
@@ -978,40 +993,46 @@
         
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
-            const qualityAgents = teamMembers.filter(m => m.role === 'quality');
-            if (qualityAgents.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No schedule data available.</td></tr>`;
+            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior');
+            if (qualityTeam.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`;
                 return;
             }
 
-            // Create a map for quick lookup: scheduleMap[userId][dayOfWeek] = shift
             const scheduleMap = {};
             teamSchedule.forEach(s => {
                 if (!scheduleMap[s.user_id]) scheduleMap[s.user_id] = {};
-                const dayOfWeek = new Date(s.shift_date).getUTCDay(); // Sunday=0, Monday=1
+                // Note: JS Date day is 0=Sun, 1=Mon. Our table is Mon-Sun.
+                const dayOfWeek = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
                 scheduleMap[s.user_id][dayOfWeek] = s.shift_type;
             });
-
-            tableBody.innerHTML = qualityAgents.map(agent => {
+            
+            tableBody.innerHTML = qualityTeam.map(agent => {
                 let cells = '';
-                const days = [1, 2, 3, 4, 5, 6, 0]; // Mon, Tue, ..., Sun
-                for (const day of days) {
-                    const shift = scheduleMap[agent.id]?.[day] || 'off';
+                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon, Tue, ..., Sun
+                for (const day of daysOfWeek) {
+                    const shift = scheduleMap[agent.id]?.[day] || 'Off';
                     let display, className;
                     switch (shift) {
-                        case 'on_leave': display = 'On Leave'; className = 'shift-leave'; break;
-                        case 'sick_leave': display = 'Sick Leave'; className = 'shift-sick'; break;
-                        case 'off': display = 'Off'; className = 'shift-off'; break;
+                        case 'On Leave': display = 'On Leave'; className = 'shift-leave'; break;
+                        case 'Sick Leave': display = 'Sick Leave'; className = 'shift-sick'; break;
+                        case 'Off': display = 'Off'; className = 'shift-off'; break;
                         default: display = shift; className = 'shift-time';
                     }
                     cells += `<td class="shift-cell" data-user-id="${agent.id}" data-day="${day}" data-user-name="${agent.name}"><span class="${className}">${display}</span></td>`;
                 }
                 return `<tr><td class="member-name">${agent.name}</td>${cells}</tr>`;
             }).join('');
+
             document.querySelectorAll('.shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => openShiftModal(cell.dataset));
+                cell.addEventListener('click', () => {
+                    if (isScheduleEditMode) {
+                        openShiftModal(cell.dataset);
+                    }
+                });
             });
         }
+
 
         function updateNotificationsUI() {
             const list = document.getElementById('notification-list');
@@ -1025,11 +1046,11 @@
             select.innerHTML = teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         };
         const populateAgentFilter = () => {
-    const filter = document.getElementById('agent-filter');
-    if (filter) { 
-        filter.innerHTML = '<option value="all">All Agents</option>' + teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-    }
-};
+            const filter = document.getElementById('agent-filter');
+            if(filter){
+                filter.innerHTML = '<option value="all">All Agents</option>' + teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            }
+        };
 
         // Modal Handlers
         async function openFinalDecisionModal(errorId) {
@@ -1059,7 +1080,7 @@
             document.getElementById('employee-id').value = employeeId || '';
 
             if (employeeId) {
-                const employee = companyEmployees.find(e => e.id === employeeId);
+                const employee = companyEmployees.find(e => e.id.toString() === employeeId);
                 if (employee) {
                     modalTitle.textContent = 'Edit Employee';
                     document.getElementById('employee-name').value = employee.employee_name;
@@ -1130,12 +1151,14 @@
             const { userId, day } = document.getElementById('save-shift-btn').dataset;
             const shiftType = document.getElementById('shift-select').value;
             
-            // This needs a specific date. We'll find the date for the selected day in the current week.
             const today = new Date();
-            const currentDay = today.getUTCDay(); // 0=Sun
+            const currentDay = today.getDay(); // 0=Sun
             const distance = day - currentDay;
-            const shiftDate = new Date(today.setDate(today.getDate() + distance)).toISOString().split('T')[0];
+            const targetDate = new Date(today);
+            targetDate.setDate(targetDate.getDate() + distance);
+            const shiftDate = targetDate.toISOString().split('T')[0];
 
+            // Use a unique combination of user_id and shift_date for upsert
             const scheduleData = {
                 user_id: userId,
                 shift_date: shiftDate,
@@ -1143,7 +1166,8 @@
             };
 
             try {
-                await updateTeamSchedule(scheduleData);
+                // The `upsert` method will insert or update based on the primary key (user_id, shift_date)
+                await updateTeamSchedule([scheduleData]); // upsert expects an array
                 showToast('Schedule updated successfully', 'success');
                 hideModal('edit-shift-modal');
                 await loadTeamSchedule(); // Reload schedule data
@@ -1224,7 +1248,31 @@
                 btn.addEventListener('click', () => hideModal(btn.closest('.modal-overlay').id));
             });
             
-            // New event listeners
+            // New/Modified event listeners
+            document.getElementById('edit-schedule-btn').addEventListener('click', (e) => {
+                isScheduleEditMode = !isScheduleEditMode;
+                const table = document.getElementById('schedule-table');
+                const button = e.target;
+                if (isScheduleEditMode) {
+                    table.classList.add('edit-mode');
+                    button.textContent = 'Save Schedule';
+                    button.classList.remove('btn-primary');
+                    button.classList.add('btn-success');
+                    showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
+                } else {
+                    table.classList.remove('edit-mode');
+                    button.textContent = 'Edit Schedule';
+                    button.classList.remove('btn-success');
+                    button.classList.add('btn-primary');
+                    showToast('Edit mode disabled.', 'info');
+                }
+            });
+
+            document.getElementById('add-schedule-member-btn').addEventListener('click', () => {
+                 showToast('Please use the "Company Employees" page to add new members.', 'info');
+                 openEmployeeModal();
+            });
+
             document.getElementById('import-orders-btn').addEventListener('click', () => document.getElementById('csv-file-input').click());
             document.getElementById('csv-file-input').addEventListener('change', handleCsvImport);
             document.getElementById('add-employee-btn').addEventListener('click', () => openEmployeeModal());
