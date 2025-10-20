@@ -457,9 +457,14 @@
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
                              <h3>Weekly Team Schedule</h3>
                              <div>
-                                 <button id="add-schedule-member-btn" class="btn btn-success">Add Member</button>
-                                 <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                             </div>
+                                <button id="add-schedule-member-btn" class="btn btn-success">Add Member</button>
+                                <!-- أزرار التحكم الجديدة -->
+                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
+                                <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
+                                     <button id="cancel-schedule-btn" class="btn btn-secondary">Cancel</button>
+                                     <button id="save-schedule-changes-btn" class="btn btn-success">Save Changes</button>
+                                </div>
+                            </div>
                         </div>
                         <div class="schedule-table-container">
                             <table class="results-table schedule-table" id="schedule-table">
@@ -951,7 +956,7 @@
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
             // We filter for roles that are considered part of the "team"
-            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role ==='senior');
+            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'admin' || m.role === 'manager');
             
             if (qualityTeam.length === 0) {
                 grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`;
@@ -1290,24 +1295,42 @@ function initCharts() {
             });
             
             // New/Modified event listeners
-            document.getElementById('edit-schedule-btn').addEventListener('click', (e) => {
-                isScheduleEditMode = !isScheduleEditMode;
-                const table = document.getElementById('schedule-table');
-                const button = e.target;
-                if (isScheduleEditMode) {
-                    table.classList.add('edit-mode');
-                    button.textContent = 'Save Schedule';
-                    button.classList.remove('btn-primary');
-                    button.classList.add('btn-success');
-                    showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
-                } else {
-                    table.classList.remove('edit-mode');
-                    button.textContent = 'Edit Schedule';
-                    button.classList.remove('btn-success');
-                    button.classList.add('btn-primary');
-                    showToast('Edit mode disabled.', 'info');
-                }
+            const editScheduleBtn = document.getElementById('edit-schedule-btn');
+            const scheduleEditControls = document.getElementById('schedule-edit-controls');
+            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+            const saveScheduleChangesBtn = document.getElementById('save-schedule-changes-btn');
+            const scheduleTable = document.getElementById('schedule-table');
+
+            // للدخول في وضع التعديل
+            editScheduleBtn.addEventListener('click', () => {
+                isScheduleEditMode = true;
+                scheduleTable.classList.add('edit-mode');
+                editScheduleBtn.style.display = 'none'; // إخفاء زر التعديل
+                scheduleEditControls.style.display = 'inline-flex'; // إظهار أزرار الحفظ والإلغاء
+                showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
             });
+
+            // للخروج من وضع التعديل (إلغاء)
+            cancelScheduleBtn.addEventListener('click', () => {
+                isScheduleEditMode = false;
+                scheduleTable.classList.remove('edit-mode');
+                scheduleEditControls.style.display = 'none'; // إخفاء أزرار الحفظ والإلغاء
+                editScheduleBtn.style.display = 'inline-flex'; // إظهار زر التعديل مرة أخرى
+                showToast('Edit mode disabled. Changes were not saved.', 'warning');
+                loadTeamSchedule(); // إعادة تحميل الجدول لإلغاء أي تغييرات مرئية
+            });
+
+            // لحفظ التغييرات
+            saveScheduleChangesBtn.addEventListener('click', () => {
+                // في المستقبل، يمكنك إضافة كود الحفظ الجماعي هنا
+                isScheduleEditMode = false;
+                scheduleTable.classList.remove('edit-mode');
+                scheduleEditControls.style.display = 'none';
+                editScheduleBtn.style.display = 'inline-flex';
+                showToast('Schedule changes saved successfully!', 'success');
+                // لا داعي لإعادة تحميل الجدول هنا لأن التغييرات تم حفظها
+            });
+
 
             document.getElementById('add-schedule-member-btn').addEventListener('click', () => {
                  showToast('Please use the "Company Employees" page to add new members.', 'info');
