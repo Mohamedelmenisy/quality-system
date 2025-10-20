@@ -1369,55 +1369,77 @@
                 });
             });
         }
+        // الصق هذا الكود الجديد بالكامل مكان الدالة القديمة
+function renderInquiriesTable() {
+    const tableBody = document.getElementById('inquiries-table-body');
+    
+    if (!helperInquiries || helperInquiries.length === 0) {
+        tableBody.innerHTML = `
+            <tr>
+                <td colspan="6" class="empty-state">
+                    <div class="empty-state-icon">❓</div>
+                    <div>No inquiries found.</div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
 
-        // Render inquiries table
-        function renderInquiriesTable() {
-            const tableBody = document.getElementById('inquiries-table-body');
-            
-            if (!helperInquiries || helperInquiries.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">❓</div>
-                            <div>No pending inquiries.</div>
-                            <small>New inquiries will appear here when submitted by agents.</small>
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
+    // --- هذا الجزء يضيف عمود "Status" إلى ترويسة الجدول تلقائيًا ---
+    const tableHead = tableBody.previousElementSibling; // The <thead> element
+    if (tableHead.rows[0].cells.length < 6) { // Check to avoid adding it multiple times
+        tableHead.rows[0].innerHTML = `
+            <th>Order ID</th>
+            <th>Agent</th>
+            <th>Inquiry</th>
+            <th>Date</th>
+            <th>Status</th>
+            <th>Actions</th>
+        `;
+    }
+    // --- نهاية جزء تعديل الترويسة ---
 
-            tableBody.innerHTML = helperInquiries.map(inquiry => {
-                const orderData = inquiry.order_assignments?.orders;
-                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
-                const inquiryDate = formatDateTime(inquiry.created_at);
-                const inquiryPreview = inquiry.inquiry_text ? 
-                    (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 
-                    'No inquiry text';
-                
-                return `
-                    <tr>
-                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
-                        <td>${agentName}</td>
-                        <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
-                        <td>${inquiryDate}</td>
-                        <td>
-                            <button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">
-                                Respond
-                            </button>
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            
-            // Add event listeners for respond buttons
-            document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const inquiryId = this.dataset.inquiryId;
-                    openRespondInquiryModal(inquiryId);
-                });
-            });
+    tableBody.innerHTML = helperInquiries.map(inquiry => {
+        const orderData = inquiry.order_assignments?.orders;
+        const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+        const inquiryDate = formatDateTime(inquiry.created_at);
+        const inquiryPreview = inquiry.inquiry_text ? 
+            (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 
+            'No inquiry text';
+        
+        let statusBadge, actionContent;
+
+        if (inquiry.status === 'responded') {
+            statusBadge = `<span class="status-badge status-completed">Responded</span>`;
+            actionContent = `<span style="color: var(--text-muted);" title="Your response: ${inquiry.response_text || ''}">Response Sent</span>`;
+        } else { // status is 'pending'
+            statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+            actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
         }
+        
+        // We make the row slightly transparent if it's already responded to
+        const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.6;' : '';
+
+        return `
+            <tr style="${rowStyle}">
+                <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                <td>${agentName}</td>
+                <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
+                <td>${inquiryDate}</td>
+                <td>${statusBadge}</td>
+                <td>${actionContent}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // إعادة ربط الأحداث فقط بأزرار "Respond" التي لا تزال موجودة
+    document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const inquiryId = this.dataset.inquiryId;
+            openRespondInquiryModal(inquiryId);
+        });
+    });
+}
 
         // Render company employees table
         function renderCompanyEmployeesTable() {
