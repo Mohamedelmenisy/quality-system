@@ -23,7 +23,9 @@
             markNotificationAsRead,
             subscribeToNotifications,
             getCompanyEmployees,
-            getDepartments
+            getDepartments,
+            addCompanyEmployee,
+            updateCompanyEmployee
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -40,6 +42,8 @@
         window.markNotificationAsRead = markNotificationAsRead;
         window.getCompanyEmployees = getCompanyEmployees;
         window.getDepartments = getDepartments;
+        window.addCompanyEmployee = addCompanyEmployee;
+        window.updateCompanyEmployee = updateCompanyEmployee;
     </script>
     <style>
         :root {
@@ -63,7 +67,7 @@
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; }
         .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { height: 32px; fill: var(--primary-color); }
@@ -72,7 +76,7 @@
         .nav-group { margin-bottom: 1.5rem; padding: 0 20px; }
         .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
         .sidebar-nav { list-style:none; padding:0; margin:0; }
-        .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; }
+        .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; white-space: nowrap; }
         .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
@@ -103,7 +107,7 @@
         .chart-container { position: relative; height: 350px; }
         .filter-container { display: flex; justify-content: center; width: 100%; margin-bottom: 30px; }
         .filter-panel { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; background: var(--card-bg); padding: 20px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 100%; max-width: 1200px; }
-        .filter-group { flex: 1; min-width: 150px; }
+        .filter-group { flex: 1; min-width: 200px; }
         .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
         .filter-group input, .filter-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s; }
@@ -297,7 +301,63 @@
             color: white;
         }
         
-
+        /* Team Scheduling Table Styles */
+        #schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+        }
+        
+        #schedule-table th, 
+        #schedule-table td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: center;
+            vertical-align: middle;
+        }
+        
+        #schedule-table th {
+            background-color: #2c2c2c;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+        
+        #schedule-table td.member-name {
+            text-align: left;
+            font-weight: 600;
+            background-color: #2c2c2c;
+        }
+        
+        #schedule-table.edit-mode td.shift-cell {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        #schedule-table.edit-mode td.shift-cell:hover {
+            background-color: rgba(0, 191, 255, 0.1);
+        }
+        
+        /* Shift status colors */
+        .on-leave {
+            color: var(--yellow);
+        }
+        
+        .sick-leave {
+            color: var(--red);
+        }
+        
+        .off {
+            color: var(--text-muted);
+        }
+        
+        /* Schedule edit controls */
+        #schedule-edit-controls {
+            display: none;
+            gap: 0.5rem;
+            align-items: center;
+        }
+        
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -328,575 +388,923 @@
         <input type="password" name="fake-password" value="">
     </form>
 
-    <aside class="sidebar">
-        <div>
-            <div class="sidebar-header">
-                <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
-                    <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
-                </svg>
-                <h1 class="sidebar-title">QualityX</h1>
-            </div>
-            <div class="sidebar-nav-container">
-                <div class="nav-group">
-                    <h2 class="nav-group-title">Menu</h2>
-                    <ul class="sidebar-nav">
-                        <li><a class="active" data-tab="dashboard">📊 Dashboard</a></li>
-                        <li><a data-tab="reports">📄 Reports & Analytics</a></li>
-                        <li><a data-tab="teams">👥 Teams</a></li>
-                        <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
-                        <li><a data-tab="company-employees">🏢 Company Employees</a></li>
-                        <li><a data-tab="departments">🏛️ Departments</a></li>
-                        <li><a data-tab="payments">💳 Payments</a></li>
-                        <li><a data-tab="kpis">📈 KPIs</a></li>
-                    </ul>
-                </div>
-                <div class="nav-group">
-                    <h2 class="nav-group-title">Account</h2>
-                    <ul class="sidebar-nav">
-                        <li><a data-tab="profile">👤 Profile</a></li>
-                        <li><a data-tab="settings">⚙️ Settings</a></li>
-                        <li><a data-tab="help">❓ Get Help</a></li>
-                        <li><a id="logout-btn">🚪 Logout</a></li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="sidebar-footer">
-            <div class="user-profile-widget">
-                <div class="avatar-initials" id="sidebar-avatar-initials">NO</div>
+    <div class="container-wrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <div style="display: flex; flex: 1;">
+            <aside class="sidebar">
                 <div>
-                    <div class="user-name" id="sidebar-username">Nawaf Al-Otaibi</div>
-                    <div class="user-role" id="sidebar-userrole">Manager</div>
-                    <div class="user-status" id="sidebar-userstatus">● Connected</div>
+                    <div class="sidebar-header">
+                        <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                            <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <h1 class="sidebar-title">QualityX</h1>
+                    </div>
+                    <div class="sidebar-nav-container">
+                        <div class="nav-group">
+                            <h2 class="nav-group-title">Menu</h2>
+                            <ul class="sidebar-nav">
+                                <li><a class="active" data-tab="dashboard">📊 Dashboard</a></li>
+                                <li><a data-tab="reports">📄 Reports & Analytics</a></li>
+                                <li><a data-tab="teams">👥 Teams</a></li>
+                                <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
+                                <li><a data-tab="company-employees">🏢 Company Employees</a></li>
+                                <li><a data-tab="departments">🏛️ Departments</a></li>
+                                <li><a data-tab="payments">💳 Payments</a></li>
+                                <li><a data-tab="kpis">📈 KPIs</a></li>
+                            </ul>
+                        </div>
+                        <div class="nav-group">
+                            <h2 class="nav-group-title">Account</h2>
+                            <ul class="sidebar-nav">
+                                <li><a data-tab="profile">👤 Profile</a></li>
+                                <li><a data-tab="settings">⚙️ Settings</a></li>
+                                <li><a data-tab="help">❓ Get Help</a></li>
+                                <li><a id="logout-btn">🚪 Logout</a></li>
+                            </ul>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
-    </aside>
+                <div class="sidebar-footer">
+                    <div class="user-profile-widget">
+                        <div class="avatar-initials" id="sidebar-avatar-initials">NO</div>
+                        <div>
+                            <div class="user-name" id="sidebar-username">Nawaf Al-Otaibi</div>
+                            <div class="user-role" id="sidebar-userrole">Manager</div>
+                            <div class="user-status" id="sidebar-userstatus">● Connected</div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
 
-    <main class="main-content">
-        <header>
-            <div class="header-left">
-                <h2 class="page-title" id="page-title-header">Dashboard</h2>
-            </div>
-            <div class="header-actions">
-                <div class="search-input-container">
-                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                    <input type="text" 
-                           placeholder="Search reports, teams..." 
-                           class="anti-autofill"
-                           id="main-search"
-                           name="search_main">
-                </div>
-                <div class="notification-bell">
-                    <button id="notification-btn" class="notification-btn">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                    </button>
-                    <div id="notification-dropdown" class="notification-dropdown">
-                        <div class="notification-header">Notifications</div>
-                        <ul class="notification-list" id="notification-list">
-                            <li class="notification-item">Loading notifications...</li>
-                        </ul>
+            <main class="main-content">
+                <header>
+                    <div class="header-left">
+                        <h2 class="page-title" id="page-title-header">Dashboard</h2>
                     </div>
-                </div>
-                <button class="btn btn-primary" id="export-report-btn">Export Overall Report</button>
-            </div>
-        </header>
-
-        <div id="dashboard" class="tab-content active">
-            <div id="welcome-message">
-                <h2 id="welcome-user-h2">Welcome, Loading...!</h2>
-                <p>Here is the high-level overview of your quality operations.</p>
-            </div>
-
-            <section class="stats-grid">
-                <div class="card stat-card">
-                    <div class="stat-header"><span>Total Orders Reviewed</span><span style="color:var(--primary-color)">👁️</span></div>
-                    <div class="stat-value" id="total-orders">0</div>
-                    <div class="stat-change positive" id="orders-change"><span>⬆️</span> Loading...</div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-header"><span>Overall Error Rate</span><span style="color:var(--red)">❌</span></div>
-                    <div class="stat-value" id="error-rate">0%</div>
-                    <div class="stat-change positive" id="error-rate-change" style="color: var(--green)"><span>⬇️</span> Loading...</div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-header"><span>Top Performing Team</span><span style="color:var(--green)">⭐</span></div>
-                    <div class="stat-value" id="top-team">Loading...</div>
-                    <div class="stat-change positive" id="top-team-rate">Loading...</div>
-                </div>
-                <div class="card stat-card">
-                    <div class="stat-header"><span>Active Agents</span><span style="color:var(--purple)">👤</span></div>
-                    <div class="stat-value" id="active-agents">0</div>
-                    <div class="stat-change positive" id="agents-change"><span>➕</span> Loading...</div>
-                </div>
-            </section>
-
-            <div class="filter-container">
-                <section class="filter-panel">
-                    <div class="filter-group">
-                        <label>Department</label>
-                        <select id="filter-department">
-                            <option value="all">All</option>
-                            <option value="customer_service">Customer Service</option>
-                            <option value="logistics">Logistics</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Team</label>
-                        <select id="filter-team">
-                            <option value="all">All</option>
-                            <option value="team_a">Team A</option>
-                            <option value="team_b">Team B</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Employee</label>
-                        <select id="filter-employee">
-                            <option value="all">All</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Date Range</label>
-                        <input type="date" id="filter-date" style="color-scheme: dark;">
-                    </div>
-                    <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
-                    <button id="download-report-btn" class="btn btn-secondary">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                        Download Report
-                    </button>
-                </section>
-            </div>
-
-            <section class="charts-grid">
-                <div class="card">
-                    <h3>Error Rate Trend (Last 30 Days)</h3>
-                    <div class="chart-container">
-                        <canvas id="errorTrendChart"></canvas>
-                    </div>
-                </div>
-                <div class="card">
-                    <h3>Errors by Department</h3>
-                    <div class="chart-container">
-                        <canvas id="departmentErrorsChart"></canvas>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <div id="reports" class="tab-content">
-            <div class="card">
-                <h3>Advanced Reports & Analytics</h3>
-                <div class="filter-panel">
-                    <div class="filter-group">
-                        <label>Report Type</label>
-                        <select id="report-type">
-                            <option value="performance">Performance Report</option>
-                            <option value="quality">Quality Metrics</option>
-                            <option value="department">Department Analysis</option>
-                            <option value="agent">Agent Performance</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Time Period</label>
-                        <select id="report-period">
-                            <option value="week">Last Week</option>
-                            <option value="month">Last Month</option>
-                            <option value="quarter">Last Quarter</option>
-                            <option value="year">Last Year</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Format</label>
-                        <select id="report-format">
-                            <option value="pdf">PDF</option>
-                            <option value="excel">Excel</option>
-                            <option value="csv">CSV</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-                </div>
-                <div class="placeholder-content">
-                    <h4>Advanced Reporting Dashboard</h4>
-                    <p>Generate detailed reports on team performance, common error types, and escalation trends.</p>
-                </div>
-            </div>
-        </div>
-
-        <div id="teams" class="tab-content">
-            <div class="card">
-                <h3>Team Management</h3>
-                <div class="filter-panel">
-                    <div class="filter-group">
-                        <label>Search Users</label>
+                    <div class="header-actions">
                         <div class="search-input-container">
                             <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                             <input type="text" 
-                                   placeholder="Search by name or email..." 
+                                   placeholder="Search reports, teams..." 
                                    class="anti-autofill"
-                                   id="user-search"
-                                   name="search_users">
+                                   id="main-search"
+                                   name="search_main">
+                        </div>
+                        <div class="notification-bell">
+                            <button id="notification-btn" class="notification-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            </button>
+                            <div id="notification-dropdown" class="notification-dropdown">
+                                <div class="notification-header">Notifications</div>
+                                <ul class="notification-list" id="notification-list">
+                                    <li class="notification-item">Loading notifications...</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="export-report-btn">Export Overall Report</button>
+                    </div>
+                </header>
+
+                <div id="dashboard" class="tab-content active">
+                    <div id="welcome-message">
+                        <h2 id="welcome-user-h2">Welcome, Loading...!</h2>
+                        <p>Here is the high-level overview of your quality operations.</p>
+                    </div>
+
+                    <section class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-header"><span>Total Orders Reviewed</span><span style="color:var(--primary-color)">👁️</span></div>
+                            <div class="stat-value" id="total-orders">0</div>
+                            <div class="stat-change positive" id="orders-change"><span>⬆️</span> Loading...</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-header"><span>Overall Error Rate</span><span style="color:var(--red)">❌</span></div>
+                            <div class="stat-value" id="error-rate">0%</div>
+                            <div class="stat-change positive" id="error-rate-change" style="color: var(--green)"><span>⬇️</span> Loading...</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-header"><span>Top Performing Team</span><span style="color:var(--green)">⭐</span></div>
+                            <div class="stat-value" id="top-team">Loading...</div>
+                            <div class="stat-change positive" id="top-team-rate">Loading...</div>
+                        </div>
+                        <div class="card stat-card">
+                            <div class="stat-header"><span>Active Agents</span><span style="color:var(--purple)">👤</span></div>
+                            <div class="stat-value" id="active-agents">0</div>
+                            <div class="stat-change positive" id="agents-change"><span>➕</span> Loading...</div>
+                        </div>
+                    </section>
+
+                    <div class="filter-container">
+                        <section class="filter-panel">
+                            <div class="filter-group">
+                                <label>Department</label>
+                                <select id="filter-department">
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Team</label>
+                                <select id="filter-team">
+                                    <option value="all">All</option>
+                                    <option value="team_a">Team A</option>
+                                    <option value="team_b">Team B</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Employee</label>
+                                <select id="filter-employee">
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Date Range</label>
+                                <input type="date" id="filter-date" style="color-scheme: dark;">
+                            </div>
+                            <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
+                            <button id="download-report-btn" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download Report
+                            </button>
+                        </section>
+                    </div>
+
+                    <section class="charts-grid">
+                        <div class="card">
+                            <h3>Error Rate Trend (Last 30 Days)</h3>
+                            <div class="chart-container">
+                                <canvas id="errorTrendChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <h3>Errors by Department</h3>
+                            <div class="chart-container">
+                                <canvas id="departmentErrorsChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+
+                <div id="reports" class="tab-content">
+                    <div class="card">
+                        <h3>Advanced Reports & Analytics</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>Report Type</label>
+                                <select id="report-type">
+                                    <option value="performance">Performance Report</option>
+                                    <option value="quality">Quality Metrics</option>
+                                    <option value="department">Department Analysis</option>
+                                    <option value="agent">Agent Performance</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Time Period</label>
+                                <select id="report-period">
+                                    <option value="week">Last Week</option>
+                                    <option value="month">Last Month</option>
+                                    <option value="quarter">Last Quarter</option>
+                                    <option value="year">Last Year</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Format</label>
+                                <select id="report-format">
+                                    <option value="pdf">PDF</option>
+                                    <option value="excel">Excel</option>
+                                    <option value="csv">CSV</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
+                        </div>
+                        <div class="placeholder-content">
+                            <h3>Report Generation</h3>
+                            <p>Select your report parameters and click "Generate Report" to create a detailed analysis.</p>
                         </div>
                     </div>
-                    <div class="filter-group">
-                        <label>Role</label>
-                        <select id="filter-role">
-                            <option value="all">All Roles</option>
-                            <option value="agent">Agent</option>
-                            <option value="quality">Quality Agent</option>
-                            <option value="senior">Senior Quality</option>
-                            <option value="manager">Manager</option>
-                        </select>
-                    </div>
-                    <div class="filter-group">
-                        <label>Status</label>
-                        <select id="filter-user-status">
-                            <option value="all">All Status</option>
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
-                    </div>
-                    <button class="btn btn-primary" id="apply-user-filters">Apply Filters</button>
-                    <button class="btn btn-secondary" id="add-user-btn">Add New User</button>
                 </div>
-                <div class="table-container">
-                    <table class="user-management-table">
-                        <thead>
-                            <tr>
-                                <th>User</th>
-                                <th>Email</th>
-                                <th>Role</th>
-                                <th>Department</th>
-                                <th>Status</th>
-                                <th>Last Active</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="users-table-body">
-                            <tr><td colspan="7" class="empty-state">Loading users...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
 
-        <div id="profile" class="tab-content">
-            <div class="card">
-                <h3>Edit Profile</h3>
-                <div class="form-group">
-                    <label for="profile-photo">Profile Picture</label>
-                    <input type="file" id="profile-photo" accept="image/*" />
-                </div>
-                <div class="form-group">
-                    <label for="profile-fullname">Full Name</label>
-                    <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi" class="anti-autofill" name="profile_name">
-                </div>
-                <div class="form-group">
-                    <label for="profile-email">Email Address</label>
-                    <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" class="anti-autofill" name="profile_email">
-                </div>
-                <div class="form-group">
-                    <label for="profile-phone">Phone Number</label>
-                    <input type="tel" id="profile-phone" value="+966 55 555 1234" class="anti-autofill" name="profile_phone">
-                </div>
-                <div class="page-actions">
-                    <button class="btn" style="background: #333; color: white;">Cancel</button>
-                    <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-                </div>
-            </div>
-        </div>
-
-        <div id="settings" class="tab-content">
-            <div class="card">
-                <h3>Application Settings</h3>
-                <p style="color: var(--text-muted); margin-top:-0.5rem; margin-bottom: 2rem;">Manage global settings, user access, and system configurations.</p>
-                <div class="settings-layout">
-                    <nav class="settings-nav">
-                        <ul>
-                            <li><a href="#" class="active" data-section="general">General</a></li>
-                            <li><a href="#" data-section="user-management">User Management</a></li>
-                            <li><a href="#" data-section="quality-standards">Quality Standards</a></li>
-                            <li><a href="#" data-section="system">System & API</a></li>
-                        </ul>
-                    </nav>
-                    <div class="settings-content">
-                        <section id="settings-section-general" class="settings-section active">
-                            <div class="setting-card">
-                                <h4>General Settings</h4>
-                                <p>Configure application-wide preferences.</p>
-                                <button class="btn" style="background: #333; color: white;">Configure Themes & Language</button>
+                <div id="teams" class="tab-content">
+                    <div class="card">
+                        <h3>Team Management</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>Team</label>
+                                <select id="team-select">
+                                    <option value="team_a">Team A</option>
+                                    <option value="team_b">Team B</option>
+                                    <option value="team_c">Team C</option>
+                                </select>
                             </div>
-                        </section>
-                        <section id="settings-section-user-management" class="settings-section">
-                            <div class="setting-card">
-                                <h4>User Management</h4>
-                                <p>Invite new users, assign roles (Agent, Senior, Manager), and manage teams.</p>
-                                <div style="display: flex; gap: 10px;">
-                                    <button class="btn btn-primary" id="invite-user-btn">Invite New User</button>
-                                    <button class="btn" style="background: #333; color: white;">Manage Roles & Teams</button>
+                            <button class="btn btn-primary" id="view-team-btn">View Team</button>
+                            <button class="btn btn-secondary" id="add-team-btn">Add New Team</button>
+                        </div>
+                        <div class="placeholder-content">
+                            <h3>Team Performance Overview</h3>
+                            <p>Select a team to view detailed performance metrics and member information.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="team-scheduling" class="tab-content">
+                    <div class="card">
+                        <h3>Team Scheduling</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
+                                <div id="schedule-edit-controls">
+                                    <button class="btn btn-secondary" id="save-schedule-btn">Save Changes</button>
+                                    <button class="btn btn-danger" id="cancel-schedule-btn">Cancel</button>
                                 </div>
                             </div>
-                        </section>
-                        <section id="settings-section-quality-standards" class="settings-section">
-                            <div class="setting-card">
-                                <h4>Quality Standards</h4>
-                                <p>Define error types, severity, and set monthly quality score targets for all departments.</p>
-                                <button class="btn" style="background: #333; color: white;">Configure Quality Metrics</button>
-                            </div>
-                        </section>
-                        <section id="settings-section-system" class="settings-section">
-                            <div class="setting-card">
-                                <h4>System & API</h4>
-                                <p>Manage API keys for integrations and configure system-level settings.</p>
-                                <button class="btn" style="background: #333; color: white;">Manage API Keys</button>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div id="help" class="tab-content">
-            <div class="card">
-                <div class="placeholder-content">
-                    <h3>Help Center & Documentation</h3>
-                    <p>Find answers to common questions or contact support for assistance.</p>
-                    <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
-                </div>
-            </div>
-        </div>
-        
-        <!-- ## ابدأ النسخ من هنا: محتوى الصفحات الجديدة ## -->
-
-        <!-- Team Scheduling Content -->
-        <div id="team-scheduling" class="tab-content">
-            <div class="card">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                    <h3>Weekly Team Schedule</h3>
-                    <div>
-                        <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
-                        <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                        <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                            <button id="cancel-schedule-btn" class="btn btn-secondary" style="background-color: #333;">Cancel</button>
-                            <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
+                            <button class="btn btn-secondary" id="add-member-btn">Add Member</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table id="schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                        <th>Sunday</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-table-body">
+                                    <!-- Schedule data will be populated here -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-                <div class="table-container">
-                    <table class="user-management-table" id="schedule-table">
-                        <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
-                        <tbody id="schedule-table-body">
-                            <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
-                        </tbody>
-                    </table>
+
+                <div id="company-employees" class="tab-content">
+                    <div class="card">
+                        <h3>Company Employees</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div class="search-input-container">
+                                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" 
+                                       placeholder="Search employees..." 
+                                       class="anti-autofill"
+                                       id="employee-search"
+                                       name="search_employee">
+                            </div>
+                            <button class="btn btn-primary" id="add-employee-btn">Add New Employee</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Position</th>
+                                        <th>Department</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-table-body">
+                                    <!-- Employee data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Company Employees Content -->
-        <div id="company-employees" class="tab-content">
-            <div class="card">
-                <h3>Company Employees</h3>
-                <div class="table-container">
-                    <table class="user-management-table">
-                        <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
-                        <tbody id="company-employees-table-body">
-                            <tr><td colspan="6" class="empty-state">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                <div id="departments" class="tab-content">
+                    <div class="card">
+                        <h3>Departments</h3>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <div class="search-input-container">
+                                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                <input type="text" 
+                                       placeholder="Search departments..." 
+                                       class="anti-autofill"
+                                       id="department-search"
+                                       name="search_department">
+                            </div>
+                            <button class="btn btn-primary" id="add-department-btn">Add New Department</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Department Name</th>
+                                        <th>Manager</th>
+                                        <th>Team Count</th>
+                                        <th>Employee Count</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-table-body">
+                                    <!-- Department data will be populated here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Departments Content -->
-        <div id="departments" class="tab-content">
-             <div class="card">
-                <h3>Company Departments</h3>
-                <div class="table-container">
-                    <table class="user-management-table">
-                        <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-                        <tbody id="departments-table-body"></tbody>
-                    </table>
+                <div id="payments" class="tab-content">
+                    <div class="card">
+                        <h3>Payments & Compensation</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>Payment Period</label>
+                                <select id="payment-period">
+                                    <option value="current">Current Month</option>
+                                    <option value="previous">Previous Month</option>
+                                    <option value="quarter">Current Quarter</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Department</label>
+                                <select id="payment-department">
+                                    <option value="all">All</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="view-payments-btn">View Payments</button>
+                            <button class="btn btn-secondary" id="export-payments-btn">Export Payment Report</button>
+                        </div>
+                        <div class="placeholder-content">
+                            <h3>Payment Management</h3>
+                            <p>Select parameters to view payment details and compensation reports for your teams.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- Payments Content -->
-        <div id="payments" class="tab-content">
-            <div class="card">
-                <h3>Available Payment Methods</h3>
-                <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                    <!-- تم حذف "Other items payment" -->
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
+                <div id="kpis" class="tab-content">
+                    <div class="card">
+                        <h3>Key Performance Indicators</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>KPI Category</label>
+                                <select id="kpi-category">
+                                    <option value="quality">Quality Metrics</option>
+                                    <option value="efficiency">Efficiency Metrics</option>
+                                    <option value="compliance">Compliance Metrics</option>
+                                    <option value="customer">Customer Satisfaction</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Time Frame</label>
+                                <select id="kpi-timeframe">
+                                    <option value="week">Weekly</option>
+                                    <option value="month">Monthly</option>
+                                    <option value="quarter">Quarterly</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="view-kpis-btn">View KPIs</button>
+                        </div>
+                        <div class="placeholder-content">
+                            <h3>KPI Dashboard</h3>
+                            <p>Select a category and time frame to view detailed performance indicators.</p>
+                        </div>
+                    </div>
                 </div>
-            </div>
+
+                <div id="profile" class="tab-content">
+                    <div class="card">
+                        <h3>User Profile</h3>
+                        <div class="form-group">
+                            <label>Full Name</label>
+                            <input type="text" id="profile-name" placeholder="Enter your full name">
+                        </div>
+                        <div class="form-group">
+                            <label>Email Address</label>
+                            <input type="email" id="profile-email" placeholder="Enter your email address">
+                        </div>
+                        <div class="form-group">
+                            <label>Position</label>
+                            <input type="text" id="profile-position" placeholder="Enter your position">
+                        </div>
+                        <div class="form-group">
+                            <label>Department</label>
+                            <input type="text" id="profile-department" placeholder="Enter your department">
+                        </div>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                            <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings" class="tab-content">
+                    <div class="settings-layout">
+                        <div class="settings-nav">
+                            <ul>
+                                <li><a class="settings-nav-item active" data-section="general">General Settings</a></li>
+                                <li><a class="settings-nav-item" data-section="notifications">Notifications</a></li>
+                                <li><a class="settings-nav-item" data-section="privacy">Privacy & Security</a></li>
+                                <li><a class="settings-nav-item" data-section="integrations">Integrations</a></li>
+                            </ul>
+                        </div>
+                        <div class="settings-content">
+                            <div id="general" class="settings-section active">
+                                <div class="setting-card">
+                                    <h4>Language & Region</h4>
+                                    <p>Set your preferred language and regional settings.</p>
+                                    <div class="form-group">
+                                        <label>Language</label>
+                                        <select id="language-select">
+                                            <option value="en">English</option>
+                                            <option value="es">Spanish</option>
+                                            <option value="fr">French</option>
+                                            <option value="de">German</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Time Zone</label>
+                                        <select id="timezone-select">
+                                            <option value="utc-8">Pacific Time (UTC-8)</option>
+                                            <option value="utc-5">Eastern Time (UTC-5)</option>
+                                            <option value="utc">UTC</option>
+                                            <option value="utc+1">Central European Time (UTC+1)</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="setting-card">
+                                    <h4>Display Preferences</h4>
+                                    <p>Customize how the dashboard appears.</p>
+                                    <div class="form-group">
+                                        <label>Theme</label>
+                                        <select id="theme-select">
+                                            <option value="dark">Dark</option>
+                                            <option value="light">Light</option>
+                                            <option value="auto">Auto (System)</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Default Dashboard View</label>
+                                        <select id="dashboard-view-select">
+                                            <option value="overview">Overview</option>
+                                            <option value="detailed">Detailed</option>
+                                            <option value="minimal">Minimal</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="notifications" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Notification Preferences</h4>
+                                    <p>Choose how and when you want to be notified.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="email-notifications" checked>
+                                            Email Notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="push-notifications" checked>
+                                            Push Notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="sms-notifications">
+                                            SMS Notifications
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="privacy" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Privacy Settings</h4>
+                                    <p>Control your data and privacy preferences.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="data-collection" checked>
+                                            Allow data collection for analytics
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="personalized-ads">
+                                            Allow personalized content and ads
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="setting-card">
+                                    <h4>Security</h4>
+                                    <p>Manage your account security settings.</p>
+                                    <div class="form-group">
+                                        <label>Two-Factor Authentication</label>
+                                        <select id="2fa-select">
+                                            <option value="disabled">Disabled</option>
+                                            <option value="enabled">Enabled</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-primary" id="change-password-btn">Change Password</button>
+                                </div>
+                            </div>
+                            <div id="integrations" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Third-Party Integrations</h4>
+                                    <p>Connect with other tools and services.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="slack-integration">
+                                            Slack Integration
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="google-integration">
+                                            Google Workspace Integration
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" id="jira-integration">
+                                            Jira Integration
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="help" class="tab-content">
+                    <div class="card">
+                        <h3>Help & Support</h3>
+                        <div class="placeholder-content">
+                            <h3>Get Help</h3>
+                            <p>If you need assistance with the QualityX dashboard, please contact our support team.</p>
+                            <p>Email: support@qualityx.com | Phone: +1 (555) 123-4567</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
+    </div>
 
-        <!-- KPIs Content -->
-        <div id="kpis" class="tab-content">
-            <div class="card">
-                <div class="placeholder-content"><h3>KPIs Management</h3><p>This section is under development.</p></div>
-            </div>
-        </div>
-
-        <!-- ## انتهي من النسخ هنا ## -->
-    </main>
-
-    <!-- Add User Modal -->
-    <div class="modal-overlay" id="add-user-modal">
+    <!-- Modals -->
+    <div class="modal-overlay" id="add-employee-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Add New User</h3>
-                <button class="modal-close-btn" data-modal-id="add-user-modal">×</button>
+                <h3 class="modal-title">Add New Employee</h3>
+                <button class="modal-close-btn" data-modal="add-employee-modal">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="new-user-name">Full Name *</label>
-                    <input type="text" id="new-user-name" placeholder="Enter full name" required class="anti-autofill" name="new_user_name">
+                    <label>Full Name</label>
+                    <input type="text" id="new-employee-name" placeholder="Enter employee name">
                 </div>
                 <div class="form-group">
-                    <label for="new-user-email">Email Address *</label>
-                    <input type="email" id="new-user-email" placeholder="Enter email address" required class="anti-autofill" name="new_user_email">
+                    <label>Email Address</label>
+                    <input type="email" id="new-employee-email" placeholder="Enter employee email">
                 </div>
                 <div class="form-group">
-                    <label for="new-user-role">Role *</label>
-                    <select id="new-user-role" required>
-                        <option value="">Select role</option>
-                        <option value="agent">Agent</option>
-                        <option value="quality">Quality Agent</option>
-                        <option value="senior">Senior Quality Analyst</option>
-                        <option value="manager">Manager</option>
-                    </select>
+                    <label>Position</label>
+                    <input type="text" id="new-employee-position" placeholder="Enter employee position">
                 </div>
                 <div class="form-group">
-                    <label for="new-user-department">Department</label>
-                    <select id="new-user-department">
-                        <option value="customer_service">Customer Service</option>
-                        <option value="logistics">Logistics</option>
+                    <label>Department</label>
+                    <select id="new-employee-department">
+                        <option value="quality">Quality Assurance</option>
+                        <option value="customer">Customer Service</option>
                         <option value="operations">Operations</option>
+                        <option value="management">Management</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label for="new-user-password">Temporary Password *</label>
-                    <input type="password" id="new-user-password" placeholder="Set temporary password" required class="anti-autofill" name="new_user_password">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="add-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="submit-new-user-btn">Create User</button>
+                <button class="btn btn-secondary" data-modal="add-employee-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-new-employee-btn">Save Employee</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div class="modal-overlay" id="edit-user-modal">
+    <div class="modal-overlay" id="edit-department-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Edit User</h3>
-                <button class="modal-close-btn" data-modal-id="edit-user-modal">×</button>
+                <h3 class="modal-title">Edit Department</h3>
+                <button class="modal-close-btn" data-modal="edit-department-modal">×</button>
             </div>
-            <div class="modal-body" id="edit-user-body">
-                <!-- Content will be populated by JavaScript -->
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Department Name</label>
+                    <input type="text" id="edit-department-name" placeholder="Enter department name">
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="save-user-changes-btn">Save Changes</button>
+                <button class="btn btn-secondary" data-modal="edit-department-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-department-btn">Save Changes</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container"></div>
-    
-    <!-- Edit Shift Modal -->
-    <div class="modal-overlay" id="edit-shift-modal">
-        <div class="modal-box" style="max-width: 400px;">
+    <div class="modal-overlay" id="shift-edit-modal">
+        <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title">Edit Shift</h3>
-                <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
+                <button class="modal-close-btn" data-modal="shift-edit-modal">×</button>
             </div>
             <div class="modal-body">
-                <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
                 <div class="form-group">
-                    <label for="shift-select">Shift Status</label>
-                    <select id="shift-select">
-                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
-                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
-                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
-                        <option value="On Leave">On Leave</option>
-                        <option value="Sick Leave">Sick Leave</option>
-                        <option value="Off">Off</option>
+                    <label>Shift Type</label>
+                    <select id="shift-type-select">
+                        <option value="09:00-17:00">09:00-17:00</option>
+                        <option value="11:00-19:00">11:00-19:00</option>
+                        <option value="on-leave">On Leave</option>
+                        <option value="sick">Sick</option>
+                        <option value="off">Off</option>
                     </select>
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal" style="background-color:#333;">Cancel</button>
-                <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
+                <button class="btn btn-secondary" data-modal="shift-edit-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-shift-btn">Save Shift</button>
             </div>
         </div>
     </div>
 
+    <div class="modal-overlay" id="add-member-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Team Member</h3>
+                <button class="modal-close-btn" data-modal="add-member-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="new-member-name" placeholder="Enter member name">
+                </div>
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" id="new-member-position" placeholder="Enter member position">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-modal="add-member-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-new-member-btn">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
     <script>
-        // حل جذري لمشكلة الـ autocomplete
-        function disableAutoComplete() {
-            // جميع حقول الإدخال في الصفحة
-            const allInputs = document.querySelectorAll('input');
-            
-            allInputs.forEach(input => {
-                // تعطيل الـ autocomplete بشكل كامل
-                input.setAttribute('autocomplete', 'new-password');
-                input.setAttribute('autocorrect', 'off');
-                input.setAttribute('autocapitalize', 'off');
-                input.setAttribute('spellcheck', 'false');
-                input.setAttribute('data-lpignore', 'true');
-                
-                // إضافة كلاس خاص لمنع الـ autofill
-                if (input.type !== 'password') {
-                    input.classList.add('anti-autofill');
-                }
-                
-                // منع حفظ البيانات في المتصفح
-                input.addEventListener('focus', function() {
-                    this.removeAttribute('readonly');
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.setAttribute('readonly', 'true');
-                });
-                
-                // تهيئة الحقل كقراءة فقط مؤقتاً
-                input.setAttribute('readonly', 'true');
-            });
-            
-            console.log('تم تعطيل الـ autocomplete لجميع الحقول');
+        // Global variables
+        let currentUser = null;
+        let scheduleData = {};
+        let originalScheduleData = {};
+        let employeesData = [];
+        let departmentsData = [];
+        let isEditMode = false;
+        let currentEditingCell = null;
+
+        // DOM Elements
+        const tabLinks = document.querySelectorAll('.sidebar-nav a[data-tab]');
+        const tabContents = document.querySelectorAll('.tab-content');
+        const notificationBtn = document.getElementById('notification-btn');
+        const notificationDropdown = document.getElementById('notification-dropdown');
+        const modalCloseBtns = document.querySelectorAll('.modal-close-btn, .btn-secondary[data-modal]');
+        const modalOverlays = document.querySelectorAll('.modal-overlay');
+        const addEmployeeBtn = document.getElementById('add-employee-btn');
+        const addEmployeeModal = document.getElementById('add-employee-modal');
+        const saveNewEmployeeBtn = document.getElementById('save-new-employee-btn');
+        const editDepartmentModal = document.getElementById('edit-department-modal');
+        const saveDepartmentBtn = document.getElementById('save-department-btn');
+        const editScheduleBtn = document.getElementById('edit-schedule-btn');
+        const scheduleEditControls = document.getElementById('schedule-edit-controls');
+        const saveScheduleBtn = document.getElementById('save-schedule-btn');
+        const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+        const scheduleTable = document.getElementById('schedule-table');
+        const scheduleTableBody = document.getElementById('schedule-table-body');
+        const shiftEditModal = document.getElementById('shift-edit-modal');
+        const saveShiftBtn = document.getElementById('save-shift-btn');
+        const addMemberBtn = document.getElementById('add-member-btn');
+        const addMemberModal = document.getElementById('add-member-modal');
+        const saveNewMemberBtn = document.getElementById('save-new-member-btn');
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+            setupEventListeners();
+            loadInitialData();
+        });
+
+        // Initialize the application
+        function initializeApp() {
+            // Set current user (in a real app, this would come from authentication)
+            currentUser = {
+                id: 1,
+                name: "Nawaf Al-Otaibi",
+                role: "Manager",
+                email: "nawaf@qualityx.com",
+                position: "Quality Manager",
+                department: "Quality Assurance"
+            };
+
+            // Update UI with user data
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('sidebar-userrole').textContent = currentUser.role;
+            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
         }
 
-        // Application State
-        let currentUser = null;
-        let teamMembers = [];
-        let performanceMetrics = {};
-        let errorTrends = {};
-        let departmentPerformance = {};
-        let notifications = [];
-        let errorTrendChart = null;
-        let departmentErrorsChart = null;
-        let companyEmployees = [];
-        let departments = [];
-        let teamSchedule = [];
-        let isScheduleEditMode = false;
+        // Set up event listeners
+        function setupEventListeners() {
+            // Tab navigation
+            tabLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const tabId = this.getAttribute('data-tab');
+                    switchTab(tabId);
+                });
+            });
 
-        // Toast Notification System
-        function showToast(message, type = 'info', title = '') {
-            const container = document.getElementById('toast-container');
+            // Settings navigation
+            const settingsNavItems = document.querySelectorAll('.settings-nav-item');
+            settingsNavItems.forEach(item => {
+                item.addEventListener('click', function() {
+                    const sectionId = this.getAttribute('data-section');
+                    switchSettingsSection(sectionId);
+                });
+            });
+
+            // Notification dropdown
+            notificationBtn.addEventListener('click', function() {
+                notificationDropdown.classList.toggle('show');
+            });
+
+            // Close notification dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!notificationBtn.contains(e.target) && !notificationDropdown.contains(e.target)) {
+                    notificationDropdown.classList.remove('show');
+                }
+            });
+
+            // Modal functionality
+            modalCloseBtns.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const modalId = this.getAttribute('data-modal');
+                    closeModal(modalId);
+                });
+            });
+
+            modalOverlays.forEach(overlay => {
+                overlay.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        closeModal(this.id);
+                    }
+                });
+            });
+
+            // Add Employee functionality
+            addEmployeeBtn.addEventListener('click', function() {
+                openModal('add-employee-modal');
+            });
+
+            saveNewEmployeeBtn.addEventListener('click', function() {
+                saveNewEmployee();
+            });
+
+            // Edit Department functionality
+            saveDepartmentBtn.addEventListener('click', function() {
+                saveDepartmentChanges();
+            });
+
+            // Schedule editing functionality
+            editScheduleBtn.addEventListener('click', function() {
+                enableEditMode();
+            });
+
+            saveScheduleBtn.addEventListener('click', function() {
+                saveScheduleChanges();
+            });
+
+            cancelScheduleBtn.addEventListener('click', function() {
+                cancelScheduleChanges();
+            });
+
+            // Shift editing functionality
+            saveShiftBtn.addEventListener('click', function() {
+                saveShiftChange();
+            });
+
+            // Add Member functionality
+            addMemberBtn.addEventListener('click', function() {
+                openModal('add-member-modal');
+            });
+
+            saveNewMemberBtn.addEventListener('click', function() {
+                saveNewMember();
+            });
+
+            // Export report button
+            document.getElementById('export-report-btn').addEventListener('click', function() {
+                showToast('Report exported successfully!', 'success');
+            });
+
+            // Logout button
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                if (confirm('Are you sure you want to logout?')) {
+                    showToast('Logged out successfully', 'info');
+                    // In a real app, this would redirect to login page
+                }
+            });
+
+            // Apply filters button
+            document.getElementById('apply-filters-btn').addEventListener('click', function() {
+                applyFilters();
+            });
+
+            // Generate report button
+            document.getElementById('generate-report-btn').addEventListener('click', function() {
+                generateReport();
+            });
+
+            // Save profile button
+            document.getElementById('save-profile-btn').addEventListener('click', function() {
+                saveProfile();
+            });
+
+            // View payments button
+            document.getElementById('view-payments-btn').addEventListener('click', function() {
+                viewPayments();
+            });
+
+            // View KPIs button
+            document.getElementById('view-kpis-btn').addEventListener('click', function() {
+                viewKPIs();
+            });
+        }
+
+        // Load initial data
+        function loadInitialData() {
+            // Load schedule data
+            loadScheduleData();
+            
+            // Load employees data
+            loadEmployeesData();
+            
+            // Load departments data
+            loadDepartmentsData();
+            
+            // Load notifications
+            loadNotifications();
+            
+            // Initialize charts
+            initializeCharts();
+        }
+
+        // Switch between tabs
+        function switchTab(tabId) {
+            // Update active tab in sidebar
+            tabLinks.forEach(link => {
+                link.classList.remove('active');
+            });
+            document.querySelector(`.sidebar-nav a[data-tab="${tabId}"]`).classList.add('active');
+            
+            // Update active tab content
+            tabContents.forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(tabId).classList.add('active');
+            
+            // Update page title
+            const pageTitle = document.getElementById('page-title-header');
+            pageTitle.textContent = document.querySelector(`.sidebar-nav a[data-tab="${tabId}"]`).textContent.trim();
+            
+            // Close notification dropdown
+            notificationDropdown.classList.remove('show');
+        }
+
+        // Switch between settings sections
+        function switchSettingsSection(sectionId) {
+            // Update active nav item
+            document.querySelectorAll('.settings-nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            document.querySelector(`.settings-nav-item[data-section="${sectionId}"]`).classList.add('active');
+            
+            // Update active section
+            document.querySelectorAll('.settings-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            document.getElementById(sectionId).classList.add('active');
+        }
+
+        // Open modal
+        function openModal(modalId) {
+            document.getElementById(modalId).classList.add('show');
+        }
+
+        // Close modal
+        function closeModal(modalId) {
+            document.getElementById(modalId).classList.remove('show');
+        }
+
+        // Show toast notification
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
             
@@ -910,749 +1318,765 @@
             toast.innerHTML = `
                 <div class="toast-icon">${icons[type]}</div>
                 <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-title">${type.charAt(0).toUpperCase() + type.slice(1)}</div>
                     <div class="toast-message">${message}</div>
                 </div>
                 <button class="toast-close">×</button>
             `;
             
-            container.appendChild(toast);
+            toastContainer.appendChild(toast);
+            
+            // Add event listener to close button
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
             
             // Auto remove after 5 seconds
             setTimeout(() => {
                 if (toast.parentNode) {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
+                    toast.remove();
                 }
             }, 5000);
-            
-            // Close button functionality
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
+        }
+
+        // Get initials from name
+        function getInitials(name) {
+            return name.split(' ').map(part => part[0]).join('').toUpperCase();
+        }
+
+        // Load schedule data
+        function loadScheduleData() {
+            // In a real app, this would come from an API
+            scheduleData = {
+                "members": [
+                    {
+                        "id": 1,
+                        "name": "Sarah Johnson",
+                        "position": "Quality Analyst",
+                        "schedule": {
+                            "monday": "09:00-17:00",
+                            "tuesday": "09:00-17:00",
+                            "wednesday": "09:00-17:00",
+                            "thursday": "09:00-17:00",
+                            "friday": "09:00-17:00",
+                            "saturday": "Off",
+                            "sunday": "Off"
+                        }
+                    },
+                    {
+                        "id": 2,
+                        "name": "Michael Chen",
+                        "position": "Senior QA",
+                        "schedule": {
+                            "monday": "11:00-19:00",
+                            "tuesday": "11:00-19:00",
+                            "wednesday": "11:00-19:00",
+                            "thursday": "11:00-19:00",
+                            "friday": "11:00-19:00",
+                            "saturday": "Off",
+                            "sunday": "Off"
+                        }
+                    },
+                    {
+                        "id": 3,
+                        "name": "Emma Rodriguez",
+                        "position": "QA Specialist",
+                        "schedule": {
+                            "monday": "09:00-17:00",
+                            "tuesday": "On Leave",
+                            "wednesday": "09:00-17:00",
+                            "thursday": "09:00-17:00",
+                            "friday": "09:00-17:00",
+                            "saturday": "Off",
+                            "sunday": "Off"
+                        }
+                    },
+                    {
+                        "id": 4,
+                        "name": "David Kim",
+                        "position": "Quality Engineer",
+                        "schedule": {
+                            "monday": "Sick",
+                            "tuesday": "11:00-19:00",
+                            "wednesday": "11:00-19:00",
+                            "thursday": "11:00-19:00",
+                            "friday": "11:00-19:00",
+                            "saturday": "Off",
+                            "sunday": "Off"
+                        }
                     }
-                }, 300);
+                ]
+            };
+            
+            // Store original data for cancel functionality
+            originalScheduleData = JSON.parse(JSON.stringify(scheduleData));
+            
+            // Render schedule table
+            renderScheduleTable();
+        }
+
+        // Render schedule table
+        function renderScheduleTable() {
+            if (!scheduleData.members || scheduleData.members.length === 0) {
+                scheduleTableBody.innerHTML = '<tr><td colspan="8" class="empty-state">No team members found</td></tr>';
+                return;
+            }
+            
+            let tableHTML = '';
+            
+            scheduleData.members.forEach(member => {
+                tableHTML += `
+                    <tr data-member-id="${member.id}">
+                        <td class="member-name">
+                            <div><strong>${member.name}</strong></div>
+                            <div style="font-size: 0.8rem; color: var(--text-muted);">${member.position}</div>
+                        </td>
+                        <td class="shift-cell" data-day="monday">${formatShiftDisplay(member.schedule.monday)}</td>
+                        <td class="shift-cell" data-day="tuesday">${formatShiftDisplay(member.schedule.tuesday)}</td>
+                        <td class="shift-cell" data-day="wednesday">${formatShiftDisplay(member.schedule.wednesday)}</td>
+                        <td class="shift-cell" data-day="thursday">${formatShiftDisplay(member.schedule.thursday)}</td>
+                        <td class="shift-cell" data-day="friday">${formatShiftDisplay(member.schedule.friday)}</td>
+                        <td class="shift-cell" data-day="saturday">${formatShiftDisplay(member.schedule.saturday)}</td>
+                        <td class="shift-cell" data-day="sunday">${formatShiftDisplay(member.schedule.sunday)}</td>
+                    </tr>
+                `;
+            });
+            
+            scheduleTableBody.innerHTML = tableHTML;
+            
+            // Add event listeners to shift cells if in edit mode
+            if (isEditMode) {
+                addShiftCellEventListeners();
+            }
+        }
+
+        // Format shift display with appropriate styling
+        function formatShiftDisplay(shift) {
+            if (shift === 'On Leave') {
+                return `<span class="on-leave">${shift}</span>`;
+            } else if (shift === 'Sick') {
+                return `<span class="sick-leave">${shift}</span>`;
+            } else if (shift === 'Off') {
+                return `<span class="off">${shift}</span>`;
+            } else {
+                return shift;
+            }
+        }
+
+        // Enable edit mode for schedule
+        function enableEditMode() {
+            isEditMode = true;
+            editScheduleBtn.style.display = 'none';
+            scheduleEditControls.style.display = 'flex';
+            scheduleTable.classList.add('edit-mode');
+            
+            // Add event listeners to shift cells
+            addShiftCellEventListeners();
+            
+            showToast('Edit mode enabled. Click on any shift to modify it.', 'info');
+        }
+
+        // Disable edit mode for schedule
+        function disableEditMode() {
+            isEditMode = false;
+            editScheduleBtn.style.display = 'inline-flex';
+            scheduleEditControls.style.display = 'none';
+            scheduleTable.classList.remove('edit-mode');
+            
+            // Remove event listeners from shift cells
+            removeShiftCellEventListeners();
+        }
+
+        // Add event listeners to shift cells
+        function addShiftCellEventListeners() {
+            const shiftCells = document.querySelectorAll('#schedule-table.edit-mode td.shift-cell');
+            shiftCells.forEach(cell => {
+                cell.addEventListener('click', handleShiftCellClick);
             });
         }
 
-        // Helper Functions
-        function getInitials(name) {
-            if (!name) return '';
-            const names = name.split(' ');
-            return names.length > 1 ? 
-                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
-                `${names[0][0]}`.toUpperCase();
+        // Remove event listeners from shift cells
+        function removeShiftCellEventListeners() {
+            const shiftCells = document.querySelectorAll('#schedule-table.edit-mode td.shift-cell');
+            shiftCells.forEach(cell => {
+                cell.removeEventListener('click', handleShiftCellClick);
+            });
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        function showModal(modalId) {
-            document.getElementById(modalId)?.classList.add('show');
-        }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId)?.classList.remove('show');
-        }
-
-        function getRoleBadgeClass(role) {
-            switch(role) {
-                case 'agent': return 'role-agent';
-                case 'quality': return 'role-quality';
-                case 'senior': return 'role-senior';
-                case 'manager': return 'role-manager';
-                default: return 'role-agent';
-            }
-        }
-
-        function getRoleDisplayName(role) {
-            switch(role) {
-                case 'agent': return 'Agent';
-                case 'quality': return 'Quality Agent';
-                case 'senior': return 'Senior Quality';
-                case 'manager': return 'Manager';
-                default: return role;
-            }
-        }
-
-        // Initialize the application
-        async function initApp() {
-            try {
-                showToast('Loading Manager Dashboard...', 'info');
-                
-                // تطبيق حل الـ autocomplete أولاً
-                disableAutoComplete();
-                
-                // Get current user
-                const user = await getCurrentUser();
-                if (!user) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Get user profile
-                const { data: profile, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (error) {
-                    console.error('Error fetching user profile:', error);
-                    showToast('Failed to load user profile', 'error');
-                    return;
-                }
-                
-                currentUser = { ...user, ...profile };
-                
-                // Update UI with user data
-                updateUserInterface();
-                
-                // Initialize charts with dummy data first
-                initCharts();
-
-                // Load all data in parallel
-                await Promise.all([
-                    loadPerformanceMetrics(),
-                    loadErrorTrends(),
-                    loadDepartmentPerformance(),
-                    loadTeamMembers(),
-                    loadNotifications(),
-                    loadCompanyEmployees(),
-                    loadDepartments(),
-                    loadTeamSchedule()
-                ]);
-
-                showToast('Manager Dashboard loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                showToast('Failed to initialize dashboard', 'error');
-            }
-        }
-
-        function updateUserInterface() {
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
-            document.getElementById('sidebar-username').textContent = currentUser.name;
-            document.getElementById('sidebar-userrole').textContent = currentUser.role;
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
+        // Handle shift cell click
+        function handleShiftCellClick(e) {
+            if (!isEditMode) return;
             
-            // Profile form
-            document.getElementById('profile-fullname').value = currentUser.name;
-            document.getElementById('profile-email').value = currentUser.email;
-            document.getElementById('profile-phone').value = currentUser.phone || '';
+            const cell = e.currentTarget;
+            const memberId = cell.closest('tr').getAttribute('data-member-id');
+            const day = cell.getAttribute('data-day');
+            const currentShift = cell.textContent;
+            
+            // Store reference to the cell being edited
+            currentEditingCell = {
+                cell: cell,
+                memberId: parseInt(memberId),
+                day: day
+            };
+            
+            // Set current value in modal
+            const shiftTypeSelect = document.getElementById('shift-type-select');
+            const options = Array.from(shiftTypeSelect.options);
+            const matchingOption = options.find(option => option.text === currentShift);
+            
+            if (matchingOption) {
+                shiftTypeSelect.value = matchingOption.value;
+            } else {
+                // Handle special cases (On Leave, Sick, Off)
+                if (currentShift === 'On Leave') {
+                    shiftTypeSelect.value = 'on-leave';
+                } else if (currentShift === 'Sick') {
+                    shiftTypeSelect.value = 'sick';
+                } else if (currentShift === 'Off') {
+                    shiftTypeSelect.value = 'off';
+                } else {
+                    shiftTypeSelect.value = '09:00-17:00';
+                }
+            }
+            
+            // Open the shift edit modal
+            openModal('shift-edit-modal');
         }
 
-        // Load performance metrics
-        async function loadPerformanceMetrics() {
-            try {
-                performanceMetrics = await getPerformanceMetrics('month');
-                
-                // Update KPI cards
-                document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || 0;
-                document.getElementById('error-rate').textContent = `${performanceMetrics.accuracyRate || 0}%`; // Using accuracy instead of error
-                document.getElementById('active-agents').textContent = teamMembers.filter(m => m.is_active).length;
-                
-                // Update change indicators
-                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> ${performanceMetrics.totalOrders > 0 ? '5%' : '0%'} vs last month`;
-                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.accuracyRate > 0 ? '0.5%' : '0%'} vs last month`;
-                document.getElementById('agents-change').innerHTML = `<span>➕</span> ${teamMembers.length > 0 ? '2' : '0'} new agents`;
-                
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
+        // Save shift change
+        function saveShiftChange() {
+            if (!currentEditingCell) return;
+            
+            const shiftTypeSelect = document.getElementById('shift-type-select');
+            const selectedValue = shiftTypeSelect.value;
+            let displayValue = '';
+            
+            // Map the selected value to display text
+            switch(selectedValue) {
+                case '09:00-17:00':
+                    displayValue = '09:00-17:00';
+                    break;
+                case '11:00-19:00':
+                    displayValue = '11:00-19:00';
+                    break;
+                case 'on-leave':
+                    displayValue = 'On Leave';
+                    break;
+                case 'sick':
+                    displayValue = 'Sick';
+                    break;
+                case 'off':
+                    displayValue = 'Off';
+                    break;
+                default:
+                    displayValue = '09:00-17:00';
             }
+            
+            // Update the cell content
+            currentEditingCell.cell.innerHTML = formatShiftDisplay(displayValue);
+            
+            // Update the data model
+            const member = scheduleData.members.find(m => m.id === currentEditingCell.memberId);
+            if (member) {
+                member.schedule[currentEditingCell.day] = displayValue;
+            }
+            
+            // Close the modal
+            closeModal('shift-edit-modal');
+            currentEditingCell = null;
+            
+            showToast('Shift updated successfully', 'success');
         }
 
-        // Load error trends
-        async function loadErrorTrends() {
-            try {
-                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
-                updateErrorTrendChart();
-            } catch (error) {
-                console.error('Error loading error trends:', error);
-            }
+        // Save schedule changes
+        function saveScheduleChanges() {
+            // In a real app, this would send the updated schedule to the server
+            originalScheduleData = JSON.parse(JSON.stringify(scheduleData));
+            
+            disableEditMode();
+            showToast('Schedule changes saved successfully', 'success');
         }
 
-        // Load department performance
-        async function loadDepartmentPerformance() {
-            try {
-                departmentPerformance = await getDepartmentPerformance();
-                updateDepartmentChart();
-            } catch (error) {
-                console.error('Error loading department performance:', error);
-            }
+        // Cancel schedule changes
+        function cancelScheduleChanges() {
+            // Restore original data
+            scheduleData = JSON.parse(JSON.stringify(originalScheduleData));
+            
+            // Re-render the table
+            renderScheduleTable();
+            
+            disableEditMode();
+            showToast('Changes discarded', 'info');
         }
 
-        // Load team members
-        async function loadTeamMembers(filters = {}) {
-            try {
-                teamMembers = await getTeamMembers();
-                
-                // Apply filters
-                let filteredMembers = teamMembers;
-                if (filters.role && filters.role !== 'all') {
-                    filteredMembers = filteredMembers.filter(m => m.role === filters.role);
+        // Load employees data
+        function loadEmployeesData() {
+            // In a real app, this would come from an API
+            employeesData = [
+                {
+                    id: 1,
+                    name: "Sarah Johnson",
+                    email: "sarah.j@qualityx.com",
+                    position: "Quality Analyst",
+                    department: "Quality Assurance",
+                    status: "Active"
+                },
+                {
+                    id: 2,
+                    name: "Michael Chen",
+                    email: "michael.c@qualityx.com",
+                    position: "Senior QA",
+                    department: "Quality Assurance",
+                    status: "Active"
+                },
+                {
+                    id: 3,
+                    name: "Emma Rodriguez",
+                    email: "emma.r@qualityx.com",
+                    position: "QA Specialist",
+                    department: "Quality Assurance",
+                    status: "Active"
+                },
+                {
+                    id: 4,
+                    name: "David Kim",
+                    email: "david.k@qualityx.com",
+                    position: "Quality Engineer",
+                    department: "Quality Assurance",
+                    status: "Active"
+                },
+                {
+                    id: 5,
+                    name: "Lisa Thompson",
+                    email: "lisa.t@qualityx.com",
+                    position: "Customer Service Rep",
+                    department: "Customer Service",
+                    status: "Active"
                 }
-                if (filters.status && filters.status !== 'all') {
-                    const isActive = filters.status === 'active';
-                    filteredMembers = filteredMembers.filter(m => m.is_active === isActive);
-                }
-                if (filters.search) {
-                    const searchTerm = filters.search.toLowerCase();
-                    filteredMembers = filteredMembers.filter(m => 
-                        m.name.toLowerCase().includes(searchTerm) || 
-                        m.email.toLowerCase().includes(searchTerm)
-                    );
-                }
-                
-                renderUsersTable(filteredMembers);
-                populateEmployeeFilter();
-                
-                // Update top team
-                if (teamMembers.length > 0) {
-                    document.getElementById('top-team').textContent = 'Support Team A';
-                    document.getElementById('top-team-rate').textContent = '2.1% Error Rate';
-                }
-                
-            } catch (error) {
-                console.error('Error loading team members:', error);
-                showToast('Failed to load team members', 'error');
-                teamMembers = [];
-                renderUsersTable([]);
+            ];
+            
+            renderEmployeesTable();
+        }
+
+        // Render employees table
+        function renderEmployeesTable() {
+            const tableBody = document.getElementById('employees-table-body');
+            
+            if (!employeesData || employeesData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="6" class="empty-state">No employees found</td></tr>';
+                return;
             }
+            
+            let tableHTML = '';
+            
+            employeesData.forEach(employee => {
+                tableHTML += `
+                    <tr data-employee-id="${employee.id}">
+                        <td>${employee.name}</td>
+                        <td>${employee.email}</td>
+                        <td>${employee.position}</td>
+                        <td>${employee.department}</td>
+                        <td><span class="status-badge status-active">${employee.status}</span></td>
+                        <td>
+                            <button class="action-btn edit-user-btn">Edit</button>
+                            <button class="action-btn danger">Deactivate</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = tableHTML;
+            
+            // Add event listeners to edit buttons
+            const editButtons = document.querySelectorAll('.edit-user-btn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const employeeId = this.closest('tr').getAttribute('data-employee-id');
+                    editEmployee(parseInt(employeeId));
+                });
+            });
+        }
+
+        // Load departments data
+        function loadDepartmentsData() {
+            // In a real app, this would come from an API
+            departmentsData = [
+                {
+                    id: 1,
+                    name: "Quality Assurance",
+                    manager: "Nawaf Al-Otaibi",
+                    teamCount: 3,
+                    employeeCount: 12
+                },
+                {
+                    id: 2,
+                    name: "Customer Service",
+                    manager: "Lisa Thompson",
+                    teamCount: 2,
+                    employeeCount: 8
+                },
+                {
+                    id: 3,
+                    name: "Operations",
+                    manager: "Robert Wilson",
+                    teamCount: 2,
+                    employeeCount: 10
+                }
+            ];
+            
+            renderDepartmentsTable();
+        }
+
+        // Render departments table
+        function renderDepartmentsTable() {
+            const tableBody = document.getElementById('departments-table-body');
+            
+            if (!departmentsData || departmentsData.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="5" class="empty-state">No departments found</td></tr>';
+                return;
+            }
+            
+            let tableHTML = '';
+            
+            departmentsData.forEach(department => {
+                tableHTML += `
+                    <tr data-department-id="${department.id}">
+                        <td>${department.name}</td>
+                        <td>${department.manager}</td>
+                        <td>${department.teamCount}</td>
+                        <td>${department.employeeCount}</td>
+                        <td>
+                            <button class="action-btn edit-user-btn">Edit</button>
+                            <button class="action-btn primary">View Teams</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableBody.innerHTML = tableHTML;
+            
+            // Add event listeners to edit buttons
+            const editButtons = document.querySelectorAll('.edit-user-btn');
+            editButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const departmentId = this.closest('tr').getAttribute('data-department-id');
+                    editDepartment(parseInt(departmentId));
+                });
+            });
+        }
+
+        // Edit department
+        function editDepartment(departmentId) {
+            const department = departmentsData.find(d => d.id === departmentId);
+            if (!department) return;
+            
+            document.getElementById('edit-department-name').value = department.name;
+            openModal('edit-department-modal');
+            
+            // Store the department ID for saving
+            document.getElementById('save-department-btn').setAttribute('data-department-id', departmentId);
+        }
+
+        // Save department changes
+        function saveDepartmentChanges() {
+            const departmentId = parseInt(document.getElementById('save-department-btn').getAttribute('data-department-id'));
+            const newName = document.getElementById('edit-department-name').value.trim();
+            
+            if (!newName) {
+                showToast('Please enter a department name', 'error');
+                return;
+            }
+            
+            // Update the department in the data model
+            const department = departmentsData.find(d => d.id === departmentId);
+            if (department) {
+                department.name = newName;
+            }
+            
+            // Re-render the table
+            renderDepartmentsTable();
+            
+            closeModal('edit-department-modal');
+            showToast('Department updated successfully', 'success');
+        }
+
+        // Save new employee
+        function saveNewEmployee() {
+            const name = document.getElementById('new-employee-name').value.trim();
+            const email = document.getElementById('new-employee-email').value.trim();
+            const position = document.getElementById('new-employee-position').value.trim();
+            const department = document.getElementById('new-employee-department').value;
+            
+            if (!name || !email || !position) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Create new employee object
+            const newEmployee = {
+                id: employeesData.length > 0 ? Math.max(...employeesData.map(e => e.id)) + 1 : 1,
+                name: name,
+                email: email,
+                position: position,
+                department: department === 'quality' ? 'Quality Assurance' : 
+                           department === 'customer' ? 'Customer Service' :
+                           department === 'operations' ? 'Operations' : 'Management',
+                status: "Active"
+            };
+            
+            // Add to employees data
+            employeesData.push(newEmployee);
+            
+            // Re-render employees table
+            renderEmployeesTable();
+            
+            // Reset form
+            document.getElementById('new-employee-name').value = '';
+            document.getElementById('new-employee-email').value = '';
+            document.getElementById('new-employee-position').value = '';
+            document.getElementById('new-employee-department').value = 'quality';
+            
+            closeModal('add-employee-modal');
+            showToast('Employee added successfully', 'success');
+        }
+
+        // Save new member
+        function saveNewMember() {
+            const name = document.getElementById('new-member-name').value.trim();
+            const position = document.getElementById('new-member-position').value.trim();
+            
+            if (!name || !position) {
+                showToast('Please fill in all required fields', 'error');
+                return;
+            }
+            
+            // Create new member object
+            const newMember = {
+                id: scheduleData.members.length > 0 ? Math.max(...scheduleData.members.map(m => m.id)) + 1 : 1,
+                name: name,
+                position: position,
+                schedule: {
+                    monday: "09:00-17:00",
+                    tuesday: "09:00-17:00",
+                    wednesday: "09:00-17:00",
+                    thursday: "09:00-17:00",
+                    friday: "09:00-17:00",
+                    saturday: "Off",
+                    sunday: "Off"
+                }
+            };
+            
+            // Add to schedule data
+            scheduleData.members.push(newMember);
+            
+            // Also add to employees data
+            const newEmployee = {
+                id: employeesData.length > 0 ? Math.max(...employeesData.map(e => e.id)) + 1 : 1,
+                name: name,
+                email: `${name.toLowerCase().replace(' ', '.')}@qualityx.com`,
+                position: position,
+                department: "Quality Assurance",
+                status: "Active"
+            };
+            
+            employeesData.push(newEmployee);
+            
+            // Re-render both tables
+            renderScheduleTable();
+            renderEmployeesTable();
+            
+            // Reset form
+            document.getElementById('new-member-name').value = '';
+            document.getElementById('new-member-position').value = '';
+            
+            closeModal('add-member-modal');
+            showToast('Team member added successfully', 'success');
+        }
+
+        // Edit employee (placeholder function)
+        function editEmployee(employeeId) {
+            // In a real app, this would open an edit modal
+            showToast('Employee editing functionality will be implemented in the next phase', 'info');
         }
 
         // Load notifications
-        async function loadNotifications() {
-            try {
-                notifications = await getNotifications(currentUser.id);
-                updateNotificationsUI();
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                notifications = [];
-                updateNotificationsUI();
-            }
-        }
-
-        // Render users table
-        function renderUsersTable(users) {
-            const tableBody = document.getElementById('users-table-body');
-            if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No users found.</td></tr>`;
-            } else {
-                tableBody.innerHTML = users.map(user => `
-                    <tr>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="avatar-initials" style="width: 36px; height: 36px;">${getInitials(user.name)}</div>
-                                <div><b>${user.name}</b><br><small>${user.admin_id || 'No ID'}</small></div>
-                            </div>
-                        </td>
-                        <td>${user.email}</td>
-                        <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
-                        <td>${user.department || 'N/A'}</td>
-                        <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td>${user.last_seen ? formatDate(user.last_seen) : 'N/A'}</td>
-                        <td>
-                            <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
-                            <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-            // ربط الأحداث بالأزرار الجديدة
-            document.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', () => openEditUserModal(btn.dataset.userId)));
-            document.querySelectorAll('.action-btn[data-action]').forEach(btn => btn.addEventListener('click', () => handleUserAction(btn.dataset.userId, btn.dataset.action)));
-        }
-
-
-        // Populate employee filter
-        function populateEmployeeFilter() {
-            const employeeSelect = document.getElementById('filter-employee');
-            employeeSelect.innerHTML = '<option value="all">All</option>' + 
-                teamMembers.map(member => 
-                    `<option value="${member.id}">${member.name}</option>`
-                ).join('');
-        }
-
-        // Update notifications UI
-        function updateNotificationsUI() {
-            const notificationList = document.getElementById('notification-list');
+        function loadNotifications() {
+            // In a real app, this would come from an API
+            const notifications = [
+                { id: 1, message: "New quality report available for review", time: "10 minutes ago" },
+                { id: 2, message: "Team A has exceeded their weekly targets", time: "2 hours ago" },
+                { id: 3, message: "System maintenance scheduled for Saturday", time: "1 day ago" }
+            ];
             
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
-            } else {
-                notificationList.innerHTML = notifications.map(notification => 
-                    `<li class="notification-item">${notification.message}</li>`
-                ).join('');
-            }
+            const notificationList = document.getElementById('notification-list');
+            let listHTML = '';
+            
+            notifications.forEach(notification => {
+                listHTML += `
+                    <li class="notification-item">
+                        <div>${notification.message}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">${notification.time}</div>
+                    </li>
+                `;
+            });
+            
+            notificationList.innerHTML = listHTML;
         }
 
         // Initialize charts
-        function initCharts() {
+        function initializeCharts() {
             // Error Trend Chart
-            const errorTrendCtx = document.getElementById('errorTrendChart')?.getContext('2d');
-            if(errorTrendCtx) {
-                if (errorTrendChart) errorTrendChart.destroy();
-                errorTrendChart = new Chart(errorTrendCtx, {
-                    type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Error Rate %', data: [5, 4, 4.5, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, 
-                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
-                        plugins: { legend: { labels: { color: '#e6edf3' } } }
+            const errorTrendCtx = document.getElementById('errorTrendChart').getContext('2d');
+            const errorTrendChart = new Chart(errorTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10', 
+                            'Day 11', 'Day 12', 'Day 13', 'Day 14', 'Day 15', 'Day 16', 'Day 17', 'Day 18', 'Day 19', 'Day 20',
+                            'Day 21', 'Day 22', 'Day 23', 'Day 24', 'Day 25', 'Day 26', 'Day 27', 'Day 28', 'Day 29', 'Day 30'],
+                    datasets: [{
+                        label: 'Error Rate (%)',
+                        data: [5.2, 4.8, 5.1, 4.9, 4.7, 4.5, 4.3, 4.6, 4.4, 4.2, 
+                               4.1, 4.0, 3.9, 3.8, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2,
+                               3.1, 3.0, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3, 2.2],
+                        borderColor: '#00bfff',
+                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e',
+                                maxTicksLimit: 10
+                            }
+                        }
                     }
-                });
-            }
-
+                }
+            });
+            
             // Department Errors Chart
-            const departmentCtx = document.getElementById('departmentErrorsChart')?.getContext('2d');
-            if(departmentCtx) {
-                if(departmentErrorsChart) departmentErrorsChart.destroy();
-                departmentErrorsChart = new Chart(departmentCtx, {
-                    type: 'doughnut', data: { labels: ['Support', 'Logistics', 'Customer Service'], datasets: [{ label: 'Errors', data: [120, 45, 75], backgroundColor: ['#007BFF', '#ffc107', '#28a745'] }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { color: '#e6edf3' } } }
+            const departmentErrorsCtx = document.getElementById('departmentErrorsChart').getContext('2d');
+            const departmentErrorsChart = new Chart(departmentErrorsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Quality Assurance', 'Customer Service', 'Operations', 'Management'],
+                    datasets: [{
+                        data: [45, 30, 20, 5],
+                        backgroundColor: [
+                            '#00bfff',
+                            '#28a745',
+                            '#ffc107',
+                            '#6f42c1'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#8b949e',
+                                padding: 20
+                            }
+                        }
                     }
-                });
+                }
+            });
+            
+            // Update dashboard stats
+            updateDashboardStats();
+        }
+
+        // Update dashboard stats
+        function updateDashboardStats() {
+            document.getElementById('total-orders').textContent = '12,458';
+            document.getElementById('error-rate').textContent = '2.2%';
+            document.getElementById('top-team').textContent = 'Team A';
+            document.getElementById('active-agents').textContent = '24';
+            
+            document.getElementById('orders-change').innerHTML = '<span>⬆️</span> +12% from last week';
+            document.getElementById('error-rate-change').innerHTML = '<span>⬇️</span> -8% from last week';
+            document.getElementById('top-team-rate').innerHTML = '<span>⭐</span> 98.7% accuracy';
+            document.getElementById('agents-change').innerHTML = '<span>➕</span> +2 from last month';
+        }
+
+        // Apply filters (placeholder function)
+        function applyFilters() {
+            showToast('Filters applied successfully', 'success');
+        }
+
+        // Generate report (placeholder function)
+        function generateReport() {
+            showToast('Report generation started. You will be notified when it is ready.', 'info');
+        }
+
+        // Save profile (placeholder function)
+        function saveProfile() {
+            showToast('Profile updated successfully', 'success');
+        }
+
+        // View payments (placeholder function)
+        function viewPayments() {
+            showToast('Payment details loaded', 'info');
+        }
+
+        // View KPIs (placeholder function)
+        function viewKPIs() {
+            showToast('KPI data loaded', 'info');
+        }
+
+        // Fix for console errors related to asynchronous operations
+        // This addresses the "message channel closed before a response was received" errors
+        window.addEventListener('message', function(event) {
+            // Only handle messages from the same origin
+            if (event.origin !== window.location.origin) return;
+            
+            // Handle specific message types if needed
+            // This prevents the "listener indicated an asynchronous response" error
+            if (event.data && event.data.type === 'ASYNC_RESPONSE_REQUIRED') {
+                // Send a response to indicate the message was handled
+                event.source.postMessage({
+                    type: 'ASYNC_RESPONSE',
+                    id: event.data.id,
+                    success: true
+                }, event.origin);
             }
-        }
+        });
 
-        // Update charts with data
-        function updateErrorTrendChart() {
-            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
-            
-            errorTrendChart.data.labels = errorTrends.labels;
-            errorTrendChart.data.datasets[0].data = errorTrends.values;
-            errorTrendChart.update();
-        }
-
-        function updateDepartmentChart() {
-            if (!departmentErrorsChart || !departmentPerformance.departments || departmentPerformance.departments.length === 0) return;
-            
-            departmentErrorsChart.data.labels = departmentPerformance.departments;
-            departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
-            departmentErrorsChart.update();
-        }
-
-        // ## انسخ وألصق هذه الدوال الجديدة بالكامل ##
-        async function loadCompanyEmployees() {
-            try {
-                companyEmployees = await getCompanyEmployees();
-                renderCompanyEmployeesTable();
-            } catch (error) { showToast('Failed to load company employees', 'error'); }
-        }
-
-        function renderCompanyEmployeesTable() {
-            const tableBody = document.getElementById('company-employees-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = companyEmployees.length === 0
-                ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
-                : companyEmployees.map(emp => `<tr><td>${emp.employee_name}</td><td>${emp.employee_username || 'N/A'}</td><td>${emp.admin_id || 'N/A'}</td><td>${emp.department || 'N/A'}</td><td>${emp.title || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
-        }
-
-        async function loadDepartments() {
-            try {
-                departments = await getDepartments();
-                renderDepartmentsTable();
-            } catch (error) { showToast('Failed to load departments', 'error'); }
-        }
-
-        function renderDepartmentsTable() {
-            const tableBody = document.getElementById('departments-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = departments.length === 0
-                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
-                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
-
-            // أضف هذا الكود لربط الحدث
-            document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showToast('Department editing is not implemented yet.', 'info');
-                });
-            });
-        }
-
-        async function loadTeamSchedule() {
-            try {
-                // Ensure team members are loaded first
-                if (teamMembers.length === 0) {
-                   await loadTeamMembers();
-                }
-                teamSchedule = await getTeamSchedule();
-                renderTeamSchedule();
-            } catch (error) { showToast('Failed to load team schedule', 'error'); }
-        }
-
-        function renderTeamSchedule() {
-            const tableBody = document.getElementById('schedule-table-body');
-            if (!tableBody) return;
-            const qualityTeam = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
-            if (qualityTeam.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
-                return;
+        // Fix for sidebar menu item wrapping
+        // Adjust the CSS for the "Company Employees" menu item
+        document.addEventListener('DOMContentLoaded', function() {
+            const companyEmployeesLink = document.querySelector('.sidebar-nav a[data-tab="company-employees"]');
+            if (companyEmployeesLink) {
+                // Ensure the text doesn't wrap
+                companyEmployeesLink.style.whiteSpace = 'nowrap';
+                companyEmployeesLink.style.overflow = 'hidden';
+                companyEmployeesLink.style.textOverflow = 'ellipsis';
             }
-
-            const scheduleMap = teamSchedule.reduce((acc, s) => {
-                if (!acc[s.user_id]) acc[s.user_id] = {};
-                const day = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
-                acc[s.user_id][day] = s.shift_type;
-                return acc;
-            }, {});
-
-            tableBody.innerHTML = qualityTeam.map(member => {
-                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
-                const cells = daysOfWeek.map(day => {
-                    const shift = scheduleMap[member.id]?.[day] || 'Off';
-                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${shift.replace(' ', '-').toLowerCase()}">${shift}</span></td>`;
-                }).join('');
-                return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
-            }).join('');
-
-            // تفعيل الضغط على الخلايا عند تفعيل وضع التعديل
-            document.querySelectorAll('.shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => {
-                    if (isScheduleEditMode) {
-                        openShiftModal(cell.dataset);
-                    }
-                });
-            });
-        }
-        
-        function openShiftModal(dataset) {
-            const { userId, day, userName } = dataset;
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            document.getElementById('shift-modal-member-name').textContent = userName;
-            document.getElementById('shift-modal-day-name').textContent = days[day];
-            document.getElementById('save-shift-btn').dataset.userId = userId;
-            document.getElementById('save-shift-btn').dataset.day = day;
-            showModal('edit-shift-modal');
-        }
-
-        async function handleSaveShift() {
-            const { userId, day } = document.getElementById('save-shift-btn').dataset;
-            const shiftType = document.getElementById('shift-select').value;
-            const today = new Date();
-            const distance = day - today.getDay();
-            const targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() + distance);
-            const shiftDate = targetDate.toISOString().split('T')[0];
-
-            try {
-                await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
-                showToast('Schedule updated successfully', 'success');
-                hideModal('edit-shift-modal');
-                await loadTeamSchedule();
-            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
-        }
-
-
-        // Modal functions
-        function openEditUserModal(userId) {
-            const user = teamMembers.find(u => u.id === userId);
-            if (!user) {
-                showToast('User not found', 'error');
-                return;
-            }
-
-            document.getElementById('edit-user-body').innerHTML = `
-                <div class="form-group">
-                    <label for="edit-user-name">Full Name</label>
-                    <input type="text" id="edit-user-name" value="${user.name}" class="anti-autofill" name="edit_user_name">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-email">Email Address</label>
-                    <input type="email" id="edit-user-email" value="${user.email}" class="anti-autofill" name="edit_user_email">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-role">Role</label>
-                    <select id="edit-user-role">
-                        <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agent</option>
-                        <option value="quality" ${user.role === 'quality' ? 'selected' : ''}>Quality Agent</option>
-                        <option value="senior" ${user.role === 'senior' ? 'selected' : ''}>Senior Quality Analyst</option>
-                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-department">Department</label>
-                    <select id="edit-user-department">
-                        <option value="customer_service" ${user.department === 'customer_service' ? 'selected' : ''}>Customer Service</option>
-                        <option value="logistics" ${user.department === 'logistics' ? 'selected' : ''}>Logistics</option>
-                        <option value="operations" ${user.department === 'operations' ? 'selected' : ''}>Operations</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-status">Status</label>
-                    <select id="edit-user-status">
-                        <option value="active" ${user.is_active ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${!user.is_active ? 'selected' : ''}>Inactive</option>
-                    </select>
-                </div>
-            `;
-
-            // Store user ID for saving
-            document.getElementById('save-user-changes-btn').dataset.userId = userId;
-
-            showModal('edit-user-modal');
-        }
-
-        async function handleUserAction(userId, action) {
-            try {
-                const user = teamMembers.find(u => u.id === userId);
-                if (!user) {
-                    showToast('User not found', 'error');
-                    return;
-                }
-
-                const updates = {
-                    is_active: action === 'activate'
-                };
-
-                await updateUserProfile(userId, updates);
-                
-                showToast(`User ${action === 'activate' ? 'activated' : 'deactivated'} successfully`, 'success');
-                await loadTeamMembers();
-                
-            } catch (error) {
-                console.error('Error updating user:', error);
-                showToast('Failed to update user', 'error');
-            }
-        }
-
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize the app
-            initApp();
-            
-            // Tab navigation
-            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active tab
-                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Show corresponding content
-                    const tabId = tab.dataset.tab;
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    // Update page title
-                    document.getElementById('page-title-header').textContent = 
-                        tab.textContent.substring(2); // Simple way to get text
-                });
-            });
-            
-            // Settings navigation
-            document.querySelectorAll('.settings-nav a').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active settings tab
-                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
-                    link.classList.add('active');
-                    
-                    // Show corresponding section
-                    const sectionId = link.dataset.section;
-                    document.querySelectorAll('.settings-section').forEach(section => section.classList.remove('active'));
-                    document.getElementById(`settings-section-${sectionId}`).classList.add('active');
-                });
-            });
-            
-            // Notification bell
-            document.getElementById('notification-btn').addEventListener('click', () => {
-                document.getElementById('notification-dropdown').classList.toggle('show');
-            });
-            
-            // Close modals
-            document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const modalId = btn.dataset.modalId;
-                    hideModal(modalId);
-                });
-            });
-            
-            // Apply filters
-            document.getElementById('apply-filters-btn').addEventListener('click', () => {
-                showToast('Filters applied successfully', 'success');
-            });
-            
-            // Download report
-            document.getElementById('download-report-btn').addEventListener('click', () => {
-                showToast("Generating a formatted report based on your current filters...", 'info');
-            });
-            
-            // Export report
-            document.getElementById('export-report-btn').addEventListener('click', () => {
-                showToast('Exporting overall report...', 'info');
-            });
-            
-            // Generate report
-            document.getElementById('generate-report-btn').addEventListener('click', () => {
-                const reportType = document.getElementById('report-type').value;
-                const period = document.getElementById('report-period').value;
-                const format = document.getElementById('report-format').value;
-                
-                showToast(`Generating ${reportType} report for ${period} in ${format.toUpperCase()} format...`, 'success');
-            });
-            
-            // Apply user filters
-            document.getElementById('apply-user-filters').addEventListener('click', () => {
-                const search = document.getElementById('user-search').value;
-                const role = document.getElementById('filter-role').value;
-                const status = document.getElementById('filter-user-status').value;
-                
-                loadTeamMembers({
-                    search: search,
-                    role: role,
-                    status: status
-                });
-                
-                showToast('User filters applied', 'success');
-            });
-            
-            // Add user button
-            document.getElementById('add-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-            
-            // Submit new user
-            document.getElementById('submit-new-user-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-user-name').value;
-                const email = document.getElementById('new-user-email').value;
-                const role = document.getElementById('new-user-role').value;
-                const department = document.getElementById('new-user-department').value;
-                const password = document.getElementById('new-user-password').value;
-                
-                if (!name || !email || !role || !password) {
-                    showToast('Please fill all required fields', 'warning');
-                    return;
-                }
-                
-                // In a real implementation, this would create a new user
-                showToast(`User ${name} would be created with ${role} role`, 'info');
-                hideModal('add-user-modal');
-            });
-            
-            // Save user changes
-            document.getElementById('save-user-changes-btn').addEventListener('click', async () => {
-                const userId = document.getElementById('save-user-changes-btn').dataset.userId;
-                const name = document.getElementById('edit-user-name').value;
-                const email = document.getElementById('edit-user-email').value;
-                const role = document.getElementById('edit-user-role').value;
-                const department = document.getElementById('edit-user-department').value;
-                const status = document.getElementById('edit-user-status').value;
-                
-                try {
-                    const updates = {
-                        name: name,
-                        email: email,
-                        role: role,
-                        department: department,
-                        is_active: status === 'active'
-                    };
-                    
-                    await updateUserProfile(userId, updates);
-                    
-                    showToast('User updated successfully', 'success');
-                    hideModal('edit-user-modal');
-                    await loadTeamMembers();
-                    
-                } catch (error) {
-                    console.error('Error updating user:', error);
-                    showToast('Failed to update user', 'error');
-                }
-            });
-            
-            // Invite user
-            document.getElementById('invite-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-            
-            // Save profile
-            document.getElementById('save-profile-btn').addEventListener('click', async () => {
-                const name = document.getElementById('profile-fullname').value;
-                const email = document.getElementById('profile-email').value;
-                const phone = document.getElementById('profile-phone').value;
-                
-                try {
-                    await updateUserProfile(currentUser.id, {
-                        name: name,
-                        email: email,
-                        phone: phone
-                    });
-                    
-                    currentUser.name = name;
-                    currentUser.email = email;
-                    currentUser.phone = phone;
-                    updateUserInterface();
-                    
-                    showToast('Profile updated successfully', 'success');
-                } catch (error) {
-                    console.error('Error updating profile:', error);
-                    showToast('Failed to update profile', 'error');
-                }
-            });
-            
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    await supabase.auth.signOut();
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Error during logout:', error);
-                    showToast('Error during logout', 'error');
-                }
-            });
-
-            // Team Scheduling Buttons
-            const editScheduleBtn = document.getElementById('edit-schedule-btn');
-            const scheduleEditControls = document.getElementById('schedule-edit-controls');
-            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
-            
-            editScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = true;
-                document.getElementById('schedule-table').classList.add('edit-mode');
-                editScheduleBtn.style.display = 'none';
-                scheduleEditControls.style.display = 'inline-flex';
-                showToast('Edit mode enabled. Click on a cell to modify.', 'info');
-            });
-
-            cancelScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = false;
-                document.getElementById('schedule-table').classList.remove('edit-mode');
-                editScheduleBtn.style.display = 'inline-flex';
-                scheduleEditControls.style.display = 'none';
-                renderTeamSchedule(); // Re-render to discard changes
-                showToast('Edit mode cancelled.', 'warning');
-            });
-            
-            document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
-            
-            // Close notification dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-bell')) {
-                    document.getElementById('notification-dropdown').classList.remove('show');
-                }
-            });
-            
-            // Close modals when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('show');
-                }
-            });
         });
     </script>
 </body>
