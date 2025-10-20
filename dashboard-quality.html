@@ -1164,7 +1164,10 @@
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
             // Show/hide escalation and inquiry tabs based on role
-            if (currentUser.role === 'quality' || currentUser.role === 'admin') {
+            if (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper') {
+    document.getElementById('escalations-tab').style.display = 'flex';
+    document.getElementById('inquiries-tab').style.display = 'flex';
+}
                 document.getElementById('escalations-tab').style.display = 'flex';
                 document.getElementById('inquiries-tab').style.display = 'flex';
             }
