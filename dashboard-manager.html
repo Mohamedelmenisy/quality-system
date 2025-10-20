@@ -72,7 +72,7 @@
         .nav-group { margin-bottom: 1.5rem; padding: 0 20px; }
         .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
         .sidebar-nav { list-style:none; padding:0; margin:0; }
-        .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; }
+        .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; white-space: nowrap; }
         .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
@@ -297,6 +297,73 @@
             color: white;
         }
         
+        /* تصميم جدول الشيفتات الجديد */
+        #schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 1px solid var(--border-color);
+        }
+        
+        #schedule-table th, 
+        #schedule-table td {
+            padding: 12px 8px;
+            text-align: left;
+            border: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        
+        #schedule-table th {
+            background-color: #2c2c2c;
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            text-align: center;
+        }
+        
+        #schedule-table td.member-name {
+            font-weight: 600;
+            background-color: #222;
+        }
+        
+        #schedule-table.edit-mode .shift-cell {
+            cursor: pointer;
+            background-color: rgba(0, 191, 255, 0.1);
+            transition: background-color 0.2s ease;
+        }
+        
+        #schedule-table.edit-mode .shift-cell:hover {
+            background-color: rgba(0, 191, 255, 0.2);
+        }
+        
+        /* ألوان حالات الشيفتات */
+        .shift-cell .on-leave {
+            color: var(--yellow);
+            font-weight: 500;
+        }
+        
+        .shift-cell .sick-leave {
+            color: var(--red);
+            font-weight: 500;
+        }
+        
+        .shift-cell .off {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+        
+        .shift-cell .shift-normal {
+            color: var(--text-color);
+        }
+        
+        .schedule-edit-controls {
+            display: none;
+            gap: 0.5rem;
+        }
+        
+        .schedule-edit-controls.show {
+            display: inline-flex;
+        }
 
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
@@ -506,19 +573,11 @@
                                     <option value="year">Last Year</option>
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <label>Format</label>
-                                <select id="report-format">
-                                    <option value="pdf">PDF</option>
-                                    <option value="excel">Excel</option>
-                                    <option value="csv">CSV</option>
-                                </select>
-                            </div>
                             <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
                         </div>
                         <div class="placeholder-content">
-                            <h4>Advanced Reporting Dashboard</h4>
-                            <p>Generate detailed reports on team performance, common error types, and escalation trends.</p>
+                            <h3>Report Generation</h3>
+                            <p>Select report parameters and click "Generate Report" to create detailed analytics.</p>
                         </div>
                     </div>
                 </div>
@@ -526,131 +585,319 @@
                 <div id="teams" class="tab-content">
                     <div class="card">
                         <h3>Team Management</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label>Search Users</label>
-                                <div class="search-input-container">
-                                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" 
-                                           placeholder="Search by name or email..." 
-                                           class="anti-autofill"
-                                           id="user-search"
-                                           name="search_users">
-                                </div>
-                            </div>
-                            <div class="filter-group">
-                                <label>Role</label>
-                                <select id="filter-role">
-                                    <option value="all">All Roles</option>
-                                    <option value="agent">Agent</option>
-                                    <option value="quality">Quality Agent</option>
-                                    <option value="senior">Senior Quality</option>
-                                    <option value="manager">Manager</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Status</label>
-                                <select id="filter-user-status">
-                                    <option value="all">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" id="apply-user-filters">Apply Filters</button>
-                            <button class="btn btn-secondary" id="add-user-btn">Add New User</button>
+                        <div class="placeholder-content">
+                            <h3>Team Overview</h3>
+                            <p>This section will display team performance metrics and management tools.</p>
                         </div>
-                        <div class="table-container">
-                            <table class="user-management-table">
+                    </div>
+                </div>
+
+                <div id="team-scheduling" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Team Scheduling</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
+                                <div class="schedule-edit-controls" id="schedule-edit-controls">
+                                    <button id="save-schedule-btn" class="btn btn-secondary">Save Changes</button>
+                                    <button id="cancel-schedule-btn" class="btn btn-danger">Cancel</button>
+                                </div>
+                                <button id="add-member-btn" class="btn btn-primary">Add Member</button>
+                            </div>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table id="schedule-table">
                                 <thead>
                                     <tr>
-                                        <th>User</th>
-                                        <th>Email</th>
-                                        <th>Role</th>
-                                        <th>Department</th>
-                                        <th>Status</th>
-                                        <th>Last Active</th>
-                                        <th>Actions</th>
+                                        <th>Team Member</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                        <th>Sunday</th>
                                     </tr>
                                 </thead>
-                                <tbody id="users-table-body">
-                                    <tr><td colspan="7" class="empty-state">Loading users...</td></tr>
+                                <tbody id="schedule-table-body">
+                                    <!-- سيتم ملء الجدول ديناميكيًا -->
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
+                <div id="company-employees" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Company Employees</h3>
+                            <button id="add-employee-btn" class="btn btn-primary">Add New Employee</button>
+                        </div>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>Department</label>
+                                <select id="employee-department-filter">
+                                    <option value="all">All Departments</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Status</label>
+                                <select id="employee-status-filter">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                    <option value="pending">Pending</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="filter-employees-btn">Filter</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Department</th>
+                                        <th>Role</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-table-body">
+                                    <!-- سيتم ملء الجدول ديناميكيًا -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="departments" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                            <h3>Departments</h3>
+                            <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Department Name</th>
+                                        <th>Manager</th>
+                                        <th>Team Count</th>
+                                        <th>Employee Count</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-table-body">
+                                    <tr>
+                                        <td>Quality Assurance</td>
+                                        <td>Nawaf Al-Otaibi</td>
+                                        <td>5</td>
+                                        <td>42</td>
+                                        <td><span class="status-badge status-active">Active</span></td>
+                                        <td>
+                                            <button class="action-btn edit-user-btn" data-department-id="1">Edit</button>
+                                            <button class="action-btn danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Customer Service</td>
+                                        <td>Sarah Johnson</td>
+                                        <td>8</td>
+                                        <td>67</td>
+                                        <td><span class="status-badge status-active">Active</span></td>
+                                        <td>
+                                            <button class="action-btn edit-user-btn" data-department-id="2">Edit</button>
+                                            <button class="action-btn danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>Technical Support</td>
+                                        <td>Michael Chen</td>
+                                        <td>4</td>
+                                        <td>28</td>
+                                        <td><span class="status-badge status-active">Active</span></td>
+                                        <td>
+                                            <button class="action-btn edit-user-btn" data-department-id="3">Edit</button>
+                                            <button class="action-btn danger">Delete</button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payments" class="tab-content">
+                    <div class="card">
+                        <h3>Payment Management</h3>
+                        <div class="placeholder-content">
+                            <h3>Payment Processing</h3>
+                            <p>This section will handle payment processing and salary management.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="kpis" class="tab-content">
+                    <div class="card">
+                        <h3>Key Performance Indicators</h3>
+                        <div class="placeholder-content">
+                            <h3>KPI Dashboard</h3>
+                            <p>This section will display key performance indicators and metrics tracking.</p>
+                        </div>
+                    </div>
+                </div>
+
                 <div id="profile" class="tab-content">
                     <div class="card">
-                        <h3>Edit Profile</h3>
-                        <div class="form-group">
-                            <label for="profile-photo">Profile Picture</label>
-                            <input type="file" id="profile-photo" accept="image/*" />
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi" class="anti-autofill" name="profile_name">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" class="anti-autofill" name="profile_email">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" value="+966 55 555 1234" class="anti-autofill" name="profile_phone">
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn" style="background: #333; color: white;">Cancel</button>
-                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                        <h3>User Profile</h3>
+                        <div class="placeholder-content">
+                            <h3>Profile Management</h3>
+                            <p>This section will allow users to manage their profile information.</p>
                         </div>
                     </div>
                 </div>
 
                 <div id="settings" class="tab-content">
-                    <div class="card">
-                        <h3>Application Settings</h3>
-                        <p style="color: var(--text-muted); margin-top:-0.5rem; margin-bottom: 2rem;">Manage global settings, user access, and system configurations.</p>
-                        <div class="settings-layout">
-                            <nav class="settings-nav">
-                                <ul>
-                                    <li><a href="#" class="active" data-section="general">General</a></li>
-                                    <li><a href="#" data-section="user-management">User Management</a></li>
-                                    <li><a href="#" data-section="quality-standards">Quality Standards</a></li>
-                                    <li><a href="#" data-section="system">System & API</a></li>
-                                </ul>
-                            </nav>
-                            <div class="settings-content">
-                                <section id="settings-section-general" class="settings-section active">
-                                    <div class="setting-card">
-                                        <h4>General Settings</h4>
-                                        <p>Configure application-wide preferences.</p>
-                                        <button class="btn" style="background: #333; color: white;">Configure Themes & Language</button>
+                    <div class="settings-layout">
+                        <div class="settings-nav">
+                            <ul>
+                                <li><a href="#" class="settings-nav-link active" data-settings-section="general">General</a></li>
+                                <li><a href="#" class="settings-nav-link" data-settings-section="notifications">Notifications</a></li>
+                                <li><a href="#" class="settings-nav-link" data-settings-section="security">Security</a></li>
+                                <li><a href="#" class="settings-nav-link" data-settings-section="integrations">Integrations</a></li>
+                            </ul>
+                        </div>
+                        <div class="settings-content">
+                            <div id="general-settings" class="settings-section active">
+                                <div class="setting-card">
+                                    <h4>Language & Region</h4>
+                                    <p>Choose your preferred language and regional settings.</p>
+                                    <div class="form-group">
+                                        <label>Language</label>
+                                        <select>
+                                            <option>English</option>
+                                            <option>Arabic</option>
+                                            <option>Spanish</option>
+                                            <option>French</option>
+                                        </select>
                                     </div>
-                                </section>
-                                <section id="settings-section-user-management" class="settings-section">
-                                    <div class="setting-card">
-                                        <h4>User Management</h4>
-                                        <p>Invite new users, assign roles (Agent, Senior, Manager), and manage teams.</p>
-                                        <div style="display: flex; gap: 10px;">
-                                            <button class="btn btn-primary" id="invite-user-btn">Invite New User</button>
-                                            <button class="btn" style="background: #333; color: white;">Manage Roles & Teams</button>
-                                        </div>
+                                    <div class="form-group">
+                                        <label>Time Zone</label>
+                                        <select>
+                                            <option>UTC+03:00 (Riyadh)</option>
+                                            <option>UTC+00:00 (London)</option>
+                                            <option>UTC-05:00 (New York)</option>
+                                        </select>
                                     </div>
-                                </section>
-                                <section id="settings-section-quality-standards" class="settings-section">
-                                    <div class="setting-card">
-                                        <h4>Quality Standards</h4>
-                                        <p>Define error types, severity, and set monthly quality score targets for all departments.</p>
-                                        <button class="btn" style="background: #333; color: white;">Configure Quality Metrics</button>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Save Changes</button>
                                     </div>
-                                </section>
-                                <section id="settings-section-system" class="settings-section">
-                                    <div class="setting-card">
-                                        <h4>System & API</h4>
-                                        <p>Manage API keys for integrations and configure system-level settings.</p>
-                                        <button class="btn" style="background: #333; color: white;">Manage API Keys</button>
+                                </div>
+                                <div class="setting-card">
+                                    <h4>Display Settings</h4>
+                                    <p>Customize how the dashboard appears.</p>
+                                    <div class="form-group">
+                                        <label>Theme</label>
+                                        <select>
+                                            <option>Dark (Default)</option>
+                                            <option>Light</option>
+                                            <option>Auto</option>
+                                        </select>
                                     </div>
-                                </section>
+                                    <div class="form-group">
+                                        <label>Dashboard Density</label>
+                                        <select>
+                                            <option>Comfortable</option>
+                                            <option>Compact</option>
+                                        </select>
+                                    </div>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Save Changes</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="notifications-settings" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Notification Preferences</h4>
+                                    <p>Manage how and when you receive notifications.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" checked> Email Notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" checked> Push Notifications
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox"> SMS Alerts
+                                        </label>
+                                    </div>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Save Preferences</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="security-settings" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Password & Security</h4>
+                                    <p>Update your password and security settings.</p>
+                                    <div class="form-group">
+                                        <label>Current Password</label>
+                                        <input type="password">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>New Password</label>
+                                        <input type="password">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Confirm New Password</label>
+                                        <input type="password">
+                                    </div>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Update Password</button>
+                                    </div>
+                                </div>
+                                <div class="setting-card">
+                                    <h4>Two-Factor Authentication</h4>
+                                    <p>Add an extra layer of security to your account.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox"> Enable Two-Factor Authentication
+                                        </label>
+                                    </div>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Save Settings</button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div id="integrations-settings" class="settings-section">
+                                <div class="setting-card">
+                                    <h4>Third-Party Integrations</h4>
+                                    <p>Connect with other tools and services.</p>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox" checked> Slack Integration
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox"> Google Workspace
+                                        </label>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>
+                                            <input type="checkbox"> Microsoft Teams
+                                        </label>
+                                    </div>
+                                    <div class="page-actions">
+                                        <button class="btn btn-primary">Save Integrations</button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -658,1015 +905,665 @@
 
                 <div id="help" class="tab-content">
                     <div class="card">
+                        <h3>Help & Support</h3>
                         <div class="placeholder-content">
-                            <h3>Help Center & Documentation</h3>
-                            <p>Find answers to common questions or contact support for assistance.</p>
-                            <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
+                            <h3>Get Assistance</h3>
+                            <p>This section will provide help resources and contact information for support.</p>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Team Scheduling Content -->
-                <div id="team-scheduling" class="tab-content">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3>Weekly Team Schedule</h3>
-                            <div>
-                                <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
-                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                                <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                                    <button id="cancel-schedule-btn" class="btn btn-secondary" style="background-color: #333;">Cancel</button>
-                                    <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="table-container">
-                            <table class="user-management-table" id="schedule-table">
-                                <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
-                                <tbody id="schedule-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Company Employees Content -->
-                <div id="company-employees" class="tab-content">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="white-space: nowrap;">Company Employees</h3>
-                            <button id="add-company-employee-btn" class="btn btn-secondary">Add New Employee</button>
-                        </div>
-                        <div class="table-container">
-                            <table class="user-management-table">
-                                <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
-                                <tbody id="company-employees-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Departments Content -->
-                <div id="departments" class="tab-content">
-                     <div class="card">
-                        <h3>Company Departments</h3>
-                        <div class="table-container">
-                            <table class="user-management-table">
-                                <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-                                <tbody id="departments-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payments Content -->
-                <div id="payments" class="tab-content">
-                    <div class="card">
-                        <h3>Available Payment Methods</h3>
-                        <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPIs Content -->
-                <div id="kpis" class="tab-content">
-                    <div class="card">
-                        <div class="placeholder-content"><h3>KPIs Management</h3><p>This section is under development.</p></div>
                     </div>
                 </div>
             </main>
         </div>
-
-        <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 260px;">
-            &copy; 2025 Mohamed Elmenisy. All rights reserved.
-        </footer>
     </div>
 
-
-    <!-- Add User Modal -->
-    <div class="modal-overlay" id="add-user-modal">
+    <!-- Modal لإضافة موظف جديد -->
+    <div id="add-employee-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Add New User</h3>
-                <button class="modal-close-btn" data-modal-id="add-user-modal">×</button>
+                <h3 class="modal-title">Add New Employee</h3>
+                <button class="modal-close-btn" id="close-add-employee-modal">&times;</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="new-user-name">Full Name *</label>
-                    <input type="text" id="new-user-name" placeholder="Enter full name" required class="anti-autofill" name="new_user_name">
+                    <label>Full Name</label>
+                    <input type="text" id="new-employee-name" placeholder="Enter full name">
                 </div>
                 <div class="form-group">
-                    <label for="new-user-email">Email Address *</label>
-                    <input type="email" id="new-user-email" placeholder="Enter email address" required class="anti-autofill" name="new_user_email">
+                    <label>Email</label>
+                    <input type="email" id="new-employee-email" placeholder="Enter email address">
                 </div>
                 <div class="form-group">
-                    <label for="new-user-role">Role *</label>
-                    <select id="new-user-role" required>
-                        <option value="">Select role</option>
+                    <label>Department</label>
+                    <select id="new-employee-department">
+                        <option value="quality">Quality Assurance</option>
+                        <option value="customer">Customer Service</option>
+                        <option value="technical">Technical Support</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Role</label>
+                    <select id="new-employee-role">
                         <option value="agent">Agent</option>
-                        <option value="quality">Quality Agent</option>
-                        <option value="senior">Senior Quality Analyst</option>
+                        <option value="quality">Quality Specialist</option>
+                        <option value="senior">Senior Agent</option>
                         <option value="manager">Manager</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label for="new-user-department">Department</label>
-                    <select id="new-user-department">
-                        <option value="customer_service">Customer Service</option>
-                        <option value="logistics">Logistics</option>
-                        <option value="operations">Operations</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="new-user-password">Temporary Password *</label>
-                    <input type="password" id="new-user-password" placeholder="Set temporary password" required class="anti-autofill" name="new_user_password">
-                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="add-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="submit-new-user-btn">Create User</button>
+                <button class="btn btn-secondary" id="cancel-add-employee">Cancel</button>
+                <button class="btn btn-primary" id="save-new-employee">Add Employee</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div class="modal-overlay" id="edit-user-modal">
+    <!-- Modal لتعديل الشيفتات -->
+    <div id="edit-shift-modal" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Edit User</h3>
-                <button class="modal-close-btn" data-modal-id="edit-user-modal">×</button>
+                <h3 class="modal-title">Edit Shift</h3>
+                <button class="modal-close-btn" id="close-edit-shift-modal">&times;</button>
             </div>
-            <div class="modal-body" id="edit-user-body">
-                <!-- Content will be populated by JavaScript -->
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select Shift</label>
+                    <select id="shift-options">
+                        <option value="9:00 AM - 5:00 PM">9:00 AM - 5:00 PM</option>
+                        <option value="10:00 AM - 6:00 PM">10:00 AM - 6:00 PM</option>
+                        <option value="11:00 AM - 7:00 PM">11:00 AM - 7:00 PM</option>
+                        <option value="12:00 PM - 8:00 PM">12:00 PM - 8:00 PM</option>
+                        <option value="1:00 PM - 9:00 PM">1:00 PM - 9:00 PM</option>
+                        <option value="on-leave">On Leave</option>
+                        <option value="sick">Sick Leave</option>
+                        <option value="off">Off</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="save-user-changes-btn">Save Changes</button>
+                <button class="btn btn-secondary" id="cancel-edit-shift">Cancel</button>
+                <button class="btn btn-primary" id="update-shift">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لإضافة عضو جديد -->
+    <div id="add-member-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Add New Member</h3>
+                <button class="modal-close-btn" id="close-add-member-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="new-member-name" placeholder="Enter full name">
+                </div>
+                <div class="form-group">
+                    <label>Position</label>
+                    <input type="text" id="new-member-position" placeholder="Enter position">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-add-member">Cancel</button>
+                <button class="btn btn-primary" id="save-new-member">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal لتعديل القسم -->
+    <div id="edit-department-modal" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Department</h3>
+                <button class="modal-close-btn" id="close-edit-department-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Department Name</label>
+                    <input type="text" id="edit-department-name" placeholder="Enter department name">
+                </div>
+                <div class="form-group">
+                    <label>Manager</label>
+                    <select id="edit-department-manager">
+                        <option value="1">Nawaf Al-Otaibi</option>
+                        <option value="2">Sarah Johnson</option>
+                        <option value="3">Michael Chen</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <select id="edit-department-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancel-edit-department">Cancel</button>
+                <button class="btn btn-primary" id="save-department-changes">Save Changes</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
-    
-    <!-- Edit Shift Modal -->
-    <div class="modal-overlay" id="edit-shift-modal">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Shift</h3>
-                <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
-                <div class="form-group">
-                    <label for="shift-select">Shift Status</label>
-                    <select id="shift-select">
-                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
-                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
-                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
-                        <option value="On Leave">On Leave</option>
-                        <option value="Sick Leave">Sick Leave</option>
-                        <option value="Off">Off</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal" style="background-color:#333;">Cancel</button>
-                <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // حل جذري لمشكلة الـ autocomplete
-        function disableAutoComplete() {
-            // جميع حقول الإدخال في الصفحة
-            const allInputs = document.querySelectorAll('input');
-            
-            allInputs.forEach(input => {
-                // تعطيل الـ autocomplete بشكل كامل
-                input.setAttribute('autocomplete', 'new-password');
+        // حل مشكلة الـ autocomplete
+        document.addEventListener('DOMContentLoaded', function() {
+            const inputs = document.querySelectorAll('input');
+            inputs.forEach(input => {
+                input.setAttribute('autocomplete', 'off');
                 input.setAttribute('autocorrect', 'off');
                 input.setAttribute('autocapitalize', 'off');
                 input.setAttribute('spellcheck', 'false');
-                input.setAttribute('data-lpignore', 'true');
-                
-                // إضافة كلاس خاص لمنع الـ autofill
-                if (input.type !== 'password') {
-                    input.classList.add('anti-autofill');
-                }
-                
-                // منع حفظ البيانات في المتصفح
-                input.addEventListener('focus', function() {
-                    this.removeAttribute('readonly');
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.setAttribute('readonly', 'true');
-                });
-                
-                // تهيئة الحقل كقراءة فقط مؤقتاً
-                input.setAttribute('readonly', 'true');
             });
-            
-            console.log('تم تعطيل الـ autocomplete لجميع الحقول');
-        }
+        });
 
-        // Application State
-        let currentUser = null;
-        let teamMembers = [];
-        let performanceMetrics = {};
-        let errorTrends = {};
-        let departmentPerformance = {};
-        let notifications = [];
-        let errorTrendChart = null;
-        let departmentErrorsChart = null;
-        let companyEmployees = [];
-        let departments = [];
-        let teamSchedule = [];
-        let isScheduleEditMode = false;
-
-        // Toast Notification System
-        function showToast(message, type = 'info', title = '') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            
-            const icons = {
-                success: '✅',
-                error: '❌',
-                warning: '⚠️',
-                info: 'ℹ️'
-            };
-            
-            toast.innerHTML = `
-                <div class="toast-icon">${icons[type]}</div>
-                <div class="toast-content">
-                    ${title ? `<div class="toast-title">${title}</div>` : ''}
-                    <div class="toast-message">${message}</div>
-                </div>
-                <button class="toast-close">×</button>
-            `;
-            
-            container.appendChild(toast);
-            
-            // Auto remove after 5 seconds
-            setTimeout(() => {
-                if (toast.parentNode) {
-                    toast.style.opacity = '0';
-                    toast.style.transform = 'translateX(100%)';
-                    setTimeout(() => {
-                        if (toast.parentNode) {
-                            toast.parentNode.removeChild(toast);
-                        }
-                    }, 300);
-                }
-            }, 5000);
-            
-            // Close button functionality
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
+        // حل مشكلة الـ listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // إضافة معالجة الأخطاء للـ listeners
+            const originalAddEventListener = EventTarget.prototype.addEventListener;
+            EventTarget.prototype.addEventListener = function(type, listener, options) {
+                const wrappedListener = function(...args) {
+                    try {
+                        return listener.apply(this, args);
+                    } catch (error) {
+                        console.error('Error in event listener:', error);
+                        // إرجاع false بدلاً من true لتجنب مشكلة الـ asynchronous response
+                        return false;
                     }
-                }, 300);
-            });
-        }
-
-        // Helper Functions
-        function getInitials(name) {
-            if (!name) return '';
-            const names = name.split(' ');
-            return names.length > 1 ? 
-                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
-                `${names[0][0]}`.toUpperCase();
-        }
-
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
-        }
-
-        function showModal(modalId) {
-            document.getElementById(modalId)?.classList.add('show');
-        }
-
-        function hideModal(modalId) {
-            document.getElementById(modalId)?.classList.remove('show');
-        }
-
-        function getRoleBadgeClass(role) {
-            switch(role) {
-                case 'agent': return 'role-agent';
-                case 'quality': return 'role-quality';
-                case 'senior': return 'role-senior';
-                case 'manager': return 'role-manager';
-                default: return 'role-agent';
-            }
-        }
-
-        function getRoleDisplayName(role) {
-            switch(role) {
-                case 'agent': return 'Agent';
-                case 'quality': return 'Quality Agent';
-                case 'senior': return 'Senior Quality';
-                case 'manager': return 'Manager';
-                default: return role;
-            }
-        }
-
-        // Initialize the application
-        async function initApp() {
-            try {
-                showToast('Loading Manager Dashboard...', 'info');
-                
-                // تطبيق حل الـ autocomplete أولاً
-                disableAutoComplete();
-                
-                // Get current user
-                const user = await getCurrentUser();
-                if (!user) {
-                    window.location.href = 'login.html';
-                    return;
-                }
-                
-                // Get user profile
-                const { data: profile, error } = await supabase
-                    .from('users')
-                    .select('*')
-                    .eq('id', user.id)
-                    .single();
-                
-                if (error) {
-                    console.error('Error fetching user profile:', error);
-                    showToast('Failed to load user profile', 'error');
-                    return;
-                }
-                
-                currentUser = { ...user, ...profile };
-                
-                // Update UI with user data
-                updateUserInterface();
-                
-                // Initialize charts with dummy data first
-                initCharts();
-
-                // Load all data in parallel
-                await Promise.all([
-                    loadPerformanceMetrics(),
-                    loadErrorTrends(),
-                    loadDepartmentPerformance(),
-                    loadTeamMembers(),
-                    loadNotifications(),
-                    loadCompanyEmployees(),
-                    loadDepartments(),
-                    loadTeamSchedule()
-                ]);
-
-                showToast('Manager Dashboard loaded successfully', 'success');
-            } catch (error) {
-                console.error('Error initializing app:', error);
-                showToast('Failed to initialize dashboard', 'error');
-            }
-        }
-
-        function updateUserInterface() {
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
-            document.getElementById('sidebar-username').textContent = currentUser.name;
-            document.getElementById('sidebar-userrole').textContent = currentUser.role;
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
-            
-            // Profile form
-            document.getElementById('profile-fullname').value = currentUser.name;
-            document.getElementById('profile-email').value = currentUser.email;
-            document.getElementById('profile-phone').value = currentUser.phone || '';
-        }
-
-        // Load performance metrics
-        async function loadPerformanceMetrics() {
-            try {
-                performanceMetrics = await getPerformanceMetrics('month');
-                
-                // Update KPI cards
-                document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || 0;
-                document.getElementById('error-rate').textContent = `${performanceMetrics.accuracyRate || 0}%`; // Using accuracy instead of error
-                document.getElementById('active-agents').textContent = teamMembers.filter(m => m.is_active).length;
-                
-                // Update change indicators
-                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> ${performanceMetrics.totalOrders > 0 ? '5%' : '0%'} vs last month`;
-                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.accuracyRate > 0 ? '0.5%' : '0%'} vs last month`;
-                document.getElementById('agents-change').innerHTML = `<span>➕</span> ${teamMembers.length > 0 ? '2' : '0'} new agents`;
-                
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
-            }
-        }
-
-        // Load error trends
-        async function loadErrorTrends() {
-            try {
-                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
-                updateErrorTrendChart();
-            } catch (error) {
-                console.error('Error loading error trends:', error);
-            }
-        }
-
-        // Load department performance
-        async function loadDepartmentPerformance() {
-            try {
-                departmentPerformance = await getDepartmentPerformance();
-                updateDepartmentChart();
-            } catch (error) {
-                console.error('Error loading department performance:', error);
-            }
-        }
-
-        // Load team members
-        async function loadTeamMembers(filters = {}) {
-            try {
-                teamMembers = await getTeamMembers();
-                
-                // Apply filters
-                let filteredMembers = teamMembers;
-                if (filters.role && filters.role !== 'all') {
-                    filteredMembers = filteredMembers.filter(m => m.role === filters.role);
-                }
-                if (filters.status && filters.status !== 'all') {
-                    const isActive = filters.status === 'active';
-                    filteredMembers = filteredMembers.filter(m => m.is_active === isActive);
-                }
-                if (filters.search) {
-                    const searchTerm = filters.search.toLowerCase();
-                    filteredMembers = filteredMembers.filter(m => 
-                        m.name.toLowerCase().includes(searchTerm) || 
-                        m.email.toLowerCase().includes(searchTerm)
-                    );
-                }
-                
-                renderUsersTable(filteredMembers);
-                populateEmployeeFilter();
-                
-                // Update top team
-                if (teamMembers.length > 0) {
-                    document.getElementById('top-team').textContent = 'Support Team A';
-                    document.getElementById('top-team-rate').textContent = '2.1% Error Rate';
-                }
-                
-            } catch (error) {
-                console.error('Error loading team members:', error);
-                showToast('Failed to load team members', 'error');
-                teamMembers = [];
-                renderUsersTable([]);
-            }
-        }
-
-        // Load notifications
-        async function loadNotifications() {
-            try {
-                notifications = await getNotifications(currentUser.id);
-                updateNotificationsUI();
-            } catch (error) {
-                console.error('Error loading notifications:', error);
-                notifications = [];
-                updateNotificationsUI();
-            }
-        }
-
-        // Render users table
-        function renderUsersTable(users) {
-            const tableBody = document.getElementById('users-table-body');
-            if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No users found.</td></tr>`;
-            } else {
-                tableBody.innerHTML = users.map(user => `
-                    <tr>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="avatar-initials" style="width: 36px; height: 36px;">${getInitials(user.name)}</div>
-                                <div><b>${user.name}</b><br><small>${user.admin_id || 'No ID'}</small></div>
-                            </div>
-                        </td>
-                        <td>${user.email}</td>
-                        <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
-                        <td>${user.department || 'N/A'}</td>
-                        <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td>${user.last_seen ? formatDate(user.last_seen) : 'N/A'}</td>
-                        <td>
-                            <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
-                            <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
-                        </td>
-                    </tr>
-                `).join('');
-            }
-            // ربط الأحداث بالأزرار الجديدة
-            document.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', () => openEditUserModal(btn.dataset.userId)));
-            document.querySelectorAll('.action-btn[data-action]').forEach(btn => btn.addEventListener('click', () => handleUserAction(btn.dataset.userId, btn.dataset.action)));
-        }
-
-
-        // Populate employee filter
-        function populateEmployeeFilter() {
-            const employeeSelect = document.getElementById('filter-employee');
-            employeeSelect.innerHTML = '<option value="all">All</option>' + 
-                teamMembers.map(member => 
-                    `<option value="${member.id}">${member.name}</option>`
-                ).join('');
-        }
-
-        // Update notifications UI
-        function updateNotificationsUI() {
-            const notificationList = document.getElementById('notification-list');
-            
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
-            } else {
-                notificationList.innerHTML = notifications.map(notification => 
-                    `<li class="notification-item">${notification.message}</li>`
-                ).join('');
-            }
-        }
-
-        // Initialize charts
-        function initCharts() {
-            // Error Trend Chart
-            const errorTrendCtx = document.getElementById('errorTrendChart')?.getContext('2d');
-            if(errorTrendCtx) {
-                if (errorTrendChart) errorTrendChart.destroy();
-                errorTrendChart = new Chart(errorTrendCtx, {
-                    type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Error Rate %', data: [5, 4, 4.5, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, 
-                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
-                        plugins: { legend: { labels: { color: '#e6edf3' } } }
-                    }
-                });
-            }
-
-            // Department Errors Chart
-            const departmentCtx = document.getElementById('departmentErrorsChart')?.getContext('2d');
-            if(departmentCtx) {
-                if(departmentErrorsChart) departmentErrorsChart.destroy();
-                departmentErrorsChart = new Chart(departmentCtx, {
-                    type: 'doughnut', data: { labels: ['Support', 'Logistics', 'Customer Service'], datasets: [{ label: 'Errors', data: [120, 45, 75], backgroundColor: ['#007BFF', '#ffc107', '#28a745'] }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { color: '#e6edf3' } } }
-                    }
-                });
-            }
-        }
-
-        // Update charts with data
-        function updateErrorTrendChart() {
-            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
-            
-            errorTrendChart.data.labels = errorTrends.labels;
-            errorTrendChart.data.datasets[0].data = errorTrends.values;
-            errorTrendChart.update();
-        }
-
-        function updateDepartmentChart() {
-            if (!departmentErrorsChart || !departmentPerformance.departments || departmentPerformance.departments.length === 0) return;
-            
-            departmentErrorsChart.data.labels = departmentPerformance.departments;
-            departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
-            departmentErrorsChart.update();
-        }
-
-        async function loadCompanyEmployees() {
-            try {
-                companyEmployees = await getCompanyEmployees();
-                renderCompanyEmployeesTable();
-            } catch (error) { showToast('Failed to load company employees', 'error'); }
-        }
-
-        function renderCompanyEmployeesTable() {
-            const tableBody = document.getElementById('company-employees-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = companyEmployees.length === 0
-                ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
-                : companyEmployees.map(emp => `<tr><td>${emp.employee_name}</td><td>${emp.employee_username || 'N/A'}</td><td>${emp.admin_id || 'N/A'}</td><td>${emp.department || 'N/A'}</td><td>${emp.title || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
-        }
-
-        async function loadDepartments() {
-            try {
-                departments = await getDepartments();
-                renderDepartmentsTable();
-                populateDepartmentFilter(); // <-- This line is added
-            } catch (error) { showToast('Failed to load departments', 'error'); }
-        }
-
-        function renderDepartmentsTable() {
-            const tableBody = document.getElementById('departments-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = departments.length === 0
-                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
-                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
-            
-            // ربط حدث الزر
-            document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showToast('Department editing is not implemented yet.', 'info');
-                });
-            });
-        }
-        
-        function populateDepartmentFilter() {
-            const deptSelect = document.getElementById('filter-department');
-            if (!deptSelect || departments.length === 0) return;
-            deptSelect.innerHTML = '<option value="all">All</option>' + departments.map(dept => `<option value="${dept.department_name}">${dept.department_name}</option>`).join('');
-        }
-
-        async function loadTeamSchedule() {
-            try {
-                // Ensure team members are loaded first
-                if (teamMembers.length === 0) {
-                   await loadTeamMembers();
-                }
-                teamSchedule = await getTeamSchedule();
-                renderTeamSchedule();
-            } catch (error) { showToast('Failed to load team schedule', 'error'); }
-        }
-
-        function renderTeamSchedule() {
-            const tableBody = document.getElementById('schedule-table-body');
-            if (!tableBody) return;
-            // عرض جميع الأدوار الإدارية والجودة في الجدول
-            const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
-            
-            if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
-                return;
-            }
-
-            const scheduleMap = teamSchedule.reduce((acc, s) => {
-                if (!acc[s.user_id]) acc[s.user_id] = {};
-                const dayIndex = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
-                acc[s.user_id][dayIndex] = s.shift_type;
-                return acc;
-            }, {});
-
-            tableBody.innerHTML = teamToSchedule.map(member => {
-                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
-                const cells = daysOfWeek.map(day => {
-                    const shift = scheduleMap[member.id]?.[day] || 'Off';
-                    const className = shift.replace(/\s/g, '-').toLowerCase();
-                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${className}">${shift}</span></td>`;
-                }).join('');
-                return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
-            }).join('');
-
-            // تفعيل الضغط على الخلايا
-            document.querySelectorAll('#schedule-table .shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => {
-                    if (document.getElementById('schedule-table').classList.contains('edit-mode')) {
-                        openShiftModal(cell.dataset);
-                    }
-                });
-            });
-        }
-        
-        function openShiftModal(dataset) {
-            const { userId, day, userName } = dataset;
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            document.getElementById('shift-modal-member-name').textContent = userName;
-            document.getElementById('shift-modal-day-name').textContent = days[day];
-            document.getElementById('save-shift-btn').dataset.userId = userId;
-            document.getElementById('save-shift-btn').dataset.day = day;
-            showModal('edit-shift-modal');
-        }
-
-        async function handleSaveShift() {
-            const { userId, day } = document.getElementById('save-shift-btn').dataset;
-            const shiftType = document.getElementById('shift-select').value;
-            const today = new Date();
-            const distance = day - today.getDay();
-            const targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() + distance);
-            const shiftDate = targetDate.toISOString().split('T')[0];
-
-            try {
-                await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
-                showToast('Schedule updated successfully', 'success');
-                hideModal('edit-shift-modal');
-                await loadTeamSchedule();
-            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
-        }
-
-
-        // Modal functions
-        function openEditUserModal(userId) {
-            const user = teamMembers.find(u => u.id === userId);
-            if (!user) {
-                showToast('User not found', 'error');
-                return;
-            }
-
-            document.getElementById('edit-user-body').innerHTML = `
-                <div class="form-group">
-                    <label for="edit-user-name">Full Name</label>
-                    <input type="text" id="edit-user-name" value="${user.name}" class="anti-autofill" name="edit_user_name">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-email">Email Address</label>
-                    <input type="email" id="edit-user-email" value="${user.email}" class="anti-autofill" name="edit_user_email">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-role">Role</label>
-                    <select id="edit-user-role">
-                        <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agent</option>
-                        <option value="quality" ${user.role === 'quality' ? 'selected' : ''}>Quality Agent</option>
-                        <option value="senior" ${user.role === 'senior' ? 'selected' : ''}>Senior Quality Analyst</option>
-                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-department">Department</label>
-                    <select id="edit-user-department">
-                        <option value="customer_service" ${user.department === 'customer_service' ? 'selected' : ''}>Customer Service</option>
-                        <option value="logistics" ${user.department === 'logistics' ? 'selected' : ''}>Logistics</option>
-                        <option value="operations" ${user.department === 'operations' ? 'selected' : ''}>Operations</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-status">Status</label>
-                    <select id="edit-user-status">
-                        <option value="active" ${user.is_active ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${!user.is_active ? 'selected' : ''}>Inactive</option>
-                    </select>
-                </div>
-            `;
-
-            // Store user ID for saving
-            document.getElementById('save-user-changes-btn').dataset.userId = userId;
-
-            showModal('edit-user-modal');
-        }
-
-        async function handleUserAction(userId, action) {
-            try {
-                const user = teamMembers.find(u => u.id === userId);
-                if (!user) {
-                    showToast('User not found', 'error');
-                    return;
-                }
-
-                const updates = {
-                    is_active: action === 'activate'
                 };
+                return originalAddEventListener.call(this, type, wrappedListener, options);
+            };
 
-                await updateUserProfile(userId, updates);
+            // إضافة معالجة للـ Promises
+            window.addEventListener('unhandledrejection', function(event) {
+                console.warn('Unhandled promise rejection:', event.reason);
+                event.preventDefault();
+            });
+
+            // إضافة معالجة للأخطاء العامة
+            window.addEventListener('error', function(event) {
+                console.error('Global error:', event.error);
+            });
+        });
+
+        // بيانات تجريبية للجدول
+        const scheduleData = [
+            { name: "Ahmed Mohammed", shifts: ["9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "10:00 AM - 6:00 PM", "9:00 AM - 5:00 PM", "on-leave", "off", "off"] },
+            { name: "Sarah Johnson", shifts: ["10:00 AM - 6:00 PM", "10:00 AM - 6:00 PM", "10:00 AM - 6:00 PM", "11:00 AM - 7:00 PM", "11:00 AM - 7:00 PM", "off", "off"] },
+            { name: "Michael Chen", shifts: ["9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "sick", "9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "off", "off"] },
+            { name: "Fatima Al-Rashid", shifts: ["11:00 AM - 7:00 PM", "11:00 AM - 7:00 PM", "11:00 AM - 7:00 PM", "11:00 AM - 7:00 PM", "11:00 AM - 7:00 PM", "off", "off"] }
+        ];
+
+        // بيانات الموظفين
+        const employeesData = [
+            { id: 1, name: "Ahmed Mohammed", email: "ahmed@company.com", department: "Quality Assurance", role: "Agent", status: "active" },
+            { id: 2, name: "Sarah Johnson", email: "sarah@company.com", department: "Customer Service", role: "Senior Agent", status: "active" },
+            { id: 3, name: "Michael Chen", email: "michael@company.com", department: "Technical Support", role: "Quality Specialist", status: "active" },
+            { id: 4, name: "Fatima Al-Rashid", email: "fatima@company.com", department: "Quality Assurance", role: "Agent", status: "pending" }
+        ];
+
+        // تهيئة الجدول عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeScheduleTable();
+            initializeEmployeesTable();
+            setupEventListeners();
+            setupModals();
+            setupTabs();
+            setupSettingsNavigation();
+            setupNotificationDropdown();
+        });
+
+        // تهيئة جدول الشيفتات
+        function initializeScheduleTable() {
+            const tableBody = document.getElementById('schedule-table-body');
+            tableBody.innerHTML = '';
+
+            scheduleData.forEach(member => {
+                const row = document.createElement('tr');
                 
-                showToast(`User ${action === 'activate' ? 'activated' : 'deactivated'} successfully`, 'success');
-                await loadTeamMembers();
+                // اسم العضو
+                const nameCell = document.createElement('td');
+                nameCell.className = 'member-name';
+                nameCell.textContent = member.name;
+                row.appendChild(nameCell);
                 
-            } catch (error) {
-                console.error('Error updating user:', error);
-                showToast('Failed to update user', 'error');
-            }
+                // الشيفتات
+                member.shifts.forEach(shift => {
+                    const shiftCell = document.createElement('td');
+                    shiftCell.className = 'shift-cell';
+                    
+                    const shiftSpan = document.createElement('span');
+                    shiftSpan.textContent = shift;
+                    
+                    // تحديد لون النص بناءً على حالة الشيفت
+                    if (shift === 'on-leave') {
+                        shiftSpan.className = 'on-leave';
+                    } else if (shift === 'sick') {
+                        shiftSpan.className = 'sick-leave';
+                    } else if (shift === 'off') {
+                        shiftSpan.className = 'off';
+                    } else {
+                        shiftSpan.className = 'shift-normal';
+                    }
+                    
+                    shiftCell.appendChild(shiftSpan);
+                    row.appendChild(shiftCell);
+                });
+                
+                tableBody.appendChild(row);
+            });
         }
 
-        // Event Listeners
-        document.addEventListener('DOMContentLoaded', () => {
-            // Initialize the app
-            initApp();
-            
-            // Tab navigation
-            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active tab
-                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
-                    tab.classList.add('active');
-                    
-                    // Show corresponding content
-                    const tabId = tab.dataset.tab;
-                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-                    document.getElementById(tabId).classList.add('active');
-                    
-                    // Update page title
-                    document.getElementById('page-title-header').textContent = 
-                        tab.textContent.substring(2); // Simple way to get text
-                });
-            });
-            
-            // Settings navigation
-            document.querySelectorAll('.settings-nav a').forEach(link => {
-                link.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    
-                    // Update active settings tab
-                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
-                    link.classList.add('active');
-                    
-                    // Show corresponding section
-                    const sectionId = link.dataset.section;
-                    document.querySelectorAll('.settings-section').forEach(section => section.classList.remove('active'));
-                    document.getElementById(`settings-section-${sectionId}`).classList.add('active');
-                });
-            });
-            
-            // Notification bell
-            document.getElementById('notification-btn').addEventListener('click', () => {
-                document.getElementById('notification-dropdown').classList.toggle('show');
-            });
-            
-            // Close modals
-            document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const modalId = btn.dataset.modalId;
-                    hideModal(modalId);
-                });
-            });
-            
-            // Apply filters
-            document.getElementById('apply-filters-btn').addEventListener('click', () => {
-                showToast('Filters applied successfully', 'success');
-            });
-            
-            document.getElementById('download-report-btn').addEventListener('click', () => {
-                showToast("Generating report for download...", 'info');
-            });
-            
-            document.getElementById('export-report-btn').addEventListener('click', () => {
-                showToast('Generating overall system report...', 'info');
-            });
-            
-            // Generate report
-            document.getElementById('generate-report-btn').addEventListener('click', () => {
-                const reportType = document.getElementById('report-type').value;
-                const period = document.getElementById('report-period').value;
-                const format = document.getElementById('report-format').value;
+        // تهيئة جدول الموظفين
+        function initializeEmployeesTable() {
+            const tableBody = document.getElementById('employees-table-body');
+            tableBody.innerHTML = '';
+
+            employeesData.forEach(employee => {
+                const row = document.createElement('tr');
                 
-                showToast(`Generating ${reportType} report for ${period} in ${format.toUpperCase()} format...`, 'success');
-            });
-            
-            // Apply user filters
-            document.getElementById('apply-user-filters').addEventListener('click', () => {
-                const search = document.getElementById('user-search').value;
-                const role = document.getElementById('filter-role').value;
-                const status = document.getElementById('filter-user-status').value;
+                row.innerHTML = `
+                    <td>${employee.name}</td>
+                    <td>${employee.email}</td>
+                    <td>${employee.department}</td>
+                    <td><span class="role-badge role-${employee.role.toLowerCase().replace(' ', '-')}">${employee.role}</span></td>
+                    <td><span class="status-badge status-${employee.status}">${employee.status.charAt(0).toUpperCase() + employee.status.slice(1)}</span></td>
+                    <td>
+                        <button class="action-btn edit-user-btn" data-employee-id="${employee.id}">Edit</button>
+                        <button class="action-btn danger">Delete</button>
+                    </td>
+                `;
                 
-                loadTeamMembers({
-                    search: search,
-                    role: role,
-                    status: status
-                });
-                
-                showToast('User filters applied', 'success');
+                tableBody.appendChild(row);
             });
-            
-            // Add user button
-            document.getElementById('add-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-             
-            document.getElementById('add-member-schedule-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
+        }
+
+        // إعداد مستمعي الأحداث
+        function setupEventListeners() {
+            // زر تعديل الجدول
+            document.getElementById('edit-schedule-btn').addEventListener('click', function() {
+                document.getElementById('schedule-table').classList.add('edit-mode');
+                document.getElementById('edit-schedule-btn').style.display = 'none';
+                document.getElementById('schedule-edit-controls').classList.add('show');
             });
 
-            // Submit new user
-            document.getElementById('submit-new-user-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-user-name').value;
-                const email = document.getElementById('new-user-email').value;
-                const role = document.getElementById('new-user-role').value;
-                const department = document.getElementById('new-user-department').value;
-                const password = document.getElementById('new-user-password').value;
-                
-                if (!name || !email || !role || !password) {
-                    showToast('Please fill all required fields', 'warning');
-                    return;
-                }
-                
-                // In a real implementation, this would create a new user
-                showToast(`User ${name} would be created with ${role} role`, 'info');
-                hideModal('add-user-modal');
+            // زر حفظ التعديلات
+            document.getElementById('save-schedule-btn').addEventListener('click', function() {
+                document.getElementById('schedule-table').classList.remove('edit-mode');
+                document.getElementById('edit-schedule-btn').style.display = 'inline-block';
+                document.getElementById('schedule-edit-controls').classList.remove('show');
+                showToast('Schedule updated successfully!', 'success');
             });
-            
-            // Save user changes
-            document.getElementById('save-user-changes-btn').addEventListener('click', async () => {
-                const userId = document.getElementById('save-user-changes-btn').dataset.userId;
-                const name = document.getElementById('edit-user-name').value;
-                const email = document.getElementById('edit-user-email').value;
-                const role = document.getElementById('edit-user-role').value;
-                const department = document.getElementById('edit-user-department').value;
-                const status = document.getElementById('edit-user-status').value;
+
+            // زر إلغاء التعديلات
+            document.getElementById('cancel-schedule-btn').addEventListener('click', function() {
+                document.getElementById('schedule-table').classList.remove('edit-mode');
+                document.getElementById('edit-schedule-btn').style.display = 'inline-block';
+                document.getElementById('schedule-edit-controls').classList.remove('show');
+                // إعادة تحميل البيانات الأصلية
+                initializeScheduleTable();
+                showToast('Changes cancelled', 'warning');
+            });
+
+            // إضافة موظف جديد
+            document.getElementById('add-employee-btn').addEventListener('click', function() {
+                document.getElementById('add-employee-modal').classList.add('show');
+            });
+
+            // إضافة عضو جديد
+            document.getElementById('add-member-btn').addEventListener('click', function() {
+                document.getElementById('add-member-modal').classList.add('show');
+            });
+
+            // حفظ العضو الجديد
+            document.getElementById('save-new-member').addEventListener('click', function() {
+                const name = document.getElementById('new-member-name').value;
+                const position = document.getElementById('new-member-position').value;
                 
-                try {
-                    const updates = {
+                if (name && position) {
+                    // إضافة العضو الجديد إلى البيانات
+                    scheduleData.push({
                         name: name,
-                        email: email,
-                        role: role,
-                        department: department,
-                        is_active: status === 'active'
-                    };
-                    
-                    await updateUserProfile(userId, updates);
-                    
-                    showToast('User updated successfully', 'success');
-                    hideModal('edit-user-modal');
-                    await loadTeamMembers();
-                    
-                } catch (error) {
-                    console.error('Error updating user:', error);
-                    showToast('Failed to update user', 'error');
-                }
-            });
-            
-            // Invite user
-            document.getElementById('invite-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-            
-            // Save profile
-            document.getElementById('save-profile-btn').addEventListener('click', async () => {
-                const name = document.getElementById('profile-fullname').value;
-                const email = document.getElementById('profile-email').value;
-                const phone = document.getElementById('profile-phone').value;
-                
-                try {
-                    await updateUserProfile(currentUser.id, {
-                        name: name,
-                        email: email,
-                        phone: phone
+                        shifts: ["9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "9:00 AM - 5:00 PM", "off", "off"]
                     });
                     
-                    currentUser.name = name;
-                    currentUser.email = email;
-                    currentUser.phone = phone;
-                    updateUserInterface();
+                    // تحديث الجدول
+                    initializeScheduleTable();
                     
-                    showToast('Profile updated successfully', 'success');
-                } catch (error) {
-                    console.error('Error updating profile:', error);
-                    showToast('Failed to update profile', 'error');
-                }
-            });
-            
-            // Logout
-            document.getElementById('logout-btn').addEventListener('click', async () => {
-                try {
-                    await supabase.auth.signOut();
-                    window.location.href = 'login.html';
-                } catch (error) {
-                    console.error('Error during logout:', error);
-                    showToast('Error during logout', 'error');
+                    // إغلاق المودال
+                    document.getElementById('add-member-modal').classList.remove('show');
+                    
+                    // إظهار رسالة نجاح
+                    showToast('Member added successfully!', 'success');
+                    
+                    // إعادة تعيين الحقول
+                    document.getElementById('new-member-name').value = '';
+                    document.getElementById('new-member-position').value = '';
+                } else {
+                    showToast('Please fill all fields', 'error');
                 }
             });
 
-            // Team Scheduling Buttons
-            const editScheduleBtn = document.getElementById('edit-schedule-btn');
-            const scheduleEditControls = document.getElementById('schedule-edit-controls');
-            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
-            
-            editScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = true;
-                document.getElementById('schedule-table').classList.add('edit-mode');
-                editScheduleBtn.style.display = 'none';
-                scheduleEditControls.style.display = 'inline-flex';
-                showToast('Edit mode enabled. Click on a cell to modify.', 'info');
+            // حفظ الموظف الجديد
+            document.getElementById('save-new-employee').addEventListener('click', function() {
+                const name = document.getElementById('new-employee-name').value;
+                const email = document.getElementById('new-employee-email').value;
+                const department = document.getElementById('new-employee-department').value;
+                const role = document.getElementById('new-employee-role').value;
+                
+                if (name && email && department && role) {
+                    // إضافة الموظف الجديد إلى البيانات
+                    employeesData.push({
+                        id: employeesData.length + 1,
+                        name: name,
+                        email: email,
+                        department: document.getElementById('new-employee-department').options[document.getElementById('new-employee-department').selectedIndex].text,
+                        role: role.charAt(0).toUpperCase() + role.slice(1),
+                        status: 'pending'
+                    });
+                    
+                    // تحديث الجدول
+                    initializeEmployeesTable();
+                    
+                    // إغلاق المودال
+                    document.getElementById('add-employee-modal').classList.remove('show');
+                    
+                    // إظهار رسالة نجاح
+                    showToast('Employee added successfully!', 'success');
+                    
+                    // إعادة تعيين الحقول
+                    document.getElementById('new-employee-name').value = '';
+                    document.getElementById('new-employee-email').value = '';
+                    document.getElementById('new-employee-department').selectedIndex = 0;
+                    document.getElementById('new-employee-role').selectedIndex = 0;
+                } else {
+                    showToast('Please fill all fields', 'error');
+                }
             });
 
-            cancelScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = false;
-                document.getElementById('schedule-table').classList.remove('edit-mode');
-                editScheduleBtn.style.display = 'inline-flex';
-                scheduleEditControls.style.display = 'none';
-                renderTeamSchedule(); // Re-render to discard changes
-                showToast('Edit mode cancelled.', 'warning');
+            // تعديل القسم
+            document.querySelectorAll('.edit-user-btn[data-department-id]').forEach(button => {
+                button.addEventListener('click', function() {
+                    document.getElementById('edit-department-modal').classList.add('show');
+                });
             });
-            
-            document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
-            
-            // Close notification dropdown when clicking outside
-            document.addEventListener('click', (e) => {
+
+            // حفظ تعديل القسم
+            document.getElementById('save-department-changes').addEventListener('click', function() {
+                document.getElementById('edit-department-modal').classList.remove('show');
+                showToast('Department updated successfully!', 'success');
+            });
+
+            // النقر على خلايا الشيفتات في وضع التعديل
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('.shift-cell') && document.getElementById('schedule-table').classList.contains('edit-mode')) {
+                    document.getElementById('edit-shift-modal').classList.add('show');
+                    
+                    // حفظ المرجع للخلية التي تم النقر عليها
+                    window.currentShiftCell = e.target.closest('.shift-cell');
+                }
+            });
+
+            // تحديث الشيفت
+            document.getElementById('update-shift').addEventListener('click', function() {
+                const selectedShift = document.getElementById('shift-options').value;
+                const shiftSpan = window.currentShiftCell.querySelector('span');
+                
+                // تحديث النص
+                shiftSpan.textContent = selectedShift;
+                
+                // تحديث اللون بناءً على الحالة الجديدة
+                shiftSpan.className = '';
+                if (selectedShift === 'on-leave') {
+                    shiftSpan.className = 'on-leave';
+                } else if (selectedShift === 'sick') {
+                    shiftSpan.className = 'sick-leave';
+                } else if (selectedShift === 'off') {
+                    shiftSpan.className = 'off';
+                } else {
+                    shiftSpan.className = 'shift-normal';
+                }
+                
+                // إغلاق المودال
+                document.getElementById('edit-shift-modal').classList.remove('show');
+                
+                // إظهار رسالة نجاح
+                showToast('Shift updated successfully!', 'success');
+            });
+        }
+
+        // إعداد المودالات
+        function setupModals() {
+            // إغلاق المودالات عند النقر على زر الإغلاق
+            document.querySelectorAll('.modal-close-btn').forEach(button => {
+                button.addEventListener('click', function() {
+                    this.closest('.modal-overlay').classList.remove('show');
+                });
+            });
+
+            // إغلاق المودالات عند النقر خارجها
+            document.querySelectorAll('.modal-overlay').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === this) {
+                        this.classList.remove('show');
+                    }
+                });
+            });
+
+            // إلغاء إضافة موظف
+            document.getElementById('cancel-add-employee').addEventListener('click', function() {
+                document.getElementById('add-employee-modal').classList.remove('show');
+            });
+
+            // إلغاء إضافة عضو
+            document.getElementById('cancel-add-member').addEventListener('click', function() {
+                document.getElementById('add-member-modal').classList.remove('show');
+            });
+
+            // إلغاء تعديل الشيفت
+            document.getElementById('cancel-edit-shift').addEventListener('click', function() {
+                document.getElementById('edit-shift-modal').classList.remove('show');
+            });
+
+            // إلغاء تعديل القسم
+            document.getElementById('cancel-edit-department').addEventListener('click', function() {
+                document.getElementById('edit-department-modal').classList.remove('show');
+            });
+        }
+
+        // إعداد التبويبات
+        function setupTabs() {
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabId = this.getAttribute('data-tab');
+                    
+                    // إخفاء جميع المحتويات
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // إزالة النشاط من جميع التبويبات
+                    document.querySelectorAll('.sidebar-nav a').forEach(tab => {
+                        tab.classList.remove('active');
+                    });
+                    
+                    // إظهار المحتوى المحدد
+                    document.getElementById(tabId).classList.add('active');
+                    this.classList.add('active');
+                    
+                    // تحديث عنوان الصفحة
+                    document.getElementById('page-title-header').textContent = this.textContent.trim();
+                });
+            });
+        }
+
+        // إعداد إعدادات التنقل
+        function setupSettingsNavigation() {
+            document.querySelectorAll('.settings-nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // إزالة النشاط من جميع الروابط
+                    document.querySelectorAll('.settings-nav-link').forEach(link => {
+                        link.classList.remove('active');
+                    });
+                    
+                    // إخفاء جميع الأقسام
+                    document.querySelectorAll('.settings-section').forEach(section => {
+                        section.classList.remove('active');
+                    });
+                    
+                    // إظهار القسم المحدد
+                    const sectionId = this.getAttribute('data-settings-section') + '-settings';
+                    document.getElementById(sectionId).classList.add('active');
+                    this.classList.add('active');
+                });
+            });
+        }
+
+        // إعداد قائمة الإشعارات
+        function setupNotificationDropdown() {
+            document.getElementById('notification-btn').addEventListener('click', function() {
+                document.getElementById('notification-dropdown').classList.toggle('show');
+            });
+
+            // إغلاق القائمة عند النقر خارجها
+            document.addEventListener('click', function(e) {
                 if (!e.target.closest('.notification-bell')) {
                     document.getElementById('notification-dropdown').classList.remove('show');
                 }
             });
+        }
+
+        // وظيفة لإظهار الإشعارات
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
             
-            // Close modals when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('show');
+            let icon = 'ℹ️';
+            let title = 'Info';
+            
+            switch(type) {
+                case 'success':
+                    icon = '✅';
+                    title = 'Success';
+                    break;
+                case 'error':
+                    icon = '❌';
+                    title = 'Error';
+                    break;
+                case 'warning':
+                    icon = '⚠️';
+                    title = 'Warning';
+                    break;
+            }
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-content">
+                    <div class="toast-title">${title}</div>
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">&times;</button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // إغلاق الإشعار تلقائياً بعد 5 ثوان
+            setTimeout(() => {
+                toast.remove();
+            }, 5000);
+            
+            // إغلاق الإشعار يدوياً
+            toast.querySelector('.toast-close').addEventListener('click', function() {
+                toast.remove();
+            });
+        }
+
+        // تهيئة الرسوم البيانية
+        document.addEventListener('DOMContentLoaded', function() {
+            // Error Trend Chart
+            const errorTrendCtx = document.getElementById('errorTrendChart').getContext('2d');
+            const errorTrendChart = new Chart(errorTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7', 'Day 8', 'Day 9', 'Day 10', 'Day 11', 'Day 12', 'Day 13', 'Day 14', 'Day 15', 'Day 16', 'Day 17', 'Day 18', 'Day 19', 'Day 20', 'Day 21', 'Day 22', 'Day 23', 'Day 24', 'Day 25', 'Day 26', 'Day 27', 'Day 28', 'Day 29', 'Day 30'],
+                    datasets: [{
+                        label: 'Error Rate %',
+                        data: [5.2, 4.8, 5.5, 4.9, 5.1, 4.7, 4.5, 4.3, 4.6, 4.4, 4.2, 4.1, 4.0, 3.9, 3.8, 3.7, 3.6, 3.5, 3.4, 3.3, 3.2, 3.1, 3.0, 2.9, 2.8, 2.7, 2.6, 2.5, 2.4, 2.3],
+                        borderColor: '#00bfff',
+                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#8b949e'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Department Errors Chart
+            const departmentErrorsCtx = document.getElementById('departmentErrorsChart').getContext('2d');
+            const departmentErrorsChart = new Chart(departmentErrorsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Quality Assurance', 'Customer Service', 'Technical Support'],
+                    datasets: [{
+                        data: [45, 30, 25],
+                        backgroundColor: [
+                            'rgba(0, 191, 255, 0.7)',
+                            'rgba(40, 167, 69, 0.7)',
+                            'rgba(255, 193, 7, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgba(0, 191, 255, 1)',
+                            'rgba(40, 167, 69, 1)',
+                            'rgba(255, 193, 7, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#8b949e',
+                                padding: 20
+                            }
+                        }
+                    }
                 }
             });
         });
