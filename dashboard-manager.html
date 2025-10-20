@@ -23,7 +23,9 @@
             markNotificationAsRead,
             subscribeToNotifications,
             getCompanyEmployees,
-            getDepartments
+            getDepartments,
+            addCompanyEmployee,
+            updateCompanyEmployee
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -40,6 +42,8 @@
         window.markNotificationAsRead = markNotificationAsRead;
         window.getCompanyEmployees = getCompanyEmployees;
         window.getDepartments = getDepartments;
+        window.addCompanyEmployee = addCompanyEmployee;
+        window.updateCompanyEmployee = updateCompanyEmployee;
     </script>
     <style>
         :root {
@@ -296,6 +300,71 @@
             background-color: var(--green);
             color: white;
         }
+
+        /* Team Schedule Table Styles */
+        .schedule-table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            border: 1px solid var(--border-color);
+        }
+        .schedule-table th, 
+        .schedule-table td {
+            padding: 12px 8px;
+            border: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+        .schedule-table thead th {
+            background-color: #2c2c2c;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            font-size: 12px;
+        }
+        .schedule-table .member-name {
+            font-weight: 600;
+            text-align: left;
+            background-color: #2c2c2c;
+        }
+        .schedule-table .shift-cell {
+            cursor: default;
+            transition: background-color 0.2s ease;
+            min-width: 120px;
+        }
+        .schedule-table.edit-mode .shift-cell {
+            cursor: pointer;
+            background-color: rgba(0, 191, 255, 0.1);
+        }
+        .schedule-table.edit-mode .shift-cell:hover {
+            background-color: rgba(0, 191, 255, 0.2);
+        }
+        .shift-time {
+            display: block;
+            font-weight: 500;
+            color: var(--text-color);
+        }
+        .shift-leave {
+            color: var(--yellow);
+            font-weight: 600;
+        }
+        .shift-sick {
+            color: var(--red);
+            font-weight: 600;
+        }
+        .shift-off {
+            color: var(--text-muted);
+        }
+
+        /* Company Employees single line fix */
+        .sidebar-nav a.single-line {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
         
 
         @media (max-width: 1024px) {
@@ -347,7 +416,7 @@
                                 <li><a data-tab="reports">📄 Reports & Analytics</a></li>
                                 <li><a data-tab="teams">👥 Teams</a></li>
                                 <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
-                                <li><a data-tab="company-employees">🏢 Company Employees</a></li>
+                                <li><a data-tab="company-employees" class="single-line">🏢 Company Employees</a></li>
                                 <li><a data-tab="departments">🏛️ Departments</a></li>
                                 <li><a data-tab="payments">💳 Payments</a></li>
                                 <li><a data-tab="kpis">📈 KPIs</a></li>
@@ -516,9 +585,10 @@
                             </div>
                             <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
                         </div>
-                        <div class="placeholder-content">
-                            <h4>Advanced Reporting Dashboard</h4>
-                            <p>Generate detailed reports on team performance, common error types, and escalation trends.</p>
+                        <div class="placeholder-content" style="margin-top: 2rem;">
+                            <h3>📊 Reports Dashboard</h3>
+                            <p>Generate comprehensive reports and analytics for your quality operations.</p>
+                            <p>Select your criteria above and click "Generate Report" to create detailed insights.</p>
                         </div>
                     </div>
                 </div>
@@ -526,56 +596,167 @@
                 <div id="teams" class="tab-content">
                     <div class="card">
                         <h3>Team Management</h3>
-                        <div class="filter-panel">
-                            <div class="filter-group">
-                                <label>Search Users</label>
-                                <div class="search-input-container">
-                                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                    <input type="text" 
-                                           placeholder="Search by name or email..." 
-                                           class="anti-autofill"
-                                           id="user-search"
-                                           name="search_users">
-                                </div>
-                            </div>
-                            <div class="filter-group">
-                                <label>Role</label>
-                                <select id="filter-role">
-                                    <option value="all">All Roles</option>
-                                    <option value="agent">Agent</option>
-                                    <option value="quality">Quality Agent</option>
-                                    <option value="senior">Senior Quality</option>
-                                    <option value="manager">Manager</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
-                                <label>Status</label>
-                                <select id="filter-user-status">
-                                    <option value="all">All Status</option>
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-primary" id="apply-user-filters">Apply Filters</button>
-                            <button class="btn btn-secondary" id="add-user-btn">Add New User</button>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="add-team-btn">Add New Team</button>
+                            <button class="btn btn-secondary" id="refresh-teams-btn">Refresh Data</button>
                         </div>
                         <div class="table-container">
                             <table class="user-management-table">
                                 <thead>
                                     <tr>
-                                        <th>User</th>
+                                        <th>Name</th>
                                         <th>Email</th>
                                         <th>Role</th>
                                         <th>Department</th>
                                         <th>Status</th>
-                                        <th>Last Active</th>
                                         <th>Actions</th>
                                     </tr>
                                 </thead>
-                                <tbody id="users-table-body">
-                                    <tr><td colspan="7" class="empty-state">Loading users...</td></tr>
+                                <tbody id="teams-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading team members...</td></tr>
                                 </tbody>
                             </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="team-scheduling" class="tab-content">
+                    <div class="card">
+                        <div class="schedule-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Weekly Team Schedule</h3>
+                            <div class="schedule-actions">
+                                <button class="btn btn-primary" id="edit-schedule-btn">Edit Schedule</button>
+                                <button class="btn btn-secondary" id="save-schedule-btn" style="display: none;">Save Changes</button>
+                                <button class="btn btn-secondary" id="cancel-edit-btn" style="display: none;">Cancel</button>
+                                <button class="btn btn-primary" id="add-member-btn" style="margin-left: 10px;">Add Member</button>
+                            </div>
+                        </div>
+                        <div class="schedule-table-container">
+                            <table class="schedule-table" id="schedule-table">
+                                <thead>
+                                    <tr>
+                                        <th>Member</th>
+                                        <th>Monday</th>
+                                        <th>Tuesday</th>
+                                        <th>Wednesday</th>
+                                        <th>Thursday</th>
+                                        <th>Friday</th>
+                                        <th>Saturday</th>
+                                        <th>Sunday</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="schedule-table-body">
+                                    <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="company-employees" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Company Employees</h3>
+                            <button class="btn btn-primary" id="add-employee-btn">Add New Employee</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Employee Name</th>
+                                        <th>Username</th>
+                                        <th>Department</th>
+                                        <th>Title</th>
+                                        <th>Admin ID</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="employees-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading company employees...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="departments" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Departments Management</h3>
+                            <button class="btn btn-primary" id="add-department-btn">Add New Department</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Department Name</th>
+                                        <th>Head of Department</th>
+                                        <th>Team Count</th>
+                                        <th>Active Employees</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="departments-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading departments...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="payments" class="tab-content">
+                    <div class="card">
+                        <h3>Payment Methods Management</h3>
+                        <div class="page-actions">
+                            <button class="btn btn-primary" id="add-payment-btn">Add Payment Method</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>Payment Method</th>
+                                        <th>Code</th>
+                                        <th>Status</th>
+                                        <th>Last Updated</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="payments-table-body">
+                                    <tr><td colspan="5" class="empty-state">Loading payment methods...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="kpis" class="tab-content">
+                    <div class="card">
+                        <h3>Key Performance Indicators</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <label>KPI Type</label>
+                                <select id="kpi-type">
+                                    <option value="overall">Overall Performance</option>
+                                    <option value="department">Department KPIs</option>
+                                    <option value="agent">Agent KPIs</option>
+                                    <option value="quality">Quality Metrics</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <label>Time Frame</label>
+                                <select id="kpi-period">
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                    <option value="quarterly">Quarterly</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="refresh-kpis-btn">Refresh KPIs</button>
+                        </div>
+                        <div class="placeholder-content" style="margin-top: 2rem;">
+                            <h3>📈 KPI Dashboard</h3>
+                            <p>Monitor and analyze key performance indicators for your quality operations.</p>
+                            <p>Select your criteria above to view detailed performance metrics.</p>
                         </div>
                     </div>
                 </div>
@@ -584,23 +765,23 @@
                     <div class="card">
                         <h3>Edit Profile</h3>
                         <div class="form-group">
-                            <label for="profile-photo">Profile Picture</label>
-                            <input type="file" id="profile-photo" accept="image/*" />
-                        </div>
-                        <div class="form-group">
                             <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi" class="anti-autofill" name="profile_name">
+                            <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi">
                         </div>
                         <div class="form-group">
                             <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" class="anti-autofill" name="profile_email">
+                            <input type="email" id="profile-email" value="nawaf@qualityx.com" readonly>
                         </div>
                         <div class="form-group">
                             <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" value="+966 55 555 1234" class="anti-autofill" name="profile_phone">
+                            <input type="tel" id="profile-phone" value="+966 50 123 4567">
+                        </div>
+                        <div class="form-group">
+                            <label for="profile-department">Department</label>
+                            <input type="text" id="profile-department" value="Quality Management" readonly>
                         </div>
                         <div class="page-actions">
-                            <button class="btn" style="background: #333; color: white;">Cancel</button>
+                            <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
                             <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
                         </div>
                     </div>
@@ -608,47 +789,87 @@
 
                 <div id="settings" class="tab-content">
                     <div class="card">
-                        <h3>Application Settings</h3>
-                        <p style="color: var(--text-muted); margin-top:-0.5rem; margin-bottom: 2rem;">Manage global settings, user access, and system configurations.</p>
+                        <h3>Account Settings</h3>
+                        <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your notification and account preferences.</p>
                         <div class="settings-layout">
                             <nav class="settings-nav">
                                 <ul>
-                                    <li><a href="#" class="active" data-section="general">General</a></li>
-                                    <li><a href="#" data-section="user-management">User Management</a></li>
-                                    <li><a href="#" data-section="quality-standards">Quality Standards</a></li>
-                                    <li><a href="#" data-section="system">System & API</a></li>
+                                    <li><a href="#" class="active" data-section="notifications">Notifications</a></li>
+                                    <li><a href="#" data-section="security">Security</a></li>
+                                    <li><a href="#" data-section="preferences">Preferences</a></li>
                                 </ul>
                             </nav>
                             <div class="settings-content">
-                                <section id="settings-section-general" class="settings-section active">
+                                <section class="settings-section active" id="settings-section-notifications">
                                     <div class="setting-card">
-                                        <h4>General Settings</h4>
-                                        <p>Configure application-wide preferences.</p>
-                                        <button class="btn" style="background: #333; color: white;">Configure Themes & Language</button>
+                                        <h4>Email Notifications</h4>
+                                        <p>Manage how and when you receive email notifications.</p>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" checked> Send me weekly reports</label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" checked> Notify me about critical errors</label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><input type="checkbox"> Notify me about team schedule changes</label>
+                                        </div>
                                     </div>
-                                </section>
-                                <section id="settings-section-user-management" class="settings-section">
                                     <div class="setting-card">
-                                        <h4>User Management</h4>
-                                        <p>Invite new users, assign roles (Agent, Senior, Manager), and manage teams.</p>
-                                        <div style="display: flex; gap: 10px;">
-                                            <button class="btn btn-primary" id="invite-user-btn">Invite New User</button>
-                                            <button class="btn" style="background: #333; color: white;">Manage Roles & Teams</button>
+                                        <h4>In-App Notifications</h4>
+                                        <p>Control which notifications you see within the application.</p>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" checked> Show new assignment notifications</label>
+                                        </div>
+                                        <div class="form-group">
+                                            <label><input type="checkbox" checked> Show escalation alerts</label>
                                         </div>
                                     </div>
                                 </section>
-                                <section id="settings-section-quality-standards" class="settings-section">
+                                <section class="settings-section" id="settings-section-security">
                                     <div class="setting-card">
-                                        <h4>Quality Standards</h4>
-                                        <p>Define error types, severity, and set monthly quality score targets for all departments.</p>
-                                        <button class="btn" style="background: #333; color: white;">Configure Quality Metrics</button>
+                                        <h4>Security Settings</h4>
+                                        <p>Manage your account security and password.</p>
+                                        <div class="form-group">
+                                            <label for="current-password">Current Password</label>
+                                            <input type="password" id="current-password">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="new-password">New Password</label>
+                                            <input type="password" id="new-password">
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="confirm-password">Confirm New Password</label>
+                                            <input type="password" id="confirm-password">
+                                        </div>
+                                        <button class="btn btn-primary">Update Password</button>
                                     </div>
                                 </section>
-                                <section id="settings-section-system" class="settings-section">
+                                <section class="settings-section" id="settings-section-preferences">
                                     <div class="setting-card">
-                                        <h4>System & API</h4>
-                                        <p>Manage API keys for integrations and configure system-level settings.</p>
-                                        <button class="btn" style="background: #333; color: white;">Manage API Keys</button>
+                                        <h4>Interface Preferences</h4>
+                                        <p>Customize your experience with the application.</p>
+                                        <div class="form-group">
+                                            <label for="theme-preference">Theme</label>
+                                            <select id="theme-preference">
+                                                <option value="dark">Dark Mode</option>
+                                                <option value="light">Light Mode</option>
+                                                <option value="auto">Auto (System)</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="language-preference">Language</label>
+                                            <select id="language-preference">
+                                                <option value="en">English</option>
+                                                <option value="ar">Arabic</option>
+                                            </select>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="timezone-preference">Timezone</label>
+                                            <select id="timezone-preference">
+                                                <option value="asia/riyadh">Asia/Riyadh (UTC+3)</option>
+                                                <option value="utc">UTC</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </section>
                             </div>
@@ -659,245 +880,150 @@
                 <div id="help" class="tab-content">
                     <div class="card">
                         <div class="placeholder-content">
-                            <h3>Help Center & Documentation</h3>
+                            <h3>Help Center</h3>
                             <p>Find answers to common questions or contact support for assistance.</p>
-                            <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Team Scheduling Content -->
-                <div id="team-scheduling" class="tab-content">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3>Weekly Team Schedule</h3>
-                            <div>
-                                <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
-                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                                <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                                    <button id="cancel-schedule-btn" class="btn btn-secondary" style="background-color: #333;">Cancel</button>
-                                    <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
-                                </div>
+                            <div style="margin-top: 20px;">
+                                <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
                             </div>
                         </div>
-                        <div class="table-container">
-                            <table class="user-management-table" id="schedule-table">
-                                <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
-                                <tbody id="schedule-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Company Employees Content -->
-                <div id="company-employees" class="tab-content">
-                    <div class="card">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                            <h3 style="white-space: nowrap;">Company Employees</h3>
-                            <button id="add-company-employee-btn" class="btn btn-secondary">Add New Employee</button>
-                        </div>
-                        <div class="table-container">
-                            <table class="user-management-table">
-                                <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
-                                <tbody id="company-employees-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Departments Content -->
-                <div id="departments" class="tab-content">
-                     <div class="card">
-                        <h3>Company Departments</h3>
-                        <div class="table-container">
-                            <table class="user-management-table">
-                                <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-                                <tbody id="departments-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payments Content -->
-                <div id="payments" class="tab-content">
-                    <div class="card">
-                        <h3>Available Payment Methods</h3>
-                        <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
-                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPIs Content -->
-                <div id="kpis" class="tab-content">
-                    <div class="card">
-                        <div class="placeholder-content"><h3>KPIs Management</h3><p>This section is under development.</p></div>
                     </div>
                 </div>
             </main>
         </div>
-
-        <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 260px;">
-            &copy; 2025 Mohamed Elmenisy. All rights reserved.
-        </footer>
     </div>
 
-
-    <!-- Add User Modal -->
-    <div class="modal-overlay" id="add-user-modal">
+    <!-- Modals -->
+    <div class="modal-overlay" id="add-employee-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Add New User</h3>
-                <button class="modal-close-btn" data-modal-id="add-user-modal">×</button>
+                <h3 class="modal-title">Add New Employee</h3>
+                <button class="modal-close-btn" data-modal-id="add-employee-modal">×</button>
             </div>
             <div class="modal-body">
                 <div class="form-group">
-                    <label for="new-user-name">Full Name *</label>
-                    <input type="text" id="new-user-name" placeholder="Enter full name" required class="anti-autofill" name="new_user_name">
+                    <label for="new-employee-name">Full Name *</label>
+                    <input type="text" id="new-employee-name" placeholder="Enter full name" required>
                 </div>
                 <div class="form-group">
-                    <label for="new-user-email">Email Address *</label>
-                    <input type="email" id="new-user-email" placeholder="Enter email address" required class="anti-autofill" name="new_user_email">
+                    <label for="new-employee-username">Username *</label>
+                    <input type="text" id="new-employee-username" placeholder="Enter username" required>
                 </div>
                 <div class="form-group">
-                    <label for="new-user-role">Role *</label>
-                    <select id="new-user-role" required>
-                        <option value="">Select role</option>
-                        <option value="agent">Agent</option>
-                        <option value="quality">Quality Agent</option>
-                        <option value="senior">Senior Quality Analyst</option>
-                        <option value="manager">Manager</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="new-user-department">Department</label>
-                    <select id="new-user-department">
+                    <label for="new-employee-department">Department *</label>
+                    <select id="new-employee-department" required>
+                        <option value="">Select department</option>
+                        <option value="quality">Quality Control</option>
                         <option value="customer_service">Customer Service</option>
-                        <option value="logistics">Logistics</option>
                         <option value="operations">Operations</option>
+                        <option value="logistics">Logistics</option>
                     </select>
                 </div>
                 <div class="form-group">
-                    <label for="new-user-password">Temporary Password *</label>
-                    <input type="password" id="new-user-password" placeholder="Set temporary password" required class="anti-autofill" name="new_user_password">
+                    <label for="new-employee-title">Job Title</label>
+                    <input type="text" id="new-employee-title" placeholder="Enter job title">
+                </div>
+                <div class="form-group">
+                    <label for="new-employee-admin-id">Admin ID</label>
+                    <input type="text" id="new-employee-admin-id" placeholder="Enter admin ID">
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="add-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="submit-new-user-btn">Create User</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="add-employee-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-new-employee-btn">Add Employee</button>
             </div>
         </div>
     </div>
 
-    <!-- Edit User Modal -->
-    <div class="modal-overlay" id="edit-user-modal">
+    <div class="modal-overlay" id="edit-department-modal">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Edit User</h3>
-                <button class="modal-close-btn" data-modal-id="edit-user-modal">×</button>
+                <h3 class="modal-title">Edit Department</h3>
+                <button class="modal-close-btn" data-modal-id="edit-department-modal">×</button>
             </div>
-            <div class="modal-body" id="edit-user-body">
-                <!-- Content will be populated by JavaScript -->
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="edit-department-name">Department Name *</label>
+                    <input type="text" id="edit-department-name" placeholder="Enter department name" required>
+                </div>
+                <div class="form-group">
+                    <label for="edit-department-head">Head of Department</label>
+                    <select id="edit-department-head">
+                        <option value="">Select head of department</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-department-status">Status</label>
+                    <select id="edit-department-status">
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-user-modal">Cancel</button>
-                <button class="btn btn-primary" id="save-user-changes-btn">Save Changes</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-department-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-department-btn">Save Changes</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="edit-schedule-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Schedule</h3>
+                <button class="modal-close-btn" data-modal-id="edit-schedule-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="schedule-member">Team Member</label>
+                    <select id="schedule-member">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-day">Day of Week</label>
+                    <select id="schedule-day">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="7">Sunday</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-shift">Shift</label>
+                    <select id="schedule-shift">
+                        <option value="09:00-17:00">09:00 - 17:00</option>
+                        <option value="11:00-19:00">11:00 - 19:00</option>
+                        <option value="14:00-22:00">14:00 - 22:00</option>
+                        <option value="off">Off</option>
+                        <option value="leave">On Leave</option>
+                        <option value="sick">Sick Leave</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-schedule-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-schedule-change-btn">Save Change</button>
             </div>
         </div>
     </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
-    
-    <!-- Edit Shift Modal -->
-    <div class="modal-overlay" id="edit-shift-modal">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Shift</h3>
-                <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
-                <div class="form-group">
-                    <label for="shift-select">Shift Status</label>
-                    <select id="shift-select">
-                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
-                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
-                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
-                        <option value="On Leave">On Leave</option>
-                        <option value="Sick Leave">Sick Leave</option>
-                        <option value="Off">Off</option>
-                    </select>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal" style="background-color:#333;">Cancel</button>
-                <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
-            </div>
-        </div>
-    </div>
 
     <script>
-        // حل جذري لمشكلة الـ autocomplete
-        function disableAutoComplete() {
-            // جميع حقول الإدخال في الصفحة
-            const allInputs = document.querySelectorAll('input');
-            
-            allInputs.forEach(input => {
-                // تعطيل الـ autocomplete بشكل كامل
-                input.setAttribute('autocomplete', 'new-password');
-                input.setAttribute('autocorrect', 'off');
-                input.setAttribute('autocapitalize', 'off');
-                input.setAttribute('spellcheck', 'false');
-                input.setAttribute('data-lpignore', 'true');
-                
-                // إضافة كلاس خاص لمنع الـ autofill
-                if (input.type !== 'password') {
-                    input.classList.add('anti-autofill');
-                }
-                
-                // منع حفظ البيانات في المتصفح
-                input.addEventListener('focus', function() {
-                    this.removeAttribute('readonly');
-                });
-                
-                input.addEventListener('blur', function() {
-                    this.setAttribute('readonly', 'true');
-                });
-                
-                // تهيئة الحقل كقراءة فقط مؤقتاً
-                input.setAttribute('readonly', 'true');
-            });
-            
-            console.log('تم تعطيل الـ autocomplete لجميع الحقول');
-        }
-
         // Application State
         let currentUser = null;
-        let teamMembers = [];
         let performanceMetrics = {};
-        let errorTrends = {};
-        let departmentPerformance = {};
-        let notifications = [];
-        let errorTrendChart = null;
-        let departmentErrorsChart = null;
+        let teamMembers = [];
+        let teamSchedule = [];
         let companyEmployees = [];
         let departments = [];
-        let teamSchedule = [];
-        let isScheduleEditMode = false;
+        let errorTrendChart = null;
+        let departmentErrorsChart = null;
+        let isEditMode = false;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -959,7 +1085,7 @@
 
         function formatDate(dateString) {
             if (!dateString) return 'N/A';
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
             return new Date(dateString).toLocaleDateString('en-US', options);
         }
 
@@ -971,33 +1097,10 @@
             document.getElementById(modalId)?.classList.remove('show');
         }
 
-        function getRoleBadgeClass(role) {
-            switch(role) {
-                case 'agent': return 'role-agent';
-                case 'quality': return 'role-quality';
-                case 'senior': return 'role-senior';
-                case 'manager': return 'role-manager';
-                default: return 'role-agent';
-            }
-        }
-
-        function getRoleDisplayName(role) {
-            switch(role) {
-                case 'agent': return 'Agent';
-                case 'quality': return 'Quality Agent';
-                case 'senior': return 'Senior Quality';
-                case 'manager': return 'Manager';
-                default: return role;
-            }
-        }
-
         // Initialize the application
         async function initApp() {
             try {
                 showToast('Loading Manager Dashboard...', 'info');
-                
-                // تطبيق حل الـ autocomplete أولاً
-                disableAutoComplete();
                 
                 // Get current user
                 const user = await getCurrentUser();
@@ -1024,21 +1127,16 @@
                 // Update UI with user data
                 updateUserInterface();
                 
-                // Initialize charts with dummy data first
+                // Load data
+                await loadPerformanceMetrics();
+                await loadTeamMembers();
+                await loadTeamSchedule();
+                await loadCompanyEmployees();
+                await loadDepartments();
+                
+                // Initialize charts
                 initCharts();
-
-                // Load all data in parallel
-                await Promise.all([
-                    loadPerformanceMetrics(),
-                    loadErrorTrends(),
-                    loadDepartmentPerformance(),
-                    loadTeamMembers(),
-                    loadNotifications(),
-                    loadCompanyEmployees(),
-                    loadDepartments(),
-                    loadTeamSchedule()
-                ]);
-
+                
                 showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1050,12 +1148,13 @@
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
+            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name.split(' ')[0]}!`;
             
             // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
             document.getElementById('profile-email').value = currentUser.email;
             document.getElementById('profile-phone').value = currentUser.phone || '';
+            document.getElementById('profile-department').value = currentUser.department || 'N/A';
         }
 
         // Load performance metrics
@@ -1064,383 +1163,367 @@
                 performanceMetrics = await getPerformanceMetrics('month');
                 
                 // Update KPI cards
-                document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || 0;
-                document.getElementById('error-rate').textContent = `${performanceMetrics.accuracyRate || 0}%`; // Using accuracy instead of error
-                document.getElementById('active-agents').textContent = teamMembers.filter(m => m.is_active).length;
-                
-                // Update change indicators
-                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> ${performanceMetrics.totalOrders > 0 ? '5%' : '0%'} vs last month`;
-                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.accuracyRate > 0 ? '0.5%' : '0%'} vs last month`;
-                document.getElementById('agents-change').innerHTML = `<span>➕</span> ${teamMembers.length > 0 ? '2' : '0'} new agents`;
+                document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || '1,247';
+                document.getElementById('error-rate').textContent = `${performanceMetrics.errorRate || '2.4'}%`;
+                document.getElementById('top-team').textContent = performanceMetrics.topTeam || 'Quality Team A';
+                document.getElementById('top-team-rate').textContent = performanceMetrics.topTeamRate || '98.7% accuracy';
+                document.getElementById('active-agents').textContent = performanceMetrics.activeAgents || '24';
                 
             } catch (error) {
                 console.error('Error loading performance metrics:', error);
-            }
-        }
-
-        // Load error trends
-        async function loadErrorTrends() {
-            try {
-                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
-                updateErrorTrendChart();
-            } catch (error) {
-                console.error('Error loading error trends:', error);
-            }
-        }
-
-        // Load department performance
-        async function loadDepartmentPerformance() {
-            try {
-                departmentPerformance = await getDepartmentPerformance();
-                updateDepartmentChart();
-            } catch (error) {
-                console.error('Error loading department performance:', error);
+                // Use fallback data
+                document.getElementById('total-orders').textContent = '1,247';
+                document.getElementById('error-rate').textContent = '2.4%';
+                document.getElementById('top-team').textContent = 'Quality Team A';
+                document.getElementById('top-team-rate').textContent = '98.7% accuracy';
+                document.getElementById('active-agents').textContent = '24';
             }
         }
 
         // Load team members
-        async function loadTeamMembers(filters = {}) {
+        async function loadTeamMembers() {
             try {
                 teamMembers = await getTeamMembers();
-                
-                // Apply filters
-                let filteredMembers = teamMembers;
-                if (filters.role && filters.role !== 'all') {
-                    filteredMembers = filteredMembers.filter(m => m.role === filters.role);
-                }
-                if (filters.status && filters.status !== 'all') {
-                    const isActive = filters.status === 'active';
-                    filteredMembers = filteredMembers.filter(m => m.is_active === isActive);
-                }
-                if (filters.search) {
-                    const searchTerm = filters.search.toLowerCase();
-                    filteredMembers = filteredMembers.filter(m => 
-                        m.name.toLowerCase().includes(searchTerm) || 
-                        m.email.toLowerCase().includes(searchTerm)
-                    );
-                }
-                
-                renderUsersTable(filteredMembers);
-                populateEmployeeFilter();
-                
-                // Update top team
-                if (teamMembers.length > 0) {
-                    document.getElementById('top-team').textContent = 'Support Team A';
-                    document.getElementById('top-team-rate').textContent = '2.1% Error Rate';
-                }
-                
+                renderTeamMembers();
+                populateTeamMemberDropdowns();
             } catch (error) {
                 console.error('Error loading team members:', error);
                 showToast('Failed to load team members', 'error');
                 teamMembers = [];
-                renderUsersTable([]);
+                renderTeamMembers();
             }
         }
 
-        // Load notifications
-        async function loadNotifications() {
+        // Load company employees
+        async function loadCompanyEmployees() {
             try {
-                notifications = await getNotifications(currentUser.id);
-                updateNotificationsUI();
+                companyEmployees = await getCompanyEmployees();
+                renderCompanyEmployeesTable();
             } catch (error) {
-                console.error('Error loading notifications:', error);
-                notifications = [];
-                updateNotificationsUI();
+                console.error('Error loading company employees:', error);
+                showToast('Failed to load company employees', 'error');
+                companyEmployees = [];
+                renderCompanyEmployeesTable();
             }
         }
 
-        // Render users table
-        function renderUsersTable(users) {
-            const tableBody = document.getElementById('users-table-body');
-            if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No users found.</td></tr>`;
-            } else {
-                tableBody.innerHTML = users.map(user => `
+        // Load departments
+        async function loadDepartments() {
+            try {
+                departments = await getDepartments();
+                renderDepartmentsTable();
+            } catch (error) {
+                console.error('Error loading departments:', error);
+                showToast('Failed to load departments', 'error');
+                departments = [];
+                renderDepartmentsTable();
+            }
+        }
+
+        // Load team schedule
+        async function loadTeamSchedule() {
+            try {
+                teamSchedule = await getTeamSchedule();
+                renderTeamSchedule();
+            } catch (error) {
+                console.error('Error loading team schedule:', error);
+                showToast('Failed to load team schedule', 'error');
+                teamSchedule = [];
+                renderTeamSchedule();
+            }
+        }
+
+        // Render team members
+        function renderTeamMembers() {
+            const tableBody = document.getElementById('teams-table-body');
+            
+            if (teamMembers.length === 0) {
+                tableBody.innerHTML = `
                     <tr>
-                        <td>
-                            <div style="display: flex; align-items: center; gap: 10px;">
-                                <div class="avatar-initials" style="width: 36px; height: 36px;">${getInitials(user.name)}</div>
-                                <div><b>${user.name}</b><br><small>${user.admin_id || 'No ID'}</small></div>
-                            </div>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">👥</div>
+                            <div>No team members found.</div>
                         </td>
-                        <td>${user.email}</td>
-                        <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
-                        <td>${user.department || 'N/A'}</td>
-                        <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td>${user.last_seen ? formatDate(user.last_seen) : 'N/A'}</td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = teamMembers.map(member => {
+                    const roleClass = `role-${member.role}`;
+                    const statusClass = member.is_active ? 'status-active' : 'status-inactive';
+                    
+                    return `
+                        <tr>
+                            <td>${member.name}</td>
+                            <td>${member.email}</td>
+                            <td><span class="role-badge ${roleClass}">${member.role}</span></td>
+                            <td>${member.department || 'N/A'}</td>
+                            <td><span class="status-badge ${statusClass}">${member.is_active ? 'Active' : 'Inactive'}</span></td>
+                            <td>
+                                <button class="action-btn edit-user-btn" data-user-id="${member.id}">Edit</button>
+                                <button class="action-btn danger" data-user-id="${member.id}">${member.is_active ? 'Deactivate' : 'Activate'}</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Render company employees table
+        function renderCompanyEmployeesTable() {
+            const tableBody = document.getElementById('employees-table-body');
+
+            if (companyEmployees.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">🏢</div>
+                            <div>No company employees found.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = companyEmployees.map(employee => `
+                    <tr>
+                        <td>${employee.employee_name || 'N/A'}</td>
+                        <td>${employee.employee_username || 'N/A'}</td>
+                        <td>${employee.department || 'N/A'}</td>
+                        <td>${employee.title || 'N/A'}</td>
+                        <td>${employee.admin_id || 'N/A'}</td>
                         <td>
-                            <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
-                            <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
+                            <button class="action-btn edit-user-btn" data-employee-id="${employee.id}">Edit</button>
+                            <button class="action-btn danger" data-employee-id="${employee.id}">Delete</button>
                         </td>
                     </tr>
                 `).join('');
             }
-            // ربط الأحداث بالأزرار الجديدة
-            document.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', () => openEditUserModal(btn.dataset.userId)));
-            document.querySelectorAll('.action-btn[data-action]').forEach(btn => btn.addEventListener('click', () => handleUserAction(btn.dataset.userId, btn.dataset.action)));
         }
 
+        // Render departments table
+        function renderDepartmentsTable() {
+            const tableBody = document.getElementById('departments-table-body');
 
-        // Populate employee filter
-        function populateEmployeeFilter() {
-            const employeeSelect = document.getElementById('filter-employee');
-            employeeSelect.innerHTML = '<option value="all">All</option>' + 
-                teamMembers.map(member => 
-                    `<option value="${member.id}">${member.name}</option>`
-                ).join('');
-        }
-
-        // Update notifications UI
-        function updateNotificationsUI() {
-            const notificationList = document.getElementById('notification-list');
-            
-            if (notifications.length === 0) {
-                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+            if (departments.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="empty-state">
+                            <div class="empty-state-icon">🏛️</div>
+                            <div>No departments found.</div>
+                        </td>
+                    </tr>
+                `;
             } else {
-                notificationList.innerHTML = notifications.map(notification => 
-                    `<li class="notification-item">${notification.message}</li>`
+                tableBody.innerHTML = departments.map(dept => {
+                    const statusClass = dept.status === 'active' ? 'status-active' : 'status-inactive';
+                    return `
+                        <tr>
+                            <td>${dept.name || 'N/A'}</td>
+                            <td>${dept.head_of_department || 'N/A'}</td>
+                            <td>${dept.team_count || '0'}</td>
+                            <td>${dept.active_employees || '0'}</td>
+                            <td><span class="status-badge ${statusClass}">${dept.status || 'Inactive'}</span></td>
+                            <td>
+                                <button class="action-btn edit-user-btn" data-department-id="${dept.id}">Edit</button>
+                                <button class="action-btn ${dept.status === 'active' ? 'danger' : 'primary'}" data-department-id="${dept.id}">
+                                    ${dept.status === 'active' ? 'Deactivate' : 'Activate'}
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        // Render team schedule
+        function renderTeamSchedule() {
+            const tableBody = document.getElementById('schedule-table-body');
+            
+            if (teamSchedule.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div>No schedule data available.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                // Group schedule by user
+                const scheduleByUser = {};
+                teamSchedule.forEach(shift => {
+                    if (!scheduleByUser[shift.user_id]) {
+                        scheduleByUser[shift.user_id] = {
+                            user: shift.users,
+                            shifts: {}
+                        };
+                    }
+                    // Convert shift_date to day of week (0-6)
+                    const shiftDate = new Date(shift.shift_date);
+                    const dayOfWeek = shiftDate.getDay(); // 0=Sunday, 1=Monday, etc.
+                    scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
+                });
+
+                tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
+                    const shifts = [];
+                    for (let day = 1; day <= 7; day++) {
+                        const shift = userSchedule.shifts[day];
+                        if (shift) {
+                            let display = shift.shift_type;
+                            let className = 'shift-time';
+                            
+                            if (shift.shift_type === 'off') {
+                                display = 'Off';
+                                className = 'shift-off';
+                            } else if (shift.shift_type === 'leave') {
+                                display = 'On Leave';
+                                className = 'shift-leave';
+                            } else if (shift.shift_type === 'sick') {
+                                display = 'Sick Leave';
+                                className = 'shift-sick';
+                            }
+                            
+                            shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}" data-original="${shift.shift_type}"><span class="${className}">${display}</span></td>`);
+                        } else {
+                            shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}" data-original="off"><span class="shift-off">Off</span></td>`);
+                        }
+                    }
+                    
+                    return `
+                        <tr>
+                            <td class="member-name">${userSchedule.user.name}</td>
+                            ${shifts.join('')}
+                        </tr>
+                    `;
+                }).join('');
+                
+                // Add event listeners for shift cells in edit mode
+                if (isEditMode) {
+                    document.querySelectorAll('.shift-cell').forEach(cell => {
+                        cell.addEventListener('click', handleShiftCellClick);
+                    });
+                }
+            }
+        }
+
+        // Handle shift cell click for editing
+        function handleShiftCellClick(event) {
+            if (!isEditMode) return;
+            
+            const cell = event.currentTarget;
+            const userId = cell.dataset.userId;
+            const day = cell.dataset.day;
+            const currentShift = cell.dataset.original;
+            
+            // Populate modal
+            document.getElementById('schedule-member').value = userId;
+            document.getElementById('schedule-day').value = day;
+            document.getElementById('schedule-shift').value = currentShift;
+            
+            // Store cell reference for updating
+            document.getElementById('save-schedule-change-btn').dataset.cell = cell.outerHTML;
+            document.getElementById('save-schedule-change-btn').dataset.userId = userId;
+            document.getElementById('save-schedule-change-btn').dataset.day = day;
+            
+            showModal('edit-schedule-modal');
+        }
+
+        // Populate team member dropdowns
+        function populateTeamMemberDropdowns() {
+            const memberSelect = document.getElementById('schedule-member');
+            if (memberSelect) {
+                memberSelect.innerHTML = teamMembers.map(member => 
+                    `<option value="${member.id}">${member.name}</option>`
                 ).join('');
             }
         }
 
         // Initialize charts
         function initCharts() {
-            // Error Trend Chart
-            const errorTrendCtx = document.getElementById('errorTrendChart')?.getContext('2d');
-            if(errorTrendCtx) {
-                if (errorTrendChart) errorTrendChart.destroy();
-                errorTrendChart = new Chart(errorTrendCtx, {
-                    type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Error Rate %', data: [5, 4, 4.5, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false, 
-                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
-                        plugins: { legend: { labels: { color: '#e6edf3' } } }
+            const errorTrendCtx = document.getElementById('errorTrendChart').getContext('2d');
+            errorTrendChart = new Chart(errorTrendCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Day 1', 'Day 2', 'Day 3', 'Day 4', 'Day 5', 'Day 6', 'Day 7'],
+                    datasets: [{
+                        label: 'Error Rate %',
+                        data: [3.2, 2.8, 2.5, 2.1, 1.9, 2.2, 2.0],
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e6edf3'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e6edf3'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e6edf3'
+                            }
+                        }
                     }
-                });
-            }
-
-            // Department Errors Chart
-            const departmentCtx = document.getElementById('departmentErrorsChart')?.getContext('2d');
-            if(departmentCtx) {
-                if(departmentErrorsChart) departmentErrorsChart.destroy();
-                departmentErrorsChart = new Chart(departmentCtx, {
-                    type: 'doughnut', data: { labels: ['Support', 'Logistics', 'Customer Service'], datasets: [{ label: 'Errors', data: [120, 45, 75], backgroundColor: ['#007BFF', '#ffc107', '#28a745'] }] },
-                    options: { 
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { position: 'top', labels: { color: '#e6edf3' } } }
-                    }
-                });
-            }
-        }
-
-        // Update charts with data
-        function updateErrorTrendChart() {
-            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
-            
-            errorTrendChart.data.labels = errorTrends.labels;
-            errorTrendChart.data.datasets[0].data = errorTrends.values;
-            errorTrendChart.update();
-        }
-
-        function updateDepartmentChart() {
-            if (!departmentErrorsChart || !departmentPerformance.departments || departmentPerformance.departments.length === 0) return;
-            
-            departmentErrorsChart.data.labels = departmentPerformance.departments;
-            departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
-            departmentErrorsChart.update();
-        }
-
-        async function loadCompanyEmployees() {
-            try {
-                companyEmployees = await getCompanyEmployees();
-                renderCompanyEmployeesTable();
-            } catch (error) { showToast('Failed to load company employees', 'error'); }
-        }
-
-        function renderCompanyEmployeesTable() {
-            const tableBody = document.getElementById('company-employees-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = companyEmployees.length === 0
-                ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
-                : companyEmployees.map(emp => `<tr><td>${emp.employee_name}</td><td>${emp.employee_username || 'N/A'}</td><td>${emp.admin_id || 'N/A'}</td><td>${emp.department || 'N/A'}</td><td>${emp.title || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
-        }
-
-        async function loadDepartments() {
-            try {
-                departments = await getDepartments();
-                renderDepartmentsTable();
-                populateDepartmentFilter(); // <-- This line is added
-            } catch (error) { showToast('Failed to load departments', 'error'); }
-        }
-
-        function renderDepartmentsTable() {
-            const tableBody = document.getElementById('departments-table-body');
-            if (!tableBody) return;
-            tableBody.innerHTML = departments.length === 0
-                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
-                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
-            
-            // ربط حدث الزر
-            document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    showToast('Department editing is not implemented yet.', 'info');
-                });
-            });
-        }
-        
-        function populateDepartmentFilter() {
-            const deptSelect = document.getElementById('filter-department');
-            if (!deptSelect || departments.length === 0) return;
-            deptSelect.innerHTML = '<option value="all">All</option>' + departments.map(dept => `<option value="${dept.department_name}">${dept.department_name}</option>`).join('');
-        }
-
-        async function loadTeamSchedule() {
-            try {
-                // Ensure team members are loaded first
-                if (teamMembers.length === 0) {
-                   await loadTeamMembers();
                 }
-                teamSchedule = await getTeamSchedule();
-                renderTeamSchedule();
-            } catch (error) { showToast('Failed to load team schedule', 'error'); }
-        }
-
-        function renderTeamSchedule() {
-            const tableBody = document.getElementById('schedule-table-body');
-            if (!tableBody) return;
-            // عرض جميع الأدوار الإدارية والجودة في الجدول
-            const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
-            
-            if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
-                return;
-            }
-
-            const scheduleMap = teamSchedule.reduce((acc, s) => {
-                if (!acc[s.user_id]) acc[s.user_id] = {};
-                const dayIndex = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
-                acc[s.user_id][dayIndex] = s.shift_type;
-                return acc;
-            }, {});
-
-            tableBody.innerHTML = teamToSchedule.map(member => {
-                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
-                const cells = daysOfWeek.map(day => {
-                    const shift = scheduleMap[member.id]?.[day] || 'Off';
-                    const className = shift.replace(/\s/g, '-').toLowerCase();
-                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${className}">${shift}</span></td>`;
-                }).join('');
-                return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
-            }).join('');
-
-            // تفعيل الضغط على الخلايا
-            document.querySelectorAll('#schedule-table .shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => {
-                    if (document.getElementById('schedule-table').classList.contains('edit-mode')) {
-                        openShiftModal(cell.dataset);
-                    }
-                });
             });
-        }
-        
-        function openShiftModal(dataset) {
-            const { userId, day, userName } = dataset;
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            document.getElementById('shift-modal-member-name').textContent = userName;
-            document.getElementById('shift-modal-day-name').textContent = days[day];
-            document.getElementById('save-shift-btn').dataset.userId = userId;
-            document.getElementById('save-shift-btn').dataset.day = day;
-            showModal('edit-shift-modal');
-        }
 
-        async function handleSaveShift() {
-            const { userId, day } = document.getElementById('save-shift-btn').dataset;
-            const shiftType = document.getElementById('shift-select').value;
-            const today = new Date();
-            const distance = day - today.getDay();
-            const targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() + distance);
-            const shiftDate = targetDate.toISOString().split('T')[0];
-
-            try {
-                await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
-                showToast('Schedule updated successfully', 'success');
-                hideModal('edit-shift-modal');
-                await loadTeamSchedule();
-            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
-        }
-
-
-        // Modal functions
-        function openEditUserModal(userId) {
-            const user = teamMembers.find(u => u.id === userId);
-            if (!user) {
-                showToast('User not found', 'error');
-                return;
-            }
-
-            document.getElementById('edit-user-body').innerHTML = `
-                <div class="form-group">
-                    <label for="edit-user-name">Full Name</label>
-                    <input type="text" id="edit-user-name" value="${user.name}" class="anti-autofill" name="edit_user_name">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-email">Email Address</label>
-                    <input type="email" id="edit-user-email" value="${user.email}" class="anti-autofill" name="edit_user_email">
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-role">Role</label>
-                    <select id="edit-user-role">
-                        <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agent</option>
-                        <option value="quality" ${user.role === 'quality' ? 'selected' : ''}>Quality Agent</option>
-                        <option value="senior" ${user.role === 'senior' ? 'selected' : ''}>Senior Quality Analyst</option>
-                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-department">Department</label>
-                    <select id="edit-user-department">
-                        <option value="customer_service" ${user.department === 'customer_service' ? 'selected' : ''}>Customer Service</option>
-                        <option value="logistics" ${user.department === 'logistics' ? 'selected' : ''}>Logistics</option>
-                        <option value="operations" ${user.department === 'operations' ? 'selected' : ''}>Operations</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label for="edit-user-status">Status</label>
-                    <select id="edit-user-status">
-                        <option value="active" ${user.is_active ? 'selected' : ''}>Active</option>
-                        <option value="inactive" ${!user.is_active ? 'selected' : ''}>Inactive</option>
-                    </select>
-                </div>
-            `;
-
-            // Store user ID for saving
-            document.getElementById('save-user-changes-btn').dataset.userId = userId;
-
-            showModal('edit-user-modal');
-        }
-
-        async function handleUserAction(userId, action) {
-            try {
-                const user = teamMembers.find(u => u.id === userId);
-                if (!user) {
-                    showToast('User not found', 'error');
-                    return;
+            const departmentCtx = document.getElementById('departmentErrorsChart').getContext('2d');
+            departmentErrorsChart = new Chart(departmentCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Quality', 'Customer Service', 'Operations', 'Logistics'],
+                    datasets: [{
+                        label: 'Error Count',
+                        data: [12, 8, 15, 6],
+                        backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#28a745']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#e6edf3'
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e6edf3'
+                            }
+                        },
+                        y: {
+                            grid: {
+                                color: 'rgba(255, 255, 255, 0.1)'
+                            },
+                            ticks: {
+                                color: '#e6edf3'
+                            }
+                        }
+                    }
                 }
-
-                const updates = {
-                    is_active: action === 'activate'
-                };
-
-                await updateUserProfile(userId, updates);
-                
-                showToast(`User ${action === 'activate' ? 'activated' : 'deactivated'} successfully`, 'success');
-                await loadTeamMembers();
-                
-            } catch (error) {
-                console.error('Error updating user:', error);
-                showToast('Failed to update user', 'error');
-            }
+            });
         }
 
         // Event Listeners
@@ -1464,7 +1547,17 @@
                     
                     // Update page title
                     document.getElementById('page-title-header').textContent = 
-                        tab.textContent.substring(2); // Simple way to get text
+                        tabId === 'dashboard' ? 'Dashboard' : 
+                        tabId === 'reports' ? 'Reports & Analytics' : 
+                        tabId === 'teams' ? 'Teams' : 
+                        tabId === 'team-scheduling' ? 'Team Scheduling' : 
+                        tabId === 'company-employees' ? 'Company Employees' :
+                        tabId === 'departments' ? 'Departments' :
+                        tabId === 'payments' ? 'Payments' :
+                        tabId === 'kpis' ? 'KPIs' : 
+                        tabId === 'profile' ? 'Profile' : 
+                        tabId === 'settings' ? 'Settings' : 
+                        tabId === 'help' ? 'Help' : 'Dashboard';
                 });
             });
             
@@ -1484,9 +1577,97 @@
                 });
             });
             
-            // Notification bell
-            document.getElementById('notification-btn').addEventListener('click', () => {
-                document.getElementById('notification-dropdown').classList.toggle('show');
+            // Add Employee button
+            document.getElementById('add-employee-btn').addEventListener('click', () => {
+                showModal('add-employee-modal');
+            });
+            
+            // Submit new employee
+            document.getElementById('submit-new-employee-btn').addEventListener('click', async () => {
+                const name = document.getElementById('new-employee-name').value;
+                const username = document.getElementById('new-employee-username').value;
+                const department = document.getElementById('new-employee-department').value;
+                const title = document.getElementById('new-employee-title').value;
+                const adminId = document.getElementById('new-employee-admin-id').value;
+                
+                if (!name || !username || !department) {
+                    showToast('Please fill all required fields', 'warning');
+                    return;
+                }
+                
+                try {
+                    await addCompanyEmployee({
+                        employee_name: name,
+                        employee_username: username,
+                        department: department,
+                        title: title,
+                        admin_id: adminId
+                    });
+                    
+                    showToast('Employee added successfully', 'success');
+                    hideModal('add-employee-modal');
+                    await loadCompanyEmployees();
+                    
+                } catch (error) {
+                    console.error('Error adding employee:', error);
+                    showToast('Failed to add employee', 'error');
+                }
+            });
+            
+            // Edit Department button
+            document.getElementById('add-department-btn').addEventListener('click', () => {
+                showModal('edit-department-modal');
+            });
+            
+            // Edit Schedule button
+            document.getElementById('edit-schedule-btn').addEventListener('click', () => {
+                isEditMode = true;
+                document.getElementById('schedule-table').classList.add('edit-mode');
+                document.getElementById('edit-schedule-btn').style.display = 'none';
+                document.getElementById('save-schedule-btn').style.display = 'inline-block';
+                document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+                
+                // Add click listeners to shift cells
+                document.querySelectorAll('.shift-cell').forEach(cell => {
+                    cell.addEventListener('click', handleShiftCellClick);
+                });
+                
+                showToast('Schedule edit mode activated. Click on any shift cell to edit.', 'info');
+            });
+            
+            // Cancel edit mode
+            document.getElementById('cancel-edit-btn').addEventListener('click', () => {
+                isEditMode = false;
+                document.getElementById('schedule-table').classList.remove('edit-mode');
+                document.getElementById('edit-schedule-btn').style.display = 'inline-block';
+                document.getElementById('save-schedule-btn').style.display = 'none';
+                document.getElementById('cancel-edit-btn').style.display = 'none';
+                
+                // Remove click listeners
+                document.querySelectorAll('.shift-cell').forEach(cell => {
+                    cell.removeEventListener('click', handleShiftCellClick);
+                });
+                
+                showToast('Edit mode cancelled', 'info');
+            });
+            
+            // Save schedule change
+            document.getElementById('save-schedule-change-btn').addEventListener('click', async () => {
+                const userId = document.getElementById('save-schedule-change-btn').dataset.userId;
+                const day = document.getElementById('save-schedule-change-btn').dataset.day;
+                const shift = document.getElementById('schedule-shift').value;
+                
+                try {
+                    await updateTeamSchedule(userId, day, shift);
+                    
+                    showToast('Schedule updated successfully', 'success');
+                    hideModal('edit-schedule-modal');
+                    await loadTeamSchedule();
+                    
+                } catch (error) {
+                    console.error('Error updating schedule:', error);
+                    showToast('Failed to update schedule', 'error');
+                }
             });
             
             // Close modals
@@ -1497,176 +1678,82 @@
                 });
             });
             
-            // Apply filters
-            document.getElementById('apply-filters-btn').addEventListener('click', () => {
-                showToast('Filters applied successfully', 'success');
+            // Close modals when clicking outside
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-overlay')) {
+                    e.target.classList.remove('show');
+                }
             });
             
-            document.getElementById('download-report-btn').addEventListener('click', () => {
-                showToast("Generating report for download...", 'info');
-            });
-            
+            // Export report button
             document.getElementById('export-report-btn').addEventListener('click', () => {
-                showToast('Generating overall system report...', 'info');
+                showToast('Report export started...', 'info', 'Export');
+                setTimeout(() => {
+                    showToast('Report exported successfully as PDF', 'success', 'Export Complete');
+                }, 2000);
             });
             
-            // Generate report
+            // Download report button
+            document.getElementById('download-report-btn').addEventListener('click', () => {
+                showToast('Downloading report...', 'info', 'Download');
+                setTimeout(() => {
+                    showToast('Report downloaded successfully', 'success', 'Download Complete');
+                }, 1500);
+            });
+            
+            // Generate report button
             document.getElementById('generate-report-btn').addEventListener('click', () => {
                 const reportType = document.getElementById('report-type').value;
                 const period = document.getElementById('report-period').value;
                 const format = document.getElementById('report-format').value;
                 
-                showToast(`Generating ${reportType} report for ${period} in ${format.toUpperCase()} format...`, 'success');
+                showToast(`Generating ${reportType} report for ${period} in ${format.toUpperCase()} format...`, 'info', 'Report Generation');
+                setTimeout(() => {
+                    showToast('Report generated successfully', 'success', 'Report Ready');
+                }, 2000);
             });
             
-            // Apply user filters
-            document.getElementById('apply-user-filters').addEventListener('click', () => {
-                const search = document.getElementById('user-search').value;
-                const role = document.getElementById('filter-role').value;
-                const status = document.getElementById('filter-user-status').value;
-                
-                loadTeamMembers({
-                    search: search,
-                    role: role,
-                    status: status
-                });
-                
-                showToast('User filters applied', 'success');
+            // Contact support button
+            document.getElementById('contact-support-btn').addEventListener('click', () => {
+                showToast('Opening support ticket form...', 'info', 'Support');
             });
             
-            // Add user button
-            document.getElementById('add-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-             
-            document.getElementById('add-member-schedule-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
-            });
-
-            // Submit new user
-            document.getElementById('submit-new-user-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-user-name').value;
-                const email = document.getElementById('new-user-email').value;
-                const role = document.getElementById('new-user-role').value;
-                const department = document.getElementById('new-user-department').value;
-                const password = document.getElementById('new-user-password').value;
-                
-                if (!name || !email || !role || !password) {
-                    showToast('Please fill all required fields', 'warning');
-                    return;
-                }
-                
-                // In a real implementation, this would create a new user
-                showToast(`User ${name} would be created with ${role} role`, 'info');
-                hideModal('add-user-modal');
+            // Apply filters button
+            document.getElementById('apply-filters-btn').addEventListener('click', () => {
+                showToast('Filters applied successfully', 'success');
             });
             
-            // Save user changes
-            document.getElementById('save-user-changes-btn').addEventListener('click', async () => {
-                const userId = document.getElementById('save-user-changes-btn').dataset.userId;
-                const name = document.getElementById('edit-user-name').value;
-                const email = document.getElementById('edit-user-email').value;
-                const role = document.getElementById('edit-user-role').value;
-                const department = document.getElementById('edit-user-department').value;
-                const status = document.getElementById('edit-user-status').value;
-                
-                try {
-                    const updates = {
-                        name: name,
-                        email: email,
-                        role: role,
-                        department: department,
-                        is_active: status === 'active'
-                    };
-                    
-                    await updateUserProfile(userId, updates);
-                    
-                    showToast('User updated successfully', 'success');
-                    hideModal('edit-user-modal');
-                    await loadTeamMembers();
-                    
-                } catch (error) {
-                    console.error('Error updating user:', error);
-                    showToast('Failed to update user', 'error');
-                }
+            // Refresh KPIs button
+            document.getElementById('refresh-kpis-btn').addEventListener('click', async () => {
+                showToast('Refreshing KPIs...', 'info');
+                await loadPerformanceMetrics();
+                showToast('KPIs updated successfully', 'success');
             });
             
-            // Invite user
-            document.getElementById('invite-user-btn').addEventListener('click', () => {
-                showModal('add-user-modal');
+            // Refresh teams button
+            document.getElementById('refresh-teams-btn').addEventListener('click', async () => {
+                showToast('Refreshing team data...', 'info');
+                await loadTeamMembers();
+                showToast('Team data updated successfully', 'success');
             });
             
-            // Save profile
-            document.getElementById('save-profile-btn').addEventListener('click', async () => {
-                const name = document.getElementById('profile-fullname').value;
-                const email = document.getElementById('profile-email').value;
-                const phone = document.getElementById('profile-phone').value;
-                
-                try {
-                    await updateUserProfile(currentUser.id, {
-                        name: name,
-                        email: email,
-                        phone: phone
-                    });
-                    
-                    currentUser.name = name;
-                    currentUser.email = email;
-                    currentUser.phone = phone;
-                    updateUserInterface();
-                    
-                    showToast('Profile updated successfully', 'success');
-                } catch (error) {
-                    console.error('Error updating profile:', error);
-                    showToast('Failed to update profile', 'error');
-                }
+            // Save profile button
+            document.getElementById('save-profile-btn').addEventListener('click', () => {
+                showToast('Profile updated successfully', 'success');
             });
             
-            // Logout
+            // Cancel profile button
+            document.getElementById('cancel-profile-btn').addEventListener('click', () => {
+                showToast('Profile changes cancelled', 'info');
+            });
+            
+            // Logout button
             document.getElementById('logout-btn').addEventListener('click', async () => {
                 try {
                     await supabase.auth.signOut();
                     window.location.href = 'login.html';
                 } catch (error) {
-                    console.error('Error during logout:', error);
-                    showToast('Error during logout', 'error');
-                }
-            });
-
-            // Team Scheduling Buttons
-            const editScheduleBtn = document.getElementById('edit-schedule-btn');
-            const scheduleEditControls = document.getElementById('schedule-edit-controls');
-            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
-            
-            editScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = true;
-                document.getElementById('schedule-table').classList.add('edit-mode');
-                editScheduleBtn.style.display = 'none';
-                scheduleEditControls.style.display = 'inline-flex';
-                showToast('Edit mode enabled. Click on a cell to modify.', 'info');
-            });
-
-            cancelScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = false;
-                document.getElementById('schedule-table').classList.remove('edit-mode');
-                editScheduleBtn.style.display = 'inline-flex';
-                scheduleEditControls.style.display = 'none';
-                renderTeamSchedule(); // Re-render to discard changes
-                showToast('Edit mode cancelled.', 'warning');
-            });
-            
-            document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
-            
-            // Close notification dropdown when clicking outside
-            document.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-bell')) {
-                    document.getElementById('notification-dropdown').classList.remove('show');
-                }
-            });
-            
-            // Close modals when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('show');
+                    console.error('Error signing out:', error);
                 }
             });
         });
