@@ -466,18 +466,18 @@ export async function getAgentErrors(agentId, filters = {}) {
         error_responses (*)
       `)
       .eq('employee_id', agentId)
-      .order('recorded_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (filters.status) {
       query = query.eq('status', filters.status);
     }
 
     if (filters.from_date) {
-      query = query.gte('recorded_at', filters.from_date);
+      query = query.gte('created_at', filters.from_date);
     }
 
     if (filters.to_date) {
-      query = query.lte('recorded_at', filters.to_date);
+      query = query.lte('created_at', filters.to_date);
     }
 
     const { data, error } = await query;
@@ -535,7 +535,7 @@ export async function getPendingErrors() {
         users!errors_employee_id_fkey (name, email)
       `)
       .eq('status', 'pending_response')
-      .order('recorded_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
     return data;
@@ -1081,15 +1081,15 @@ export async function getErrorTrends(period = '6 months') {
   try {
     const { data, error } = await supabase
       .from('errors')
-      .select('recorded_at, quality_reviews(modified_reason)')
-      .order('recorded_at', { ascending: true });
+      .select('created_at, quality_reviews(modified_reason)')
+      .order('created_at', { ascending: true });
 
     if (error) throw error;
 
     // Process data for charts
     const monthlyData = {};
     data.forEach(error => {
-      const month = new Date(error.recorded_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+      const month = new Date(error.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
       if (!monthlyData[month]) {
         monthlyData[month] = 0;
       }
