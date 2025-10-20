@@ -1265,61 +1265,63 @@
 }
 
         // Render orders table
-        function renderOrdersTable() {
-            const tableBody = document.getElementById('orders-table-body');
-            
-            if (assignedOrders.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">📋</div>
-                            <div>No orders assigned to you.</div>
-                            <small>New orders will appear here when assigned.</small>
-                        </td>
-                    </tr>
-                `;
-            } else {
-                tableBody.innerHTML = assignedOrders.map(order => {
-                    const orderData = order.orders;
-                    const statusClass = `status-${order.status}`;
-                    
-                    return `
-                        <tr>
-                            <td>${orderData?.order_id || 'N/A'}</td>
-                            <td>${orderData?.reason || 'N/A'}</td>
-                            <td>${formatDate(order.assigned_at)}</td>
-                            <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                            <td>
-                                <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                                ${order.status === 'pending' ? 
-                                    `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                                     <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                                     <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                                    ''
-                                }
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
-                
-                // Add event listeners
-                document.querySelectorAll('.view-order-btn').forEach(btn => {
-                    btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId));
-                });
-                
-                document.querySelectorAll('.review-order-btn').forEach(btn => {
-                    btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId));
-                });
-                
-                document.querySelectorAll('.escalate-order-btn').forEach(btn => {
-                    btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId));
-                });
+       function renderOrdersTable() {
+    const tableBody = document.getElementById('orders-table-body');
+    
+    if (assignedOrders.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">...</td></tr>`;
+        return;
+    }
 
-                document.querySelectorAll('.raise-inquiry-btn').forEach(btn => {
-                    btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId));
-                });
+    tableBody.innerHTML = assignedOrders.map(order => {
+        const orderData = order.orders;
+        const statusClass = `status-${order.status}`;
+        
+        // --- الجزء الجديد للتحقق من الاستفسارات ---
+        let inquiryBadge = '';
+        if (order.inquiries && order.inquiries.length > 0) {
+            const latestInquiry = order.inquiries[order.inquiries.length - 1]; // Get the last inquiry
+            if (latestInquiry.status === 'pending') {
+                inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
+            } else if (latestInquiry.status === 'responded') {
+                inquiryBadge = `<span class="inquiry-badge" style="background-color: var(--green-bg); color: var(--green);" title="Response: ${latestInquiry.response_text}">Response Received</span>`;
             }
         }
+        // --- نهاية الجزء الجديد ---
+
+        return `
+            <tr>
+                <td>${orderData?.order_id || 'N/A'} ${inquiryBadge}</td> 
+                <td>${orderData?.reason || 'N/A'}</td>
+                <td>${formatDate(order.assigned_at)}</td>
+                <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                <td>
+                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                    ${order.status === 'pending' ? 
+                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                        ''
+                    }
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // إعادة ربط الأحداث
+    document.querySelectorAll('.view-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.review-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.escalate-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => {
+        btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId));
+    });
+}
 
         // Render escalations table
         function renderEscalationsTable() {
