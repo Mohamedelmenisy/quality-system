@@ -1280,7 +1280,7 @@
         // Load helper escalations
         async function loadHelperEscalations() {
             try {
-                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
                     // Fetch ALL escalations (pending and resolved) by passing an empty filter object
                     const escalationsData = await getEscalations(null, {});
                     helperEscalations = escalationsData || [];
@@ -1300,7 +1300,7 @@
         // Load helper inquiries
        async function loadHelperInquiries() {
             try {
-                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
                     console.log('🔄 Loading inquiries for role:', currentUser.role);
                     helperInquiries = await getHelperInquiries(currentUser.id); 
                     renderInquiriesTable();
