@@ -352,6 +352,7 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     orders (*),
     users!order_assignments_quality_agent_id_fkey (name, email),
     inquiries (*) 
+    escalations (*)
   `)
 //
       .order('assigned_at', { ascending: false });
