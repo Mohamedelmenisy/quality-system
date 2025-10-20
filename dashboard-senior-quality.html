@@ -182,6 +182,44 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
+        /* Custom Toggle Switch Styles */
+        .form-group.toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .form-group.toggle input[type="checkbox"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 44px;
+            height: 24px;
+            background-color: #333;
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.3s ease-in-out;
+            flex-shrink: 0;
+        }
+        .form-group.toggle input[type="checkbox"]::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            background-color: #8b949e;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: all 0.3s ease-in-out;
+        }
+        .form-group.toggle input[type="checkbox"]:checked {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        .form-group.toggle input[type="checkbox"]:checked::before {
+            transform: translateX(20px);
+            background-color: black;
+        }
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-wrapper { margin-left: 220px; }
@@ -236,9 +274,9 @@
             </div>
             <div class="sidebar-footer">
                 <div class="user-profile-widget">
-                    <div class="avatar-initials" id="sidebar-avatar-initials">KA</div>
+                    <div class="avatar-initials" id="sidebar-avatar-initials">ME</div>
                     <div>
-                        <div class="user-name" id="sidebar-username">Khaled Al-Mutairi</div>
+                        <div class="user-name" id="sidebar-username">Mohamed Elmenisy</div>
                         <div class="user-role">Senior Quality Analyst</div>
                         <div class="user-status">● Online</div>
                     </div>
@@ -271,7 +309,7 @@
                 <!-- Dashboard Tab -->
                 <div id="dashboard" class="tab-content active">
                      <div id="welcome-message">
-                        <h2 id="welcome-user-h2">Welcome, Khaled!</h2>
+                        <h2 id="welcome-user-h2">Welcome, Mohamed!</h2>
                         <p>Here is a summary of your activity and team oversight.</p>
                     </div>
                     <div class="kpi-grid">
@@ -445,8 +483,13 @@
                             <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
                             <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
                         </div>
-                        <div class="chart-container">
-                            <canvas id="analyticsChart"></canvas>
+                        <div class="charts-grid">
+                            <div class="chart-container">
+                                <canvas id="analyticsChart"></canvas>
+                            </div>
+                            <div class="chart-container">
+                                <canvas id="errorTypesPieChart"></canvas>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -457,11 +500,11 @@
                         <h3>Edit Profile</h3>
                         <div class="form-group">
                             <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" value="Khaled Al-Mutairi">
+                            <input type="text" id="profile-fullname" value="Mohamed Elmenisy">
                         </div>
                         <div class="form-group">
                             <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="k.almutairi@qualityx.com" readonly style="background: #333;">
+                            <input type="email" id="profile-email" value="m.elmenisy@qualityx.com" readonly style="background: #333;">
                         </div>
                         <div class="form-group">
                             <label for="profile-phone">Phone Number</label>
@@ -559,6 +602,7 @@
         let agentAccuracyChart = null;
         let reviewsVsErrorsChart = null;
         let analyticsChart = null;
+        let errorTypesPieChart = null;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -693,9 +737,21 @@
         }
 
         function updateUserInterface() {
-            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
-            document.getElementById('sidebar-username').textContent = currentUser.name;
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name.split(' ')[0]}!`;
+            if (!currentUser) return;
+            
+            // Sidebar and Welcome message
+            const name = currentUser.name || "User";
+            const initials = getInitials(name);
+            const firstName = name.split(' ')[0];
+
+            document.getElementById('sidebar-avatar-initials').textContent = initials;
+            document.getElementById('sidebar-username').textContent = name;
+            document.getElementById('welcome-user-h2').textContent = `Welcome, ${firstName}!`;
+            
+            // Profile page form
+            document.getElementById('profile-fullname').value = name;
+            document.getElementById('profile-email').value = currentUser.email || '';
+            document.getElementById('profile-phone').value = currentUser.phone || '+966 55 123 5555'; // Use phone from profile or default
         }
 
         // Load pending errors with agent responses
@@ -1154,7 +1210,14 @@
                     maintainAspectRatio: false,
                     plugins: {
                         legend: {
+                            position: 'bottom',
                             labels: { color: '#e6edf3' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Monthly Performance Report',
+                            color: '#e6edf3',
+                            font: { size: 16 }
                         }
                     },
                     scales: {
@@ -1165,6 +1228,44 @@
                         x: {
                             grid: { color: 'rgba(255,255,255,0.1)' },
                             ticks: { color: '#e6edf3' }
+                        }
+                    }
+                }
+            });
+            
+            // Error Types Pie Chart (NEW)
+            const pieCtx = document.getElementById('errorTypesPieChart').getContext('2d');
+            errorTypesPieChart = new Chart(pieCtx, {
+                type: 'pie',
+                data: {
+                    labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'],
+                    datasets: [{
+                        label: 'Error Types',
+                        data: [40, 25, 15, 10, 10], // Sample data
+                        backgroundColor: [
+                            '#dc3545',
+                            '#ffc107',
+                            '#007BFF',
+                            '#17a2b8',
+                            '#8b949e'
+                        ],
+                        borderColor: 'var(--card-bg)',
+                        borderWidth: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: { color: '#e6edf3' }
+                        },
+                        title: {
+                            display: true,
+                            text: 'Error Types Analysis',
+                            color: '#e6edf3',
+                            font: { size: 16 }
                         }
                     }
                 }
