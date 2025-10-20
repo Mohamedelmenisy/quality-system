@@ -157,6 +157,7 @@
         .status-reviewed { background-color: var(--primary-color-darker); }
         .status-responded { background-color: var(--info-color); }
         .status-finalized { background-color: var(--success-color); }
+        .status-resolved { background-color: var(--success-color); } /* Added for escalations */
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
@@ -796,6 +797,22 @@
         </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div id="logout-confirm-modal" class="modal-overlay">
+        <div class="modal-box" style="max-width: 450px; text-align: center;">
+            <div class="modal-header" style="border: none; padding-bottom: 0;">
+                <h3 class="modal-title" style="width: 100%; text-align: center;">Confirm Logout</h3>
+                <button class="modal-close-btn" data-modal-id="logout-confirm-modal" style="position: absolute; top: 10px; right: 10px;">×</button>
+            </div>
+            <p style="margin: 1.5rem 0; color: var(--text-muted-color);">Are you sure you want to log out of your account?</p>
+            <div class="page-actions" style="justify-content: center;">
+                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="logout-confirm-modal">Cancel</button>
+                <button type="button" id="confirm-logout-btn" class="btn btn-danger">Confirm Logout</button>
+            </div>
+        </div>
+    </div>
+
+
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
     
@@ -877,7 +894,7 @@
                     loadTeamSchedule(),
                     loadPerformanceMetrics(),
                     loadNotifications(),
-                    loadDirectEscalations() 
+                    loadDirectEscalations()
                 ]);
                 initCharts();
                 showToast('Senior Dashboard loaded successfully', 'success');
@@ -899,11 +916,11 @@
             document.getElementById('profile-email').value = currentUser.email || '';
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
-
-        // --- NEW: Load direct escalations for the senior
+        
         async function loadDirectEscalations() {
             try {
                 if (typeof getEscalations === 'function') {
+                    // نجلب التصعيدات الموجهة للسينيور الحالي
                     const escalations = await getEscalations(currentUser.id);
                     directEscalations = escalations || [];
                     renderDirectEscalationsTable();
@@ -912,8 +929,6 @@
             } catch (error) {
                 showToast('Failed to load direct escalations', 'error');
                 console.error('Error loading direct escalations:', error);
-                directEscalations = [];
-                renderDirectEscalationsTable();
             }
         }
 
@@ -943,7 +958,7 @@
             try {
                 performanceMetrics = await getPerformanceMetrics('month');
                 document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-                document.getElementById('pending-escalations').textContent = pendingErrors.length;
+                document.getElementById('pending-escalations').textContent = directEscalations.filter(e => e.status === 'pending').length;
                 document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
                 document.getElementById('avg-resolution-time').textContent = '45 mins';
             } catch (error) {
@@ -1013,13 +1028,23 @@
             `).join('');
         }
 
-        // --- NEW: Render direct escalations table
-        function renderDirectEscalationsTable(escalationsToRender = directEscalations) {
+        function renderDirectEscalationsTable() {
             const tableBody = document.getElementById('direct-escalations-table-body');
             if (!tableBody) return;
 
+            const searchTerm = document.getElementById('direct-escalation-search').value.toLowerCase();
+            const statusFilter = document.getElementById('direct-escalation-status-filter').value;
+
+            const escalationsToRender = directEscalations.filter(e => {
+                const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
+                const searchCorpus = `${e.order_assignments?.orders?.order_id} ${e.escalated_by?.name} ${e.notes}`.toLowerCase();
+                const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
+                return matchesStatus && matchesSearch;
+            });
+
+
             if (escalationsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations assigned to you.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations found.</td></tr>`;
                 return;
             }
 
@@ -1032,8 +1057,8 @@
                 let statusBadge, actionContent;
                 
                 if (escalation.status === 'resolved') {
-                    statusBadge = `<span class="status-badge status-completed">Resolved</span>`;
-                    actionContent = `<button class="btn btn-secondary btn-sm">Viewed</button>`;
+                    statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
+                    actionContent = `<button class="btn btn-secondary btn-sm" disabled>Viewed</button>`;
                 } else { // 'pending'
                     statusBadge = `<span class="status-badge status-pending">Pending</span>`;
                     actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
@@ -1057,7 +1082,9 @@
                 btn.addEventListener('click', () => {
                     const escalation = directEscalations.find(e => String(e.id) === String(btn.dataset.escalationId));
                     if (!escalation) return;
-                    const feedback = prompt(`Reviewing escalation for order ${escalation.order_assignments?.orders?.order_id}.\n\nEnter your feedback to resolve:`);
+                    
+                    const feedback = prompt(`Reviewing escalation for order ${escalation.order_assignments?.orders?.order_id}.\nEnter your feedback to resolve:`);
+                    
                     if (feedback && typeof resolveEscalation === 'function') {
                         resolveEscalation(escalation.id, feedback)
                             .then(() => {
@@ -1069,17 +1096,20 @@
                 });
             });
         }
-
+        
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
-            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'admin' || m.role === 'manager');
             
-            if (qualityTeam.length === 0) {
+            // --- تعديل هنا: نحدد كل الأدوار التي نريد عرضها ---
+            const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
+            const teamToDisplay = teamMembers.filter(m => teamRoles.includes(m.role));
+            
+            if (teamToDisplay.length === 0) {
                 grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`;
                 return;
             }
             
-            grid.innerHTML = qualityTeam.map(member => `
+            grid.innerHTML = teamToDisplay.map(member => `
                 <div class="team-member-card">
                     <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">
                         ${getInitials(member.name)}
@@ -1113,7 +1143,7 @@
         
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
-            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior');
+            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'helper');
             if (qualityTeam.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`;
                 return;
@@ -1160,12 +1190,26 @@
 
         const populateAgentSelect = () => {
             const select = document.getElementById('agent-select');
-            select.innerHTML = teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+            
+            // --- تعديل هنا: نحدد الأدوار القابلة لاستلام المهام ---
+            const assignableRoles = ['quality', 'helper'];
+            const assignableMembers = teamMembers.filter(m => assignableRoles.includes(m.role));
+
+            if (assignableMembers.length === 0) {
+                select.innerHTML = '<option value="">No agents available</option>';
+                return;
+            }
+
+            select.innerHTML = assignableMembers.map(a => 
+                // نضيف الدور بجانب الاسم للتمييز
+                `<option value="${a.id}">${a.name} (${a.role})</option>`
+            ).join('');
         };
+
 
         // Modal Handlers
         async function openFinalDecisionModal(errorId) {
-            const error = pendingErrors.find(e => e.id === errorId);
+            const error = pendingErrors.find(e => e.id.toString() === errorId);
             if (!error) return;
             document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
@@ -1175,7 +1219,7 @@
                 </div>
                 <div class="feedback-form">
                     <label>Your Decision & Notes:</label>
-                    <textarea id="decision-notes"></textarea>
+                    <textarea id="decision-notes" rows="4"></textarea>
                     <div class="feedback-actions">
                         <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'rejected')">Reject</button>
                         <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'approved')">Approve</button>
@@ -1222,6 +1266,10 @@
         // Action Handlers
         async function handleFinalDecision(errorId, decision) {
             const notes = document.getElementById('decision-notes').value;
+            if (!notes) {
+                showToast('Please provide your decision notes.', 'warning');
+                return;
+            }
             try {
                 await submitFinalDecision(errorId, currentUser.id, decision, notes);
                 showToast(`Response ${decision} successfully`, 'success');
@@ -1337,6 +1385,7 @@
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
+                    if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
                     tabs.forEach(t => t.parentElement.classList.remove('active'));
                     tab.parentElement.classList.add('active');
@@ -1400,46 +1449,29 @@
             
             document.getElementById('select-all-checkbox').addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
        
-            // --- NEW FILTERING LOGIC ---
-            const applyFilters = (baseData, renderFunc, filters) => {
-                let filteredData = [...baseData];
-                if(filters.searchTerm){
-                     filteredData = filteredData.filter(item => JSON.stringify(item).toLowerCase().includes(filters.searchTerm));
-                }
-                if(filters.status && filters.status !== 'all'){
-                    filteredData = filteredData.filter(item => item.status === filters.status);
-                }
-                renderFunc(filteredData);
-            }
+            document.getElementById('direct-escalation-search').addEventListener('input', () => renderDirectEscalationsTable());
+            document.getElementById('direct-escalation-status-filter').addEventListener('change', () => renderDirectEscalationsTable());
 
-            document.getElementById('unassigned-search').addEventListener('input', (e) => {
-                applyFilters(unassignedOrders, renderUnassignedOrdersTable, {searchTerm: e.target.value.toLowerCase()});
+            // Logout Button with confirmation
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                showModal('logout-confirm-modal');
             });
-            
-            document.getElementById('assigned-search').addEventListener('input', (e) => {
-                applyFilters(assignedOrders, renderAssignedOrdersTable, {
-                    searchTerm: e.target.value.toLowerCase(), 
-                    status: document.getElementById('assigned-status-filter').value
-                });
+
+            document.getElementById('confirm-logout-btn').addEventListener('click', async () => {
+                try {
+                    showToast('Logging out...', 'info');
+                    // Assuming a logout function exists, like supabase.auth.signOut()
+                    // const { error } = await supabase.auth.signOut();
+                    // if (error) throw error;
+                    hideModal('logout-confirm-modal');
+                    setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
+                } catch (error) {
+                    showToast(`Logout failed: ${error.message}`, 'error');
+                    hideModal('logout-confirm-modal');
+                }
             });
-            document.getElementById('assigned-status-filter').addEventListener('change', (e) => {
-                 applyFilters(assignedOrders, renderAssignedOrdersTable, {
-                    searchTerm: document.getElementById('assigned-search').value.toLowerCase(),
-                    status: e.target.value
-                });
-            });
-             document.getElementById('direct-escalation-search').addEventListener('input', (e) => {
-                applyFilters(directEscalations, renderDirectEscalationsTable, {
-                    searchTerm: e.target.value.toLowerCase(), 
-                    status: document.getElementById('direct-escalation-status-filter').value
-                });
-            });
-            document.getElementById('direct-escalation-status-filter').addEventListener('change', (e) => {
-                 applyFilters(directEscalations, renderDirectEscalationsTable, {
-                    searchTerm: document.getElementById('direct-escalation-search').value.toLowerCase(),
-                    status: e.target.value
-                });
-            });
+
         });
 
         window.handleFinalDecision = handleFinalDecision;
