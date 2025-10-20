@@ -346,12 +346,14 @@ export async function assignOrders(orderIds, agentId, assignedById) {
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
-      .from('order_assignments')
-      .select(`
-        *,
-        orders (*),
-        users!order_assignments_quality_agent_id_fkey (name, email)
-      `)
+  .from('order_assignments')
+  .select(`
+    *,
+    orders (*),
+    users!order_assignments_quality_agent_id_fkey (name, email),
+    inquiries (*) 
+  `)
+//
       .order('assigned_at', { ascending: false });
 
     if (agentId) {
