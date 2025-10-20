@@ -96,7 +96,7 @@
         .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; }
+        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; display: flex; flex-direction: column; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -136,7 +136,7 @@
         .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-new { background-color: var(--primary-color); color: #000; }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
-        .status-completed { background-color: var(--green-bg); color: var(--green); }
+        .status-completed, .status-resolved { background-color: var(--green-bg); color: var(--green); }
         .status-error { background-color: var(--red-bg); color: var(--red); }
         .status-escalated { background-color: var(--yellow-bg); color: var(--yellow); }
         .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 5px 10px; border-radius: 6px; margin-right: 5px; transition: background-color 0.3s ease; }
@@ -466,10 +466,18 @@
         <!-- New Escalations Tab -->
         <div id="escalations" class="tab-content">
             <div class="card">
-                <h3>Pending Escalations (<span id="escalations-count">0</span>)</h3>
+                <h3>My Escalations (<span id="escalations-count">0</span>)</h3>
                 <div class="filter-bar">
-                    <div class="filter-group search-input-container">
+                    <div class="filter-group">
                         <input type="search" id="escalations-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-escalation-status">Status:</label>
+                        <select id="filter-escalation-status">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="resolved">Resolved</option>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label for="filter-escalation-date">Date:</label>
@@ -488,11 +496,12 @@
                                 <th>Escalated By</th>
                                 <th>Agent's Reason</th>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="escalations-table-body">
-                            <tr><td colspan="5" class="empty-state">Loading escalations...</td></tr>
+                            <tr><td colspan="6" class="empty-state">Loading escalations...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -502,10 +511,18 @@
         <!-- New Inquiries Tab -->
         <div id="inquiries" class="tab-content">
             <div class="card">
-                <h3>Pending Inquiries (<span id="inquiries-count">0</span>)</h3>
+                <h3>Team Inquiries (<span id="inquiries-count">0</span>)</h3>
                 <div class="filter-bar">
-                    <div class="filter-group search-input-container">
+                    <div class="filter-group">
                         <input type="search" id="inquiries-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                     <div class="filter-group">
+                        <label for="filter-inquiry-status">Status:</label>
+                        <select id="filter-inquiry-status">
+                            <option value="all">All</option>
+                            <option value="pending">Pending</option>
+                            <option value="responded">Responded</option>
+                        </select>
                     </div>
                     <div class="filter-group">
                         <label for="filter-inquiry-date">Date:</label>
@@ -524,11 +541,12 @@
                                 <th>Agent</th>
                                 <th>Inquiry</th>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inquiries-table-body">
-                            <tr><td colspan="5" class="empty-state">Loading inquiries...</td></tr>
+                            <tr><td colspan="6" class="empty-state">Loading inquiries...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -682,6 +700,9 @@
                 </div>
             </div>
         </div>
+        <footer style="text-align: center; padding: 20px; color: var(--text-muted); margin-top: auto;">
+            © 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
     </main>
 
     <!-- Review Order Modal -->
@@ -962,6 +983,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- View Inquiry/Response Modal (This is the one we added) -->
+    <div class="modal-overlay" id="view-inquiry-modal">
+        <div class="modal-box" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="view-inquiry-text">Loading...</p>
+                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+                </div>
+                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                    <strong>Helper's Response</strong>
+                    <p id="view-inquiry-response-text">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
@@ -979,8 +1024,8 @@
         let issueTypesChart = null;
         
         // New state variables
-        let helperEscalations = [];
-        let helperInquiries = [];
+        let allEscalations = [];
+        let allInquiries = [];
         let isSeniorEscalationMode = false;
 
         // Toast Notification System
@@ -1007,29 +1052,21 @@
             
             container.appendChild(toast);
             
-            // Auto remove after 5 seconds
-            setTimeout(() => {
+            const removeToast = () => {
                 if (toast.parentNode) {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(100%)';
                     setTimeout(() => {
-                        if (toast.parentNode) { // FIX: Corrected condition from 'if (toast.parentNode {' to 'if (toast.parentNode) {'
+                        if (toast.parentNode) {
                             toast.parentNode.removeChild(toast);
                         }
                     }, 300);
                 }
-            }, 5000);
+            };
             
-            // Close button functionality
-            toast.querySelector('.toast-close').addEventListener('click', () => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
-                    }
-                }, 300);
-            });
+            setTimeout(removeToast, 5000);
+            
+            toast.querySelector('.toast-close').addEventListener('click', removeToast);
         }
 
         // Helper Functions
@@ -1066,20 +1103,28 @@
         function hideModal(modalId) {
             document.getElementById(modalId)?.classList.remove('show');
         }
+        
+        function viewInquiryResponse(inquiry) {
+            if (inquiry) {
+                document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                showModal('view-inquiry-modal');
+            }
+        }
 
         // Initialize the application
         async function initApp() {
             try {
                 showToast('Loading Quality Dashboard...', 'info');
                 
-                // Get current user
                 const user = await getCurrentUser();
                 if (!user) {
                     window.location.href = 'login.html';
                     return;
                 }
                 
-                // Get user profile
                 const { data: profile, error } = await supabase
                     .from('users')
                     .select('*')
@@ -1094,23 +1139,20 @@
                 
                 currentUser = { ...user, ...profile };
                 
-                // Update UI with user data
                 updateUserInterface();
                 
-                // Load user data
-                await loadAssignedOrders();
-                await loadPerformanceMetrics();
-                await loadTeamMembers();
-                await loadTeamSchedule();
-                await loadNotifications();
-                await loadHelperEscalations();
-                await loadHelperInquiries();
-                await loadCompanyEmployees();
-                
-                // Initialize real-time subscriptions
+                await Promise.all([
+                    loadAssignedOrders(),
+                    loadPerformanceMetrics(),
+                    loadTeamMembers(),
+                    loadTeamSchedule(),
+                    loadNotifications(),
+                    loadAllEscalations(),
+                    loadAllInquiries(),
+                    loadCompanyEmployees()
+                ]);
+
                 initRealtimeSubscriptions();
-                
-                // Initialize charts
                 initCharts();
                 
                 showToast('Quality Dashboard loaded successfully', 'success');
@@ -1126,20 +1168,17 @@
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
-            // Show/hide escalation and inquiry tabs based on role
-            if (currentUser.role === 'quality' || currentUser.role === 'admin') {
+            if (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior') {
                 document.getElementById('escalations-tab').style.display = 'flex';
                 document.getElementById('inquiries-tab').style.display = 'flex';
             }
             
-            // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
             document.getElementById('profile-email').value = currentUser.email;
             document.getElementById('profile-phone').value = currentUser.phone || '';
             document.getElementById('profile-department').value = currentUser.department || 'N/A';
         }
 
-        // Load assigned orders
         async function loadAssignedOrders(filters = {}) {
             try {
                 assignedOrders = await getAssignedOrders(currentUser.id, filters);
@@ -1153,26 +1192,19 @@
             }
         }
 
-        // Load performance metrics
         async function loadPerformanceMetrics() {
             try {
                 performanceMetrics = await getPerformanceMetrics('month');
-                
-                // Update KPI cards
                 document.getElementById('todays-reviews').textContent = performanceMetrics.completedOrders || 0;
                 document.getElementById('open-cases').textContent = performanceMetrics.pendingReviews || 0;
                 document.getElementById('quality-score').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-                document.getElementById('escalation-rate').textContent = `${performanceMetrics.errorRate || 0}%`;
-                
-                // Update charts
+                document.getElementById('escalation-rate').textContent = '0%'; 
                 updateCharts();
-                
             } catch (error) {
                 console.error('Error loading performance metrics:', error);
             }
         }
 
-        // Load team members
         async function loadTeamMembers() {
             try {
                 teamMembers = await getTeamMembers();
@@ -1186,7 +1218,6 @@
             }
         }
 
-        // Load company employees
         async function loadCompanyEmployees() {
             try {
                 companyEmployees = await getCompanyEmployees();
@@ -1199,7 +1230,6 @@
             }
         }
 
-        // Load team schedule
         async function loadTeamSchedule() {
             try {
                 teamSchedule = await getTeamSchedule();
@@ -1212,7 +1242,6 @@
             }
         }
 
-        // Load notifications
         async function loadNotifications() {
             try {
                 notifications = await getNotifications(currentUser.id);
@@ -1224,228 +1253,196 @@
             }
         }
 
-        // Load helper escalations
-      async function loadHelperEscalations() {
-    try {
-        // Check if the user has a role that should see escalations
-        if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
-            console.log('🔄 Loading all pending escalations for role:', currentUser.role);
-            // Admins and Quality Agents see ALL pending escalations
-            const escalationsData = await getEscalations(null, { status: 'pending' });
-            
-            helperEscalations = escalationsData;
-            renderEscalationsTable();
-            document.getElementById('escalations-count').textContent = helperEscalations.length;
-            console.log('✅ Escalations loaded:', helperEscalations.length);
-        }
-    } catch (error) {
-        console.error('❌ Error loading escalations:', error);
-        showToast('Failed to load escalations', 'error');
-        helperEscalations = [];
-        renderEscalationsTable();
-    }
-}
-        // Load helper inquiries
-       async function loadHelperInquiries() {
-    try {
-        // The API function getHelperInquiries already gets all pending inquiries,
-        // so we just need to allow the correct roles to call it.
-        if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
-            console.log('🔄 Loading inquiries for role:', currentUser.role);
-            helperInquiries = await getHelperInquiries(currentUser.id); // The function name is fine to keep
-            renderInquiriesTable();
-            document.getElementById('inquiries-count').textContent = helperInquiries.length;
-            console.log('✅ Inquiries loaded:', helperInquiries.length);
-        }
-    } catch (error) {
-        console.error('❌ Error loading helper inquiries:', error);
-        showToast('Failed to load inquiries', 'error');
-        helperInquiries = [];
-        renderInquiriesTable();
-    }
-}
-
-        // Render orders table
-       function renderOrdersTable() {
-    const tableBody = document.getElementById('orders-table-body');
-    
-    if (assignedOrders.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">...</td></tr>`;
-        return;
-    }
-
-    tableBody.innerHTML = assignedOrders.map(order => {
-        const orderData = order.orders;
-        const statusClass = `status-${order.status}`;
-        
-        // --- الجزء الجديد للتحقق من الاستفسارات ---
-        let inquiryBadge = '';
-        if (order.inquiries && order.inquiries.length > 0) {
-            const latestInquiry = order.inquiries[order.inquiries.length - 1]; // Get the last inquiry
-            if (latestInquiry.status === 'pending') {
-                inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
-            } else if (latestInquiry.status === 'responded') {
-                 inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Response from Helper:\\n\\n${latestInquiry.response_text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view response">Response Received</button>`;
+        async function loadAllEscalations() {
+            try {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior')) {
+                    const escalationsData = await getEscalations(); // Fetch all, without filters
+                    allEscalations = escalationsData;
+                    applyEscalationFilters();
+                }
+            } catch (error) {
+                console.error('❌ Error loading escalations:', error);
+                showToast('Failed to load escalations', 'error');
+                allEscalations = [];
+                applyEscalationFilters();
             }
         }
-        // --- نهاية الجزء الجديد ---
 
-        return `
-            <tr>
-                <td>${orderData?.order_id || 'N/A'} ${inquiryBadge}</td> 
-                <td>${orderData?.reason || 'N/A'}</td>
-                <td>${formatDate(order.assigned_at)}</td>
-                <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                <td>
-                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                    ${order.status === 'pending' ? 
-                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                        ''
-                    }
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
-    // إعادة ربط الأحداث
-    document.querySelectorAll('.view-order-btn').forEach(btn => {
-        btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId));
-    });
-    document.querySelectorAll('.review-order-btn').forEach(btn => {
-        btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId));
-    });
-    document.querySelectorAll('.escalate-order-btn').forEach(btn => {
-        btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId));
-    });
-    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => {
-        btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId));
-    });
-}
+        async function loadAllInquiries() {
+            try {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior')) {
+                    allInquiries = await getHelperInquiries();
+                    applyInquiryFilters();
+                }
+            } catch (error) {
+                console.error('❌ Error loading inquiries:', error);
+                showToast('Failed to load inquiries', 'error');
+                allInquiries = [];
+                applyInquiryFilters();
+            }
+        }
 
-        // Render escalations table
-        function renderEscalationsTable() {
-            const tableBody = document.getElementById('escalations-table-body');
+       function renderOrdersTable() {
+            const tableBody = document.getElementById('orders-table-body');
             
-            if (!helperEscalations || helperEscalations.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">🚨</div>
-                            <div>No pending escalations.</div>
-                            <small>New escalations will appear here when assigned to you.</small>
-                        </td>
-                    </tr>
-                `;
+            if (assignedOrders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">...</td></tr>`;
                 return;
             }
 
-            tableBody.innerHTML = helperEscalations.map(escalation => {
-                const orderData = escalation.order_assignments?.orders;
-                const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
-                const escalationDate = formatDateTime(escalation.escalated_at);
-                const reasonPreview = escalation.notes ? 
-                    (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 
-                    'No reason provided';
+            tableBody.innerHTML = assignedOrders.map(order => {
+                const orderData = order.orders;
+                const statusClass = `status-${order.status}`;
                 
+                let inquiryBadge = '';
+                if (order.inquiries && order.inquiries.length > 0) {
+                    const latestInquiry = order.inquiries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                    if (latestInquiry.status === 'pending') {
+                        inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
+                    } else if (latestInquiry.status === 'responded') {
+                        const inquiryDataString = JSON.stringify(latestInquiry).replace(/"/g, '&quot;');
+                        inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick='viewInquiryResponse(JSON.parse(this.dataset.inquiry))' data-inquiry='${inquiryDataString}' title="Click to view response">Response Received</button>`;
+                    }
+                }
+
                 return `
                     <tr>
-                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
-                       <td>${escalatedByName}</td>
-                        <td title="${escalation.notes || ''}">${reasonPreview}</td>
-                        <td>${escalationDate}</td>
+                        <td>${orderData?.order_id || 'N/A'} ${inquiryBadge}</td> 
+                        <td>${orderData?.reason || 'N/A'}</td>
+                        <td>${formatDate(order.assigned_at)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
                         <td>
-                            <button class="action-btn primary review-escalation-btn" data-escalation-id="${escalation.id}">
-                                Review
-                            </button>
+                            <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                            ${order.status === 'pending' ? 
+                                `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                                 <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                                 <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                                ''
+                            }
                         </td>
                     </tr>
                 `;
             }).join('');
             
-            // Add event listeners for review buttons
+            document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+        }
+
+        function renderEscalationsTable(escalationsToRender) {
+            const tableBody = document.getElementById('escalations-table-body');
+            
+            if (!escalationsToRender || escalationsToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations match the current filters.</td></tr>`;
+                return;
+            }
+
+            const tableHead = tableBody.previousElementSibling;
+            if (tableHead.rows[0].cells.length < 6) {
+                tableHead.rows[0].innerHTML = `
+                    <th>Order ID</th>
+                    <th>Escalated By</th>
+                    <th>Reason</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                `;
+            }
+
+            tableBody.innerHTML = escalationsToRender.map(escalation => {
+                const orderData = escalation.order_assignments?.orders;
+                const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
+                const escalationDate = formatDateTime(escalation.escalated_at);
+                const reasonPreview = escalation.notes ? (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 'No reason';
+
+                let statusBadge, actionContent;
+                
+                if (escalation.status === 'resolved') {
+                    statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
+                    actionContent = `<button class="action-btn view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
+                } else { // 'pending'
+                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+                    actionContent = `<button class="action-btn primary review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
+                }
+
+                const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${escalatedByName}</td>
+                        <td title="${escalation.notes || ''}">${reasonPreview}</td>
+                        <td>${escalationDate}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionContent}</td>
+                    </tr>
+                `;
+            }).join('');
+            
             document.querySelectorAll('.review-escalation-btn').forEach(btn => {
+                btn.addEventListener('click', function() { openReviewEscalationModal(this.dataset.escalationId); });
+            });
+            document.querySelectorAll('.view-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const escalationId = this.dataset.escalationId;
-                    openReviewEscalationModal(escalationId);
+                    const escalation = allEscalations.find(e => e.id === this.dataset.escalationId);
+                    if (escalation) {
+                         showToast(`Resolved Escalation:\n${escalation.notes}`, 'info', `Order: ${escalation.order_assignments?.orders?.order_id}`);
+                    }
                 });
             });
         }
-        // الصق هذا الكود الجديد بالكامل مكان الدالة القديمة
-function renderInquiriesTable() {
-    const tableBody = document.getElementById('inquiries-table-body');
-    
-    if (!helperInquiries || helperInquiries.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries found.</div></td></tr>`;
-        return;
-    }
-
-    const tableHead = tableBody.previousElementSibling;
-    if (tableHead.rows[0].cells.length < 6) {
-        tableHead.rows[0].innerHTML = `
-            <th>Order ID</th>
-            <th>Agent</th>
-            <th>Inquiry</th>
-            <th>Date</th>
-            <th>Status</th>
-            <th>Actions</th>
-        `;
-    }
-
-    tableBody.innerHTML = helperInquiries.map(inquiry => {
-        const orderData = inquiry.order_assignments?.orders;
-        const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
-        const inquiryDate = formatDateTime(inquiry.created_at);
-        const inquiryPreview = inquiry.inquiry_text ? (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 'No inquiry text';
         
-        let statusBadge, actionContent;
+        function renderInquiriesTable(inquiriesToRender) {
+            const tableBody = document.getElementById('inquiries-table-body');
+            
+            if (!inquiriesToRender || inquiriesToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No inquiries match the current filters.</td></tr>`;
+                return;
+            }
 
-        if (inquiry.status === 'responded') {
-            statusBadge = `<span class="status-badge status-completed">Responded</span>`;
-            // -- تعديل هنا: إضافة زر "View Response" --
-            actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
-        } else { // status is 'pending'
-            statusBadge = `<span class="status-badge status-pending">Pending</span>`;
-            actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
+            tableBody.innerHTML = inquiriesToRender.map(inquiry => {
+                const orderData = inquiry.order_assignments?.orders;
+                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+                const inquiryDate = formatDateTime(inquiry.created_at);
+                const inquiryPreview = inquiry.inquiry_text ? (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 'No inquiry text';
+                
+                let statusBadge, actionContent;
+
+                if (inquiry.status === 'responded') {
+                    statusBadge = `<span class="status-badge status-completed">Responded</span>`;
+                    actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
+                } else {
+                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+                    actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
+                }
+                
+                const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.7; background-color: #161616;' : '';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${agentName}</td>
+                        <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
+                        <td>${inquiryDate}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionContent}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
+                btn.addEventListener('click', function() { openRespondInquiryModal(this.dataset.inquiryId); });
+            });
+
+           document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const inquiry = allInquiries.find(i => i.id === this.dataset.inquiryId);
+                    if(inquiry) viewInquiryResponse(inquiry);
+                });
+            });
         }
-        
-        // -- تعديل هنا: جعلنا السطر أقل بهتانًا (opacity 0.7 بدلاً من 0.6) --
-        const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.7; background-color: #161616;' : '';
 
-        return `
-            <tr style="${rowStyle}">
-                <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
-                <td>${agentName}</td>
-                <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
-                <td>${inquiryDate}</td>
-                <td>${statusBadge}</td>
-                <td>${actionContent}</td>
-            </tr>
-        `;
-    }).join('');
-    
-    // إعادة ربط الأحداث لكل الأزرار
-    document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
-        btn.addEventListener('click', function() { openRespondInquiryModal(this.dataset.inquiryId); });
-    });
-
-    // -- تعديل هنا: إضافة حدث لزر "View Response" الجديد --
-   document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
-    btn.addEventListener('click', function() {
-        const inquiry = helperInquiries.find(i => i.id === this.dataset.inquiryId);
-        if (inquiry) {
-            document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-            document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-            document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-            document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-            showModal('view-inquiry-modal');
-        }
-    });
-});
-} // <<< THIS IS THE FIX: Added the missing closing curly brace here.
-
-        // Render company employees table
         function renderCompanyEmployeesTable() {
             const tableBody = document.getElementById('employees-table-body');
 
@@ -1470,18 +1467,52 @@ function renderInquiriesTable() {
                 `).join('');
             }
         }
+        
+        // APPLY FILTERS FUNCTIONS
+        function applyEscalationFilters() {
+            const searchTerm = document.getElementById('escalations-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-escalation-status').value;
+            const dateFilter = document.getElementById('filter-escalation-date').value;
 
-        // Render team members
+            const filtered = allEscalations.filter(e => {
+                const orderId = e.order_assignments?.orders?.order_id || '';
+                const agentName = e.escalated_by?.name || '';
+                
+                const matchesSearch = searchTerm === '' || orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
+                const matchesDate = dateFilter === '' || e.escalated_at.startsWith(dateFilter);
+                
+                return matchesSearch && matchesStatus && matchesDate;
+            });
+            document.getElementById('escalations-count').textContent = filtered.length;
+            renderEscalationsTable(filtered);
+        }
+        
+        function applyInquiryFilters() {
+            const searchTerm = document.getElementById('inquiries-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-inquiry-status').value;
+            const dateFilter = document.getElementById('filter-inquiry-date').value;
+
+            const filtered = allInquiries.filter(i => {
+                const orderId = i.order_assignments?.orders?.order_id || '';
+                const agentName = i.order_assignments?.users?.name || '';
+
+                const matchesSearch = searchTerm === '' || orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
+                const matchesDate = dateFilter === '' || i.created_at.startsWith(dateFilter);
+                
+                return matchesSearch && matchesStatus && matchesDate;
+            });
+            document.getElementById('inquiries-count').textContent = filtered.length;
+            renderInquiriesTable(filtered);
+        }
+
+
         function renderTeamMembers() {
             const teamGrid = document.getElementById('team-grid');
             
             if (teamMembers.length === 0) {
-                teamGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">👥</div>
-                        <div>No team members found.</div>
-                    </div>
-                `;
+                teamGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><div>No team members found.</div></div>`;
             } else {
                 teamGrid.innerHTML = teamMembers.map(member => {
                     const color = stringToColor(member.name);
@@ -1492,97 +1523,60 @@ function renderInquiriesTable() {
                             </div>
                             <div class="team-member-name">${member.name}</div>
                             <div class="team-member-role">${member.role}</div>
-                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
-                                ${member.department || 'No department'}
-                            </div>
+                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">${member.department || 'No department'}</div>
                         </div>
                     `;
                 }).join('');
             }
         }
 
-        // Render team schedule
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
             
             if (teamSchedule.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="empty-state">
-                            <div class="empty-state-icon">📅</div>
-                            <div>No schedule data available.</div>
-                        </td>
-                    </tr>
-                `;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><div>No schedule data available.</div></td></tr>`;
             } else {
-                // Group schedule by user
                 const scheduleByUser = {};
                 teamSchedule.forEach(shift => {
                     if (!scheduleByUser[shift.user_id]) {
-                        scheduleByUser[shift.user_id] = {
-                            user: shift.users,
-                            shifts: {}
-                        };
+                        scheduleByUser[shift.user_id] = { user: shift.users, shifts: {} };
                     }
-                    // Convert shift_date to day of week (0-6)
                     const shiftDate = new Date(shift.shift_date);
-                    const dayOfWeek = shiftDate.getDay(); // 0=Sunday, 1=Monday, etc.
+                    const dayOfWeek = shiftDate.getDay(); 
                     scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
                 });
 
                 tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
                     const shifts = [];
                     for (let day = 1; day <= 7; day++) {
-                        const shift = userSchedule.shifts[day % 7]; // Adjust for Sunday being 0
+                        const shift = userSchedule.shifts[day % 7];
                         let display = 'Off';
                         let className = 'shift-off';
                         
                         if (shift) {
-                            if (shift.shift_type === 'off') {
-                                display = 'Off';
-                                className = 'shift-off';
-                            } else if (shift.shift_type === 'leave') {
-                                display = 'On Leave';
-                                className = 'shift-leave';
-                            } else if (shift.shift_type === 'sick') {
-                                display = 'Sick Leave';
-                                className = 'shift-sick';
-                            } else {
-                                display = shift.shift_type;
-                                className = 'shift-time';
-                            }
+                            if (shift.shift_type === 'off') { display = 'Off'; className = 'shift-off'; } 
+                            else if (shift.shift_type === 'leave') { display = 'On Leave'; className = 'shift-leave'; } 
+                            else if (shift.shift_type === 'sick') { display = 'Sick Leave'; className = 'shift-sick'; } 
+                            else { display = shift.shift_type; className = 'shift-time'; }
                         }
                         
                         shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}"><span class="${className}">${display}</span></td>`);
                     }
                     
-                    return `
-                        <tr>
-                            <td class="member-name">${userSchedule.user.name}</td>
-                            ${shifts.join('')}
-                        </tr>
-                    `;
+                    return `<tr><td class="member-name">${userSchedule.user.name}</td>${shifts.join('')}</tr>`;
                 }).join('');
             }
         }
 
-        // Handle shift cell click for editing - Disabled as per request
-        function handleShiftCellClick(event) {
-            // Editing is now disabled
-            return;
-        }
+        function handleShiftCellClick(event) { return; }
 
-        // Populate team member dropdowns
         function populateTeamMemberDropdowns() {
             const memberSelect = document.getElementById('schedule-member');
             if (memberSelect) {
-                memberSelect.innerHTML = teamMembers.map(member => 
-                    `<option value="${member.id}">${member.name}</option>`
-                ).join('');
+                memberSelect.innerHTML = teamMembers.map(member => `<option value="${member.id}">${member.name}</option>`).join('');
             }
         }
 
-        // Populate senior dropdown
         function populateSeniorDropdown() {
             const seniorSelect = document.getElementById('escalate-to-senior');
             const seniorMembers = teamMembers.filter(m => m.role === 'senior');
@@ -1592,13 +1586,9 @@ function renderInquiriesTable() {
                 return;
             }
             
-            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' +
-                seniorMembers.map(member => 
-                    `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`
-                ).join('');
+            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' + seniorMembers.map(member => `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`).join('');
         }
 
-        // Update notifications UI
         function updateNotificationsUI() {
             const notificationList = document.getElementById('notification-list');
             const notificationBadge = document.getElementById('notification-badge');
@@ -1613,43 +1603,34 @@ function renderInquiriesTable() {
                             <div>${notification.message}</div>
                             <div class="notification-time">${formatDateTime(notification.created_at)}</div>
                         </div>
-                        <div class="notification-actions">
-                            <button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button>
-                        </div>
+                        <div class="notification-actions"><button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button></div>
                     </li>
                 `).join('');
                 
                 notificationBadge.textContent = notifications.length;
                 notificationBadge.style.display = 'flex';
                 
-                // Add event listeners to mark as read buttons
                 document.querySelectorAll('.mark-read-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        const notificationId = btn.dataset.notificationId;
-                        await markNotificationAsRead(notificationId);
+                        await markNotificationAsRead(btn.dataset.notificationId);
                         await loadNotifications();
                     });
                 });
             }
         }
 
-        // Initialize real-time subscriptions
         function initRealtimeSubscriptions() {
             try {
-                // Subscribe to new notifications
                 if (typeof window.subscribeToNotifications === 'function') {
                     window.subscribeToNotifications(currentUser.id, (payload) => {
-                        console.log('New notification received:', payload);
                         showToast(payload.new.message, 'info', 'New Notification');
                         loadNotifications();
                     });
                 }
                 
-                // Subscribe to new assignments
                 if (typeof window.subscribeToAssignments === 'function') {
                     window.subscribeToAssignments(currentUser.id, (payload) => {
-                        console.log('New order assigned:', payload);
                         showToast('A new order has been assigned to you', 'info', 'New Assignment');
                         loadAssignedOrders();
                     });
@@ -1659,234 +1640,82 @@ function renderInquiriesTable() {
             }
         }
 
-        // Initialize charts
         function initCharts() {
             const monthlyCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
             monthlyPerformanceChart = new Chart(monthlyCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [
-                        {
-                            label: 'Correct Reviews',
-                            data: [45, 52, 48, 55, 58, 62],
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Errors Found',
-                            data: [8, 6, 10, 7, 5, 4],
-                            borderColor: '#dc3545',
-                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#e6edf3'
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#e6edf3'
-                            }
-                        },
-                        y: {
-                            grid: {
-                                color: 'rgba(255, 255, 255, 0.1)'
-                            },
-                            ticks: {
-                                color: '#e6edf3'
-                            }
-                        }
-                    }
-                }
+                type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Correct Reviews', data: [45, 52, 48, 55, 58, 62], borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.4 }, { label: 'Errors Found', data: [8, 6, 10, 7, 5, 4], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e6edf3' } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } } } }
             });
 
             const issueCtx = document.getElementById('issueTypesChart').getContext('2d');
             issueTypesChart = new Chart(issueCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'],
-                    datasets: [{
-                        data: [45, 25, 18, 12],
-                        backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: {
-                                color: '#e6edf3'
-                            }
-                        }
-                    }
-                }
+                type: 'doughnut', data: { labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'], datasets: [{ data: [45, 25, 18, 12], backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'], borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } } } }
             });
         }
 
-        // Update charts with data
-        function updateCharts() {
-            // In a real implementation, this would update charts with actual data
-            // For now, we're using static data for demonstration
-        }
+        function updateCharts() { }
 
-        // Modal functions
         async function openViewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
-            if (!orderAssignment) {
-                showToast('Order not found', 'error');
-                return;
-            }
-
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
             document.getElementById('view-order-id').textContent = order.order_id;
-            document.getElementById('view-order-body').innerHTML = `
-                <div class="detail-item">
-                    <strong>Order ID</strong>
-                    <p>${order.order_id}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Employee</strong>
-                    <p>${order.employee_name}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Reason</strong>
-                    <p>${order.reason}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Amount</strong>
-                    <p>${order.amount || 'N/A'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Chefz</strong>
-                    <p>${order.chefz || 'N/A'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Order Status</strong>
-                    <p>${order.order_status}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Requested Delivery</strong>
-                    <p>${order.requested_delivery_date || 'N/A'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Payment Type</strong>
-                    <p>${order.payment_type || 'N/A'}</p>
-                </div>
-            `;
-
+            document.getElementById('view-order-body').innerHTML = `<div class="detail-item"><strong>Order ID</strong><p>${order.order_id}</p></div> <div class="detail-item"><strong>Employee</strong><p>${order.employee_name}</p></div> <div class="detail-item"><strong>Reason</strong><p>${order.reason}</p></div> <div class="detail-item"><strong>Amount</strong><p>${order.amount || 'N/A'}</p></div> <div class="detail-item"><strong>Chefz</strong><p>${order.chefz || 'N/A'}</p></div> <div class="detail-item"><strong>Order Status</strong><p>${order.order_status}</p></div> <div class="detail-item"><strong>Requested Delivery</strong><p>${order.requested_delivery_date || 'N/A'}</p></div> <div class="detail-item"><strong>Payment Type</strong><p>${order.payment_type || 'N/A'}</p></div>`;
             showModal('view-order-modal');
         }
 
         async function openReviewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
-            if (!orderAssignment) {
-                showToast('Order not found', 'error');
-                return;
-            }
-
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
             document.getElementById('review-order-id').textContent = order.order_id;
             document.getElementById('review-order-details').textContent = order.reason;
             document.getElementById('review-employee-name').textContent = order.employee_name;
             document.getElementById('review-issue-type').textContent = order.reason;
-
-            // Store the assignment ID for submission
             document.getElementById('submit-review-btn').dataset.assignmentId = orderAssignmentId;
-            
-            // Reset form fields and button state
             document.getElementById('review-action').value = '';
             document.getElementById('review-department').value = 'customer_service';
             document.getElementById('review-modified-reason').value = '';
             document.getElementById('review-notes').value = '';
-            
             const submitBtn = document.getElementById('submit-review-btn');
             submitBtn.classList.remove('btn-danger');
             submitBtn.classList.add('btn-primary');
             submitBtn.textContent = 'Submit Review';
-            
-            const notesLabel = document.querySelector('label[for="review-notes"]');
-            notesLabel.textContent = 'Additional Notes';
-
+            document.querySelector('label[for="review-notes"]').textContent = 'Additional Notes';
             showModal('review-order-modal');
         }
 
         async function openEscalateOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
-            if (!orderAssignment) {
-                showToast('Order not found', 'error');
-                return;
-            }
-
-            const order = orderAssignment.orders;
-            document.getElementById('escalate-order-id').textContent = order.order_id;
-
-            // Store the assignment ID for submission
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            document.getElementById('escalate-order-id').textContent = orderAssignment.orders.order_id;
             document.getElementById('submit-escalation-btn').dataset.assignmentId = orderAssignmentId;
-
             showModal('escalate-order-modal');
         }
 
         async function openRaiseInquiryModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
-            if (!orderAssignment) {
-                showToast('Order not found', 'error');
-                return;
-            }
-
-            const order = orderAssignment.orders;
-            document.getElementById('inquiry-order-id').textContent = order.order_id;
-            document.getElementById('inquiry-order-details').textContent = order.reason;
-
-            // Store the assignment ID for submission
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            document.getElementById('inquiry-order-id').textContent = orderAssignment.orders.order_id;
+            document.getElementById('inquiry-order-details').textContent = orderAssignment.orders.reason;
             document.getElementById('submit-inquiry-btn').dataset.assignmentId = orderAssignmentId;
-
             showModal('raise-inquiry-modal');
         }
 
         async function openReviewEscalationModal(escalationId) {
             try {
-                const escalation = helperEscalations.find(e => e.id === escalationId);
-                if (!escalation) {
-                    showToast('Escalation not found', 'error');
-                    return;
-                }
-
+                const escalation = allEscalations.find(e => e.id === escalationId);
+                if (!escalation) { showToast('Escalation not found', 'error'); return; }
                 const order = escalation.order_assignments?.orders;
-                const agentName = escalation.order_assignments?.users?.name || 'Unknown Agent';
-                
-                // Fill modal with data
                 document.getElementById('review-escalation-order-id').textContent = order?.order_id || 'N/A';
                 document.getElementById('escalation-order-details').textContent = order?.reason || 'No details available';
                 document.getElementById('escalation-employee-name').textContent = order?.employee_name || 'N/A';
                 document.getElementById('escalation-issue-type').textContent = order?.reason || 'N/A';
                 document.getElementById('agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
-
-                // Store the escalation ID for submission
                 document.getElementById('resolve-escalation-btn').dataset.escalationId = escalationId;
                 document.getElementById('toggle-senior-escalation-btn').dataset.escalationId = escalationId;
-
-                // Reset form state
                 resetEscalationModal();
-
                 showModal('review-escalation-modal');
             } catch (error) {
                 console.error('Error opening escalation modal:', error);
@@ -1896,23 +1725,13 @@ function renderInquiriesTable() {
 
         async function openRespondInquiryModal(inquiryId) {
             try {
-                const inquiry = helperInquiries.find(i => i.id === inquiryId);
-                if (!inquiry) {
-                    showToast('Inquiry not found', 'error');
-                    return;
-                }
-
+                const inquiry = allInquiries.find(i => i.id === inquiryId);
+                if (!inquiry) { showToast('Inquiry not found', 'error'); return; }
                 const order = inquiry.order_assignments?.orders;
-                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
-                
-                // Fill modal with data
                 document.getElementById('respond-inquiry-order-id').textContent = order?.order_id || 'N/A';
                 document.getElementById('respond-inquiry-order-details').textContent = order?.reason || 'No details available';
                 document.getElementById('agent-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text';
-
-                // Store the inquiry ID for submission
                 document.getElementById('submit-inquiry-response-btn').dataset.inquiryId = inquiryId;
-
                 showModal('respond-inquiry-modal');
             } catch (error) {
                 console.error('Error opening inquiry modal:', error);
@@ -1920,24 +1739,21 @@ function renderInquiriesTable() {
             }
         }
 
-        // Reset escalation modal
         function resetEscalationModal() {
             document.getElementById('helper-feedback').value = '';
             document.getElementById('senior-escalation-section').style.display = 'none';
-            document.getElementById('toggle-senior-escalation-btn').textContent = 'Escalate to Senior';
-            document.getElementById('toggle-senior-escalation-btn').classList.remove('btn-secondary');
-            document.getElementById('toggle-senior-escalation-btn').classList.add('btn-primary');
+            const btn = document.getElementById('toggle-senior-escalation-btn');
+            btn.textContent = 'Escalate to Senior';
+            btn.classList.remove('btn-secondary');
+            btn.classList.add('btn-primary');
             document.getElementById('escalate-to-senior').value = '';
             document.getElementById('senior-escalation-reason').value = '';
             isSeniorEscalationMode = false;
         }
 
-        // Utility function to generate color from string
         function stringToColor(str) {
             let hash = 0;
-            for (let i = 0; i < str.length; i++) {
-                hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            }
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
             let color = '#';
             for (let i = 0; i < 3; i++) {
                 const value = (hash >> (i * 8)) & 0xFF;
@@ -1948,116 +1764,64 @@ function renderInquiriesTable() {
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
-            // Initialize the app
             initApp();
             
-            // Tab navigation
             document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
-                    // Update active tab
                     document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
                     tab.classList.add('active');
-                    
-                    // Show corresponding content
                     const tabId = tab.dataset.tab;
                     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(tabId).classList.add('active');
-                    
-                    // Update page title
-                    document.getElementById('page-title-header').textContent = 
-                        tabId === 'dashboard' ? 'Dashboard' : 
-                        tabId === 'my-assigned-orders' ? 'Assigned Orders' : 
-                        tabId === 'team-scheduling' ? 'Team Scheduling' : 
-                        tabId === 'team-members' ? 'Team Members' : 
-                        tabId === 'company-employees' ? 'Company Employees' :
-                        tabId === 'payments' ? 'Payments' :
-                        tabId === 'escalations' ? 'Escalations' : 
-                        tabId === 'inquiries' ? 'Inquiries' : 
-                        tabId === 'profile' ? 'Profile' : 
-                        tabId === 'settings' ? 'Settings' : 
-                        tabId === 'help' ? 'Help' : 'Dashboard';
+                    document.getElementById('page-title-header').textContent = tab.textContent.replace(/[\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u, '').trim();
                 });
             });
             
-            // Settings navigation
             document.querySelectorAll('.settings-nav a').forEach(link => {
                 link.addEventListener('click', (e) => {
                     e.preventDefault();
-                    
-                    // Update active settings tab
                     document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
                     link.classList.add('active');
-                    
-                    // Show corresponding section
                     const sectionId = link.dataset.section;
                     document.querySelectorAll('.setting-card').forEach(section => section.style.display = 'none');
                     document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
                 });
             });
             
-            // Notification bell
-            document.getElementById('notification-btn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                document.getElementById('notification-dropdown').classList.toggle('show');
-            });
+            document.getElementById('notification-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown').classList.toggle('show'); });
             
-            // Mark all as read
             document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                for (const notification of notifications) {
-                    await markNotificationAsRead(notification.id);
-                }
+                await Promise.all(notifications.map(n => markNotificationAsRead(n.id)));
                 await loadNotifications();
                 showToast('All notifications marked as read', 'success');
             });
             
-            // Close modals
-            document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const modalId = btn.dataset.modalId;
-                    hideModal(modalId);
-                });
-            });
+            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal(btn.dataset.modalId)));
             
-            // Submit review
             document.getElementById('submit-review-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
                 const action = document.getElementById('review-action').value;
-                const department = document.getElementById('review-department').value;
-                const modifiedReason = document.getElementById('review-modified-reason').value;
-                const notes = document.getElementById('review-notes').value;
-                
-                if (!action) {
-                    showToast('Please select an action', 'warning');
-                    return;
-                }
-                
+                if (!action) { showToast('Please select an action', 'warning'); return; }
                 try {
                     await submitReview(assignmentId, {
                         action_correctness: action,
-                        department: department,
-                        modified_reason: modifiedReason,
-                        notes: notes
+                        department: document.getElementById('review-department').value,
+                        modified_reason: document.getElementById('review-modified-reason').value,
+                        notes: document.getElementById('review-notes').value
                     });
-                    
                     showToast('Review submitted successfully', 'success');
                     hideModal('review-order-modal');
-                    await loadAssignedOrders();
-                    await loadPerformanceMetrics();
-                    
+                    await Promise.all([loadAssignedOrders(), loadPerformanceMetrics()]);
                 } catch (error) {
-                    console.error('Error submitting review:', error);
                     showToast('Failed to submit review', 'error');
                 }
             });
 
-            // Dynamically change review modal based on action
             document.getElementById('review-action').addEventListener('change', function() {
                 const submitBtn = document.getElementById('submit-review-btn');
                 const notesLabel = document.querySelector('label[for="review-notes"]');
-                
                 if (this.value === 'error') {
                     submitBtn.classList.remove('btn-primary');
                     submitBtn.classList.add('btn-danger');
@@ -2071,266 +1835,100 @@ function renderInquiriesTable() {
                 }
             });
             
-            // Submit escalation
             document.getElementById('submit-escalation-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
-                const escalateTo = document.getElementById('escalate-to').value;
                 const reason = document.getElementById('escalate-reason').value;
-                const notes = document.getElementById('escalate-notes').value;
-                
-                if (!escalateTo || !reason) {
-                    showToast('Please fill all required fields', 'warning');
-                    return;
-                }
-                
+                if (!reason) { showToast('Please provide a reason', 'warning'); return; }
                 try {
-                    // Get senior quality analyst ID
-                    const seniorMembers = teamMembers.filter(m => m.role === 'senior');
-                    if (seniorMembers.length === 0) {
-                        showToast('No senior quality analysts available', 'error');
-                        return;
-                    }
-                    
-                    const escalatedToId = seniorMembers[0].id;
-                    
-                    await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
-                    
+                    const helperMembers = teamMembers.filter(m => m.role === 'quality');
+                    if (helperMembers.length === 0) { showToast('No helpers available', 'error'); return; }
+                    await submitEscalation(assignmentId, currentUser.id, helperMembers[0].id, reason);
                     showToast('Order escalated successfully', 'success');
                     hideModal('escalate-order-modal');
                     await loadAssignedOrders();
-                    
                 } catch (error) {
-                    console.error('Error submitting escalation:', error);
                     showToast('Failed to escalate order', 'error');
                 }
             });
 
-            // Submit inquiry
             document.getElementById('submit-inquiry-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-inquiry-btn').dataset.assignmentId;
                 const inquiryText = document.getElementById('inquiry-text').value;
-                
-                if (!inquiryText.trim()) {
-                    showToast('Please provide your inquiry', 'warning');
-                    return;
-                }
-                
+                if (!inquiryText.trim()) { showToast('Please provide your inquiry', 'warning'); return; }
                 try {
                     await raiseInquiry(assignmentId, currentUser.id, inquiryText);
-                    
                     showToast('Inquiry submitted successfully', 'success');
                     hideModal('raise-inquiry-modal');
                     await loadAssignedOrders();
-                    
                 } catch (error) {
-                    console.error('Error submitting inquiry:', error);
                     showToast('Failed to submit inquiry', 'error');
                 }
             });
             
-            // Toggle senior escalation section
             document.getElementById('toggle-senior-escalation-btn').addEventListener('click', () => {
                 const section = document.getElementById('senior-escalation-section');
                 const button = document.getElementById('toggle-senior-escalation-btn');
-                
-                if (!isSeniorEscalationMode) {
-                    section.style.display = 'block';
-                    button.textContent = 'Cancel Senior Escalation';
-                    button.classList.remove('btn-primary');
-                    button.classList.add('btn-secondary');
-                    isSeniorEscalationMode = true;
-                    
-                    // Populate senior dropdown
-                    populateSeniorDropdown();
-                } else {
-                    section.style.display = 'none';
-                    button.textContent = 'Escalate to Senior';
-                    button.classList.remove('btn-secondary');
-                    button.classList.add('btn-primary');
-                    isSeniorEscalationMode = false;
-                }
+                isSeniorEscalationMode = !isSeniorEscalationMode;
+                section.style.display = isSeniorEscalationMode ? 'block' : 'none';
+                button.textContent = isSeniorEscalationMode ? 'Cancel Senior Escalation' : 'Escalate to Senior';
+                button.classList.toggle('btn-primary', !isSeniorEscalationMode);
+                button.classList.toggle('btn-secondary', isSeniorEscalationMode);
+                if (isSeniorEscalationMode) populateSeniorDropdown();
             });
             
-            // Resolve escalation
             document.getElementById('resolve-escalation-btn').addEventListener('click', async () => {
                 const escalationId = document.getElementById('resolve-escalation-btn').dataset.escalationId;
                 const feedback = document.getElementById('helper-feedback').value;
-                
-                if (!feedback.trim()) {
-                    showToast('Please provide your feedback before resolving', 'warning');
-                    return;
-                }
-                
+                if (!feedback.trim()) { showToast('Please provide feedback', 'warning'); return; }
                 try {
                     await resolveEscalation(escalationId, feedback);
                     showToast('Escalation resolved successfully', 'success');
                     hideModal('review-escalation-modal');
-                    await loadHelperEscalations();
+                    await loadAllEscalations();
                 } catch (error) {
-                    console.error('Error resolving escalation:', error);
                     showToast('Failed to resolve escalation', 'error');
                 }
             });
 
-            // Submit inquiry response
             document.getElementById('submit-inquiry-response-btn').addEventListener('click', async () => {
                 const inquiryId = document.getElementById('submit-inquiry-response-btn').dataset.inquiryId;
                 const response = document.getElementById('helper-response').value;
-                
-                if (!response.trim()) {
-                    showToast('Please provide your response', 'warning');
-                    return;
-                }
-                
+                if (!response.trim()) { showToast('Please provide your response', 'warning'); return; }
                 try {
                     await respondToInquiry(inquiryId, currentUser.id, response);
                     showToast('Response sent successfully', 'success');
                     hideModal('respond-inquiry-modal');
-                    await loadHelperInquiries();
+                    await loadAllInquiries();
                 } catch (error) {
-                    console.error('Error responding to inquiry:', error);
                     showToast('Failed to send response', 'error');
                 }
             });
             
-            // Handle senior escalation
-            document.getElementById('escalate-to-senior').addEventListener('change', function() {
-                const reasonField = document.getElementById('senior-escalation-reason');
-                
-                if (this.value) {
-                    reasonField.required = true;
-                } else {
-                    reasonField.required = false;
-                }
-            });
+            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { await loadAllEscalations(); showToast('Escalations refreshed', 'info'); });
+            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadAllInquiries(); showToast('Inquiries refreshed', 'info'); });
             
-            // Refresh escalations
-            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => {
-                await loadHelperEscalations();
-                showToast('Escalations refreshed', 'info');
-            });
-
-            // Refresh inquiries
-            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => {
-                await loadHelperInquiries();
-                showToast('Inquiries refreshed', 'info');
-            });
+            // Filter event listeners
+            document.getElementById('escalations-search-input').addEventListener('input', applyEscalationFilters);
+            document.getElementById('filter-escalation-status').addEventListener('change', applyEscalationFilters);
+            document.getElementById('filter-escalation-date').addEventListener('change', applyEscalationFilters);
+            document.getElementById('inquiries-search-input').addEventListener('input', applyInquiryFilters);
+            document.getElementById('filter-inquiry-status').addEventListener('change', applyInquiryFilters);
+            document.getElementById('filter-inquiry-date').addEventListener('change', applyInquiryFilters);
             
-            // Search in escalations
-            document.getElementById('escalations-search-input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#escalations-table-body tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            });
-
-            // Search in inquiries
-            document.getElementById('inquiries-search-input').addEventListener('input', function(e) {
-                const searchTerm = e.target.value.toLowerCase();
-                const rows = document.querySelectorAll('#inquiries-table-body tr');
-                
-                rows.forEach(row => {
-                    const text = row.textContent.toLowerCase();
-                    row.style.display = text.includes(searchTerm) ? '' : 'none';
-                });
-            });
-            
-            // Close notification dropdown when clicking outside
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-bell')) {
-                    document.getElementById('notification-dropdown').classList.remove('show');
-                }
-            });
-            
-            // Close modals when clicking outside
-            document.addEventListener('click', (e) => {
-                if (e.target.classList.contains('modal-overlay')) {
-                    e.target.classList.remove('show');
-                }
+                if (!e.target.closest('.notification-bell')) document.getElementById('notification-dropdown').classList.remove('show');
+                if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
             });
 
-            // Filter orders by status
             document.getElementById('filter-status').addEventListener('change', function() {
-                const status = this.value;
-                let filters = {};
-                
-                if (status === 'completed_today') {
-                    const today = new Date().toISOString().split('T')[0];
-                    filters = { status: 'completed', from_date: today, to_date: today };
-                } else if (status !== 'all') {
-                    filters = { status: status };
-                }
-                
+                const filters = this.value === 'all' ? {} : { status: this.value };
                 loadAssignedOrders(filters);
             });
-
-            // Filter by date range
-            document.getElementById('filter-from-date').addEventListener('change', applyDateFilter);
-            document.getElementById('filter-to-date').addEventListener('change', applyDateFilter);
-
-            function applyDateFilter() {
-                const fromDate = document.getElementById('filter-from-date').value;
-                const toDate = document.getElementById('filter-to-date').value;
-                const status = document.getElementById('filter-status').value;
-                
-                let filters = {};
-                if (fromDate) filters.from_date = fromDate;
-                if (toDate) filters.to_date = toDate;
-                if (status !== 'all' && status !== 'completed_today') {
-                    filters.status = status;
-                }
-                
-                loadAssignedOrders(filters);
-            }
         });
+
+        // Make function globally accessible for inline onclick
+        window.viewInquiryResponse = viewInquiryResponse;
     </script>
-    
-    <!-- ==================== ALL MODALS GO HERE, OUTSIDE THE SCRIPT TAG ==================== -->
-
-    <!-- Review Order Modal (Should already be here) -->
-    <div class="modal-overlay" id="review-order-modal">
-        <!-- ... content of review modal ... -->
-    </div>
-    
-    <!-- Escalate Order Modal (Should already be here) -->
-    <div class="modal-overlay" id="escalate-order-modal">
-        <!-- ... content of escalate modal ... -->
-    </div>
-
-    <!-- Respond to Inquiry Modal (Should already be here) -->
-    <div class="modal-overlay" id="respond-inquiry-modal">
-        <!-- ... content of respond modal ... -->
-    </div>
-
-    <!-- View Inquiry/Response Modal (This is the one we added) -->
-    <div class="modal-overlay" id="view-inquiry-modal">
-        <div class="modal-box" style="max-width: 550px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Agent's Inquiry</strong>
-                    <p id="view-inquiry-text">Loading...</p>
-                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
-                </div>
-                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
-                    <strong>Your Response</strong>
-                    <p id="view-inquiry-response-text">Loading...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Toast Notifications Container (Should already be here) -->
-    <div class="toast-container" id="toast-container"></div>
 
 </body>
 </html>
