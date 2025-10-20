@@ -620,7 +620,7 @@ export async function getEscalations(userId = null, filters = {}) {
       query = query.eq('escalated_to_id', userId);
     }
 
-    if (filters.status) {
+    if (filters.status && filters.status !== 'all') {
       query = query.eq('status', filters.status);
     }
 
@@ -821,6 +821,7 @@ export async function getHelperInquiries(helperId) {
         inquiry_text,
         status,
         created_at,
+        response_text,
         order_assignments!inquiries_order_id_fkey (
           id,
           status,
