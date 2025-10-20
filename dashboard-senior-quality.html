@@ -927,7 +927,7 @@
                     <td class="wrap-text">${order.employee_name}</td>
                     <td>${order.chefz || 'N/A'}</td>
                     <td>${order.order_status}</td>
-                    <td>${order.requested_delivery_date || 'N/A'}</td>
+                    <td>${formatDate(order.requested_delivery_date)}</td>
                     <td>${order.payment_type || 'N/A'}</td>
                 </tr>
             `).join('');
