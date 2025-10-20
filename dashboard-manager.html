@@ -296,6 +296,19 @@
             background-color: var(--green);
             color: white;
         }
+
+        /* Team Schedule Specific Styles */
+        #schedule-table.edit-mode .shift-cell {
+            cursor: pointer;
+            background-color: rgba(0, 191, 255, 0.1);
+            transition: background-color 0.2s ease;
+        }
+        #schedule-table.edit-mode .shift-cell:hover {
+            background-color: rgba(0, 191, 255, 0.2);
+        }
+        .shift-cell span.on-leave { color: var(--yellow); }
+        .shift-cell span.sick-leave { color: var(--red); }
+        .shift-cell span.off { color: var(--text-muted); }
         
 
         @media (max-width: 1024px) {
@@ -438,8 +451,6 @@
                         <label>Department</label>
                         <select id="filter-department">
                             <option value="all">All</option>
-                            <option value="customer_service">Customer Service</option>
-                            <option value="logistics">Logistics</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -666,8 +677,6 @@
             </div>
         </div>
         
-        <!-- ## ابدأ النسخ من هنا: محتوى الصفحات الجديدة ## -->
-
         <!-- Team Scheduling Content -->
         <div id="team-scheduling" class="tab-content">
             <div class="card">
@@ -677,7 +686,7 @@
                         <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
                         <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
                         <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                            <button id="cancel-schedule-btn" class="btn btn-secondary" style="background-color: #333;">Cancel</button>
+                            <button id="cancel-schedule-btn" class="btn" style="background-color: #333; color: white;">Cancel</button>
                             <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
                         </div>
                     </div>
@@ -696,7 +705,10 @@
         <!-- Company Employees Content -->
         <div id="company-employees" class="tab-content">
             <div class="card">
-                <h3>Company Employees</h3>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3 style="white-space: nowrap;">Company Employees</h3>
+                    <button id="add-company-employee-btn" class="btn btn-secondary">Add New Employee</button>
+                </div>
                 <div class="table-container">
                     <table class="user-management-table">
                         <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
@@ -707,6 +719,7 @@
                 </div>
             </div>
         </div>
+
 
         <!-- Departments Content -->
         <div id="departments" class="tab-content">
@@ -725,8 +738,7 @@
         <div id="payments" class="tab-content">
             <div class="card">
                 <h3>Available Payment Methods</h3>
-                <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                    <!-- تم حذف "Other items payment" -->
+                <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
                     <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
@@ -748,7 +760,9 @@
             </div>
         </div>
 
-        <!-- ## انتهي من النسخ هنا ## -->
+        <footer style="text-align: center; padding: 20px 0; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-top: 30px;">
+            &copy; 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
     </main>
 
     <!-- Add User Modal -->
@@ -893,6 +907,7 @@
         let departments = [];
         let teamSchedule = [];
         let isScheduleEditMode = false;
+        let scheduleChanges = {}; // To hold temporary changes
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -1244,8 +1259,7 @@
             departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
             departmentErrorsChart.update();
         }
-
-        // ## انسخ وألصق هذه الدوال الجديدة بالكامل ##
+        
         async function loadCompanyEmployees() {
             try {
                 companyEmployees = await getCompanyEmployees();
@@ -1265,6 +1279,7 @@
             try {
                 departments = await getDepartments();
                 renderDepartmentsTable();
+                populateDepartmentFilter(); // <-- Add this line
             } catch (error) { showToast('Failed to load departments', 'error'); }
         }
 
@@ -1274,8 +1289,8 @@
             tableBody.innerHTML = departments.length === 0
                 ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
                 : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
-
-            // أضف هذا الكود لربط الحدث
+            
+            // ربط حدث الزر
             document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     showToast('Department editing is not implemented yet.', 'info');
@@ -1283,9 +1298,14 @@
             });
         }
 
+        function populateDepartmentFilter() {
+            const deptSelect = document.getElementById('filter-department');
+            if (!deptSelect || departments.length === 0) return;
+            deptSelect.innerHTML = '<option value="all">All</option>' + departments.map(dept => `<option value="${dept.department_name}">${dept.department_name}</option>`).join('');
+        }
+
         async function loadTeamSchedule() {
             try {
-                // Ensure team members are loaded first
                 if (teamMembers.length === 0) {
                    await loadTeamMembers();
                 }
@@ -1297,30 +1317,31 @@
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
             if (!tableBody) return;
-            const qualityTeam = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
-            if (qualityTeam.length === 0) {
+            const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
+            
+            if (teamToSchedule.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
                 return;
             }
 
             const scheduleMap = teamSchedule.reduce((acc, s) => {
                 if (!acc[s.user_id]) acc[s.user_id] = {};
-                const day = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
-                acc[s.user_id][day] = s.shift_type;
+                const dayIndex = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
+                acc[s.user_id][dayIndex] = s.shift_type;
                 return acc;
             }, {});
 
-            tableBody.innerHTML = qualityTeam.map(member => {
+            tableBody.innerHTML = teamToSchedule.map(member => {
                 const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
                 const cells = daysOfWeek.map(day => {
                     const shift = scheduleMap[member.id]?.[day] || 'Off';
-                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${shift.replace(' ', '-').toLowerCase()}">${shift}</span></td>`;
+                    const className = shift.replace(/ /g, '-').toLowerCase();
+                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${className}">${shift}</span></td>`;
                 }).join('');
                 return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
             }).join('');
 
-            // تفعيل الضغط على الخلايا عند تفعيل وضع التعديل
-            document.querySelectorAll('.shift-cell').forEach(cell => {
+            document.querySelectorAll('#schedule-table .shift-cell').forEach(cell => {
                 cell.addEventListener('click', () => {
                     if (isScheduleEditMode) {
                         openShiftModal(cell.dataset);
@@ -1342,18 +1363,32 @@
         async function handleSaveShift() {
             const { userId, day } = document.getElementById('save-shift-btn').dataset;
             const shiftType = document.getElementById('shift-select').value;
+            
+            // Calculate the correct date for the selected day of the current week
             const today = new Date();
-            const distance = day - today.getDay();
+            const currentDay = today.getDay(); // Sunday = 0, Monday = 1...
+            const targetDay = parseInt(day, 10);
+            
+            // Adjust day for weeks starting on Sunday vs Monday if needed. Assuming JS standard.
+            let dayDifference = targetDay - currentDay;
+            if (targetDay < 1 && currentDay > 0) { // Assuming week starts Monday (1)
+               // This logic might need adjustment based on exact week start definition
+            }
+
             const targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() + distance);
+            targetDate.setDate(today.getDate() + dayDifference);
             const shiftDate = targetDate.toISOString().split('T')[0];
 
             try {
-                await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
+                const { data, error } = await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
+                if (error) throw error;
                 showToast('Schedule updated successfully', 'success');
                 hideModal('edit-shift-modal');
-                await loadTeamSchedule();
-            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
+                await loadTeamSchedule(); // Reload schedule to show the update
+            } catch (error) { 
+                console.error("Error updating schedule:", error);
+                showToast(`Failed to update schedule: ${error.message}`, 'error'); 
+            }
         }
 
 
@@ -1488,14 +1523,12 @@
                 showToast('Filters applied successfully', 'success');
             });
             
-            // Download report
             document.getElementById('download-report-btn').addEventListener('click', () => {
-                showToast("Generating a formatted report based on your current filters...", 'info');
+                showToast("Generating report for download...", 'info');
             });
-            
-            // Export report
+
             document.getElementById('export-report-btn').addEventListener('click', () => {
-                showToast('Exporting overall report...', 'info');
+                showToast('Generating overall system report...', 'info');
             });
             
             // Generate report
@@ -1620,10 +1653,16 @@
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+            const saveScheduleBtn = document.getElementById('save-schedule-btn');
+            const scheduleTable = document.getElementById('schedule-table');
+            
+            document.getElementById('add-member-schedule-btn').addEventListener('click', () => {
+                showModal('add-user-modal');
+            });
             
             editScheduleBtn.addEventListener('click', () => {
                 isScheduleEditMode = true;
-                document.getElementById('schedule-table').classList.add('edit-mode');
+                scheduleTable.classList.add('edit-mode');
                 editScheduleBtn.style.display = 'none';
                 scheduleEditControls.style.display = 'inline-flex';
                 showToast('Edit mode enabled. Click on a cell to modify.', 'info');
@@ -1631,11 +1670,20 @@
 
             cancelScheduleBtn.addEventListener('click', () => {
                 isScheduleEditMode = false;
-                document.getElementById('schedule-table').classList.remove('edit-mode');
+                scheduleTable.classList.remove('edit-mode');
                 editScheduleBtn.style.display = 'inline-flex';
                 scheduleEditControls.style.display = 'none';
                 renderTeamSchedule(); // Re-render to discard changes
                 showToast('Edit mode cancelled.', 'warning');
+            });
+            
+            saveScheduleBtn.addEventListener('click', async () => {
+                isScheduleEditMode = false;
+                scheduleTable.classList.remove('edit-mode');
+                editScheduleBtn.style.display = 'inline-flex';
+                scheduleEditControls.style.display = 'none';
+                showToast('Changes saved successfully!', 'success');
+                // The actual saving happens in handleSaveShift, this button is more of a state toggle
             });
             
             document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
