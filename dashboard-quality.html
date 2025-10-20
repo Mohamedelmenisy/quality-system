@@ -1007,6 +1007,22 @@
         </div>
     </div>
 
+    <!-- Logout Confirmation Modal -->
+    <div class="modal-overlay" id="logout-confirm-modal">
+        <div class="modal-box" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="border-bottom: none; justify-content: center;">
+                <h3 class="modal-title">Confirm Logout</h3>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem;">Are you sure you want to log out?</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="btn btn-secondary" id="cancel-logout-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
 
@@ -1163,12 +1179,9 @@
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
-          // Show/hide escalation and inquiry tabs based on role
-const helperRoles = ['quality', 'admin', 'helper'];
-if (helperRoles.includes(currentUser.role)) {
-    document.getElementById('escalations-tab').style.display = 'flex';
-    document.getElementById('inquiries-tab').style.display = 'flex';
-}
+            // Show/hide escalation and inquiry tabs based on role
+            const helperRoles = ['quality', 'admin', 'helper'];
+            if (helperRoles.includes(currentUser.role)) {
                 document.getElementById('escalations-tab').style.display = 'flex';
                 document.getElementById('inquiries-tab').style.display = 'flex';
             }
@@ -1857,6 +1870,16 @@ if (helperRoles.includes(currentUser.role)) {
             }
             return color;
         }
+        
+        async function logoutUser() {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+                showToast('Failed to log out', 'error');
+            } else {
+                window.location.href = 'login.html';
+            }
+        }
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
@@ -1990,6 +2013,20 @@ if (helperRoles.includes(currentUser.role)) {
                 } catch (error) { showToast('Failed to send response', 'error'); }
             });
             
+            // Logout Button Logic
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                showModal('logout-confirm-modal');
+            });
+            
+            document.getElementById('cancel-logout-btn').addEventListener('click', () => {
+                hideModal('logout-confirm-modal');
+            });
+
+            document.getElementById('confirm-logout-btn').addEventListener('click', () => {
+                logoutUser();
+            });
+            
             document.getElementById('escalate-to-senior').addEventListener('change', function() { document.getElementById('senior-escalation-reason').required = !!this.value; });
             document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { await loadHelperEscalations(); showToast('Escalations refreshed', 'info'); });
             document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadHelperInquiries(); showToast('Inquiries refreshed', 'info'); });
@@ -2028,3 +2065,4 @@ if (helperRoles.includes(currentUser.role)) {
     </script>
 </body>
 </html>
+```
