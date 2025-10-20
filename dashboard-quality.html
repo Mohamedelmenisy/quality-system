@@ -1163,8 +1163,9 @@
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
-            // Show/hide escalation and inquiry tabs based on role
-            if (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper') {
+          // Show/hide escalation and inquiry tabs based on role
+const helperRoles = ['quality', 'admin', 'helper'];
+if (helperRoles.includes(currentUser.role)) {
     document.getElementById('escalations-tab').style.display = 'flex';
     document.getElementById('inquiries-tab').style.display = 'flex';
 }
