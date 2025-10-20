@@ -171,6 +171,91 @@
         .footer-text {
             opacity: 0.8;
         }
+
+        /* Custom Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            display: none; /* Hidden by default */
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(5px);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal-overlay.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            padding: 30px 40px;
+            border-radius: 15px;
+            text-align: center;
+            width: 90%;
+            max-width: 400px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-content h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+
+        .modal-content p {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin-bottom: 25px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .modal-btn {
+            padding: 10px 25px;
+            border-radius: 10px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            border: none;
+        }
+
+        .modal-btn.confirm {
+            background-color: var(--primary-color);
+            color: #000;
+        }
+        
+        .modal-btn.confirm:hover {
+            background-color: var(--primary-hover);
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+        }
+
+        .modal-btn.cancel {
+            background-color: #333;
+            color: var(--text-secondary);
+        }
+        
+        .modal-btn.cancel:hover {
+            background-color: #444;
+        }
         
         @media (max-width: 768px) {
             .dashboard-container {
@@ -233,6 +318,18 @@
         <p class="footer-text">© 2025 Mohamed Elmenisy. All rights reserved.</p>
     </div>
 
+    <!-- Custom Logout Confirmation Modal -->
+    <div id="logout-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h2>Confirm Logout</h2>
+            <p>Are you sure you want to logout?</p>
+            <div class="modal-buttons">
+                <button id="cancel-logout-btn" class="modal-btn cancel">Cancel</button>
+                <button id="confirm-logout-btn" class="modal-btn confirm">Logout</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function redirectTo(dashboardType) {
             const pages = {
@@ -247,11 +344,44 @@
             }
         }
 
+        // --- Improved Logout Logic ---
+        const logoutModal = document.getElementById('logout-modal');
+        const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
+        const cancelLogoutBtn = document.getElementById('cancel-logout-btn');
+
+        // Show the modal
         function logout() {
-            if (confirm('Are you sure you want to logout?')) {
-                window.location.href = './login.html';
-            }
+            logoutModal.style.display = 'flex';
+            // Use a timeout to allow the display property to apply before adding the class for the transition
+            setTimeout(() => {
+                logoutModal.classList.add('show');
+            }, 10);
         }
+
+        // Perform the logout action
+        function performLogout() {
+            window.location.href = './login.html';
+        }
+
+        // Hide the modal
+        function cancelLogout() {
+            logoutModal.classList.remove('show');
+            // Wait for the transition to finish before setting display to none
+            setTimeout(() => {
+                logoutModal.style.display = 'none';
+            }, 300);
+        }
+
+        // Add event listeners
+        confirmLogoutBtn.addEventListener('click', performLogout);
+        cancelLogoutBtn.addEventListener('click', cancelLogout);
+
+        // Also close modal if user clicks on the overlay (outside the modal content)
+        logoutModal.addEventListener('click', function(event) {
+            if (event.target === logoutModal) {
+                cancelLogout();
+            }
+        });
     </script>
 </body>
 </html>
