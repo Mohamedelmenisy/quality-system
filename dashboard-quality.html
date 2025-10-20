@@ -1284,7 +1284,7 @@
             if (latestInquiry.status === 'pending') {
                 inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
             } else if (latestInquiry.status === 'responded') {
-                inquiryBadge = `<span class="inquiry-badge" style="background-color: var(--green-bg); color: var(--green);" title="Response: ${latestInquiry.response_text}">Response Received</span>`;
+                 inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Response from Helper:\\n\\n${latestInquiry.response_text.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view response">Response Received</button>`;
             }
         }
         // --- نهاية الجزء الجديد ---
@@ -1430,16 +1430,18 @@ function renderInquiriesTable() {
     });
 
     // -- تعديل هنا: إضافة حدث لزر "View Response" الجديد --
-    document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const inquiry = helperInquiries.find(i => i.id === this.dataset.inquiryId);
-            if (inquiry) {
-                // ببساطة نظهر الرد في نافذة alert مؤقتًا
-                alert(`Inquiry from: ${inquiry.order_assignments?.users?.name}\n\nQuestion:\n${inquiry.inquiry_text}\n\nYour Response:\n${inquiry.response_text}`);
-            }
-        });
+   document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const inquiry = helperInquiries.find(i => i.id === this.dataset.inquiryId);
+        if (inquiry) {
+            document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+            document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+            document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+            document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+            showModal('view-inquiry-modal');
+        }
     });
-}
+});
 
         // Render company employees table
         function renderCompanyEmployeesTable() {
@@ -2283,5 +2285,30 @@ function renderInquiriesTable() {
             }
         });
     </script>
+    
+    <!-- View Inquiry/Response Modal (NEWLY ADDED) -->
+    <div class="modal-overlay" id="view-inquiry-modal">
+        <div class="modal-box" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="view-inquiry-text">Loading...</p>
+                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+                </div>
+                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                    <strong>Your Response</strong>
+                    <p id="view-inquiry-response-text">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
