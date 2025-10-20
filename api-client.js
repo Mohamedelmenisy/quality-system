@@ -246,6 +246,12 @@ export async function updateCompanyEmployee(employeeId, updates) {
     }
 }
 
+export async function getDepartments() {
+    const { data, error } = await supabase.from('departments').select('*, head:users(name)');
+    if (error) throw error;
+    return data;
+}
+
 
 // ==================== ORDER FUNCTIONS ====================
 
