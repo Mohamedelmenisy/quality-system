@@ -2286,7 +2286,24 @@ function renderInquiriesTable() {
         });
     </script>
     
-    <!-- View Inquiry/Response Modal (NEWLY ADDED) -->
+    <!-- ==================== ALL MODALS GO HERE, OUTSIDE THE SCRIPT TAG ==================== -->
+
+    <!-- Review Order Modal (Should already be here) -->
+    <div class="modal-overlay" id="review-order-modal">
+        <!-- ... content of review modal ... -->
+    </div>
+    
+    <!-- Escalate Order Modal (Should already be here) -->
+    <div class="modal-overlay" id="escalate-order-modal">
+        <!-- ... content of escalate modal ... -->
+    </div>
+
+    <!-- Respond to Inquiry Modal (Should already be here) -->
+    <div class="modal-overlay" id="respond-inquiry-modal">
+        <!-- ... content of respond modal ... -->
+    </div>
+
+    <!-- View Inquiry/Response Modal (This is the one we added) -->
     <div class="modal-overlay" id="view-inquiry-modal">
         <div class="modal-box" style="max-width: 550px;">
             <div class="modal-header">
@@ -2310,5 +2327,8 @@ function renderInquiriesTable() {
         </div>
     </div>
     
+    <!-- Toast Notifications Container (Should already be here) -->
+    <div class="toast-container" id="toast-container"></div>
+
 </body>
 </html>
