@@ -1157,7 +1157,7 @@ export async function importOrdersFromCSV(csvData) {
       requested_delivery_date: row.requested_delivery_date,
       payment_type: row.payment_type,
       raw_data: row,
-      recorded_at: new Date()
+     created_at: new Date()
     }));
 
     const { data, error } = await supabase
