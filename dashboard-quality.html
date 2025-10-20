@@ -136,7 +136,7 @@
         .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-new { background-color: var(--primary-color); color: #000; }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
-        .status-completed, .status-resolved { background-color: var(--green-bg); color: var(--green); }
+        .status-completed { background-color: var(--green-bg); color: var(--green); }
         .status-error { background-color: var(--red-bg); color: var(--red); }
         .status-escalated { background-color: var(--yellow-bg); color: var(--yellow); }
         .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 5px 10px; border-radius: 6px; margin-right: 5px; transition: background-color 0.3s ease; }
@@ -247,6 +247,7 @@
         .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
         .payment-card { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
         .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
+        .main-footer { margin-top: auto; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -466,17 +467,17 @@
         <!-- New Escalations Tab -->
         <div id="escalations" class="tab-content">
             <div class="card">
-                <h3>My Escalations (<span id="escalations-count">0</span>)</h3>
+                <h3>Escalations (<span id="escalations-count">0</span>)</h3>
                 <div class="filter-bar">
-                    <div class="filter-group">
+                    <div class="filter-group search-input-container">
                         <input type="search" id="escalations-search-input" placeholder="Search by Order ID, Agent...">
                     </div>
                     <div class="filter-group">
                         <label for="filter-escalation-status">Status:</label>
                         <select id="filter-escalation-status">
-                            <option value="all">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="resolved">Resolved</option>
+                             <option value="all">All</option>
+                             <option value="pending">Pending</option>
+                             <option value="resolved">Resolved</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -496,12 +497,11 @@
                                 <th>Escalated By</th>
                                 <th>Agent's Reason</th>
                                 <th>Date</th>
-                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="escalations-table-body">
-                            <tr><td colspan="6" class="empty-state">Loading escalations...</td></tr>
+                            <tr><td colspan="5" class="empty-state">Loading escalations...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -511,17 +511,17 @@
         <!-- New Inquiries Tab -->
         <div id="inquiries" class="tab-content">
             <div class="card">
-                <h3>Team Inquiries (<span id="inquiries-count">0</span>)</h3>
+                <h3>Inquiries (<span id="inquiries-count">0</span>)</h3>
                 <div class="filter-bar">
-                    <div class="filter-group">
+                    <div class="filter-group search-input-container">
                         <input type="search" id="inquiries-search-input" placeholder="Search by Order ID, Agent...">
                     </div>
                      <div class="filter-group">
                         <label for="filter-inquiry-status">Status:</label>
                         <select id="filter-inquiry-status">
-                            <option value="all">All</option>
-                            <option value="pending">Pending</option>
-                            <option value="responded">Responded</option>
+                             <option value="all">All</option>
+                             <option value="pending">Pending</option>
+                             <option value="responded">Responded</option>
                         </select>
                     </div>
                     <div class="filter-group">
@@ -541,12 +541,11 @@
                                 <th>Agent</th>
                                 <th>Inquiry</th>
                                 <th>Date</th>
-                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inquiries-table-body">
-                            <tr><td colspan="6" class="empty-state">Loading inquiries...</td></tr>
+                            <tr><td colspan="5" class="empty-state">Loading inquiries...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -700,7 +699,7 @@
                 </div>
             </div>
         </div>
-        <footer style="text-align: center; padding: 20px; color: var(--text-muted); margin-top: auto;">
+        <footer class="main-footer">
             © 2025 Mohamed Elmenisy. All rights reserved.
         </footer>
     </main>
@@ -902,6 +901,30 @@
             </div>
         </div>
     </div>
+    
+    <!-- View Inquiry/Response Modal (NEW) -->
+    <div class="modal-overlay" id="view-inquiry-modal">
+        <div class="modal-box" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="view-inquiry-text">Loading...</p>
+                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+                </div>
+                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                    <strong>Helper's Response</strong>
+                    <p id="view-inquiry-response-text">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Add Team Member Modal -->
     <div class="modal-overlay" id="add-member-modal">
@@ -983,30 +1006,6 @@
             </div>
         </div>
     </div>
-    
-    <!-- View Inquiry/Response Modal (This is the one we added) -->
-    <div class="modal-overlay" id="view-inquiry-modal">
-        <div class="modal-box" style="max-width: 550px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Agent's Inquiry</strong>
-                    <p id="view-inquiry-text">Loading...</p>
-                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
-                </div>
-                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
-                    <strong>Helper's Response</strong>
-                    <p id="view-inquiry-response-text">Loading...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
-            </div>
-        </div>
-    </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
@@ -1024,8 +1023,8 @@
         let issueTypesChart = null;
         
         // New state variables
-        let allEscalations = [];
-        let allInquiries = [];
+        let helperEscalations = [];
+        let helperInquiries = [];
         let isSeniorEscalationMode = false;
 
         // Toast Notification System
@@ -1052,8 +1051,9 @@
             
             container.appendChild(toast);
             
+            // Auto remove after 5 seconds
             const removeToast = () => {
-                if (toast.parentNode) {
+                 if (toast.parentNode) {
                     toast.style.opacity = '0';
                     toast.style.transform = 'translateX(100%)';
                     setTimeout(() => {
@@ -1063,9 +1063,9 @@
                     }, 300);
                 }
             };
-            
             setTimeout(removeToast, 5000);
             
+            // Close button functionality
             toast.querySelector('.toast-close').addEventListener('click', removeToast);
         }
 
@@ -1103,28 +1103,20 @@
         function hideModal(modalId) {
             document.getElementById(modalId)?.classList.remove('show');
         }
-        
-        function viewInquiryResponse(inquiry) {
-            if (inquiry) {
-                document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-                document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-                showModal('view-inquiry-modal');
-            }
-        }
 
         // Initialize the application
         async function initApp() {
             try {
                 showToast('Loading Quality Dashboard...', 'info');
                 
+                // Get current user
                 const user = await getCurrentUser();
                 if (!user) {
                     window.location.href = 'login.html';
                     return;
                 }
                 
+                // Get user profile
                 const { data: profile, error } = await supabase
                     .from('users')
                     .select('*')
@@ -1139,20 +1131,23 @@
                 
                 currentUser = { ...user, ...profile };
                 
+                // Update UI with user data
                 updateUserInterface();
                 
-                await Promise.all([
-                    loadAssignedOrders(),
-                    loadPerformanceMetrics(),
-                    loadTeamMembers(),
-                    loadTeamSchedule(),
-                    loadNotifications(),
-                    loadAllEscalations(),
-                    loadAllInquiries(),
-                    loadCompanyEmployees()
-                ]);
-
+                // Load user data
+                await loadAssignedOrders();
+                await loadPerformanceMetrics();
+                await loadTeamMembers();
+                await loadTeamSchedule();
+                await loadNotifications();
+                await loadHelperEscalations();
+                await loadHelperInquiries();
+                await loadCompanyEmployees();
+                
+                // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
+                
+                // Initialize charts
                 initCharts();
                 
                 showToast('Quality Dashboard loaded successfully', 'success');
@@ -1168,17 +1163,20 @@
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
             
-            if (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior') {
+            // Show/hide escalation and inquiry tabs based on role
+            if (currentUser.role === 'quality' || currentUser.role === 'admin') {
                 document.getElementById('escalations-tab').style.display = 'flex';
                 document.getElementById('inquiries-tab').style.display = 'flex';
             }
             
+            // Profile form
             document.getElementById('profile-fullname').value = currentUser.name;
             document.getElementById('profile-email').value = currentUser.email;
             document.getElementById('profile-phone').value = currentUser.phone || '';
             document.getElementById('profile-department').value = currentUser.department || 'N/A';
         }
 
+        // Load assigned orders
         async function loadAssignedOrders(filters = {}) {
             try {
                 assignedOrders = await getAssignedOrders(currentUser.id, filters);
@@ -1192,19 +1190,26 @@
             }
         }
 
+        // Load performance metrics
         async function loadPerformanceMetrics() {
             try {
                 performanceMetrics = await getPerformanceMetrics('month');
+                
+                // Update KPI cards
                 document.getElementById('todays-reviews').textContent = performanceMetrics.completedOrders || 0;
                 document.getElementById('open-cases').textContent = performanceMetrics.pendingReviews || 0;
                 document.getElementById('quality-score').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-                document.getElementById('escalation-rate').textContent = '0%'; 
+                document.getElementById('escalation-rate').textContent = `${performanceMetrics.errorRate || 0}%`;
+                
+                // Update charts
                 updateCharts();
+                
             } catch (error) {
                 console.error('Error loading performance metrics:', error);
             }
         }
 
+        // Load team members
         async function loadTeamMembers() {
             try {
                 teamMembers = await getTeamMembers();
@@ -1218,6 +1223,7 @@
             }
         }
 
+        // Load company employees
         async function loadCompanyEmployees() {
             try {
                 companyEmployees = await getCompanyEmployees();
@@ -1230,6 +1236,7 @@
             }
         }
 
+        // Load team schedule
         async function loadTeamSchedule() {
             try {
                 teamSchedule = await getTeamSchedule();
@@ -1242,6 +1249,7 @@
             }
         }
 
+        // Load notifications
         async function loadNotifications() {
             try {
                 notifications = await getNotifications(currentUser.id);
@@ -1253,32 +1261,42 @@
             }
         }
 
-        async function loadAllEscalations() {
+        // Load helper escalations
+        async function loadHelperEscalations() {
             try {
-                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior')) {
-                    const escalationsData = await getEscalations(); // Fetch all, without filters
-                    allEscalations = escalationsData;
-                    applyEscalationFilters();
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+                    // Fetch ALL escalations (pending and resolved) by passing an empty filter object
+                    const escalationsData = await getEscalations(null, {});
+                    helperEscalations = escalationsData || [];
+                    renderEscalationsTable();
+                    // The count in the header should reflect only PENDING escalations
+                    const pendingCount = helperEscalations.filter(e => e.status === 'pending').length;
+                    document.getElementById('escalations-count').textContent = pendingCount;
                 }
             } catch (error) {
                 console.error('❌ Error loading escalations:', error);
                 showToast('Failed to load escalations', 'error');
-                allEscalations = [];
-                applyEscalationFilters();
+                helperEscalations = [];
+                renderEscalationsTable();
             }
         }
 
-        async function loadAllInquiries() {
+        // Load helper inquiries
+       async function loadHelperInquiries() {
             try {
-                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'senior')) {
-                    allInquiries = await getHelperInquiries();
-                    applyInquiryFilters();
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin')) {
+                    console.log('🔄 Loading inquiries for role:', currentUser.role);
+                    helperInquiries = await getHelperInquiries(currentUser.id); 
+                    renderInquiriesTable();
+                     const pendingCount = helperInquiries.filter(i => i.status === 'pending').length;
+                    document.getElementById('inquiries-count').textContent = pendingCount;
+                    console.log('✅ Inquiries loaded:', helperInquiries.length);
                 }
             } catch (error) {
-                console.error('❌ Error loading inquiries:', error);
+                console.error('❌ Error loading helper inquiries:', error);
                 showToast('Failed to load inquiries', 'error');
-                allInquiries = [];
-                applyInquiryFilters();
+                helperInquiries = [];
+                renderInquiriesTable();
             }
         }
 
@@ -1286,7 +1304,7 @@
             const tableBody = document.getElementById('orders-table-body');
             
             if (assignedOrders.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">...</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
                 return;
             }
 
@@ -1296,12 +1314,12 @@
                 
                 let inquiryBadge = '';
                 if (order.inquiries && order.inquiries.length > 0) {
-                    const latestInquiry = order.inquiries.sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                    const latestInquiry = order.inquiries[order.inquiries.length - 1]; 
                     if (latestInquiry.status === 'pending') {
                         inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
                     } else if (latestInquiry.status === 'responded') {
-                        const inquiryDataString = JSON.stringify(latestInquiry).replace(/"/g, '&quot;');
-                        inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick='viewInquiryResponse(JSON.parse(this.dataset.inquiry))' data-inquiry='${inquiryDataString}' title="Click to view response">Response Received</button>`;
+                        // MODIFIED: Replaced alert with a function call to open the modal
+                        inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="openInquiryResponseModal('${latestInquiry.id}')" title="Click to view response">Response Received</button>`;
                     }
                 }
 
@@ -1330,11 +1348,12 @@
             document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
         }
 
-        function renderEscalationsTable(escalationsToRender) {
+        // REPLACED with user's provided function
+        function renderEscalationsTable() {
             const tableBody = document.getElementById('escalations-table-body');
-            
-            if (!escalationsToRender || escalationsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations match the current filters.</td></tr>`;
+
+            if (!helperEscalations || helperEscalations.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations found.</td></tr>`;
                 return;
             }
 
@@ -1350,7 +1369,7 @@
                 `;
             }
 
-            tableBody.innerHTML = escalationsToRender.map(escalation => {
+            tableBody.innerHTML = helperEscalations.map(escalation => {
                 const orderData = escalation.order_assignments?.orders;
                 const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
                 const escalationDate = formatDateTime(escalation.escalated_at);
@@ -1359,7 +1378,7 @@
                 let statusBadge, actionContent;
                 
                 if (escalation.status === 'resolved') {
-                    statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
+                    statusBadge = `<span class="status-badge status-completed">Resolved</span>`;
                     actionContent = `<button class="action-btn view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
                 } else { // 'pending'
                     statusBadge = `<span class="status-badge status-pending">Pending</span>`;
@@ -1379,29 +1398,43 @@
                     </tr>
                 `;
             }).join('');
-            
+
+            // ربط الأحداث للأزرار
             document.querySelectorAll('.review-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', function() { openReviewEscalationModal(this.dataset.escalationId); });
             });
             document.querySelectorAll('.view-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const escalation = allEscalations.find(e => e.id === this.dataset.escalationId);
+                    const escalation = helperEscalations.find(e => e.id === this.dataset.escalationId);
                     if (escalation) {
-                         showToast(`Resolved Escalation:\n${escalation.notes}`, 'info', `Order: ${escalation.order_assignments?.orders?.order_id}`);
+                        alert(`Escalation Details:\n\nOrder: ${escalation.order_assignments?.orders?.order_id}\nReason: ${escalation.notes}\nStatus: Resolved`);
                     }
                 });
             });
         }
-        
-        function renderInquiriesTable(inquiriesToRender) {
+
+        // FIXED by adding the missing closing brace
+        function renderInquiriesTable() {
             const tableBody = document.getElementById('inquiries-table-body');
             
-            if (!inquiriesToRender || inquiriesToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No inquiries match the current filters.</td></tr>`;
+            if (!helperInquiries || helperInquiries.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries found.</div></td></tr>`;
                 return;
             }
 
-            tableBody.innerHTML = inquiriesToRender.map(inquiry => {
+            const tableHead = tableBody.previousElementSibling;
+            if (tableHead.rows[0].cells.length < 6) {
+                tableHead.rows[0].innerHTML = `
+                    <th>Order ID</th>
+                    <th>Agent</th>
+                    <th>Inquiry</th>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                `;
+            }
+
+            tableBody.innerHTML = helperInquiries.map(inquiry => {
                 const orderData = inquiry.order_assignments?.orders;
                 const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
                 const inquiryDate = formatDateTime(inquiry.created_at);
@@ -1412,7 +1445,7 @@
                 if (inquiry.status === 'responded') {
                     statusBadge = `<span class="status-badge status-completed">Responded</span>`;
                     actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
-                } else {
+                } else { // status is 'pending'
                     statusBadge = `<span class="status-badge status-pending">Pending</span>`;
                     actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
                 }
@@ -1437,8 +1470,14 @@
 
            document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const inquiry = allInquiries.find(i => i.id === this.dataset.inquiryId);
-                    if(inquiry) viewInquiryResponse(inquiry);
+                    const inquiry = helperInquiries.find(i => i.id === this.dataset.inquiryId);
+                    if (inquiry) {
+                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                        showModal('view-inquiry-modal');
+                    }
                 });
             });
         }
@@ -1467,52 +1506,17 @@
                 `).join('');
             }
         }
-        
-        // APPLY FILTERS FUNCTIONS
-        function applyEscalationFilters() {
-            const searchTerm = document.getElementById('escalations-search-input').value.toLowerCase();
-            const statusFilter = document.getElementById('filter-escalation-status').value;
-            const dateFilter = document.getElementById('filter-escalation-date').value;
-
-            const filtered = allEscalations.filter(e => {
-                const orderId = e.order_assignments?.orders?.order_id || '';
-                const agentName = e.escalated_by?.name || '';
-                
-                const matchesSearch = searchTerm === '' || orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
-                const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
-                const matchesDate = dateFilter === '' || e.escalated_at.startsWith(dateFilter);
-                
-                return matchesSearch && matchesStatus && matchesDate;
-            });
-            document.getElementById('escalations-count').textContent = filtered.length;
-            renderEscalationsTable(filtered);
-        }
-        
-        function applyInquiryFilters() {
-            const searchTerm = document.getElementById('inquiries-search-input').value.toLowerCase();
-            const statusFilter = document.getElementById('filter-inquiry-status').value;
-            const dateFilter = document.getElementById('filter-inquiry-date').value;
-
-            const filtered = allInquiries.filter(i => {
-                const orderId = i.order_assignments?.orders?.order_id || '';
-                const agentName = i.order_assignments?.users?.name || '';
-
-                const matchesSearch = searchTerm === '' || orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
-                const matchesStatus = statusFilter === 'all' || i.status === statusFilter;
-                const matchesDate = dateFilter === '' || i.created_at.startsWith(dateFilter);
-                
-                return matchesSearch && matchesStatus && matchesDate;
-            });
-            document.getElementById('inquiries-count').textContent = filtered.length;
-            renderInquiriesTable(filtered);
-        }
-
 
         function renderTeamMembers() {
             const teamGrid = document.getElementById('team-grid');
             
             if (teamMembers.length === 0) {
-                teamGrid.innerHTML = `<div class="empty-state"><div class="empty-state-icon">👥</div><div>No team members found.</div></div>`;
+                teamGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div>No team members found.</div>
+                    </div>
+                `;
             } else {
                 teamGrid.innerHTML = teamMembers.map(member => {
                     const color = stringToColor(member.name);
@@ -1523,7 +1527,9 @@
                             </div>
                             <div class="team-member-name">${member.name}</div>
                             <div class="team-member-role">${member.role}</div>
-                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">${member.department || 'No department'}</div>
+                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                                ${member.department || 'No department'}
+                            </div>
                         </div>
                     `;
                 }).join('');
@@ -1534,12 +1540,22 @@
             const tableBody = document.getElementById('schedule-table-body');
             
             if (teamSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><div>No schedule data available.</div></td></tr>`;
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div>No schedule data available.</div>
+                        </td>
+                    </tr>
+                `;
             } else {
                 const scheduleByUser = {};
                 teamSchedule.forEach(shift => {
                     if (!scheduleByUser[shift.user_id]) {
-                        scheduleByUser[shift.user_id] = { user: shift.users, shifts: {} };
+                        scheduleByUser[shift.user_id] = {
+                            user: shift.users,
+                            shifts: {}
+                        };
                     }
                     const shiftDate = new Date(shift.shift_date);
                     const dayOfWeek = shiftDate.getDay(); 
@@ -1554,26 +1570,40 @@
                         let className = 'shift-off';
                         
                         if (shift) {
-                            if (shift.shift_type === 'off') { display = 'Off'; className = 'shift-off'; } 
-                            else if (shift.shift_type === 'leave') { display = 'On Leave'; className = 'shift-leave'; } 
-                            else if (shift.shift_type === 'sick') { display = 'Sick Leave'; className = 'shift-sick'; } 
-                            else { display = shift.shift_type; className = 'shift-time'; }
+                            if (shift.shift_type === 'off') {
+                                display = 'Off';
+                                className = 'shift-off';
+                            } else if (shift.shift_type === 'leave') {
+                                display = 'On Leave';
+                                className = 'shift-leave';
+                            } else if (shift.shift_type === 'sick') {
+                                display = 'Sick Leave';
+                                className = 'shift-sick';
+                            } else {
+                                display = shift.shift_type;
+                                className = 'shift-time';
+                            }
                         }
                         
                         shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}"><span class="${className}">${display}</span></td>`);
                     }
                     
-                    return `<tr><td class="member-name">${userSchedule.user.name}</td>${shifts.join('')}</tr>`;
+                    return `
+                        <tr>
+                            <td class="member-name">${userSchedule.user.name}</td>
+                            ${shifts.join('')}
+                        </tr>
+                    `;
                 }).join('');
             }
         }
 
-        function handleShiftCellClick(event) { return; }
-
         function populateTeamMemberDropdowns() {
             const memberSelect = document.getElementById('schedule-member');
             if (memberSelect) {
-                memberSelect.innerHTML = teamMembers.map(member => `<option value="${member.id}">${member.name}</option>`).join('');
+                memberSelect.innerHTML = teamMembers.map(member => 
+                    `<option value="${member.id}">${member.name}</option>`
+                ).join('');
             }
         }
 
@@ -1586,7 +1616,10 @@
                 return;
             }
             
-            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' + seniorMembers.map(member => `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`).join('');
+            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' +
+                seniorMembers.map(member => 
+                    `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`
+                ).join('');
         }
 
         function updateNotificationsUI() {
@@ -1603,7 +1636,9 @@
                             <div>${notification.message}</div>
                             <div class="notification-time">${formatDateTime(notification.created_at)}</div>
                         </div>
-                        <div class="notification-actions"><button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button></div>
+                        <div class="notification-actions">
+                            <button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button>
+                        </div>
                     </li>
                 `).join('');
                 
@@ -1613,7 +1648,8 @@
                 document.querySelectorAll('.mark-read-btn').forEach(btn => {
                     btn.addEventListener('click', async (e) => {
                         e.stopPropagation();
-                        await markNotificationAsRead(btn.dataset.notificationId);
+                        const notificationId = btn.dataset.notificationId;
+                        await markNotificationAsRead(notificationId);
                         await loadNotifications();
                     });
                 });
@@ -1624,6 +1660,7 @@
             try {
                 if (typeof window.subscribeToNotifications === 'function') {
                     window.subscribeToNotifications(currentUser.id, (payload) => {
+                        console.log('New notification received:', payload);
                         showToast(payload.new.message, 'info', 'New Notification');
                         loadNotifications();
                     });
@@ -1631,6 +1668,7 @@
                 
                 if (typeof window.subscribeToAssignments === 'function') {
                     window.subscribeToAssignments(currentUser.id, (payload) => {
+                        console.log('New order assigned:', payload);
                         showToast('A new order has been assigned to you', 'info', 'New Assignment');
                         loadAssignedOrders();
                     });
@@ -1643,25 +1681,90 @@
         function initCharts() {
             const monthlyCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
             monthlyPerformanceChart = new Chart(monthlyCtx, {
-                type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Correct Reviews', data: [45, 52, 48, 55, 58, 62], borderColor: '#28a745', backgroundColor: 'rgba(40, 167, 69, 0.1)', fill: true, tension: 0.4 }, { label: 'Errors Found', data: [8, 6, 10, 7, 5, 4], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true, tension: 0.4 }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e6edf3' } } }, scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } } } }
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Correct Reviews',
+                            data: [45, 52, 48, 55, 58, 62],
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Errors Found',
+                            data: [8, 6, 10, 7, 5, 4],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: '#e6edf3' } } },
+                    scales: { x: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } }, y: { grid: { color: 'rgba(255, 255, 255, 0.1)' }, ticks: { color: '#e6edf3' } } } }
             });
 
             const issueCtx = document.getElementById('issueTypesChart').getContext('2d');
             issueTypesChart = new Chart(issueCtx, {
-                type: 'doughnut', data: { labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'], datasets: [{ data: [45, 25, 18, 12], backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'], borderWidth: 0 }] },
+                type: 'doughnut',
+                data: {
+                    labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'],
+                    datasets: [{
+                        data: [45, 25, 18, 12],
+                        backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'],
+                        borderWidth: 0
+                    }]
+                },
                 options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } } } }
             });
         }
 
-        function updateCharts() { }
+        function updateCharts() { /* Placeholder for future implementation */ }
+
+        // MODAL FUNCTIONS
+        function openInquiryResponseModal(inquiryId) {
+            let inquiry, order;
+            // Search through assigned orders to find the specific inquiry
+            for (const assignedOrder of assignedOrders) {
+                if (!assignedOrder.inquiries) continue;
+                const foundInquiry = assignedOrder.inquiries.find(i => String(i.id) === String(inquiryId));
+                if (foundInquiry) {
+                    inquiry = foundInquiry;
+                    order = assignedOrder.orders;
+                    break;
+                }
+            }
+
+            if (inquiry) {
+                document.getElementById('view-inquiry-order-id').textContent = order?.order_id || 'N/A';
+                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                document.getElementById('view-inquiry-agent-name').textContent = `By: ${currentUser.name}`; // It's my own inquiry
+                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                showModal('view-inquiry-modal');
+            } else {
+                showToast('Could not find inquiry details.', 'error');
+            }
+        }
+        window.openInquiryResponseModal = openInquiryResponseModal;
 
         async function openViewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
             document.getElementById('view-order-id').textContent = order.order_id;
-            document.getElementById('view-order-body').innerHTML = `<div class="detail-item"><strong>Order ID</strong><p>${order.order_id}</p></div> <div class="detail-item"><strong>Employee</strong><p>${order.employee_name}</p></div> <div class="detail-item"><strong>Reason</strong><p>${order.reason}</p></div> <div class="detail-item"><strong>Amount</strong><p>${order.amount || 'N/A'}</p></div> <div class="detail-item"><strong>Chefz</strong><p>${order.chefz || 'N/A'}</p></div> <div class="detail-item"><strong>Order Status</strong><p>${order.order_status}</p></div> <div class="detail-item"><strong>Requested Delivery</strong><p>${order.requested_delivery_date || 'N/A'}</p></div> <div class="detail-item"><strong>Payment Type</strong><p>${order.payment_type || 'N/A'}</p></div>`;
+            document.getElementById('view-order-body').innerHTML = `
+                <div class="detail-item"><strong>Order ID</strong><p>${order.order_id}</p></div>
+                <div class="detail-item"><strong>Employee</strong><p>${order.employee_name}</p></div>
+                <div class="detail-item"><strong>Reason</strong><p>${order.reason}</p></div>
+                <div class="detail-item"><strong>Amount</strong><p>${order.amount || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Chefz</strong><p>${order.chefz || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Order Status</strong><p>${order.order_status}</p></div>
+                <div class="detail-item"><strong>Requested Delivery</strong><p>${order.requested_delivery_date || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Payment Type</strong><p>${order.payment_type || 'N/A'}</p></div>
+            `;
             showModal('view-order-modal');
         }
 
@@ -1679,8 +1782,7 @@
             document.getElementById('review-modified-reason').value = '';
             document.getElementById('review-notes').value = '';
             const submitBtn = document.getElementById('submit-review-btn');
-            submitBtn.classList.remove('btn-danger');
-            submitBtn.classList.add('btn-primary');
+            submitBtn.className = 'btn btn-primary';
             submitBtn.textContent = 'Submit Review';
             document.querySelector('label[for="review-notes"]').textContent = 'Additional Notes';
             showModal('review-order-modal');
@@ -1689,7 +1791,8 @@
         async function openEscalateOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) { showToast('Order not found', 'error'); return; }
-            document.getElementById('escalate-order-id').textContent = orderAssignment.orders.order_id;
+            const order = orderAssignment.orders;
+            document.getElementById('escalate-order-id').textContent = order.order_id;
             document.getElementById('submit-escalation-btn').dataset.assignmentId = orderAssignmentId;
             showModal('escalate-order-modal');
         }
@@ -1697,55 +1800,44 @@
         async function openRaiseInquiryModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id === orderAssignmentId);
             if (!orderAssignment) { showToast('Order not found', 'error'); return; }
-            document.getElementById('inquiry-order-id').textContent = orderAssignment.orders.order_id;
-            document.getElementById('inquiry-order-details').textContent = orderAssignment.orders.reason;
+            const order = orderAssignment.orders;
+            document.getElementById('inquiry-order-id').textContent = order.order_id;
+            document.getElementById('inquiry-order-details').textContent = order.reason;
             document.getElementById('submit-inquiry-btn').dataset.assignmentId = orderAssignmentId;
             showModal('raise-inquiry-modal');
         }
 
         async function openReviewEscalationModal(escalationId) {
-            try {
-                const escalation = allEscalations.find(e => e.id === escalationId);
-                if (!escalation) { showToast('Escalation not found', 'error'); return; }
-                const order = escalation.order_assignments?.orders;
-                document.getElementById('review-escalation-order-id').textContent = order?.order_id || 'N/A';
-                document.getElementById('escalation-order-details').textContent = order?.reason || 'No details available';
-                document.getElementById('escalation-employee-name').textContent = order?.employee_name || 'N/A';
-                document.getElementById('escalation-issue-type').textContent = order?.reason || 'N/A';
-                document.getElementById('agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
-                document.getElementById('resolve-escalation-btn').dataset.escalationId = escalationId;
-                document.getElementById('toggle-senior-escalation-btn').dataset.escalationId = escalationId;
-                resetEscalationModal();
-                showModal('review-escalation-modal');
-            } catch (error) {
-                console.error('Error opening escalation modal:', error);
-                showToast('Failed to open escalation details', 'error');
-            }
+            const escalation = helperEscalations.find(e => String(e.id) === String(escalationId));
+            if (!escalation) { showToast('Escalation not found', 'error'); return; }
+            const order = escalation.order_assignments?.orders;
+            document.getElementById('review-escalation-order-id').textContent = order?.order_id || 'N/A';
+            document.getElementById('escalation-order-details').textContent = order?.reason || 'No details';
+            document.getElementById('escalation-employee-name').textContent = order?.employee_name || 'N/A';
+            document.getElementById('escalation-issue-type').textContent = order?.reason || 'N/A';
+            document.getElementById('agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
+            document.getElementById('resolve-escalation-btn').dataset.escalationId = escalationId;
+            document.getElementById('toggle-senior-escalation-btn').dataset.escalationId = escalationId;
+            resetEscalationModal();
+            showModal('review-escalation-modal');
         }
 
         async function openRespondInquiryModal(inquiryId) {
-            try {
-                const inquiry = allInquiries.find(i => i.id === inquiryId);
-                if (!inquiry) { showToast('Inquiry not found', 'error'); return; }
-                const order = inquiry.order_assignments?.orders;
-                document.getElementById('respond-inquiry-order-id').textContent = order?.order_id || 'N/A';
-                document.getElementById('respond-inquiry-order-details').textContent = order?.reason || 'No details available';
-                document.getElementById('agent-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text';
-                document.getElementById('submit-inquiry-response-btn').dataset.inquiryId = inquiryId;
-                showModal('respond-inquiry-modal');
-            } catch (error) {
-                console.error('Error opening inquiry modal:', error);
-                showToast('Failed to open inquiry details', 'error');
-            }
+            const inquiry = helperInquiries.find(i => String(i.id) === String(inquiryId));
+            if (!inquiry) { showToast('Inquiry not found', 'error'); return; }
+            const order = inquiry.order_assignments?.orders;
+            document.getElementById('respond-inquiry-order-id').textContent = order?.order_id || 'N/A';
+            document.getElementById('respond-inquiry-order-details').textContent = order?.reason || 'No details';
+            document.getElementById('agent-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text';
+            document.getElementById('submit-inquiry-response-btn').dataset.inquiryId = inquiryId;
+            showModal('respond-inquiry-modal');
         }
 
         function resetEscalationModal() {
             document.getElementById('helper-feedback').value = '';
             document.getElementById('senior-escalation-section').style.display = 'none';
-            const btn = document.getElementById('toggle-senior-escalation-btn');
-            btn.textContent = 'Escalate to Senior';
-            btn.classList.remove('btn-secondary');
-            btn.classList.add('btn-primary');
+            document.getElementById('toggle-senior-escalation-btn').textContent = 'Escalate to Senior';
+            document.getElementById('toggle-senior-escalation-btn').className = 'btn btn-primary';
             document.getElementById('escalate-to-senior').value = '';
             document.getElementById('senior-escalation-reason').value = '';
             isSeniorEscalationMode = false;
@@ -1753,7 +1845,7 @@
 
         function stringToColor(str) {
             let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
             let color = '#';
             for (let i = 0; i < 3; i++) {
                 const value = (hash >> (i * 8)) & 0xFF;
@@ -1766,6 +1858,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
             
+            // Tab navigation
             document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
@@ -1774,7 +1867,7 @@
                     const tabId = tab.dataset.tab;
                     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(tabId).classList.add('active');
-                    document.getElementById('page-title-header').textContent = tab.textContent.replace(/[\u{1F300}-\u{1F5FF}\u{1F600}-\u{1F64F}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/u, '').trim();
+                    document.getElementById('page-title-header').textContent = tab.textContent.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
                 });
             });
             
@@ -1793,12 +1886,12 @@
             
             document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                await Promise.all(notifications.map(n => markNotificationAsRead(n.id)));
+                for (const notification of notifications) { await markNotificationAsRead(notification.id); }
                 await loadNotifications();
                 showToast('All notifications marked as read', 'success');
             });
             
-            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal(btn.dataset.modalId)));
+            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal(btn.closest('.modal-overlay').id)));
             
             document.getElementById('submit-review-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
@@ -1813,23 +1906,20 @@
                     });
                     showToast('Review submitted successfully', 'success');
                     hideModal('review-order-modal');
-                    await Promise.all([loadAssignedOrders(), loadPerformanceMetrics()]);
-                } catch (error) {
-                    showToast('Failed to submit review', 'error');
-                }
+                    await loadAssignedOrders();
+                    await loadPerformanceMetrics();
+                } catch (error) { showToast('Failed to submit review', 'error'); }
             });
 
             document.getElementById('review-action').addEventListener('change', function() {
                 const submitBtn = document.getElementById('submit-review-btn');
                 const notesLabel = document.querySelector('label[for="review-notes"]');
                 if (this.value === 'error') {
-                    submitBtn.classList.remove('btn-primary');
-                    submitBtn.classList.add('btn-danger');
+                    submitBtn.className = 'btn btn-danger';
                     submitBtn.textContent = 'Submit as Error';
                     notesLabel.textContent = 'Reason for Error *';
                 } else {
-                    submitBtn.classList.remove('btn-danger');
-                    submitBtn.classList.add('btn-primary');
+                    submitBtn.className = 'btn btn-primary';
                     submitBtn.textContent = 'Submit Review';
                     notesLabel.textContent = 'Additional Notes';
                 }
@@ -1837,18 +1927,17 @@
             
             document.getElementById('submit-escalation-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
+                const escalateTo = document.getElementById('escalate-to').value;
                 const reason = document.getElementById('escalate-reason').value;
-                if (!reason) { showToast('Please provide a reason', 'warning'); return; }
+                if (!escalateTo || !reason) { showToast('Please fill all required fields', 'warning'); return; }
                 try {
-                    const helperMembers = teamMembers.filter(m => m.role === 'quality');
-                    if (helperMembers.length === 0) { showToast('No helpers available', 'error'); return; }
-                    await submitEscalation(assignmentId, currentUser.id, helperMembers[0].id, reason);
+                    const seniorMembers = teamMembers.filter(m => m.role === 'senior');
+                    if (seniorMembers.length === 0) { showToast('No senior quality analysts available', 'error'); return; }
+                    await submitEscalation(assignmentId, currentUser.id, seniorMembers[0].id, reason);
                     showToast('Order escalated successfully', 'success');
                     hideModal('escalate-order-modal');
                     await loadAssignedOrders();
-                } catch (error) {
-                    showToast('Failed to escalate order', 'error');
-                }
+                } catch (error) { showToast('Failed to escalate order', 'error'); }
             });
 
             document.getElementById('submit-inquiry-btn').addEventListener('click', async () => {
@@ -1860,9 +1949,7 @@
                     showToast('Inquiry submitted successfully', 'success');
                     hideModal('raise-inquiry-modal');
                     await loadAssignedOrders();
-                } catch (error) {
-                    showToast('Failed to submit inquiry', 'error');
-                }
+                } catch (error) { showToast('Failed to submit inquiry', 'error'); }
             });
             
             document.getElementById('toggle-senior-escalation-btn').addEventListener('click', () => {
@@ -1871,23 +1958,20 @@
                 isSeniorEscalationMode = !isSeniorEscalationMode;
                 section.style.display = isSeniorEscalationMode ? 'block' : 'none';
                 button.textContent = isSeniorEscalationMode ? 'Cancel Senior Escalation' : 'Escalate to Senior';
-                button.classList.toggle('btn-primary', !isSeniorEscalationMode);
-                button.classList.toggle('btn-secondary', isSeniorEscalationMode);
-                if (isSeniorEscalationMode) populateSeniorDropdown();
+                button.className = isSeniorEscalationMode ? 'btn btn-secondary' : 'btn btn-primary';
+                if(isSeniorEscalationMode) populateSeniorDropdown();
             });
             
             document.getElementById('resolve-escalation-btn').addEventListener('click', async () => {
                 const escalationId = document.getElementById('resolve-escalation-btn').dataset.escalationId;
                 const feedback = document.getElementById('helper-feedback').value;
-                if (!feedback.trim()) { showToast('Please provide feedback', 'warning'); return; }
+                if (!feedback.trim()) { showToast('Please provide your feedback before resolving', 'warning'); return; }
                 try {
                     await resolveEscalation(escalationId, feedback);
                     showToast('Escalation resolved successfully', 'success');
                     hideModal('review-escalation-modal');
-                    await loadAllEscalations();
-                } catch (error) {
-                    showToast('Failed to resolve escalation', 'error');
-                }
+                    await loadHelperEscalations();
+                } catch (error) { showToast('Failed to resolve escalation', 'error'); }
             });
 
             document.getElementById('submit-inquiry-response-btn').addEventListener('click', async () => {
@@ -1898,37 +1982,45 @@
                     await respondToInquiry(inquiryId, currentUser.id, response);
                     showToast('Response sent successfully', 'success');
                     hideModal('respond-inquiry-modal');
-                    await loadAllInquiries();
-                } catch (error) {
-                    showToast('Failed to send response', 'error');
-                }
+                    await loadHelperInquiries();
+                } catch (error) { showToast('Failed to send response', 'error'); }
             });
             
-            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { await loadAllEscalations(); showToast('Escalations refreshed', 'info'); });
-            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadAllInquiries(); showToast('Inquiries refreshed', 'info'); });
-            
-            // Filter event listeners
-            document.getElementById('escalations-search-input').addEventListener('input', applyEscalationFilters);
-            document.getElementById('filter-escalation-status').addEventListener('change', applyEscalationFilters);
-            document.getElementById('filter-escalation-date').addEventListener('change', applyEscalationFilters);
-            document.getElementById('inquiries-search-input').addEventListener('input', applyInquiryFilters);
-            document.getElementById('filter-inquiry-status').addEventListener('change', applyInquiryFilters);
-            document.getElementById('filter-inquiry-date').addEventListener('change', applyInquiryFilters);
-            
+            document.getElementById('escalate-to-senior').addEventListener('change', function() { document.getElementById('senior-escalation-reason').required = !!this.value; });
+            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { await loadHelperEscalations(); showToast('Escalations refreshed', 'info'); });
+            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadHelperInquiries(); showToast('Inquiries refreshed', 'info'); });
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('.notification-bell')) document.getElementById('notification-dropdown').classList.remove('show');
-                if (e.target.classList.contains('modal-overlay')) e.target.classList.remove('show');
+                if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); }
+                if (e.target.classList.contains('modal-overlay')) { e.target.classList.remove('show'); }
             });
 
-            document.getElementById('filter-status').addEventListener('change', function() {
-                const filters = this.value === 'all' ? {} : { status: this.value };
-                loadAssignedOrders(filters);
+            // FILTER LISTENERS
+            const addFilterListener = (inputId, tableBodyId, dataArray, renderFunc) => {
+                document.getElementById(inputId).addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.toLowerCase();
+                    const filteredData = dataArray.filter(item => JSON.stringify(item).toLowerCase().includes(searchTerm));
+                    renderFunc(filteredData);
+                });
+            };
+            
+            document.getElementById('filter-status').addEventListener('change', function() { loadAssignedOrders({ status: this.value }); });
+            document.getElementById('filter-from-date').addEventListener('change', function() { loadAssignedOrders({ from_date: this.value }); });
+            document.getElementById('filter-to-date').addEventListener('change', function() { loadAssignedOrders({ to_date: this.value }); });
+
+            // Search listeners for escalations and inquiries
+            document.getElementById('escalations-search-input').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('#escalations-table-body tr').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                });
+            });
+            document.getElementById('inquiries-search-input').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                document.querySelectorAll('#inquiries-table-body tr').forEach(row => {
+                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
+                });
             });
         });
-
-        // Make function globally accessible for inline onclick
-        window.viewInquiryResponse = viewInquiryResponse;
     </script>
-
 </body>
 </html>
