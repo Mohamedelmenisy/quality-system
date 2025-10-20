@@ -369,22 +369,22 @@
                 <div class="kpi-card">
                     <div class="kpi-title">Today's Reviews</div>
                     <div class="kpi-value" id="todays-reviews">0</div>
-                    <div class="kpi-change" id="todays-reviews-change" style="color: var(--green);">Loading...</div>
+                    <div class="kpi-change" id="todays-reviews-change" style="color: var(--green);"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-title">Open Cases</div>
                     <div class="kpi-value" id="open-cases">0</div>
-                    <div class="kpi-change" id="open-cases-change" style="color: var(--yellow);">Loading...</div>
+                    <div class="kpi-change" id="open-cases-change" style="color: var(--yellow);"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-title">Avg. Quality Score</div>
                     <div class="kpi-value" id="quality-score">0%</div>
-                    <div class="kpi-change" id="quality-score-change" style="color: var(--green);">Loading...</div>
+                    <div class="kpi-change" id="quality-score-change" style="color: var(--green);"></div>
                 </div>
                 <div class="kpi-card">
                     <div class="kpi-title">Escalation Rate</div>
                     <div class="kpi-value" id="escalation-rate">0%</div>
-                    <div class="kpi-change" id="escalation-rate-change" style="color: var(--red);">Loading...</div>
+                    <div class="kpi-change" id="escalation-rate-change" style="color: var(--red);"></div>
                 </div>
             </div>
 
@@ -402,7 +402,6 @@
                     </div>
                     <h3>Recent Activity</h3>
                     <ul class="activity-feed" id="recent-activity">
-                        <li class="activity-item">Loading activity...</li>
                     </ul>
                 </div>
             </div>
@@ -1953,40 +1952,36 @@
             });
             
             document.getElementById('submit-escalation-btn').addEventListener('click', async () => {
-                const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
-                const escalateTo = document.getElementById('escalate-to').value;
-                const reason = document.getElementById('escalate-reason').value;
-                if (!escalateTo || !reason) { showToast('Please fill all required fields', 'warning'); return; }
                 try {
-    const escalateToRole = document.getElementById('escalate-to').value; // سيقرأ 'helper' أو 'senior'
-    const reason = document.getElementById('escalate-reason').value;
-    const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
+                    const escalateToRole = document.getElementById('escalate-to').value;
+                    const reason = document.getElementById('escalate-reason').value;
+                    const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
 
-    if (!escalateToRole || !reason) {
-        showToast('Please select a recipient and provide a reason.', 'warning');
-        return;
-    }
+                    if (!escalateToRole || !reason) {
+                        showToast('Please select a recipient and provide a reason.', 'warning');
+                        return;
+                    }
 
-    // ابحث عن أول مستخدم متاح له الدور الذي تم اختياره
-    const recipient = teamMembers.find(m => m.role === escalateToRole);
+                    const recipient = teamMembers.find(m => m.role === escalateToRole);
 
-    if (!recipient) {
-        showToast(`No user with the role '${escalateToRole}' is available to escalate to.`, 'error');
-        return;
-    }
+                    if (!recipient) {
+                        showToast(`No user with the role '${escalateToRole}' is available to escalate to.`, 'error');
+                        return;
+                    }
 
-    const escalatedToId = recipient.id;
+                    const escalatedToId = recipient.id;
 
-    await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
-    
-    showToast('Order escalated successfully!', 'success');
-    hideModal('escalate-order-modal');
-    await loadAssignedOrders(); // تحديث قائمة الطلبات
-    
-} catch (error) {
-    console.error('Error submitting escalation:', error);
-    showToast(`Failed to escalate order: ${error.message}`, 'error');
-}
+                    await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
+                    
+                    showToast('Order escalated successfully!', 'success');
+                    hideModal('escalate-order-modal');
+                    await loadAssignedOrders(); 
+                    
+                } catch (error) {
+                    console.error('Error submitting escalation:', error);
+                    showToast(`Failed to escalate order: ${error.message}`, 'error');
+                }
+            });
 
             document.getElementById('submit-inquiry-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-inquiry-btn').dataset.assignmentId;
@@ -2086,4 +2081,3 @@
     </script>
 </body>
 </html>
-```
