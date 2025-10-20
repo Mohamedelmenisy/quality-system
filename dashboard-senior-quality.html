@@ -1025,9 +1025,11 @@
             select.innerHTML = teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
         };
         const populateAgentFilter = () => {
-            const filter = document.getElementById('agent-filter');
-            filter.innerHTML = '<option value="all">All Agents</option>' + teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
-        };
+    const filter = document.getElementById('agent-filter');
+    if (filter) { 
+        filter.innerHTML = '<option value="all">All Agents</option>' + teamMembers.filter(m => m.role === 'quality').map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+    }
+};
 
         // Modal Handlers
         async function openFinalDecisionModal(errorId) {
