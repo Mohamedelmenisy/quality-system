@@ -21,7 +21,9 @@
             updateTeamSchedule,
             getNotifications,
             markNotificationAsRead,
-            subscribeToNotifications
+            subscribeToNotifications,
+            getCompanyEmployees,
+            getDepartments
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -36,6 +38,8 @@
         window.updateTeamSchedule = updateTeamSchedule;
         window.getNotifications = getNotifications;
         window.markNotificationAsRead = markNotificationAsRead;
+        window.getCompanyEmployees = getCompanyEmployees;
+        window.getDepartments = getDepartments;
     </script>
     <style>
         :root {
@@ -342,6 +346,7 @@
                         <li><a data-tab="teams">👥 Teams</a></li>
                         <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
                         <li><a data-tab="company-employees">🏢 Company Employees</a></li>
+                        <li><a data-tab="departments">🏛️ Departments</a></li>
                         <li><a data-tab="payments">💳 Payments</a></li>
                         <li><a data-tab="kpis">📈 KPIs</a></li>
                     </ul>
@@ -400,7 +405,7 @@
 
         <div id="dashboard" class="tab-content active">
             <div id="welcome-message">
-                <h2 id="welcome-user-h2">Welcome, Nawaf Al-Otaibi!</h2>
+                <h2 id="welcome-user-h2">Welcome, Loading...!</h2>
                 <p>Here is the high-level overview of your quality operations.</p>
             </div>
 
@@ -465,7 +470,7 @@
 
             <section class="charts-grid">
                 <div class="card">
-                    <h3>Error Rate Trend (Last 6 Months)</h3>
+                    <h3>Error Rate Trend (Last 30 Days)</h3>
                     <div class="chart-container">
                         <canvas id="errorTrendChart"></canvas>
                     </div>
@@ -660,6 +665,9 @@
             </div>
         </div>
         
+        <!-- ## ابدأ النسخ من هنا: محتوى الصفحات الجديدة ## -->
+
+        <!-- Team Scheduling Content -->
         <div id="team-scheduling" class="tab-content">
             <div class="card">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -668,41 +676,76 @@
                         <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
                         <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
                         <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                             <button id="cancel-schedule-btn" class="btn btn-secondary">Cancel</button>
-                             <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
+                            <button id="cancel-schedule-btn" class="btn btn-secondary" style="background-color: #333;">Cancel</button>
+                            <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
                         </div>
                     </div>
                 </div>
                 <div class="table-container">
                     <table class="user-management-table" id="schedule-table">
                         <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
-                        <tbody id="schedule-table-body"></tbody>
+                        <tbody id="schedule-table-body">
+                            <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        <!-- Company Employees Content -->
         <div id="company-employees" class="tab-content">
-            <!-- سيتم ملء هذا القسم لاحقًا -->
+            <div class="card">
+                <h3>Company Employees</h3>
+                <div class="table-container">
+                    <table class="user-management-table">
+                        <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
+                        <tbody id="company-employees-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
+        <!-- Departments Content -->
+        <div id="departments" class="tab-content">
+             <div class="card">
+                <h3>Company Departments</h3>
+                <div class="table-container">
+                    <table class="user-management-table">
+                        <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
+                        <tbody id="departments-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payments Content -->
         <div id="payments" class="tab-content">
             <div class="card">
                 <h3>Available Payment Methods</h3>
                 <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
-                    <!-- قائمة ثابتة بطرق الدفع -->
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Visa Master Card</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Apple Pay</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Mada</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Visa-Master</div>
                     <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & MADA</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Apple-Pay</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Tamara</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Tamara</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & STC Pay</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Other items payment</div>
                 </div>
             </div>
         </div>
+
+        <!-- KPIs Content -->
         <div id="kpis" class="tab-content">
             <div class="card">
-                <div class="placeholder-content"><h3>KPIs Management</h3><p>This section will allow managing Key Performance Indicators.</p></div>
+                <div class="placeholder-content"><h3>KPIs Management</h3><p>This section is under development.</p></div>
             </div>
         </div>
+
+        <!-- ## انتهي من النسخ هنا ## -->
     </main>
 
     <!-- Add User Modal -->
@@ -815,6 +858,10 @@
         let notifications = [];
         let errorTrendChart = null;
         let departmentErrorsChart = null;
+        let companyEmployees = [];
+        let departments = [];
+        let teamSchedule = [];
+        let isScheduleEditMode = false;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -941,16 +988,21 @@
                 // Update UI with user data
                 updateUserInterface();
                 
-                // Load data
-                await loadPerformanceMetrics();
-                await loadErrorTrends();
-                await loadDepartmentPerformance();
-                await loadTeamMembers();
-                await loadNotifications();
-                
-                // Initialize charts
+                // Initialize charts with dummy data first
                 initCharts();
-                
+
+                // Load all data in parallel
+                await Promise.all([
+                    loadPerformanceMetrics(),
+                    loadErrorTrends(),
+                    loadDepartmentPerformance(),
+                    loadTeamMembers(),
+                    loadNotifications(),
+                    loadCompanyEmployees(),
+                    loadDepartments(),
+                    loadTeamSchedule()
+                ]);
+
                 showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -977,12 +1029,12 @@
                 
                 // Update KPI cards
                 document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || 0;
-                document.getElementById('error-rate').textContent = `${performanceMetrics.errorRate || 0}%`;
+                document.getElementById('error-rate').textContent = `${performanceMetrics.accuracyRate || 0}%`; // Using accuracy instead of error
                 document.getElementById('active-agents').textContent = teamMembers.filter(m => m.is_active).length;
                 
                 // Update change indicators
                 document.getElementById('orders-change').innerHTML = `<span>⬆️</span> ${performanceMetrics.totalOrders > 0 ? '5%' : '0%'} vs last month`;
-                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.errorRate > 0 ? '0.5%' : '0%'} vs last month`;
+                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.accuracyRate > 0 ? '0.5%' : '0%'} vs last month`;
                 document.getElementById('agents-change').innerHTML = `<span>➕</span> ${teamMembers.length > 0 ? '2' : '0'} new agents`;
                 
             } catch (error) {
@@ -993,7 +1045,7 @@
         // Load error trends
         async function loadErrorTrends() {
             try {
-                errorTrends = await getErrorTrends('6 months');
+                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
                 updateErrorTrendChart();
             } catch (error) {
                 console.error('Error loading error trends:', error);
@@ -1117,93 +1169,37 @@
 
         // Initialize charts
         function initCharts() {
-            const errorTrendCtx = document.getElementById('errorTrendChart').getContext('2d');
-            errorTrendChart = new Chart(errorTrendCtx, {
-                type: 'line',
-                data: {
-                    labels: errorTrends.labels || [],
-                    datasets: [{
-                        label: 'Error Rate %',
-                        data: errorTrends.values || [],
-                        borderColor: 'rgba(0, 191, 255, 1)',
-                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            labels: {
-                                color: '#e6edf3'
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            },
-                            ticks: {
-                                color: '#e6edf3'
-                            }
-                        },
-                        x: {
-                            grid: {
-                                color: 'rgba(255,255,255,0.1)'
-                            },
-                            ticks: {
-                                color: '#e6edf3'
-                            }
-                        }
+            // Error Trend Chart
+            const errorTrendCtx = document.getElementById('errorTrendChart')?.getContext('2d');
+            if(errorTrendCtx) {
+                if (errorTrendChart) errorTrendChart.destroy();
+                errorTrendChart = new Chart(errorTrendCtx, {
+                    type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Error Rate %', data: [5, 4, 4.5, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
+                        plugins: { legend: { labels: { color: '#e6edf3' } } }
                     }
-                }
-            });
-
-            const departmentCtx = document.getElementById('departmentErrorsChart').getContext('2d');
-            departmentErrorsChart = new Chart(departmentCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: departmentPerformance.departments || [],
-                    datasets: [{
-                        label: 'Errors',
-                        data: departmentPerformance.errorRates || [],
-                        backgroundColor: ['#007BFF', '#ffc107', '#28a745']
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'top',
-                            labels: {
-                                color: '#e6edf3'
-                            }
-                        }
-                    }
-                }
-            });
-
-            if (errorTrendChart && errorTrends.labels) {
-                errorTrendChart.data.labels = errorTrends.labels;
-                errorTrendChart.data.datasets[0].data = errorTrends.values;
-                errorTrendChart.update();
+                });
             }
-            if (departmentErrorsChart && departmentPerformance.departments) {
-                departmentErrorsChart.data.labels = departmentPerformance.departments;
-                departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
-                departmentErrorsChart.update();
+
+            // Department Errors Chart
+            const departmentCtx = document.getElementById('departmentErrorsChart')?.getContext('2d');
+            if(departmentCtx) {
+                if(departmentErrorsChart) departmentErrorsChart.destroy();
+                departmentErrorsChart = new Chart(departmentCtx, {
+                    type: 'doughnut', data: { labels: ['Support', 'Logistics', 'Customer Service'], datasets: [{ label: 'Errors', data: [120, 45, 75], backgroundColor: ['#007BFF', '#ffc107', '#28a745'] }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { color: '#e6edf3' } } }
+                    }
+                });
             }
         }
 
-
         // Update charts with data
         function updateErrorTrendChart() {
-            if (!errorTrendChart || !errorTrends.labels) return;
+            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
             
             errorTrendChart.data.labels = errorTrends.labels;
             errorTrendChart.data.datasets[0].data = errorTrends.values;
@@ -1211,12 +1207,73 @@
         }
 
         function updateDepartmentChart() {
-            if (!departmentErrorsChart || !departmentPerformance.departments) return;
+            if (!departmentErrorsChart || !departmentPerformance.departments || departmentPerformance.departments.length === 0) return;
             
             departmentErrorsChart.data.labels = departmentPerformance.departments;
             departmentErrorsChart.data.datasets[0].data = departmentPerformance.errorRates;
             departmentErrorsChart.update();
         }
+
+        // ## انسخ وألصق هذه الدوال الجديدة بالكامل ##
+        async function loadCompanyEmployees() {
+            try {
+                companyEmployees = await getCompanyEmployees();
+                renderCompanyEmployeesTable();
+            } catch (error) { showToast('Failed to load company employees', 'error'); }
+        }
+
+        function renderCompanyEmployeesTable() {
+            const tableBody = document.getElementById('company-employees-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = companyEmployees.length === 0
+                ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
+                : companyEmployees.map(emp => `<tr><td>${emp.employee_name}</td><td>${emp.employee_username || 'N/A'}</td><td>${emp.admin_id || 'N/A'}</td><td>${emp.department || 'N/A'}</td><td>${emp.title || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
+        }
+
+        async function loadDepartments() {
+            try {
+                departments = await getDepartments();
+                renderDepartmentsTable();
+            } catch (error) { showToast('Failed to load departments', 'error'); }
+        }
+
+        function renderDepartmentsTable() {
+            const tableBody = document.getElementById('departments-table-body');
+            if (!tableBody) return;
+            tableBody.innerHTML = departments.length === 0
+                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
+                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
+        }
+
+        async function loadTeamSchedule() {
+            try {
+                // Ensure team members are loaded first
+                if (teamMembers.length === 0) {
+                   await loadTeamMembers();
+                }
+                teamSchedule = await getTeamSchedule();
+                renderTeamSchedule();
+            } catch (error) { showToast('Failed to load team schedule', 'error'); }
+        }
+
+        function renderTeamSchedule() {
+            const tableBody = document.getElementById('schedule-table-body');
+            if (!tableBody) return;
+            if (teamMembers.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members to schedule.</td></tr>`;
+                return;
+            }
+            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+            tableBody.innerHTML = teamMembers.map(member => {
+                let cells = days.map(day => {
+                    const scheduleEntry = teamSchedule.find(s => s.user_id === member.id && s.shift_date === day); // Note: This is a simplified matching
+                    const shiftText = scheduleEntry ? `${scheduleEntry.start_time} - ${scheduleEntry.end_time}` : 'Off';
+                    return `<td data-day="${day}" data-user-id="${member.id}">${shiftText}</td>`;
+                }).join('');
+                return `<tr><td>${member.name}</td>${cells}</tr>`;
+            }).join('');
+        }
+
 
         // Modal functions
         function openEditUserModal(userId) {
@@ -1311,12 +1368,7 @@
                     
                     // Update page title
                     document.getElementById('page-title-header').textContent = 
-                        tabId === 'dashboard' ? 'Dashboard' : 
-                        tabId === 'reports' ? 'Reports & Analytics' : 
-                        tabId === 'teams' ? 'Teams' : 
-                        tabId === 'profile' ? 'Profile' : 
-                        tabId === 'settings' ? 'Settings' : 
-                        tabId === 'help' ? 'Help' : 'Dashboard';
+                        tab.textContent.substring(2); // Simple way to get text
                 });
             });
             
@@ -1480,6 +1532,28 @@
                     console.error('Error during logout:', error);
                     showToast('Error during logout', 'error');
                 }
+            });
+
+            // Team Scheduling Buttons
+            const editScheduleBtn = document.getElementById('edit-schedule-btn');
+            const scheduleEditControls = document.getElementById('schedule-edit-controls');
+            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+            
+            editScheduleBtn.addEventListener('click', () => {
+                isScheduleEditMode = true;
+                document.getElementById('schedule-table').classList.add('edit-mode');
+                editScheduleBtn.style.display = 'none';
+                scheduleEditControls.style.display = 'inline-flex';
+                showToast('Edit mode enabled. Click on a cell to modify.', 'info');
+            });
+
+            cancelScheduleBtn.addEventListener('click', () => {
+                isScheduleEditMode = false;
+                document.getElementById('schedule-table').classList.remove('edit-mode');
+                editScheduleBtn.style.display = 'inline-flex';
+                scheduleEditControls.style.display = 'none';
+                renderTeamSchedule(); // Re-render to discard changes
+                showToast('Edit mode cancelled.', 'warning');
             });
             
             // Close notification dropdown when clicking outside
