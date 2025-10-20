@@ -1315,54 +1315,67 @@
                 renderInquiriesTable();
             }
         }
+// الصق هذا الكود بالكامل مكان دالة renderOrdersTable القديمة
+function renderOrdersTable() {
+    const tableBody = document.getElementById('orders-table-body');
+    
+    if (assignedOrders.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
+        return;
+    }
 
-       function renderOrdersTable() {
-            const tableBody = document.getElementById('orders-table-body');
-            
-            if (assignedOrders.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
-                return;
+    tableBody.innerHTML = assignedOrders.map(order => {
+        const orderData = order.orders;
+        const statusClass = `status-${order.status}`;
+        
+        let specialStatusBadge = ''; // سنستخدم هذا لعرض حالة الاستفسار أو التصعيد
+
+        // 1. التحقق من التصعيدات أولاً (لأنها أكثر أهمية)
+        if (order.escalations && order.escalations.length > 0) {
+            const latestEscalation = order.escalations[order.escalations.length - 1];
+            if (latestEscalation.status === 'pending') {
+                specialStatusBadge = `<span class="inquiry-badge" title="Your escalation is pending a response">Escalation Pending</span>`;
+            } else if (latestEscalation.status === 'resolved') {
+                const feedback = latestEscalation.notes || 'No feedback provided.';
+                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Feedback on Escalation:\\n\\n${feedback.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view feedback">Escalation Resolved</button>`;
             }
-
-            tableBody.innerHTML = assignedOrders.map(order => {
-                const orderData = order.orders;
-                const statusClass = `status-${order.status}`;
-                
-                let inquiryBadge = '';
-                if (order.inquiries && order.inquiries.length > 0) {
-                    const latestInquiry = order.inquiries[order.inquiries.length - 1]; 
-                    if (latestInquiry.status === 'pending') {
-                        inquiryBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
-                    } else if (latestInquiry.status === 'responded') {
-                        // MODIFIED: Replaced alert with a function call to open the modal
-                        inquiryBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="openInquiryResponseModal('${latestInquiry.id}')" title="Click to view response">Response Received</button>`;
-                    }
-                }
-
-                return `
-                    <tr>
-                        <td>${orderData?.order_id || 'N/A'} ${inquiryBadge}</td> 
-                        <td>${orderData?.reason || 'N/A'}</td>
-                        <td>${formatDate(order.assigned_at)}</td>
-                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                        <td>
-                            <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                            ${order.status === 'pending' ? 
-                                `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                                 <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                                 <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                                ''
-                            }
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-            
-            document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+        } 
+        // 2. إذا لم يكن هناك تصعيد، تحقق من الاستفسارات
+        else if (order.inquiries && order.inquiries.length > 0) {
+            const latestInquiry = order.inquiries[order.inquiries.length - 1];
+            if (latestInquiry.status === 'pending') {
+                specialStatusBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
+            } else if (latestInquiry.status === 'responded') {
+                const response = latestInquiry.response_text || 'No response provided.';
+                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Response from Helper:\\n\\n${response.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view response">Response Received</button>`;
+            }
         }
+
+        return `
+            <tr>
+                <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td> 
+                <td>${orderData?.reason || 'N/A'}</td>
+                <td>${formatDate(order.assigned_at)}</td>
+                <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                <td>
+                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                    ${order.status === 'pending' ? 
+                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                        ''
+                    }
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // إعادة ربط كل الأحداث للأزرار
+    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+}
 
         // REPLACED with user's provided function
         function renderEscalationsTable() {
