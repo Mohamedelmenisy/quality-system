@@ -213,6 +213,40 @@ export async function getCompanyEmployees() {
   }
 }
 
+export async function addCompanyEmployee(employeeData) {
+    try {
+        const { data, error } = await supabase
+            .from('employees')
+            .insert(employeeData)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('AddCompanyEmployee error:', error);
+        throw error;
+    }
+}
+
+export async function updateCompanyEmployee(employeeId, updates) {
+    try {
+        const { data, error } = await supabase
+            .from('employees')
+            .update(updates)
+            .eq('id', employeeId)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('UpdateCompanyEmployee error:', error);
+        throw error;
+    }
+}
+
+
 // ==================== ORDER FUNCTIONS ====================
 
 export async function getOrders(filters = {}) {
