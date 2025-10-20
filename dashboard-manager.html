@@ -660,7 +660,8 @@
             <div class="card">
                 <div class="placeholder-content">
                     <h3>Help Center & Documentation</h3>
-                    <p>Contact support or find answers to your questions here.</p>
+                    <p>Find answers to common questions or contact support for assistance.</p>
+                    <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
                 </div>
             </div>
         </div>
@@ -699,7 +700,9 @@
                 <div class="table-container">
                     <table class="user-management-table">
                         <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
-                        <tbody id="company-employees-table-body"></tbody>
+                        <tbody id="company-employees-table-body">
+                            <tr><td colspan="6" class="empty-state">Loading...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -722,18 +725,18 @@
         <div id="payments" class="tab-content">
             <div class="card">
                 <h3>Available Payment Methods</h3>
-                <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Visa Master Card</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Apple Pay</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Mada</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Visa-Master</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & MADA</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Apple-Pay</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Tamara</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & Tamara</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Wallet & STC Pay</div>
-                    <div class="payment-card" style="background: #2c2c2c; border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600;">Other items payment</div>
+                <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+                    <!-- تم حذف "Other items payment" -->
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
+                    <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
                 </div>
             </div>
         </div>
@@ -813,6 +816,34 @@
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
+    
+    <!-- Edit Shift Modal -->
+    <div class="modal-overlay" id="edit-shift-modal">
+        <div class="modal-box" style="max-width: 400px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Shift</h3>
+                <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
+                <div class="form-group">
+                    <label for="shift-select">Shift Status</label>
+                    <select id="shift-select">
+                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
+                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
+                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Sick Leave">Sick Leave</option>
+                        <option value="Off">Off</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal" style="background-color:#333;">Cancel</button>
+                <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // حل جذري لمشكلة الـ autocomplete
@@ -1242,7 +1273,14 @@
             if (!tableBody) return;
             tableBody.innerHTML = departments.length === 0
                 ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
-                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
+                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
+
+            // أضف هذا الكود لربط الحدث
+            document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    showToast('Department editing is not implemented yet.', 'info');
+                });
+            });
         }
 
         async function loadTeamSchedule() {
@@ -1259,19 +1297,63 @@
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
             if (!tableBody) return;
-            if (teamMembers.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members to schedule.</td></tr>`;
+            const qualityTeam = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
+            if (qualityTeam.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
                 return;
             }
-            const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-            tableBody.innerHTML = teamMembers.map(member => {
-                let cells = days.map(day => {
-                    const scheduleEntry = teamSchedule.find(s => s.user_id === member.id && s.shift_date === day); // Note: This is a simplified matching
-                    const shiftText = scheduleEntry ? `${scheduleEntry.start_time} - ${scheduleEntry.end_time}` : 'Off';
-                    return `<td data-day="${day}" data-user-id="${member.id}">${shiftText}</td>`;
+
+            const scheduleMap = teamSchedule.reduce((acc, s) => {
+                if (!acc[s.user_id]) acc[s.user_id] = {};
+                const day = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
+                acc[s.user_id][day] = s.shift_type;
+                return acc;
+            }, {});
+
+            tableBody.innerHTML = qualityTeam.map(member => {
+                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
+                const cells = daysOfWeek.map(day => {
+                    const shift = scheduleMap[member.id]?.[day] || 'Off';
+                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${shift.replace(' ', '-').toLowerCase()}">${shift}</span></td>`;
                 }).join('');
-                return `<tr><td>${member.name}</td>${cells}</tr>`;
+                return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
             }).join('');
+
+            // تفعيل الضغط على الخلايا عند تفعيل وضع التعديل
+            document.querySelectorAll('.shift-cell').forEach(cell => {
+                cell.addEventListener('click', () => {
+                    if (isScheduleEditMode) {
+                        openShiftModal(cell.dataset);
+                    }
+                });
+            });
+        }
+        
+        function openShiftModal(dataset) {
+            const { userId, day, userName } = dataset;
+            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+            document.getElementById('shift-modal-member-name').textContent = userName;
+            document.getElementById('shift-modal-day-name').textContent = days[day];
+            document.getElementById('save-shift-btn').dataset.userId = userId;
+            document.getElementById('save-shift-btn').dataset.day = day;
+            showModal('edit-shift-modal');
+        }
+
+        async function handleSaveShift() {
+            const { userId, day } = document.getElementById('save-shift-btn').dataset;
+            const shiftType = document.getElementById('shift-select').value;
+            const today = new Date();
+            const distance = day - today.getDay();
+            const targetDate = new Date(today);
+            targetDate.setDate(targetDate.getDate() + distance);
+            const shiftDate = targetDate.toISOString().split('T')[0];
+
+            try {
+                await updateTeamSchedule([{ user_id: userId, shift_date: shiftDate, shift_type: shiftType }]);
+                showToast('Schedule updated successfully', 'success');
+                hideModal('edit-shift-modal');
+                await loadTeamSchedule();
+            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
         }
 
 
@@ -1555,6 +1637,8 @@
                 renderTeamSchedule(); // Re-render to discard changes
                 showToast('Edit mode cancelled.', 'warning');
             });
+            
+            document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
             
             // Close notification dropdown when clicking outside
             document.addEventListener('click', (e) => {
