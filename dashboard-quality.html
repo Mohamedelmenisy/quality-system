@@ -847,6 +847,51 @@ document.addEventListener('click', function(e){
         </div>
     </div>
 
+    <!-- Review Escalation Modal (Main) -->
+    <div class="modal-overlay" id="review-escalation-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Escalation: <span id="review-escalation-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="escalation-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Employee</strong>
+                    <p id="escalation-employee-name">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Issue Type</strong>
+                    <p id="escalation-issue-type">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent's Reason for Escalation</strong>
+                    <p id="agent-escalation-reason">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="helper-feedback">Your Feedback / Final Decision *</label>
+                    <textarea id="helper-feedback" placeholder="Provide your feedback and final decision..." required></textarea>
+                </div>
+                <div class="form-group" id="senior-escalation-section" style="display: none;">
+                    <label for="escalate-to-senior">Escalate to Senior *</label>
+                    <select id="escalate-to-senior" required>
+                        <option value="">Select Senior Quality Analyst</option>
+                    </select>
+                    <label for="senior-escalation-reason" style="margin-top: 10px;">Reason for Escalation to Senior *</label>
+                    <textarea id="senior-escalation-reason" placeholder="Explain why you are escalating this to senior..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="resolve-escalation-btn">Resolve & Send Feedback</button>
+                <button class="btn btn-primary" id="toggle-senior-escalation-btn">Escalate to Senior</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Respond to Inquiry Modal -->
     <div class="modal-overlay" id="respond-inquiry-modal">
         <div class="modal-box">
@@ -871,6 +916,30 @@ document.addEventListener('click', function(e){
             <div class="modal-footer">
                 <button class="btn btn-secondary modal-close-btn" data-modal-id="respond-inquiry-modal">Cancel</button>
                 <button class="btn btn-primary" id="submit-inquiry-response-btn">Send Response</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Inquiry/Response Modal (Main) -->
+    <div class="modal-overlay" id="view-inquiry-modal">
+        <div class="modal-box" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="view-inquiry-text">Loading...</p>
+                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+                </div>
+                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                    <strong>Helper's Response</strong>
+                    <p id="view-inquiry-response-text">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
             </div>
         </div>
     </div>
@@ -972,7 +1041,7 @@ document.addEventListener('click', function(e){
         </div>
     </div>
     
-    <!-- View Escalation Details Modal (NEW) -->
+    <!-- View Escalation Details Modal (Main) -->
     <div id="view-escalation-modal" class="modal-overlay">
       <div class="modal-box">
         <div class="modal-header">
@@ -1078,12 +1147,27 @@ document.addEventListener('click', function(e){
         }
 
         function showModal(modalId) {
-            document.getElementById(modalId)?.classList.add('show');
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.classList.add('show');
+                // Use the style-based display for injected modals if they don't use the 'show' class
+                if (el.style.display !== 'flex') {
+                    el.style.display = 'flex';
+                }
+            }
         }
 
         function hideModal(modalId) {
-            document.getElementById(modalId)?.classList.remove('show');
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.classList.remove('show');
+                 // Use the style-based display for injected modals if they don't use the 'show' class
+                if (el.style.display !== 'none') {
+                    el.style.display = 'none';
+                }
+            }
         }
+
 
         // Initialize the application
         async function initApp() {
@@ -1371,8 +1455,10 @@ document.addEventListener('click', function(e){
                     const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
                     
                     if (inquiry) {
-                        const inquiryText = inquiry.response_text || "No response provided.";
-                        document.getElementById('view-inquiry-body').textContent = inquiryText;
+                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
                         showModal('view-inquiry-modal');
                     } else {
                         showToast('Could not find inquiry details.', 'error');
@@ -1508,7 +1594,7 @@ document.addEventListener('click', function(e){
 
            document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const inquiry = helperInquiries.find(i => i.id === this.dataset.inquiryId);
+                    const inquiry = helperInquiries.find(i => String(i.id) === String(this.dataset.inquiryId));
                     if (inquiry) {
                         document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
                         document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
@@ -1849,16 +1935,20 @@ document.addEventListener('click', function(e){
             const escalation = helperEscalations.find(e => String(e.id) === String(escalationId));
             if (!escalation) { showToast('Escalation not found', 'error'); return; }
             const order = escalation.order_assignments?.orders;
-            document.getElementById('review-escalation-order-id').textContent = order?.order_id || 'N/A';
-            document.getElementById('escalation-order-details').textContent = order?.reason || 'No details';
-            document.getElementById('escalation-employee-name').textContent = order?.employee_name || 'N/A';
-            document.getElementById('escalation-issue-type').textContent = order?.reason || 'N/A';
-            document.getElementById('agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
-            document.getElementById('resolve-escalation-btn').dataset.escalationId = escalationId;
-            document.getElementById('toggle-senior-escalation-btn').dataset.escalationId = escalationId;
+            
+            const modal = document.getElementById('review-escalation-modal');
+            modal.querySelector('#review-escalation-order-id').textContent = order?.order_id || 'N/A';
+            modal.querySelector('#escalation-order-details').textContent = order?.reason || 'No details';
+            modal.querySelector('#escalation-employee-name').textContent = order?.employee_name || 'N/A';
+            modal.querySelector('#escalation-issue-type').textContent = order?.reason || 'N/A';
+            modal.querySelector('#agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
+            modal.querySelector('#resolve-escalation-btn').dataset.escalationId = escalationId;
+            modal.querySelector('#toggle-senior-escalation-btn').dataset.escalationId = escalationId;
+            
             resetEscalationModal();
             showModal('review-escalation-modal');
         }
+
 
         async function openRespondInquiryModal(inquiryId) {
             const inquiry = helperInquiries.find(i => String(i.id) === String(inquiryId));
@@ -1872,17 +1962,21 @@ document.addEventListener('click', function(e){
         }
 
         function resetEscalationModal() {
-            document.getElementById('helper-feedback').value = '';
-            document.getElementById('senior-escalation-section').style.display = 'none';
-            document.getElementById('toggle-senior-escalation-btn').textContent = 'Escalate to Senior';
-            document.getElementById('toggle-senior-escalation-btn').className = 'btn btn-primary';
-            document.getElementById('escalate-to-senior').value = '';
-            document.getElementById('senior-escalation-reason').value = '';
+            const modal = document.getElementById('review-escalation-modal');
+            modal.querySelector('#helper-feedback').value = '';
+            modal.querySelector('#senior-escalation-section').style.display = 'none';
+            const toggleBtn = modal.querySelector('#toggle-senior-escalation-btn');
+            toggleBtn.textContent = 'Escalate to Senior';
+            toggleBtn.className = 'btn btn-primary';
+            modal.querySelector('#escalate-to-senior').value = '';
+            modal.querySelector('#senior-escalation-reason').value = '';
             isSeniorEscalationMode = false;
         }
 
+
         function stringToColor(str) {
             let hash = 0;
+            if (!str) return '#cccccc';
             for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
             let color = '#';
             for (let i = 0; i < 3; i++) {
@@ -1939,8 +2033,11 @@ document.addEventListener('click', function(e){
                 showToast('All notifications marked as read', 'success');
             });
             
-            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => hideModal(btn.closest('.modal-overlay').id)));
-            
+            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => {
+                const modalId = btn.dataset.modalId;
+                if(modalId) hideModal(modalId);
+            }));
+
             document.getElementById('submit-review-btn').addEventListener('click', async () => {
                 const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
                 const action = document.getElementById('review-action').value;
@@ -2018,14 +2115,16 @@ document.addEventListener('click', function(e){
             });
             
             document.getElementById('toggle-senior-escalation-btn').addEventListener('click', () => {
-                const section = document.getElementById('senior-escalation-section');
-                const button = document.getElementById('toggle-senior-escalation-btn');
+                const modal = document.getElementById('review-escalation-modal');
+                const section = modal.querySelector('#senior-escalation-section');
+                const button = modal.querySelector('#toggle-senior-escalation-btn');
                 isSeniorEscalationMode = !isSeniorEscalationMode;
                 section.style.display = isSeniorEscalationMode ? 'block' : 'none';
                 button.textContent = isSeniorEscalationMode ? 'Cancel Senior Escalation' : 'Escalate to Senior';
                 button.className = isSeniorEscalationMode ? 'btn btn-secondary' : 'btn btn-primary';
                 if(isSeniorEscalationMode) populateSeniorDropdown();
             });
+
             
             document.getElementById('resolve-escalation-btn').addEventListener('click', async () => {
                 const escalationId = document.getElementById('resolve-escalation-btn').dataset.escalationId;
@@ -2070,8 +2169,12 @@ document.addEventListener('click', function(e){
             document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadHelperInquiries(); showToast('Inquiries refreshed', 'info'); });
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); }
-                if (e.target.classList.contains('modal-overlay')) { e.target.classList.remove('show'); }
+                if (e.target.classList.contains('modal-overlay')) {
+                    const modalId = e.target.id;
+                    if(modalId) hideModal(modalId);
+                }
             });
+
 
             // FILTER LISTENERS
             const addFilterListener = (inputId, tableBodyId, dataArray, renderFunc) => {
@@ -2137,12 +2240,12 @@ document.addEventListener('click', function(e){
   </div>
 </div>
 
-<!-- Review Escalation Modal -->
-<div class="modal-overlay" id="review-escalation-modal" style="display:none;">
+<!-- Review Escalation Modal (ALT) -->
+<div class="modal-overlay" id="review-escalation-modal-alt" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
       <h3 class="modal-title">Review Escalation</h3>
-      <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
+      <button class="modal-close-btn" data-modal-id="review-escalation-modal-alt">×</button>
     </div>
     <div class="modal-body">
       <div class="form-group">
@@ -2152,39 +2255,60 @@ document.addEventListener('click', function(e){
     </div>
     <div class="modal-footer">
       <button class="btn btn-success" id="resolve-escalation-confirm-btn">Resolve & Send Feedback</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
+      <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal-alt">Cancel</button>
     </div>
   </div>
 </div>
 
-<!-- View Inquiry Modal -->
-<div class="modal-overlay" id="view-inquiry-modal" style="display:none;">
+<!-- View Inquiry Modal (ALT) -->
+<div class="modal-overlay" id="view-inquiry-modal-alt" style="display:none;">
   <div class="modal-box">
     <div class="modal-header">
       <h3 class="modal-title">Inquiry Response</h3>
-      <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+      <button class="modal-close-btn" data-modal-id="view-inquiry-modal-alt">×</button>
     </div>
-    <div class="modal-body" id="view-inquiry-body" style="white-space:pre-wrap;"></div>
+    <div class="modal-body" id="view-inquiry-body-alt" style="white-space:pre-wrap;"></div>
     <div class="modal-footer">
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-inquiry-modal-alt">Close</button>
     </div>
   </div>
 </div>
 
 <!-- Small utility styles for modals (scoped local) -->
 <style>
-.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45); display:flex; align-items:center; justify-content:center; z-index:2000; }
-.modal-box{ background:#fff; width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee; }
-.modal-title{ margin:0; font-size:16px; }
-.modal-body{ padding:16px; max-height:60vh; overflow:auto; }
-.modal-footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; gap:8px; justify-content:flex-end; }
-.modal-close-btn{ background:none; border:0; font-size:20px; cursor:pointer; }
-.btn{ padding:8px 12px; border-radius:6px; cursor:pointer; border:1px solid #ccc; background:#f5f5f5; }
-.btn-primary{ background:#2563eb; color:#fff; border-color:transparent; }
-.btn-success{ background:#16a34a; color:#fff; border-color:transparent; }
-.btn-secondary{ background:#e5e7eb; }
-.form-group label{ display:block; margin-bottom:6px; font-weight:600; }
+#review-escalation-modal-alt .modal-box, #view-inquiry-modal-alt .modal-box, #reassign-modal .modal-box, #view-assignment-modal .modal-box { 
+    background:#fff; color: #333; width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; 
+}
+#review-escalation-modal-alt .modal-header, #view-inquiry-modal-alt .modal-header, #reassign-modal .modal-header, #view-assignment-modal .modal-header {
+    display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee;
+}
+#review-escalation-modal-alt .modal-title, #view-inquiry-modal-alt .modal-title, #reassign-modal .modal-title, #view-assignment-modal .modal-title {
+    margin:0; font-size:16px;
+}
+#review-escalation-modal-alt .modal-body, #view-inquiry-modal-alt .modal-body, #reassign-modal .modal-body, #view-assignment-modal .modal-body {
+    padding:16px; max-height:60vh; overflow:auto;
+}
+#review-escalation-modal-alt .modal-footer, #view-inquiry-modal-alt .modal-footer, #reassign-modal .modal-footer, #view-assignment-modal .modal-footer {
+    padding:12px 16px; border-top:1px solid #eee; display:flex; gap:8px; justify-content:flex-end;
+}
+#review-escalation-modal-alt .modal-close-btn, #view-inquiry-modal-alt .modal-close-btn, #reassign-modal .modal-close-btn, #view-assignment-modal .modal-close-btn {
+    background:none; border:0; font-size:20px; cursor:pointer; color: #555;
+}
+#review-escalation-modal-alt .btn, #view-inquiry-modal-alt .btn, #reassign-modal .btn, #view-assignment-modal .btn { 
+    padding:8px 12px; border-radius:6px; cursor:pointer; border:1px solid #ccc; background:#f5f5f5; 
+}
+#review-escalation-modal-alt .btn-primary, #view-inquiry-modal-alt .btn-primary, #reassign-modal .btn-primary, #view-assignment-modal .btn-primary { 
+    background:#2563eb; color:#fff; border-color:transparent; 
+}
+#review-escalation-modal-alt .btn-success, #view-inquiry-modal-alt .btn-success, #reassign-modal .btn-success, #view-assignment-modal .btn-success { 
+    background:#16a34a; color:#fff; border-color:transparent; 
+}
+#review-escalation-modal-alt .btn-secondary, #view-inquiry-modal-alt .btn-secondary, #reassign-modal .btn-secondary, #view-assignment-modal .btn-secondary {
+     background:#e5e7eb; 
+}
+#review-escalation-modal-alt .form-group label, #view-inquiry-modal-alt .form-group label, #reassign-modal .form-group label, #view-assignment-modal .form-group label {
+     display:block; margin-bottom:6px; font-weight:600; 
+}
 </style>
 <!-- END: Added Modals -->
 
@@ -2196,16 +2320,17 @@ document.addEventListener('DOMContentLoaded', function(){
   const resolveBtn = document.getElementById('resolve-escalation-confirm-btn');
   if(resolveBtn){
     resolveBtn.addEventListener('click', async function(){
-      const escalationId = document.getElementById('review-escalation-modal').dataset.escalationId;
+      const escalationId = document.getElementById('review-escalation-modal-alt').dataset.escalationId;
       const feedback = document.getElementById('review-feedback-text').value.trim();
       if(!feedback){ alert('Please provide feedback before resolving'); return; }
       try{
         if(typeof resolveEscalation === 'function'){
           await resolveEscalation(escalationId, feedback);
+          showToast('Escalation resolved', 'success');
         }
-        hideModal('review-escalation-modal');
+        hideModal('review-escalation-modal-alt');
         // reload lists if functions exist
-        if(typeof loadDirectEscalations === 'function') loadDirectEscalations();
+        if(typeof loadHelperEscalations === 'function') loadHelperEscalations();
         if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
       }catch(err){
         console.error(err);
@@ -2224,6 +2349,7 @@ document.addEventListener('DOMContentLoaded', function(){
       try{
         if(typeof assignOrders === 'function'){
           await assignOrders([], newAgentId); // adapt signature if needed
+          showToast('Order reassigned', 'success');
         } else {
           console.warn('assignOrders function not found');
         }
@@ -2237,13 +2363,20 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   // hook generic "review escalation" buttons (buttons with class review-escalation-btn)
-  document.querySelectorAll('.review-escalation-btn').forEach(btn=>{
-    btn.addEventListener('click', function(){
-      const id = this.dataset.escalationId || this.getAttribute('data-escalation-id');
-      document.getElementById('review-escalation-modal').dataset.escalationId = id;
-      showModal('review-escalation-modal');
-    });
+  document.body.addEventListener('click', function(e) {
+      if (e.target && e.target.classList.contains('review-escalation-btn')) {
+          const id = e.target.dataset.escalationId || e.target.getAttribute('data-escalation-id');
+          const modal = document.getElementById('review-escalation-modal-alt');
+          if (modal) {
+              modal.dataset.escalationId = id;
+              // Also clear previous feedback
+              const feedbackText = document.getElementById('review-feedback-text');
+              if(feedbackText) feedbackText.value = '';
+              showModal('review-escalation-modal-alt');
+          }
+      }
   });
+
 
   // hook view-assignment buttons to populate modal
   document.querySelectorAll('.open-view-assignment-btn').forEach(btn=>{
@@ -2262,7 +2395,7 @@ document.addEventListener('DOMContentLoaded', function(){
                             <div><strong>User:</strong> ${found.users?.name || found.user || 'N/A'}</div>
                             <div><strong>Status:</strong> ${found.status||'N/A'}</div>
                             <div><strong>Order:</strong> ${found.order_id || (found.orders && found.orders.order_id) || 'N/A'}</div>
-                            <div style="margin-top:8px;"><strong>Notes:</strong><pre style="white-space:pre-wrap;">${found.notes||''}</pre></div>`;
+                            <div style="margin-top:8px;"><strong>Notes:</strong><pre style="white-space:pre-wrap;margin-top:4px;padding:8px;background:#f0f0f0;border-radius:4px;">${found.notes||'N/A'}</pre></div>`;
         } else {
           body.innerHTML = 'Assignment details not found locally.';
         }
@@ -2291,8 +2424,8 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.open-view-inquiry-btn').forEach(btn=>{
     btn.addEventListener('click', function(){
       const text = this.dataset.inquiryText || this.getAttribute('data-inquiry-text') || this.textContent || '';
-      document.getElementById('view-inquiry-body').textContent = text;
-      showModal('view-inquiry-modal');
+      document.getElementById('view-inquiry-body-alt').textContent = text;
+      showModal('view-inquiry-modal-alt');
     });
   });
 
@@ -2302,3 +2435,4 @@ document.addEventListener('DOMContentLoaded', function(){
 
 </body>
 </html>
+```
