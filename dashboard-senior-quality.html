@@ -811,6 +811,22 @@
             </div>
         </div>
     </div>
+    
+    <!-- View Escalation Details Modal -->
+    <div id="view-escalation-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">Escalation Details</h3>
+          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
+        </div>
+        <div id="view-escalation-body" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Content will be populated by JS -->
+        </div>
+        <div class="modal-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
+        </div>
+      </div>
+    </div>
 
 
     <!-- Toast Notifications Container -->
@@ -1058,7 +1074,7 @@
                 
                 if (escalation.status === 'resolved') {
                     statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
-                    actionContent = `<button class="btn btn-secondary btn-sm" disabled>Viewed</button>`;
+                    actionContent = `<button class="btn btn-secondary btn-sm view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
                 } else { // 'pending'
                     statusBadge = `<span class="status-badge status-pending">Pending</span>`;
                     actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
@@ -1093,6 +1109,21 @@
                             })
                             .catch(err => showToast(`Error: ${err.message}`, 'error'));
                     }
+                });
+            });
+
+            document.querySelectorAll('.view-escalation-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const escalation = directEscalations.find(e => String(e.id) === String(btn.dataset.escalationId));
+                    if (!escalation) return;
+
+                    const body = document.getElementById('view-escalation-body');
+                    body.innerHTML = `
+                        <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
+                        <div class="detail-item" style="grid-column: span 2;"><strong>Original Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || ''}</p></div>
+                        <div class="detail-item" style="grid-column: span 2; background: rgba(40, 167, 69, 0.1);"><strong>Your Feedback</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'Not provided.'}</p></div>
+                    `;
+                    showModal('view-escalation-modal');
                 });
             });
         }
