@@ -87,7 +87,8 @@
             return new Date(dateString).toLocaleDateString('en-EG', { 
                 year: 'numeric', 
                 month: 'short', 
-                day: 'numeric' 
+                day: 'numeric',
+                timeZone: 'Africa/Cairo'
             });
         }
 
@@ -98,7 +99,8 @@
                 month: 'short', 
                 day: 'numeric', 
                 hour: '2-digit', 
-                minute: '2-digit' 
+                minute: '2-digit',
+                timeZone: 'Africa/Cairo'
             });
         }
 
@@ -288,7 +290,7 @@
                 </div>
                 <div class="detail-item">
                     <strong>Date Recorded</strong>
-                    <p>${formatDateTime(error.recorded_at)}</p>
+                    <p>${formatDate(error.recorded_at)}</p>
                 </div>
                 <div class="detail-item">
                     <strong>Error Type</strong>
