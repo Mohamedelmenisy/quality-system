@@ -393,13 +393,22 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 export async function submitReview(assignmentId, reviewData) {
   try {
+    // نقوم بإعادة هيكلة الكائن المرسل لضمان استخدام الأسماء الصحيحة
+    const dataToInsert = {
+      assignment_id: assignmentId,
+      action_correctness: reviewData.action_correctness,
+      department: reviewData.department,
+      modified_reason: reviewData.modified_reason,
+      // هذا هو التعديل الأهم: نأخذ القيمة من 'notes' ونضعها في 'modification_details'
+      modification_details: reviewData.notes, 
+      reviewed_at: new Date()
+    };
+
+    console.log("Data being sent to 'quality_reviews':", dataToInsert); // سطر تشخيصي
+
     const { data, error } = await supabase
       .from('quality_reviews')
-      .insert({
-        assignment_id: assignmentId,
-        ...reviewData,
-        reviewed_at: new Date()
-      })
+      .insert(dataToInsert) // نرسل الكائن الجديد الصريح
       .select()
       .single();
 
