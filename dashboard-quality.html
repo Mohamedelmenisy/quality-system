@@ -623,7 +623,6 @@
                     <div class="payment-card">Tamara</div>
                     <div class="payment-card">Wallet & Tamara</div>
                     <div class="payment-card">Wallet & STC Pay</div>
-                    <div class="payment-card">Other items payment</div>
                 </div>
             </div>
         </div>
@@ -1328,21 +1327,35 @@ function renderOrdersTable() {
         const orderData = order.orders;
         const statusClass = `status-${order.status}`;
         
-        let specialStatusBadge = ''; // سنستخدم هذا لعرض حالة الاستفسار أو التصعيد
+        let specialStatusBadge = '';
 
-        // 1. التحقق من التصعيدات أولاً (لأنها أكثر أهمية)
+        // --- منطق جديد ومحسن لعرض حالة التصعيد والرد ---
         if (order.escalations && order.escalations.length > 0) {
             const latestEscalation = order.escalations[order.escalations.length - 1];
-            if (latestEscalation.status === 'pending') {
-                specialStatusBadge = `<span class="inquiry-badge" title="Your escalation is pending a response">Escalation Pending</span>`;
-            } else if (latestEscalation.status === 'resolved') {
-                const feedback = latestEscalation.notes || 'No feedback provided.';
-                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Feedback on Escalation:\\n\\n${feedback.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view feedback">Escalation Resolved</button>`;
+            let feedback = '';
+            let isResolved = false;
+
+            // تحقق من رد السينيور أولاً (إذا كان موجودًا)
+            if (order.final_decisions && order.final_decisions.length > 0) {
+                const finalDecision = order.final_decisions[0];
+                feedback = `Senior's Decision: ${finalDecision.decision.toUpperCase()}\n\nNotes: ${finalDecision.notes}`;
+                isResolved = true;
+            } 
+            // إذا لم يكن هناك رد من السينيور، تحقق من رد الهيلبر
+            else if (latestEscalation.status === 'resolved') {
+                feedback = `Helper's Feedback:\n\n${latestEscalation.notes || 'No feedback.'}`;
+                isResolved = true;
             }
-        } 
-        // 2. إذا لم يكن هناك تصعيد، تحقق من الاستفسارات
+
+            if (isResolved) {
+                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green);" onclick="alert('${feedback.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view feedback">Resolved</button>`;
+            } else { // لا يزال معلقًا
+                specialStatusBadge = `<span class="inquiry-badge" title="Escalated and awaiting response">Escalation Pending</span>`;
+            }
+        }
+        // منطق الاستفسارات يبقى كما هو
         else if (order.inquiries && order.inquiries.length > 0) {
-            const latestInquiry = order.inquiries[order.inquiries.length - 1];
+             const latestInquiry = order.inquiries[order.inquiries.length - 1];
             if (latestInquiry.status === 'pending') {
                 specialStatusBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
             } else if (latestInquiry.status === 'responded') {
@@ -1359,7 +1372,7 @@ function renderOrdersTable() {
                 <td><span class="status-badge ${statusClass}">${order.status}</span></td>
                 <td>
                     <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                    ${order.status === 'pending' ? 
+                    ${(order.status === 'pending' && specialStatusBadge === '') ? // <-- شرط جديد: إخفاء الأزرار إذا كان هناك تصعيد أو استفسار
                         `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
                          <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
                          <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
