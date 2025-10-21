@@ -251,7 +251,6 @@ export async function getDepartments() {
     return data;
 }
 
-
 // ==================== ORDER FUNCTIONS ====================
 
 export async function getOrders(filters = {}) {
@@ -346,15 +345,14 @@ export async function assignOrders(orderIds, agentId, assignedById) {
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
-  .from('order_assignments')
-  .select(`
-    *,
-    orders (*),
-    users!order_assignments_quality_agent_id_fkey (name, email),
-    inquiries (*) 
-    escalations (*)
-  `)
-//
+      .from('order_assignments')
+      .select(`
+        *,
+        orders (*),
+        users!order_assignments_quality_agent_id_fkey (name, email),
+        inquiries (*),
+        escalations (*)
+      `)
       .order('assigned_at', { ascending: false });
 
     if (agentId) {
@@ -613,6 +611,38 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
     return data;
   } catch (error) {
     console.error('SubmitEscalation error:', error);
+    throw error;
+  }
+}
+
+export async function getEscalations(userId = null, filters = {}) {
+  try {
+    let query = supabase
+      .from('escalations')
+      .select(`
+        *,
+        order_assignments!escalations_assignment_id_fkey (
+          orders (*),
+          users!order_assignments_quality_agent_id_fkey (name)
+        ),
+        escalated_by:users!escalations_escalated_by_id_fkey (name),
+        escalated_to:users!escalations_escalated_to_id_fkey (name)
+      `)
+      .order('escalated_at', { ascending: false });
+
+    if (userId) {
+      query = query.eq('escalated_to_id', userId);
+    }
+
+    if (filters.status) {
+      query = query.eq('status', filters.status);
+    }
+
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetEscalations error:', error);
     throw error;
   }
 }
@@ -1301,3 +1331,53 @@ export function subscribeToErrors(agentId, callback) {
     };
   }
 }
+
+// ==================== EXPORT ALL FUNCTIONS ====================
+
+export {
+  supabase,
+  signUp,
+  signIn,
+  signOut,
+  getCurrentUser,
+  getUserData,
+  getUserById,
+  updateUserProfile,
+  getCompanyEmployees,
+  addCompanyEmployee,
+  updateCompanyEmployee,
+  getDepartments,
+  getOrders,
+  getUnassignedOrders,
+  assignOrders,
+  getAssignedOrders,
+  submitReview,
+  getQualityReviews,
+  getAgentErrors,
+  submitErrorResponse,
+  getPendingErrors,
+  submitFinalDecision,
+  submitEscalation,
+  getEscalations,
+  getHelperEscalations,
+  resolveEscalation,
+  escalateToSenior,
+  raiseInquiry,
+  getHelperInquiries,
+  respondToInquiry,
+  getTeamMembers,
+  getTeamSchedule,
+  updateTeamSchedule,
+  getNotifications,
+  markNotificationAsRead,
+  createNotification,
+  subscribeToNotifications,
+  subscribeToAssignments,
+  subscribeToEscalations,
+  subscribeToInquiries,
+  subscribeToErrors,
+  getPerformanceMetrics,
+  getErrorTrends,
+  getDepartmentPerformance,
+  importOrdersFromCSV
+};
