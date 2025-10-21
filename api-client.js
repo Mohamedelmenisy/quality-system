@@ -1175,7 +1175,7 @@ export async function getDepartmentPerformance() {
 
 // ==================== DATA IMPORT FUNCTIONS ====================
 
-export async function importOrdersFromCSV(csvData) {
+async function importOrdersFromCSV(csvData) {
   try {
     // Parse CSV data and transform to match orders table structure
     const orders = csvData.map(row => ({
