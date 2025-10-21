@@ -392,62 +392,62 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
 export async function submitReview(assignmentId, reviewData) {
-  try {
-    const { data: review, error: reviewError } = await supabase
-      .from('quality_reviews')
-      .insert({
-        assignment_id: assignmentId,
-        action_correctness: reviewData.action_correctness,
-        department: reviewData.department,
-        modified_reason: reviewData.modified_reason,
-        modification_details: reviewData.notes,
-        reviewed_at: new Date()
-      })
-      .select()
-      .single();
+    try {
+        const { data: review, error: reviewError } = await supabase
+            .from('quality_reviews')
+            .insert({
+                assignment_id: assignmentId,
+                action_correctness: reviewData.action_correctness,
+                department: reviewData.department,
+                modified_reason: reviewData.modified_reason,
+                modification_details: reviewData.notes, // Translating 'notes' to 'modification_details'
+                reviewed_at: new Date()
+            })
+            .select()
+            .single();
 
-    if (reviewError) throw reviewError;
+        if (reviewError) throw reviewError;
 
-    // تحديث حالة الطلب وإضافة وقت الإكمال
-    await supabase
-      .from('order_assignments')
-      .update({ status: 'completed', completed_at: new Date().toISOString() })
-      .eq('id', assignmentId);
+        // تحديث حالة الطلب وإضافة وقت الإكمال
+        await supabase
+            .from('order_assignments')
+            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .eq('id', assignmentId);
 
-    // --- الجزء الأهم: إنشاء سجل خطأ إذا كانت المراجعة 'error' ---
-    if (reviewData.action_correctness === 'error') {
-      const { data: assignmentData } = await supabase
-        .from('order_assignments')
-        .select('orders(employee_name)')
-        .eq('id', assignmentId)
-        .single();
-      
-      if (assignmentData && assignmentData.orders.employee_name) {
-        // We use 'employees' table which is the source of truth for company staff
-        const { data: employee } = await supabase
-          .from('employees')
-          .select('id')
-          .eq('employee_name', assignmentData.orders.employee_name)
-          .single();
+        // --- الجزء الأهم: إنشاء سجل خطأ إذا كانت المراجعة 'error' ---
+        if (reviewData.action_correctness === 'error') {
+            const { data: assignmentData } = await supabase
+                .from('order_assignments')
+                .select('orders(employee_name)')
+                .eq('id', assignmentId)
+                .single();
 
-        if (employee) {
-          await supabase.from('errors').insert({
-            review_id: review.id,
-            employee_id: employee.id,
-            status: 'pending_response'
-          });
-        } else {
-          console.warn(`Could not find company employee with name: ${assignmentData.orders.employee_name} to log an error.`);
+            if (assignmentData && assignmentData.orders.employee_name) {
+                const { data: employee } = await supabase
+                    .from('users')
+                    .select('id')
+                    .eq('name', assignmentData.orders.employee_name) // أو admin_id إذا كان الربط به
+                    .single();
+
+                if (employee) {
+                    await supabase.from('errors').insert({
+                        review_id: review.id,
+                        employee_id: employee.id
+                        // يمكنك إضافة باقي تفاصيل الخطأ هنا
+                    });
+                } else {
+                    console.warn(`Could not find user with name: ${assignmentData.orders.employee_name} to log an error.`);
+                }
+            }
         }
-      }
+
+        return review;
+    } catch (error) {
+        console.error('SubmitReview error:', error);
+        throw error;
     }
-    
-    return review;
-  } catch (error) {
-    console.error('SubmitReview error:', error);
-    throw error;
-  }
 }
+
 
 export async function getQualityReviews(filters = {}) {
   try {
@@ -641,6 +641,7 @@ export async function getEscalations(userId = null, filters = {}) {
      .select(`
     *,
     order_assignments!escalations_assignment_id_fkey (
+      *,
       orders (*),
       users!order_assignments_quality_agent_id_fkey (name)
     ),
@@ -842,6 +843,7 @@ export async function getHelperInquiries(helperId) {
       .select(`
         id,
         inquiry_text,
+        response_text,
         status,
         created_at,
         order_assignments!inquiries_order_id_fkey (
