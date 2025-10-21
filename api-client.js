@@ -668,61 +668,82 @@ export async function getHelperEscalations(helperId) {
 
 export async function resolveEscalation(escalationId, feedback) {
   try {
+    // جلب بيانات التصعيد أولاً للإشعارات
     const { data: escalationData, error: fetchError } = await supabase
       .from('escalations')
-      .select('escalated_by_id, order_assignments!inner(orders(order_id))')
+      .select(`
+        escalated_by_id,
+        order_assignments!escalations_assignment_id_fkey (
+          orders (order_id)
+        )
+      `)
       .eq('id', escalationId)
       .single();
 
     if (fetchError) throw fetchError;
 
+    // ✅ التحديث: الرد يذهب في feedback فقط
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         status: 'resolved',
-        feedback: feedback, // <-- **نخزن الرد في الحقل الجديد**
+        feedback: feedback, // ✅ الرد النهائي هنا
         resolved_at: new Date().toISOString()
+        // ❌ لا نلمس notes - تبقى كما هي
       })
       .eq('id', escalationId)
-      .select()
+      .select(`
+        *,
+        order_assignments (
+          orders (*)
+        ),
+        escalated_by:users!escalations_escalated_by_id_fkey (name),
+        escalated_to:users!escalations_escalated_to_id_fkey (name)
+      `)
       .single();
 
     if (error) throw error;
 
-    // إرسال إشعار للشخص الذي قام بالتصعيد
+    // إرسال إشعار للشخص الذي رفع التصعيد
     if (escalationData) {
       const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
         escalationData.escalated_by_id,
-        `Your escalation for order ${orderId} has been resolved.`, 'info'
+        `Your escalation for order ${orderId} has been resolved with feedback.`,
+        'info'
       );
     }
+
     return data;
   } catch (error) {
-    console.error('💥 ResolveEscalation error:', error);
+    console.error('ResolveEscalation error:', error);
     throw error;
   }
 }
 
 export async function escalateToSenior(escalationId, seniorId, helperNotes) {
   try {
-    console.log('🔄 Escalating to senior:', { escalationId, seniorId });
-    
-    // Get current escalation
+    // جلب التصعيد الحالي
     const { data: currentEscalation, error: fetchError } = await supabase
       .from('escalations')
-      .select('*')
+      .select('notes, feedback, escalated_by_id')
       .eq('id', escalationId)
       .single();
 
     if (fetchError) throw fetchError;
 
-    // Update escalation to redirect to senior
+    // ✅ التحديث: نضيف ملاحظات الهيلبر في feedback إذا كان فارغاً
+    // أو ننشئ feedback جديد إذا كان موجوداً
+    const newFeedback = currentEscalation.feedback 
+      ? `${currentEscalation.feedback}\n\n--- Helper Notes ---\n${helperNotes}`
+      : `--- Helper Notes ---\n${helperNotes}`;
+
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         escalated_to_id: seniorId,
-        notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
+        feedback: newFeedback, // ✅ نستخدم feedback للملاحظات الإضافية
+        status: 'pending', // نعيده لحالة pending لأن السينيور سيراجعه
         updated_at: new Date().toISOString()
       })
       .eq('id', escalationId)
@@ -731,17 +752,23 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 
     if (error) throw error;
 
-    // Create notification for the senior
+    // إنشاء إشعار للسينيور
     await createNotification(
       seniorId,
       `A new escalation requires your review.`,
       'warning'
     );
 
-    console.log('✅ Escalation forwarded to senior successfully');
+    // إشعار للشخص الأصلي أن تصعيده تم تحويله
+    await createNotification(
+      currentEscalation.escalated_by_id,
+      `Your escalation has been forwarded to a senior analyst for further review.`,
+      'info'
+    );
+
     return data;
   } catch (error) {
-    console.error('💥 EscalateToSenior error:', error);
+    console.error('EscalateToSenior error:', error);
     throw error;
   }
 }
