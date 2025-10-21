@@ -587,49 +587,32 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
         assignment_id: assignmentId,
         escalated_by_id: escalatedById,
         escalated_to_id: escalatedToId,
-        notes: reason,
+        notes: reason, // ✅ السبب الأصلي يذهب هنا
         status: 'pending',
-        escalated_at: new Date()
+        escalated_at: new Date().toISOString()
       })
-      .select()
+      .select(`
+        *,
+        order_assignments (
+          orders (*)
+        ),
+        escalated_by:users!escalations_escalated_by_id_fkey (name),
+        escalated_to:users!escalations_escalated_to_id_fkey (name)
+      `)
       .single();
 
     if (error) throw error;
+
+    // إنشاء إشعار للمستلم
+    await createNotification(
+      escalatedToId,
+      `New escalation assigned to you for order review.`,
+      'warning'
+    );
+
     return data;
   } catch (error) {
     console.error('SubmitEscalation error:', error);
-    throw error;
-  }
-}
-
-export async function getEscalations(userId = null, filters = {}) {
-  try {
-    let query = supabase
-      .from('escalations')
-     .select(`
-    *,
-    order_assignments!escalations_assignment_id_fkey (
-      orders (*),
-      users!order_assignments_quality_agent_id_fkey (name)
-    ),
-    escalated_by:users!escalations_escalated_by_id_fkey (name),
-    escalated_to:users!escalations_escalated_to_id_fkey (name)
-  `)
-      .order('escalated_at', { ascending: false });
-
-    if (userId) {
-      query = query.eq('escalated_to_id', userId);
-    }
-
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetEscalations error:', error);
     throw error;
   }
 }
