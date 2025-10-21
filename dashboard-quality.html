@@ -1339,19 +1339,19 @@
                 tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
                 return;
             }
-
+        
             tableBody.innerHTML = assignedOrders.map(order => {
                 const orderData = order.orders;
                 const statusClass = `status-${order.status}`;
                 
                 let specialStatusBadge = '';
-
+        
                 if (order.escalations && order.escalations.length > 0) {
                     const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
                     if (latestEscalation.status === 'resolved') {
-                        specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Resolved</button>`;
+                        specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green);">Resolved</button>`;
                     } else {
-                        specialStatusBadge = `<span class="inquiry-badge">Escalation Pending</span>`;
+                        specialStatusBadge = `<span class="inquiry-badge" title="This order is escalated">Escalation Pending</span>`;
                     }
                 }
                 else if (order.inquiries && order.inquiries.length > 0) {
@@ -1362,7 +1362,7 @@
                         specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
                     }
                 }
-
+        
                 return `
                     <tr>
                         <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td> 
@@ -1387,7 +1387,7 @@
             document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
             document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
             document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
-
+        
             // Add new event listeners for the new buttons
             document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -1400,7 +1400,7 @@
                         showToast('Could not find escalation details.', 'error');
                         return;
                     }
-
+        
                     const body = document.getElementById('view-escalation-body');
                     if (body) {
                         body.innerHTML = `
@@ -1412,7 +1412,7 @@
                     }
                 });
             });
-
+        
             document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
                 btn.addEventListener('click', (e) => {
                     e.stopPropagation();
@@ -1430,8 +1430,6 @@
             });
         }
 
-
-        // REPLACED with user's provided function
         function renderEscalationsTable() {
             const tableBody = document.getElementById('escalations-table-body');
 
@@ -1488,15 +1486,21 @@
             });
             document.querySelectorAll('.view-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', function() {
-                    const escalation = helperEscalations.find(e => e.id === this.dataset.escalationId);
+                    const escalation = helperEscalations.find(e => String(e.id) === String(this.dataset.escalationId));
                     if (escalation) {
-                        alert(`Escalation Details:\n\nOrder: ${escalation.order_assignments?.orders?.order_id}\nReason: ${escalation.notes}\nStatus: Resolved`);
+                        const body = document.getElementById('view-escalation-body');
+                        body.innerHTML = `
+                            <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Escalated By</strong><span>${escalation.escalated_by?.name || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Agent's Reason</strong><p>${escalation.notes || ''}</p></div>
+                            <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p>${escalation.feedback || 'Not provided.'}</p></div>
+                        `;
+                        showModal('view-escalation-modal');
                     }
                 });
             });
         }
 
-        // FIXED by adding the missing closing brace
         function renderInquiriesTable() {
             const tableBody = document.getElementById('inquiries-table-body');
             
@@ -1930,7 +1934,7 @@
             let hash = 0;
             for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
             let color = '#';
-            for (let i = 0; i < 3; i++) {
+for (let i = 0; i < 3; i++) {
                 const value = (hash >> (i * 8)) & 0xFF;
                 color += ('00' + value.toString(16)).substr(-2);
             }
