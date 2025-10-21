@@ -1453,87 +1453,133 @@ document.addEventListener('click', function(e){
                     tabs.forEach(t => t.parentElement.classList.remove('active'));
                     tab.parentElement.classList.add('active');
                     contentAreas.forEach(area => area.classList.remove('active'));
-                    document.getElementById(tabId)?.classList.add('active');
-                    pageTitle.textContent = tab.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                    const activeContent = document.getElementById(tabId);
+                    if (activeContent) activeContent.classList.add('active');
+                    if (pageTitle) pageTitle.textContent = tab.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
                 });
             });
             
-            document.getElementById('notification-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown').classList.toggle('show'); });
-            document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); } });
-            document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => hideModal(btn.closest('.modal-overlay').id)); });
+            const notificationBtn = document.getElementById('notification-btn');
+            if (notificationBtn) {
+                notificationBtn.addEventListener('click', (e) => { 
+                    e.stopPropagation(); 
+                    const dropdown = document.getElementById('notification-dropdown');
+                    if (dropdown) dropdown.classList.toggle('show');
+                });
+            }
+            
+            document.addEventListener('click', (e) => { 
+                if (!e.target.closest('.notification-bell')) { 
+                    const dropdown = document.getElementById('notification-dropdown');
+                    if (dropdown) dropdown.classList.remove('show');
+                } 
+            });
+
+            document.querySelectorAll('.modal-close-btn').forEach(btn => { 
+                btn.addEventListener('click', () => {
+                    const modal = btn.closest('.modal-overlay');
+                    if (modal) hideModal(modal.id);
+                }); 
+            });
             
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const scheduleTable = document.getElementById('schedule-table');
+            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
+            const saveScheduleChangesBtn = document.getElementById('save-schedule-changes-btn');
+            const addScheduleMemberBtn = document.getElementById('add-schedule-member-btn');
+            const importOrdersBtn = document.getElementById('import-orders-btn');
+            const csvFileInput = document.getElementById('csv-file-input');
+            const addEmployeeBtn = document.getElementById('add-employee-btn');
+            const employeeForm = document.getElementById('employee-form');
+            const saveShiftBtn = document.getElementById('save-shift-btn');
+            const assignBtn = document.getElementById('assign-btn');
+            const selectAllCheckbox = document.getElementById('select-all-checkbox');
+            const directEscalationSearch = document.getElementById('direct-escalation-search');
+            const directEscalationStatusFilter = document.getElementById('direct-escalation-status-filter');
+            const logoutBtn = document.getElementById('logout-btn');
+            const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
 
-            editScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = true;
-                scheduleTable.classList.add('edit-mode');
-                editScheduleBtn.style.display = 'none';
-                scheduleEditControls.style.display = 'inline-flex';
-                showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
-            });
+            if (editScheduleBtn) {
+                editScheduleBtn.addEventListener('click', () => {
+                    isScheduleEditMode = true;
+                    if (scheduleTable) scheduleTable.classList.add('edit-mode');
+                    editScheduleBtn.style.display = 'none';
+                    if (scheduleEditControls) scheduleEditControls.style.display = 'inline-flex';
+                    showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
+                });
+            }
 
-            document.getElementById('cancel-schedule-btn').addEventListener('click', () => {
-                isScheduleEditMode = false;
-                scheduleTable.classList.remove('edit-mode');
-                scheduleEditControls.style.display = 'none';
-                editScheduleBtn.style.display = 'inline-flex';
-                showToast('Edit mode disabled. Changes were not saved.', 'warning');
-                loadTeamSchedule(); 
-            });
+            if (cancelScheduleBtn) {
+                cancelScheduleBtn.addEventListener('click', () => {
+                    isScheduleEditMode = false;
+                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
+                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
+                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
+                    showToast('Edit mode disabled. Changes were not saved.', 'warning');
+                    loadTeamSchedule(); 
+                });
+            }
 
-            document.getElementById('save-schedule-changes-btn').addEventListener('click', () => {
-                isScheduleEditMode = false;
-                scheduleTable.classList.remove('edit-mode');
-                scheduleEditControls.style.display = 'none';
-                editScheduleBtn.style.display = 'inline-flex';
-                showToast('Schedule changes saved successfully!', 'success');
-            });
-
-            document.getElementById('add-schedule-member-btn').addEventListener('click', () => { showToast('Please use the "Company Employees" page to add new members.', 'info'); openEmployeeModal(); });
-            document.getElementById('import-orders-btn').addEventListener('click', () => document.getElementById('csv-file-input').click());
-            document.getElementById('csv-file-input').addEventListener('change', handleCsvImport);
-            document.getElementById('add-employee-btn').addEventListener('click', () => openEmployeeModal());
-            document.getElementById('employee-form').addEventListener('submit', handleEmployeeFormSubmit);
-            document.getElementById('save-shift-btn').addEventListener('click', handleSaveShift);
-
-            document.getElementById('assign-btn').addEventListener('click', async () => {
-                const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-                const agentId = document.getElementById('agent-select').value;
-                if (selectedOrders.length === 0 || !agentId) { showToast('Please select orders and an agent', 'warning'); return; }
-                try {
-                    await assignOrders(selectedOrders, agentId, currentUser.id);
-                    showToast(`${selectedOrders.length} orders assigned`, 'success');
-                    await loadUnassignedOrders();
-                    await loadAssignedOrders();
-                } catch (error) { showToast('Failed to assign orders', 'error'); }
-            });
+            if (saveScheduleChangesBtn) {
+                saveScheduleChangesBtn.addEventListener('click', () => {
+                    isScheduleEditMode = false;
+                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
+                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
+                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
+                    showToast('Schedule changes saved successfully!', 'success');
+                });
+            }
             
-            document.getElementById('select-all-checkbox').addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
+            if (addScheduleMemberBtn) addScheduleMemberBtn.addEventListener('click', () => { showToast('Please use the "Company Employees" page to add new members.', 'info'); openEmployeeModal(); });
+            if (importOrdersBtn) importOrdersBtn.addEventListener('click', () => csvFileInput?.click());
+            if (csvFileInput) csvFileInput.addEventListener('change', handleCsvImport);
+            if (addEmployeeBtn) addEmployeeBtn.addEventListener('click', () => openEmployeeModal());
+            if (employeeForm) employeeForm.addEventListener('submit', handleEmployeeFormSubmit);
+            if (saveShiftBtn) saveShiftBtn.addEventListener('click', handleSaveShift);
+
+            if (assignBtn) {
+                assignBtn.addEventListener('click', async () => {
+                    const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
+                    const agentSelect = document.getElementById('agent-select');
+                    const agentId = agentSelect ? agentSelect.value : null;
+                    if (selectedOrders.length === 0 || !agentId) { showToast('Please select orders and an agent', 'warning'); return; }
+                    try {
+                        await assignOrders(selectedOrders, agentId, currentUser.id);
+                        showToast(`${selectedOrders.length} orders assigned`, 'success');
+                        await loadUnassignedOrders();
+                        await loadAssignedOrders();
+                    } catch (error) { showToast('Failed to assign orders', 'error'); }
+                });
+            }
+            
+            if (selectAllCheckbox) selectAllCheckbox.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
        
-            document.getElementById('direct-escalation-search').addEventListener('input', () => renderDirectEscalationsTable());
-            document.getElementById('direct-escalation-status-filter').addEventListener('change', () => renderDirectEscalationsTable());
+            if (directEscalationSearch) directEscalationSearch.addEventListener('input', () => renderDirectEscalationsTable());
+            if (directEscalationStatusFilter) directEscalationStatusFilter.addEventListener('change', () => renderDirectEscalationsTable());
 
-            // Logout Button with confirmation
-            document.getElementById('logout-btn').addEventListener('click', (e) => {
-                e.preventDefault();
-                showModal('logout-confirm-modal');
-            });
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    showModal('logout-confirm-modal');
+                });
+            }
 
-            document.getElementById('confirm-logout-btn').addEventListener('click', async () => {
-                try {
-                    showToast('Logging out...', 'info');
-                    // Assuming a logout function exists, like supabase.auth.signOut()
-                    // const { error } = await supabase.auth.signOut();
-                    // if (error) throw error;
-                    hideModal('logout-confirm-modal');
-                    setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
-                } catch (error) {
-                    showToast(`Logout failed: ${error.message}`, 'error');
-                    hideModal('logout-confirm-modal');
-                }
-            });
+            if (confirmLogoutBtn) {
+                confirmLogoutBtn.addEventListener('click', async () => {
+                    try {
+                        showToast('Logging out...', 'info');
+                        // Assuming a logout function exists, like supabase.auth.signOut()
+                        // const { error } = await supabase.auth.signOut();
+                        // if (error) throw error;
+                        hideModal('logout-confirm-modal');
+                        setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
+                    } catch (error) {
+                        showToast(`Logout failed: ${error.message}`, 'error');
+                        hideModal('logout-confirm-modal');
+                    }
+                });
+            }
 
         });
 
@@ -1634,8 +1680,10 @@ document.addEventListener('DOMContentLoaded', function(){
   const resolveBtn = document.getElementById('resolve-escalation-confirm-btn');
   if(resolveBtn){
     resolveBtn.addEventListener('click', async function(){
-      const escalationId = document.getElementById('review-escalation-modal').dataset.escalationId;
-      const feedback = document.getElementById('review-feedback-text').value.trim();
+      const escalationModal = document.getElementById('review-escalation-modal');
+      const escalationId = escalationModal ? escalationModal.dataset.escalationId : null;
+      const feedbackText = document.getElementById('review-feedback-text');
+      const feedback = feedbackText ? feedbackText.value.trim() : null;
       if(!feedback){ alert('Please provide feedback before resolving'); return; }
       try{
         if(typeof resolveEscalation === 'function'){
@@ -1657,7 +1705,8 @@ document.addEventListener('DOMContentLoaded', function(){
   if(reassignBtn){
     reassignBtn.addEventListener('click', async function(){
       const assignmentId = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
-      const newAgentId = document.getElementById('reassign-to-select').value;
+      const newAgentSelect = document.getElementById('reassign-to-select');
+      const newAgentId = newAgentSelect ? newAgentSelect.value : null;
       if(!newAgentId){ alert('Please choose a user to reassign to'); return; }
       try{
         if(typeof assignOrders === 'function'){
@@ -1678,8 +1727,11 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.review-escalation-btn').forEach(btn=>{
     btn.addEventListener('click', function(){
       const id = this.dataset.escalationId || this.getAttribute('data-escalation-id');
-      document.getElementById('review-escalation-modal').dataset.escalationId = id;
-      showModal('review-escalation-modal');
+      const reviewModal = document.getElementById('review-escalation-modal');
+      if (reviewModal) {
+          reviewModal.dataset.escalationId = id;
+          showModal('review-escalation-modal');
+      }
     });
   });
 
@@ -1689,6 +1741,7 @@ document.addEventListener('DOMContentLoaded', function(){
       const id = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
       // try to find local assignedOrders array
       let body = document.getElementById('view-assignment-body');
+      if (!body) return;
       body.innerHTML = 'Loading...';
       let found = null;
       try{
@@ -1713,14 +1766,18 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.open-reassign-assignment-btn').forEach(btn=>{
     btn.addEventListener('click', function(){
       const id = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
-      document.getElementById('reassign-to-select').innerHTML = '<option value="">Loading...</option>';
+      const reassignSelect = document.getElementById('reassign-to-select');
+      const reassignConfirm = document.getElementById('reassign-confirm-btn');
+      if (!reassignSelect || !reassignConfirm) return;
+      
+      reassignSelect.innerHTML = '<option value="">Loading...</option>';
       // populate teamMembers if exists
       if(typeof teamMembers !== 'undefined' && Array.isArray(teamMembers)){
-        document.getElementById('reassign-to-select').innerHTML = teamMembers.map(m=>`<option value="${m.id}">${m.name||m.email||m.id}</option>`).join('');
+        reassignSelect.innerHTML = teamMembers.map(m=>`<option value="${m.id}">${m.name||m.email||m.id}</option>`).join('');
       } else {
-        document.getElementById('reassign-to-select').innerHTML = '<option value="">No users</option>';
+        reassignSelect.innerHTML = '<option value="">No users</option>';
       }
-      document.getElementById('reassign-confirm-btn').dataset.assignmentId = id;
+      reassignConfirm.dataset.assignmentId = id;
       showModal('reassign-modal');
     });
   });
@@ -1729,8 +1786,11 @@ document.addEventListener('DOMContentLoaded', function(){
   document.querySelectorAll('.open-view-inquiry-btn').forEach(btn=>{
     btn.addEventListener('click', function(){
       const text = this.dataset.inquiryText || this.getAttribute('data-inquiry-text') || this.textContent || '';
-      document.getElementById('view-inquiry-body').textContent = text;
-      showModal('view-inquiry-modal');
+      const inquiryBody = document.getElementById('view-inquiry-body');
+      if (inquiryBody) {
+        inquiryBody.textContent = text;
+        showModal('view-inquiry-modal');
+      }
     });
   });
 
@@ -1740,3 +1800,4 @@ document.addEventListener('DOMContentLoaded', function(){
 
 </body>
 </html>
+```
