@@ -2043,47 +2043,48 @@ document.addEventListener('click', function(e){
                 const action = document.getElementById('review-action').value;
                 if (!action) { showToast('Please select an action', 'warning'); return; }
                 try {
-                      console.log("1. 'Submit Review' button clicked.");
+                    console.log("1. 'Submit Review' button clicked.");
     
-    const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
-    const action = document.getElementById('review-action').value;
-    const department = document.getElementById('review-department').value;
-    const modifiedReason = document.getElementById('review-modified-reason').value;
-    const notes = document.getElementById('review-notes').value;
+                    const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
+                    const action = document.getElementById('review-action').value;
+                    const department = document.getElementById('review-department').value;
+                    const modifiedReason = document.getElementById('review-modified-reason').value;
+                    const notes = document.getElementById('review-notes').value;
 
-    if (!action) {
-        showToast('Please select an action (Correct/Error).', 'warning');
-        return;
-    }
+                    if (!action) {
+                        showToast('Please select an action (Correct/Error).', 'warning');
+                        return;
+                    }
 
-    const reviewData = {
-        action_correctness: action,
-        department: department,
-        modified_reason: modifiedReason,
-        notes: notes // Let's keep it 'notes' for now as per the calling convention
-    };
+                    const reviewData = {
+                        action_correctness: action,
+                        department: department,
+                        modified_reason: modifiedReason,
+                        notes: notes // Let's keep it 'notes' for now as per the calling convention
+                    };
 
-    console.log("2. Data collected from form:", { assignmentId, ...reviewData });
+                    console.log("2. Data collected from form:", { assignmentId, ...reviewData });
 
-    // Show a loading message
-    showToast('Submitting your review...', 'info');
-    console.log("3. Calling submitReview function...");
+                    // Show a loading message
+                    showToast('Submitting your review...', 'info');
+                    console.log("3. Calling submitReview function...");
 
-    await submitReview(assignmentId, reviewData);
-    
-    console.log("6. submitReview function completed successfully.");
-    showToast('Review submitted successfully!', 'success');
-    hideModal('review-order-modal');
-    
-    console.log("7. Reloading assigned orders and metrics...");
-    await loadAssignedOrders();
-    await loadPerformanceMetrics();
-    console.log("8. Data reloaded.");
+                    await submitReview(assignmentId, reviewData);
+                    
+                    console.log("6. submitReview function completed successfully.");
+                    showToast('Review submitted successfully!', 'success');
+                    hideModal('review-order-modal');
+                    
+                    console.log("7. Reloading assigned orders and metrics...");
+                    await loadAssignedOrders();
+                    await loadPerformanceMetrics();
+                    console.log("8. Data reloaded.");
 
-} catch (error) {
-    console.error("💥 Error caught in dashboard-quality.html:", error);
-    showToast(`Failed to submit review: ${error.message}`, 'error');
-}
+                } catch (error) {
+                    console.error("💥 Error caught in dashboard-quality.html:", error);
+                    showToast(`Failed to submit review: ${error.message}`, 'error');
+                }
+            });
 
             document.getElementById('review-action').addEventListener('change', function() {
                 const submitBtn = document.getElementById('submit-review-btn');
@@ -2464,4 +2465,3 @@ document.addEventListener('DOMContentLoaded', function(){
 
 </body>
 </html>
-```
