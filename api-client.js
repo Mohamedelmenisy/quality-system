@@ -685,26 +685,19 @@ export async function getHelperEscalations(helperId) {
 
 export async function resolveEscalation(escalationId, feedback) {
   try {
-    console.log('🔄 Resolving escalation:', escalationId);
-    
-    // Get escalation details first
     const { data: escalationData, error: fetchError } = await supabase
       .from('escalations')
-      .select('escalated_by_id, order_assignments!escalations_assignment_id_fkey(orders(order_id))')
+      .select('escalated_by_id, order_assignments!inner(orders(order_id))')
       .eq('id', escalationId)
       .single();
 
-    if (fetchError) {
-      console.error('Error fetching escalation details:', fetchError);
-      throw fetchError;
-    }
+    if (fetchError) throw fetchError;
 
-    // Update escalation status and add feedback
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         status: 'resolved',
-        notes: feedback,
+        feedback: feedback, // <-- This is the corrected line
         resolved_at: new Date().toISOString()
       })
       .eq('id', escalationId)
@@ -713,17 +706,15 @@ export async function resolveEscalation(escalationId, feedback) {
 
     if (error) throw error;
 
-    // Create notification for the original agent
     if (escalationData) {
       const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
         escalationData.escalated_by_id,
-        `Your escalation for order ${orderId} has been resolved. Check the feedback.`,
+        `Your escalation for order ${orderId} has been resolved.`,
         'info'
       );
     }
-
-    console.log('✅ Escalation resolved successfully');
+    
     return data;
   } catch (error) {
     console.error('💥 ResolveEscalation error:', error);
