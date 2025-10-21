@@ -545,8 +545,22 @@
                             <h3>Company Employees</h3>
                             <button id="add-employee-btn" class="btn btn-primary">Add New Employee</button>
                         </div>
-                        <div class="team-grid" id="company-employees-grid">
-                            <div class="empty-state">Loading company employees...</div>
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Username</th>
+                                        <th>Admin ID</th>
+                                        <th>Department</th>
+                                        <th>Title</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="company-employees-table-body">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
@@ -566,6 +580,7 @@
                             <div class="payment-card">Tamara</div>
                             <div class="payment-card">Wallet & Tamara</div>
                             <div class="payment-card">Wallet & STC Pay</div>
+                            <div class="payment-card">Other items payment</div>
                         </div>
                     </div>
                 </div>
@@ -782,42 +797,6 @@
         </div>
     </div>
 
-    <!-- View Assigned Order Modal -->
-    <div id="view-assigned-order-modal" class="modal-overlay">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 class="modal-title">Order Details: <span id="view-assigned-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="view-assigned-order-modal">×</button>
-            </div>
-            <div id="view-assigned-order-body" class="escalation-details">
-                <!-- Details will be populated here -->
-            </div>
-             <div class="page-actions">
-                <button class="btn btn-primary modal-close-btn" data-modal-id="view-assigned-order-modal">Close</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Reassign Order Modal -->
-    <div id="reassign-order-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Reassign Order <span id="reassign-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="reassign-order-modal">×</button>
-            </div>
-            <p id="reassign-current-agent" style="margin-bottom: 1rem; color: var(--text-muted-color);"></p>
-            <div class="form-group">
-                <label for="reassign-agent-select">Select New Agent</label>
-                <select id="reassign-agent-select"></select>
-            </div>
-            <div class="page-actions">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="reassign-order-modal">Cancel</button>
-                <button id="confirm-reassign-btn" class="btn btn-primary">Confirm Reassignment</button>
-            </div>
-        </div>
-    </div>
-
-
     <!-- Logout Confirmation Modal -->
     <div id="logout-confirm-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 450px; text-align: center;">
@@ -971,7 +950,7 @@
         const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
         const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), renderAssignedOrdersTable, null, assignedOrders);
         const loadTeamMembers = () => loadData(getTeamMembers, () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
-        const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesGrid, null, companyEmployees);
+        const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
         
@@ -1042,18 +1021,11 @@
                     <td><span class="status-badge status-${a.status}">${a.status}</span></td>
                     <td>${formatDate(a.assigned_at)}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                        ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+                        <button class="btn btn-secondary btn-sm">View</button>
+                        ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm">Reassign</button>` : ''}
                     </td>
                 </tr>
             `).join('');
-
-            document.querySelectorAll('.view-assigned-btn').forEach(btn => {
-                btn.addEventListener('click', () => openViewAssignedModal(btn.dataset.assignmentId));
-            });
-            document.querySelectorAll('.reassign-btn').forEach(btn => {
-                btn.addEventListener('click', () => openReassignModal(btn.dataset.assignmentId));
-            });
         }
 
         function renderDirectEscalationsTable() {
@@ -1148,30 +1120,24 @@
             `).join('');
         }
 
-        function renderCompanyEmployeesGrid(employeesToRender = companyEmployees) {
-            const grid = document.getElementById('company-employees-grid');
-            if(!employeesToRender.length) {
-                grid.innerHTML = `<div class="empty-state">🏢 No company employees found.</div>`;
+        function renderCompanyEmployeesTable(employeesToRender = companyEmployees) {
+            const tableBody = document.getElementById('company-employees-table-body');
+            if(employeesToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">🏢 No company employees found.</td></tr>`;
                 return;
             }
-            grid.innerHTML = employeesToRender.map(emp => `
-                <div class="team-member-card">
-                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(emp.employee_name)};">
-                        ${getInitials(emp.employee_name)}
-                    </div>
-                    <div class="team-member-name">${emp.employee_name}</div>
-                    <div class="team-member-role">${emp.title || 'N/A'}</div>
-                    <p style="color: var(--text-muted-color); font-size: 0.8rem; margin-top: 5px;">
-                        ${emp.department || 'No Department'}
-                    </p>
-                    <button class="btn btn-secondary btn-sm edit-employee-btn" style="margin-top: 1rem;" data-employee-id="${emp.id}">Edit</button>
-                </div>
+            tableBody.innerHTML = employeesToRender.map(emp => `
+                <tr>
+                    <td>${emp.employee_name}</td>
+                    <td>${emp.employee_username || 'N/A'}</td>
+                    <td>${emp.admin_id || 'N/A'}</td>
+                    <td>${emp.department || 'N/A'}</td>
+                    <td>${emp.title || 'N/A'}</td>
+                    <td><button class="btn btn-secondary btn-sm edit-employee-btn" data-employee-id="${emp.id}">Edit</button></td>
+                </tr>
             `).join('');
             document.querySelectorAll('.edit-employee-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Prevent card click if any
-                    openEmployeeModal(btn.dataset.employeeId);
-                });
+                btn.addEventListener('click', () => openEmployeeModal(btn.dataset.employeeId));
             });
         }
         
@@ -1295,47 +1261,6 @@
             saveBtn.dataset.day = day;
 
             showModal('edit-shift-modal');
-        }
-
-        function openViewAssignedModal(assignmentId) {
-            const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-            if (!assignment) {
-                showToast('Could not find assignment details.', 'error');
-                return;
-            }
-            const order = assignment.orders;
-            document.getElementById('view-assigned-order-id').textContent = order?.order_id || 'N/A';
-            const body = document.getElementById('view-assigned-order-body');
-            body.innerHTML = `
-                <div class="detail-item"><strong>Assigned To</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
-                <div class="detail-item"><strong>Status</strong><span><span class="status-badge status-${assignment.status}">${assignment.status}</span></span></div>
-                <div class="detail-item"><strong>Date Assigned</strong><span>${formatDate(assignment.assigned_at)}</span></div>
-                <div class="detail-item"><strong>Employee</strong><span>${order?.employee_name || 'N/A'}</span></div>
-                <div class="detail-item"><strong>Reason</strong><span style="white-space: normal;">${order?.reason || 'N/A'}</span></div>
-                <div class="detail-item"><strong>Payment</strong><span>${order?.payment_type || 'N/A'}</span></div>
-            `;
-            showModal('view-assigned-order-modal');
-        }
-
-        function openReassignModal(assignmentId) {
-            const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-             if (!assignment) {
-                showToast('Could not find assignment details.', 'error');
-                return;
-            }
-            document.getElementById('reassign-order-id').textContent = assignment.orders?.order_id || '';
-            document.getElementById('reassign-current-agent').textContent = `Currently assigned to: ${assignment.users?.name || 'Unknown'}`;
-            
-            const select = document.getElementById('reassign-agent-select');
-            const assignableRoles = ['quality', 'helper'];
-            // Exclude the current agent from the list
-            select.innerHTML = teamMembers
-                .filter(m => assignableRoles.includes(m.role) && m.id !== assignment.quality_agent_id)
-                .map(m => `<option value="${m.id}">${m.name} (${m.role})</option>`)
-                .join('');
-            
-            document.getElementById('confirm-reassign-btn').dataset.assignmentId = assignmentId;
-            showModal('reassign-order-modal');
         }
 
         // Action Handlers
@@ -1527,30 +1452,6 @@
             document.getElementById('direct-escalation-search').addEventListener('input', () => renderDirectEscalationsTable());
             document.getElementById('direct-escalation-status-filter').addEventListener('change', () => renderDirectEscalationsTable());
 
-            document.getElementById('confirm-reassign-btn').addEventListener('click', async (e) => {
-                const assignmentId = e.target.dataset.assignmentId;
-                const newAgentId = document.getElementById('reassign-agent-select').value;
-                if (!newAgentId) {
-                    showToast('Please select a new agent.', 'warning');
-                    return;
-                }
-                try {
-                    showToast('Reassigning order...', 'info');
-                    const { error } = await supabase
-                        .from('order_assignments')
-                        .update({ quality_agent_id: newAgentId, assigned_by_id: currentUser.id })
-                        .eq('id', assignmentId);
-                    if (error) throw error;
-                    
-                    showToast('Order reassigned successfully!', 'success');
-                    hideModal('reassign-order-modal');
-                    await loadAssignedOrders();
-
-                } catch (error) {
-                    showToast(`Failed to reassign order: ${error.message}`, 'error');
-                }
-            });
-
             // Logout Button with confirmation
             document.getElementById('logout-btn').addEventListener('click', (e) => {
                 e.preventDefault();
@@ -1561,8 +1462,8 @@
                 try {
                     showToast('Logging out...', 'info');
                     // Assuming a logout function exists, like supabase.auth.signOut()
-                    const { error } = await supabase.auth.signOut();
-                    if (error) throw error;
+                    // const { error } = await supabase.auth.signOut();
+                    // if (error) throw error;
                     hideModal('logout-confirm-modal');
                     setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
                 } catch (error) {
