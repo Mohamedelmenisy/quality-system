@@ -393,37 +393,53 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 export async function submitReview(assignmentId, reviewData) {
   try {
-    // نقوم بإعادة هيكلة الكائن المرسل لضمان استخدام الأسماء الصحيحة
+    console.log("4. Entered submitReview function in api-client.js.");
+    
     const dataToInsert = {
       assignment_id: assignmentId,
       action_correctness: reviewData.action_correctness,
       department: reviewData.department,
       modified_reason: reviewData.modified_reason,
-      // هذا هو التعديل الأهم: نأخذ القيمة من 'notes' ونضعها في 'modification_details'
-      modification_details: reviewData.notes, 
+      modification_details: reviewData.notes, // Translating 'notes' to 'modification_details'
       reviewed_at: new Date()
     };
 
-    console.log("Data being sent to 'quality_reviews':", dataToInsert); // سطر تشخيصي
+    console.log("5. Prepared data for insertion:", dataToInsert);
 
-    const { data, error } = await supabase
+    const { data, error: insertError } = await supabase
       .from('quality_reviews')
-      .insert(dataToInsert) // نرسل الكائن الجديد الصريح
+      .insert(dataToInsert)
       .select()
       .single();
 
-    if (error) throw error;
+    if (insertError) {
+      console.error('❌ Supabase INSERT error:', insertError);
+      throw insertError; // This will be caught by the outer catch block
+    }
+
+    console.log("5a. Successfully inserted into 'quality_reviews'.");
 
     // Update assignment status
-    await supabase
+    const { error: updateError } = await supabase
       .from('order_assignments')
       .update({ status: 'completed' })
       .eq('id', assignmentId);
 
+    if (updateError) {
+        console.error('⚠️ Supabase UPDATE error on order_assignments:', updateError);
+        // We can decide if this should be a critical error or just a warning
+        // For now, let's throw it to see it.
+        throw updateError;
+    }
+
+    console.log("5b. Successfully updated 'order_assignments'.");
+
     return data;
+
   } catch (error) {
-    console.error('SubmitReview error:', error);
-    throw error;
+    // This will catch any of the errors thrown above
+    console.error('💥 Error inside submitReview function:', error);
+    throw error; // Re-throw the error so the calling function can catch it
   }
 }
 
