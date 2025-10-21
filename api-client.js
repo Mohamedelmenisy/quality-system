@@ -6,7 +6,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // الرجاء التأكد من أن هذه القيم مطابقة تماماً لما هو موجود في لوحة تحكم Supabase
 // Project Settings -> API
 const SUPABASE_URL = "https://otaztiyatvbajswowdgs.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI7ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc";
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -346,15 +346,15 @@ export async function assignOrders(orderIds, agentId, assignedById) {
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
-  .from('order_assignments')
-  .select(`
-    *,
-    orders (*),
-    users!order_assignments_quality_agent_id_fkey (name, email),
-    inquiries (*) 
-    escalations (*)
-  `)
-//
+      .from('order_assignments')
+      .select(`
+        *,
+        orders (*),
+        users!order_assignments_quality_agent_id_fkey (name, email),
+        inquiries (*),
+        escalations (*),
+        quality_reviews (*)
+      `)
       .order('assigned_at', { ascending: false });
 
     if (agentId) {
@@ -393,53 +393,59 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 export async function submitReview(assignmentId, reviewData) {
   try {
-    console.log("4. Entered submitReview function in api-client.js.");
-    
-    const dataToInsert = {
-      assignment_id: assignmentId,
-      action_correctness: reviewData.action_correctness,
-      department: reviewData.department,
-      modified_reason: reviewData.modified_reason,
-      modification_details: reviewData.notes, // Translating 'notes' to 'modification_details'
-      reviewed_at: new Date()
-    };
-
-    console.log("5. Prepared data for insertion:", dataToInsert);
-
-    const { data, error: insertError } = await supabase
+    const { data: review, error: reviewError } = await supabase
       .from('quality_reviews')
-      .insert(dataToInsert)
+      .insert({
+        assignment_id: assignmentId,
+        action_correctness: reviewData.action_correctness,
+        department: reviewData.department,
+        modified_reason: reviewData.modified_reason,
+        modification_details: reviewData.notes,
+        reviewed_at: new Date()
+      })
       .select()
       .single();
 
-    if (insertError) {
-      console.error('❌ Supabase INSERT error:', insertError);
-      throw insertError; // This will be caught by the outer catch block
-    }
+    if (reviewError) throw reviewError;
 
-    console.log("5a. Successfully inserted into 'quality_reviews'.");
-
-    // Update assignment status
-    const { error: updateError } = await supabase
+    // تحديث حالة الطلب وإضافة وقت الإكمال
+    await supabase
       .from('order_assignments')
-      .update({ status: 'completed' })
+      .update({ status: 'completed', completed_at: new Date().toISOString() })
       .eq('id', assignmentId);
 
-    if (updateError) {
-        console.error('⚠️ Supabase UPDATE error on order_assignments:', updateError);
-        // We can decide if this should be a critical error or just a warning
-        // For now, let's throw it to see it.
-        throw updateError;
+    // --- الجزء الأهم: إنشاء سجل خطأ إذا كانت المراجعة 'error' ---
+    if (reviewData.action_correctness === 'error') {
+      const { data: assignmentData } = await supabase
+        .from('order_assignments')
+        .select('orders(employee_name)')
+        .eq('id', assignmentId)
+        .single();
+      
+      if (assignmentData && assignmentData.orders.employee_name) {
+        // We use 'employees' table which is the source of truth for company staff
+        const { data: employee } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('employee_name', assignmentData.orders.employee_name)
+          .single();
+
+        if (employee) {
+          await supabase.from('errors').insert({
+            review_id: review.id,
+            employee_id: employee.id,
+            status: 'pending_response'
+          });
+        } else {
+          console.warn(`Could not find company employee with name: ${assignmentData.orders.employee_name} to log an error.`);
+        }
+      }
     }
-
-    console.log("5b. Successfully updated 'order_assignments'.");
-
-    return data;
-
+    
+    return review;
   } catch (error) {
-    // This will catch any of the errors thrown above
-    console.error('💥 Error inside submitReview function:', error);
-    throw error; // Re-throw the error so the calling function can catch it
+    console.error('SubmitReview error:', error);
+    throw error;
   }
 }
 
@@ -481,6 +487,7 @@ export async function getAgentErrors(agentId, filters = {}) {
           action_correctness,
           department,
           modified_reason,
+          modification_details,
           order_assignments (
             orders (
               order_id,
