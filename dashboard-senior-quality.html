@@ -8,31 +8,31 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { 
-            supabase, 
-            getCurrentUser, 
-            getUserById,
-            getUnassignedOrders,
-            getAssignedOrders,
-            assignOrders,
-            getPendingErrors,
-            submitFinalDecision,
-            getPerformanceMetrics,
-            getTeamMembers,
-            getTeamSchedule,
-            updateTeamSchedule,
-            getNotifications,
-            markNotificationAsRead,
-            subscribeToNotifications,
-            getErrorTrends,
-            getDepartmentPerformance,
-            importOrdersFromCSV,
-            getCompanyEmployees,
-            addCompanyEmployee,
-            updateCompanyEmployee,
-            getEscalations,
-            resolveEscalation
-        } from './api-client.js';
+      import { 
+    supabase, 
+    getCurrentUser, 
+    getUserById,
+    getUnassignedOrders,
+    getAssignedOrders,
+    assignOrders,
+    getPendingErrors,
+    submitFinalDecision,
+    getPerformanceMetrics,
+    getTeamMembers,
+    getTeamSchedule,
+    updateTeamSchedule,
+    getNotifications,
+    markNotificationAsRead,
+    subscribeToNotifications,
+    getErrorTrends,
+    getDepartmentPerformance,
+    importOrdersFromCSV,
+    getCompanyEmployees,
+    addCompanyEmployee,
+    updateCompanyEmployee,
+    getEscalations,        // ✅ تأكد من وجودها هنا
+    resolveEscalation      // ✅ تأكد من وجودها هنا
+} from './api-client.js';
         
         window.supabase = supabase;
         window.getCurrentUser = getCurrentUser;
