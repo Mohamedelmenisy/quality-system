@@ -351,10 +351,9 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     *,
     orders (*),
     users!order_assignments_quality_agent_id_fkey (name, email),
-    inquiries (*) 
-    escalations (*)
+    inquiries (*),
+    escalations (*, quality_reviews(errors(final_decisions(*))))
   `)
-//
       .order('assigned_at', { ascending: false });
 
     if (agentId) {
@@ -382,7 +381,25 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
     const { data, error } = await query;
     if (error) throw error;
-    return data;
+
+    // Helper to extract final_decisions and flatten the structure
+    const processedData = data.map(assignment => {
+        let final_decisions = [];
+        if (assignment.escalations) {
+            for (const escalation of assignment.escalations) {
+                if (escalation.quality_reviews && escalation.quality_reviews.errors) {
+                    for (const err of escalation.quality_reviews.errors) {
+                        if (err.final_decisions) {
+                            final_decisions.push(...err.final_decisions);
+                        }
+                    }
+                }
+            }
+        }
+        return { ...assignment, final_decisions };
+    });
+
+    return processedData;
   } catch (error) {
     console.error('GetAssignedOrders error:', error);
     throw error;
