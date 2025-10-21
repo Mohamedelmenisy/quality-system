@@ -251,6 +251,7 @@ export async function getDepartments() {
     return data;
 }
 
+
 // ==================== ORDER FUNCTIONS ====================
 
 export async function getOrders(filters = {}) {
@@ -345,14 +346,15 @@ export async function assignOrders(orderIds, agentId, assignedById) {
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
-      .from('order_assignments')
-      .select(`
-        *,
-        orders (*),
-        users!order_assignments_quality_agent_id_fkey (name, email),
-        inquiries (*),
-        escalations (*)
-      `)
+  .from('order_assignments')
+  .select(`
+    *,
+    orders (*),
+    users!order_assignments_quality_agent_id_fkey (name, email),
+    inquiries (*) 
+    escalations (*)
+  `)
+//
       .order('assigned_at', { ascending: false });
 
     if (agentId) {
@@ -585,29 +587,14 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
         assignment_id: assignmentId,
         escalated_by_id: escalatedById,
         escalated_to_id: escalatedToId,
-        notes: reason, // ✅ السبب الأصلي يذهب هنا
+        notes: reason,
         status: 'pending',
-        escalated_at: new Date().toISOString()
+        escalated_at: new Date()
       })
-      .select(`
-        *,
-        order_assignments (
-          orders (*)
-        ),
-        escalated_by:users!escalations_escalated_by_id_fkey (name),
-        escalated_to:users!escalations_escalated_to_id_fkey (name)
-      `)
+      .select()
       .single();
 
     if (error) throw error;
-
-    // إنشاء إشعار للمستلم
-    await createNotification(
-      escalatedToId,
-      `New escalation assigned to you for order review.`,
-      'warning'
-    );
-
     return data;
   } catch (error) {
     console.error('SubmitEscalation error:', error);
@@ -619,15 +606,15 @@ export async function getEscalations(userId = null, filters = {}) {
   try {
     let query = supabase
       .from('escalations')
-      .select(`
-        *,
-        order_assignments!escalations_assignment_id_fkey (
-          orders (*),
-          users!order_assignments_quality_agent_id_fkey (name)
-        ),
-        escalated_by:users!escalations_escalated_by_id_fkey (name),
-        escalated_to:users!escalations_escalated_to_id_fkey (name)
-      `)
+     .select(`
+    *,
+    order_assignments!escalations_assignment_id_fkey (
+      orders (*),
+      users!order_assignments_quality_agent_id_fkey (name)
+    ),
+    escalated_by:users!escalations_escalated_by_id_fkey (name),
+    escalated_to:users!escalations_escalated_to_id_fkey (name)
+  `)
       .order('escalated_at', { ascending: false });
 
     if (userId) {
@@ -698,82 +685,61 @@ export async function getHelperEscalations(helperId) {
 
 export async function resolveEscalation(escalationId, feedback) {
   try {
-    // جلب بيانات التصعيد أولاً للإشعارات
     const { data: escalationData, error: fetchError } = await supabase
       .from('escalations')
-      .select(`
-        escalated_by_id,
-        order_assignments!escalations_assignment_id_fkey (
-          orders (order_id)
-        )
-      `)
+      .select('escalated_by_id, order_assignments!inner(orders(order_id))')
       .eq('id', escalationId)
       .single();
 
     if (fetchError) throw fetchError;
 
-    // ✅ التحديث: الرد يذهب في feedback فقط
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         status: 'resolved',
-        feedback: feedback, // ✅ الرد النهائي هنا
+        feedback: feedback, // <-- **نخزن الرد في الحقل الجديد**
         resolved_at: new Date().toISOString()
-        // ❌ لا نلمس notes - تبقى كما هي
       })
       .eq('id', escalationId)
-      .select(`
-        *,
-        order_assignments (
-          orders (*)
-        ),
-        escalated_by:users!escalations_escalated_by_id_fkey (name),
-        escalated_to:users!escalations_escalated_to_id_fkey (name)
-      `)
+      .select()
       .single();
 
     if (error) throw error;
 
-    // إرسال إشعار للشخص الذي رفع التصعيد
+    // إرسال إشعار للشخص الذي قام بالتصعيد
     if (escalationData) {
       const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
         escalationData.escalated_by_id,
-        `Your escalation for order ${orderId} has been resolved with feedback.`,
-        'info'
+        `Your escalation for order ${orderId} has been resolved.`, 'info'
       );
     }
-
     return data;
   } catch (error) {
-    console.error('ResolveEscalation error:', error);
+    console.error('💥 ResolveEscalation error:', error);
     throw error;
   }
 }
 
 export async function escalateToSenior(escalationId, seniorId, helperNotes) {
   try {
-    // جلب التصعيد الحالي
+    console.log('🔄 Escalating to senior:', { escalationId, seniorId });
+    
+    // Get current escalation
     const { data: currentEscalation, error: fetchError } = await supabase
       .from('escalations')
-      .select('notes, feedback, escalated_by_id')
+      .select('*')
       .eq('id', escalationId)
       .single();
 
     if (fetchError) throw fetchError;
 
-    // ✅ التحديث: نضيف ملاحظات الهيلبر في feedback إذا كان فارغاً
-    // أو ننشئ feedback جديد إذا كان موجوداً
-    const newFeedback = currentEscalation.feedback 
-      ? `${currentEscalation.feedback}\n\n--- Helper Notes ---\n${helperNotes}`
-      : `--- Helper Notes ---\n${helperNotes}`;
-
+    // Update escalation to redirect to senior
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         escalated_to_id: seniorId,
-        feedback: newFeedback, // ✅ نستخدم feedback للملاحظات الإضافية
-        status: 'pending', // نعيده لحالة pending لأن السينيور سيراجعه
+        notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
         updated_at: new Date().toISOString()
       })
       .eq('id', escalationId)
@@ -782,23 +748,17 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 
     if (error) throw error;
 
-    // إنشاء إشعار للسينيور
+    // Create notification for the senior
     await createNotification(
       seniorId,
       `A new escalation requires your review.`,
       'warning'
     );
 
-    // إشعار للشخص الأصلي أن تصعيده تم تحويله
-    await createNotification(
-      currentEscalation.escalated_by_id,
-      `Your escalation has been forwarded to a senior analyst for further review.`,
-      'info'
-    );
-
+    console.log('✅ Escalation forwarded to senior successfully');
     return data;
   } catch (error) {
-    console.error('EscalateToSenior error:', error);
+    console.error('💥 EscalateToSenior error:', error);
     throw error;
   }
 }
@@ -1175,7 +1135,7 @@ export async function getDepartmentPerformance() {
 
 // ==================== DATA IMPORT FUNCTIONS ====================
 
-async function importOrdersFromCSV(csvData) {
+export async function importOrdersFromCSV(csvData) {
   try {
     // Parse CSV data and transform to match orders table structure
     const orders = csvData.map(row => ({
@@ -1331,53 +1291,3 @@ export function subscribeToErrors(agentId, callback) {
     };
   }
 }
-
-// ==================== EXPORT ALL FUNCTIONS ====================
-
-export {
-  supabase,
-  signUp,
-  signIn,
-  signOut,
-  getCurrentUser,
-  getUserData,
-  getUserById,
-  updateUserProfile,
-  getCompanyEmployees,
-  addCompanyEmployee,
-  updateCompanyEmployee,
-  getDepartments,
-  getOrders,
-  getUnassignedOrders,
-  assignOrders,
-  getAssignedOrders,
-  submitReview,
-  getQualityReviews,
-  getAgentErrors,
-  submitErrorResponse,
-  getPendingErrors,
-  submitFinalDecision,
-  submitEscalation,
-  getEscalations,
-  getHelperEscalations,
-  resolveEscalation,
-  escalateToSenior,
-  raiseInquiry,
-  getHelperInquiries,
-  respondToInquiry,
-  getTeamMembers,
-  getTeamSchedule,
-  updateTeamSchedule,
-  getNotifications,
-  markNotificationAsRead,
-  createNotification,
-  subscribeToNotifications,
-  subscribeToAssignments,
-  subscribeToEscalations,
-  subscribeToInquiries,
-  subscribeToErrors,
-  getPerformanceMetrics,
-  getErrorTrends,
-  getDepartmentPerformance,
-  importOrdersFromCSV
-};
