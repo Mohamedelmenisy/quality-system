@@ -888,6 +888,11 @@
             return color;
         };
 
+        // Placeholder functions for modal opening
+        const openViewAssignedModal = (id) => showToast(`Opening view for assignment ${id}...`, 'info');
+        const openReassignModal = (id) => showToast(`Opening reassign for assignment ${id}...`, 'info');
+
+
         // Initialize the application
         async function initApp() {
             try {
@@ -1037,11 +1042,19 @@
                     <td><span class="status-badge status-${a.status}">${a.status}</span></td>
                     <td>${formatDate(a.assigned_at)}</td>
                     <td>
-                        <button class="btn btn-secondary btn-sm">View</button>
-                        ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm">Reassign</button>` : ''}
+                        <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
+                        ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
                     </td>
                 </tr>
             `).join('');
+        
+            // ربط الأحداث للأزرار
+            document.querySelectorAll('.view-assigned-btn').forEach(btn => {
+                btn.addEventListener('click', () => openViewAssignedModal(btn.dataset.assignmentId));
+            });
+            document.querySelectorAll('.reassign-btn').forEach(btn => {
+                btn.addEventListener('click', () => openReassignModal(btn.dataset.assignmentId));
+            });
         }
 
         function renderDirectEscalationsTable() {
@@ -1057,7 +1070,6 @@
                 const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
                 return matchesStatus && matchesSearch;
             });
-
 
             if (escalationsToRender.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations found.</td></tr>`;
@@ -1120,8 +1132,8 @@
                     const body = document.getElementById('view-escalation-body');
                     body.innerHTML = `
                         <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
-                        <div class="detail-item" style="grid-column: span 2;"><strong>Original Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || ''}</p></div>
-                        <div class="detail-item" style="grid-column: span 2; background: rgba(40, 167, 69, 0.1);"><strong>Your Feedback</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'Not provided.'}</p></div>
+                        <div class="detail-item" style="grid-column: span 2;"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
+                        <div class="detail-item" style="grid-column: span 2; background: rgba(40, 167, 69, 0.1);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
                     `;
                     showModal('view-escalation-modal');
                 });
