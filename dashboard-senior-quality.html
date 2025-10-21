@@ -833,7 +833,7 @@ document.addEventListener('click', function(e){
     </div>
     
     <!-- View Escalation Details Modal -->
-    <div id="view-escalation-modal" class="modal-overlay" style="display:flex;">
+    <div id="view-escalation-modal" class="modal-overlay" style="display:none;">
       <div class="modal-box">
         <div class="modal-header">
           <h3 class="modal-title">Escalation Details</h3>
@@ -1134,24 +1134,6 @@ document.addEventListener('click', function(e){
                     </tr>
                 `;
             }).join('');
-
-            document.querySelectorAll('.review-escalation-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const escalation = directEscalations.find(e => String(e.id) === String(btn.dataset.escalationId));
-                    if (!escalation) return;
-                    
-                    const feedback = null; /* replaced prompt() with modal flow */
-                    
-                    if (feedback && typeof resolveEscalation === 'function') {
-                        resolveEscalation(escalation.id, feedback)
-                            .then(() => {
-                                showToast('Escalation resolved successfully.', 'success');
-                                loadDirectEscalations(); 
-                            })
-                            .catch(err => showToast(`Error: ${err.message}`, 'error'));
-                    }
-                });
-            });
 
             document.querySelectorAll('.view-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
@@ -1737,7 +1719,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // hook generic "review escalation" buttons (buttons with class review-escalation-btn)
   document.body.addEventListener('click', function(event) {
-    if (event.target.matches('.review-escalation-btn')) {
+    if (event.target.classList.contains('review-escalation-btn')) {
         const id = event.target.dataset.escalationId || event.target.getAttribute('data-escalation-id');
         const reviewModal = document.getElementById('review-escalation-modal');
         if (reviewModal) {
@@ -1750,7 +1732,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // hook view-assignment buttons to populate modal
   document.body.addEventListener('click', function(event) {
-    if (event.target.matches('.open-view-assignment-btn')) {
+    if (event.target.classList.contains('view-assigned-btn')) { // Changed from .open-view-assignment-btn
         const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
         let body = document.getElementById('view-assignment-body');
         if (!body) return;
@@ -1758,14 +1740,13 @@ document.addEventListener('DOMContentLoaded', function(){
         let found = null;
         try{
             if(typeof assignedOrders !== 'undefined' && Array.isArray(assignedOrders)){
-            found = assignedOrders.find(a=>String(a.id)===String(id) || String(a.assignment_id)===String(id));
+            found = assignedOrders.find(a=>String(a.id)===String(id));
             }
             if(found){
-            body.innerHTML = `<div><strong>Assignment:</strong> ${found.id || found.assignment_id}</div>
-                                <div><strong>User:</strong> ${found.users?.name || found.user || 'N/A'}</div>
+            body.innerHTML = `<div><strong>Assignment:</strong> ${found.id}</div>
+                                <div><strong>User:</strong> ${found.users?.name || 'N/A'}</div>
                                 <div><strong>Status:</strong> ${found.status||'N/A'}</div>
-                                <div><strong>Order:</strong> ${found.order_id || (found.orders && found.orders.order_id) || 'N/A'}</div>
-                                <div style="margin-top:8px;"><strong>Notes:</strong><pre style="white-space:pre-wrap;">${found.notes||''}</pre></div>`;
+                                <div><strong>Order:</strong> ${(found.orders && found.orders.order_id) || 'N/A'}</div>`;
             } else {
             body.innerHTML = 'Assignment details not found locally.';
             }
@@ -1776,7 +1757,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // hook reassign placeholders that used showToast text replacements
   document.body.addEventListener('click', function(event){
-    if(event.target.matches('.open-reassign-assignment-btn')){
+    if(event.target.classList.contains('reassign-btn')){ // Changed from .open-reassign-assignment-btn
         const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
         const reassignSelect = document.getElementById('reassign-to-select');
         const reassignConfirm = document.getElementById('reassign-confirm-btn');
@@ -1784,7 +1765,8 @@ document.addEventListener('DOMContentLoaded', function(){
         
         reassignSelect.innerHTML = '<option value="">Loading...</option>';
         if(typeof teamMembers !== 'undefined' && Array.isArray(teamMembers)){
-            reassignSelect.innerHTML = teamMembers.map(m=>`<option value="${m.id}">${m.name||m.email||m.id}</option>`).join('');
+            const assignableMembers = teamMembers.filter(m => m.role === 'quality' || m.role === 'helper');
+            reassignSelect.innerHTML = assignableMembers.map(m=>`<option value="${m.id}">${m.name} (${m.role})</option>`).join('');
         } else {
             reassignSelect.innerHTML = '<option value="">No users</option>';
         }
@@ -1795,7 +1777,7 @@ document.addEventListener('DOMContentLoaded', function(){
 
   // hook view-inquiry buttons
   document.body.addEventListener('click', function(event) {
-    if(event.target.matches('.open-view-inquiry-btn')){
+    if(event.target.classList.contains('open-view-inquiry-btn')){
         const text = event.target.dataset.inquiryText || event.target.getAttribute('data-inquiry-text') || event.target.textContent || '';
         const inquiryBody = document.getElementById('view-inquiry-body');
         if (inquiryBody) {
