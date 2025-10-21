@@ -685,9 +685,6 @@ export async function getHelperEscalations(helperId) {
 
 export async function resolveEscalation(escalationId, feedback) {
   try {
-    console.log('🔄 Resolving escalation:', escalationId);
-    
-    // First, get the ID of the user who originally escalated it
     const { data: escalationData, error: fetchError } = await supabase
       .from('escalations')
       .select('escalated_by_id, order_assignments!inner(orders(order_id))')
@@ -696,12 +693,11 @@ export async function resolveEscalation(escalationId, feedback) {
 
     if (fetchError) throw fetchError;
 
-    // Now, update the escalation with the feedback
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
         status: 'resolved',
-        feedback: feedback, // <-- **نخزن الرد في حقل جديد ومخصص**
+        feedback: feedback, // <-- **نخزن الرد في الحقل الجديد**
         resolved_at: new Date().toISOString()
       })
       .eq('id', escalationId)
@@ -710,16 +706,14 @@ export async function resolveEscalation(escalationId, feedback) {
 
     if (error) throw error;
 
-    // Send a notification to the user who escalated
+    // إرسال إشعار للشخص الذي قام بالتصعيد
     if (escalationData) {
       const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
         escalationData.escalated_by_id,
-        `Your escalation for order ${orderId} has been resolved.`,
-        'info'
+        `Your escalation for order ${orderId} has been resolved.`, 'info'
       );
     }
-    
     return data;
   } catch (error) {
     console.error('💥 ResolveEscalation error:', error);
