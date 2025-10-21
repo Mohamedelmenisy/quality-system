@@ -73,6 +73,7 @@
             --info-color: #17a2b8;
             --font-body: 'Poppins', sans-serif;
             --border-radius-base: 0.75rem;
+            --green-bg: rgba(40, 167, 69, 0.1);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
@@ -1132,8 +1133,8 @@
                     const body = document.getElementById('view-escalation-body');
                     body.innerHTML = `
                         <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
-                        <div class="detail-item" style="grid-column: span 2;"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
-                        <div class="detail-item" style="grid-column: span 2; background: rgba(40, 167, 69, 0.1);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
+                        <div class="detail-item"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
+                        <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
                     `;
                     showModal('view-escalation-modal');
                 });
