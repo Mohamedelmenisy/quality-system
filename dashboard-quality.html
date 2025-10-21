@@ -1021,6 +1021,22 @@
             </div>
         </div>
     </div>
+    
+    <!-- View Escalation Details Modal (NEW) -->
+    <div id="view-escalation-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">Escalation Details</h3>
+          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
+        </div>
+        <div id="view-escalation-body" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Content will be populated by JS -->
+        </div>
+        <div class="modal-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
@@ -1315,67 +1331,105 @@
                 renderInquiriesTable();
             }
         }
-// الصق هذا الكود بالكامل مكان دالة renderOrdersTable القديمة
-function renderOrdersTable() {
-    const tableBody = document.getElementById('orders-table-body');
-    
-    if (assignedOrders.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
-        return;
-    }
 
-    tableBody.innerHTML = assignedOrders.map(order => {
-        const orderData = order.orders;
-        const statusClass = `status-${order.status}`;
-        
-        let specialStatusBadge = ''; // سنستخدم هذا لعرض حالة الاستفسار أو التصعيد
+        function renderOrdersTable() {
+            const tableBody = document.getElementById('orders-table-body');
+            
+            if (!assignedOrders || assignedOrders.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state">No assigned orders found.</td></tr>`;
+                return;
+            }
 
-        // 1. التحقق من التصعيدات أولاً (لأنها أكثر أهمية)
-        if (order.escalations && order.escalations.length > 0) {
-            const latestEscalation = order.escalations[order.escalations.length - 1];
-            if (latestEscalation.status === 'pending') {
-                specialStatusBadge = `<span class="inquiry-badge" title="Your escalation is pending a response">Escalation Pending</span>`;
-            } else if (latestEscalation.status === 'resolved') {
-                const feedback = latestEscalation.notes || 'No feedback provided.';
-                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Feedback on Escalation:\\n\\n${feedback.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view feedback">Escalation Resolved</button>`;
-            }
-        } 
-        // 2. إذا لم يكن هناك تصعيد، تحقق من الاستفسارات
-        else if (order.inquiries && order.inquiries.length > 0) {
-            const latestInquiry = order.inquiries[order.inquiries.length - 1];
-            if (latestInquiry.status === 'pending') {
-                specialStatusBadge = `<span class="inquiry-badge" title="Your inquiry is pending a response">Inquiry Pending</span>`;
-            } else if (latestInquiry.status === 'responded') {
-                const response = latestInquiry.response_text || 'No response provided.';
-                specialStatusBadge = `<button class="action-btn btn-sm" style="background-color: var(--green-bg); color: var(--green); cursor: pointer;" onclick="alert('Response from Helper:\\n\\n${response.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n')}')" title="Click to view response">Response Received</button>`;
-            }
+            tableBody.innerHTML = assignedOrders.map(order => {
+                const orderData = order.orders;
+                const statusClass = `status-${order.status}`;
+                
+                let specialStatusBadge = '';
+
+                if (order.escalations && order.escalations.length > 0) {
+                    const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
+                    if (latestEscalation.status === 'resolved') {
+                        specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Resolved</button>`;
+                    } else {
+                        specialStatusBadge = `<span class="inquiry-badge">Escalation Pending</span>`;
+                    }
+                }
+                else if (order.inquiries && order.inquiries.length > 0) {
+                    const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                    if (latestInquiry.status === 'responded') {
+                        specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
+                    } else {
+                        specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
+                    }
+                }
+
+                return `
+                    <tr>
+                        <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td> 
+                        <td>${orderData?.reason || 'N/A'}</td>
+                        <td>${formatDate(order.assigned_at)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                        <td>
+                            <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                            ${order.status === 'pending' ? 
+                                `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                                 <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                                 <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                                ''
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Re-bind all events for buttons
+            document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+
+            // Add new event listeners for the new buttons
+            document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const escalationId = btn.dataset.escalationId;
+                    const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
+                    const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
+                    
+                    if (!escalation) {
+                        showToast('Could not find escalation details.', 'error');
+                        return;
+                    }
+
+                    const body = document.getElementById('view-escalation-body');
+                    if (body) {
+                        body.innerHTML = `
+                            <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
+                            <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
+                        `;
+                        showModal('view-escalation-modal');
+                    }
+                });
+            });
+
+            document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const inquiryId = btn.dataset.inquiryId;
+                    const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+                    const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+                    
+                    if (inquiry) {
+                        const inquiryText = inquiry.response_text || "No response provided.";
+                        alert(`Response from Helper:\n\n${inquiryText}`);
+                    } else {
+                        showToast('Could not find inquiry details.', 'error');
+                    }
+                });
+            });
         }
 
-        return `
-            <tr>
-                <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td> 
-                <td>${orderData?.reason || 'N/A'}</td>
-                <td>${formatDate(order.assigned_at)}</td>
-                <td><span class="status-badge ${statusClass}">${order.status}</span></td>
-                <td>
-                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                    ${order.status === 'pending' ? 
-                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                        ''
-                    }
-                </td>
-            </tr>
-        `;
-    }).join('');
-    
-    // إعادة ربط كل الأحداث للأزرار
-    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
-}
 
         // REPLACED with user's provided function
         function renderEscalationsTable() {
