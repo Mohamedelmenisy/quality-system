@@ -847,51 +847,6 @@ document.addEventListener('click', function(e){
         </div>
     </div>
 
-    <!-- Review Escalation Modal -->
-    <div class="modal-overlay" id="review-escalation-modal">
-        <div class="modal-box">
-            <div class="modal-header">
-                <h3 class="modal-title">Review Escalation: <span id="review-escalation-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Order Details</strong>
-                    <p id="escalation-order-details">Loading...</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Employee</strong>
-                    <p id="escalation-employee-name">Loading...</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Issue Type</strong>
-                    <p id="escalation-issue-type">Loading...</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Agent's Reason for Escalation</strong>
-                    <p id="agent-escalation-reason">Loading...</p>
-                </div>
-                <div class="form-group">
-                    <label for="helper-feedback">Your Feedback / Final Decision *</label>
-                    <textarea id="helper-feedback" placeholder="Provide your feedback and final decision..." required></textarea>
-                </div>
-                <div class="form-group" id="senior-escalation-section" style="display: none;">
-                    <label for="escalate-to-senior">Escalate to Senior *</label>
-                    <select id="escalate-to-senior" required>
-                        <option value="">Select Senior Quality Analyst</option>
-                    </select>
-                    <label for="senior-escalation-reason" style="margin-top: 10px;">Reason for Escalation to Senior *</label>
-                    <textarea id="senior-escalation-reason" placeholder="Explain why you are escalating this to senior..." required></textarea>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" id="resolve-escalation-btn">Resolve & Send Feedback</button>
-                <button class="btn btn-primary" id="toggle-senior-escalation-btn">Escalate to Senior</button>
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
-            </div>
-        </div>
-    </div>
-
     <!-- Respond to Inquiry Modal -->
     <div class="modal-overlay" id="respond-inquiry-modal">
         <div class="modal-box">
@@ -916,30 +871,6 @@ document.addEventListener('click', function(e){
             <div class="modal-footer">
                 <button class="btn btn-secondary modal-close-btn" data-modal-id="respond-inquiry-modal">Cancel</button>
                 <button class="btn btn-primary" id="submit-inquiry-response-btn">Send Response</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- View Inquiry/Response Modal (NEW) -->
-    <div class="modal-overlay" id="view-inquiry-modal">
-        <div class="modal-box" style="max-width: 550px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Agent's Inquiry</strong>
-                    <p id="view-inquiry-text">Loading...</p>
-                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
-                </div>
-                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
-                    <strong>Helper's Response</strong>
-                    <p id="view-inquiry-response-text">Loading...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
             </div>
         </div>
     </div>
@@ -1441,7 +1372,8 @@ document.addEventListener('click', function(e){
                     
                     if (inquiry) {
                         const inquiryText = inquiry.response_text || "No response provided.";
-                         (function(msg){ try{ document.getElementById('view-inquiry-body').textContent = String(msg).replace(/^\"|\"$/g,''); showModal('view-inquiry-modal'); }catch(e){ console.warn(e);} })(
+                        document.getElementById('view-inquiry-body').textContent = inquiryText;
+                        showModal('view-inquiry-modal');
                     } else {
                         showToast('Could not find inquiry details.', 'error');
                     }
@@ -1953,7 +1885,7 @@ document.addEventListener('click', function(e){
             let hash = 0;
             for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
             let color = '#';
-for (let i = 0; i < 3; i++) {
+            for (let i = 0; i < 3; i++) {
                 const value = (hash >> (i * 8)) & 0xFF;
                 color += ('00' + value.toString(16)).substr(-2);
             }
