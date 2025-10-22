@@ -1044,16 +1044,24 @@ document.addEventListener('click', function(e){
         }
 
         async function loadPerformanceMetrics() {
-            try {
-                performanceMetrics = await getPerformanceMetrics('month');
-                document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-                document.getElementById('pending-escalations').textContent = directEscalations.filter(e => e.status === 'pending').length;
-                document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-                document.getElementById('avg-resolution-time').textContent = '45 mins';
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
-            }
-        }
+    try {
+        // الدالة الآن تعيد كل البيانات التي نحتاجها مباشرة
+        performanceMetrics = await getPerformanceMetrics(); 
+        
+        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
+        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
+        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
+        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime || 0} mins`;
+        
+    } catch (error) {
+        console.error('Error loading performance metrics:', error);
+        // يمكنك هنا عرض قيم افتراضية في حالة حدوث خطأ
+        document.getElementById('reviews-today').textContent = 'N/A';
+        document.getElementById('pending-escalations').textContent = 'N/A';
+        document.getElementById('team-accuracy').textContent = 'N/A';
+        document.getElementById('avg-resolution-time').textContent = 'N/A';
+    }
+}
 
         // Render Functions
         function renderEscalationsTable(errorsToRender = pendingErrors) {
