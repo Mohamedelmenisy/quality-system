@@ -899,12 +899,6 @@ document.addEventListener('click', function(e){
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
 
-        // FIX: Placeholder function to prevent app from crashing.
-        // The real function should be implemented and exported from './api-client.js'
-        const getAppealedErrors = async () => {
-            console.warn("Using placeholder for getAppealedErrors. Please implement this function in api-client.js");
-            return []; // Return an empty array to allow the UI to load without data.
-        };
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
