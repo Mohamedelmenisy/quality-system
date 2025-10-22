@@ -973,9 +973,17 @@ export async function getTeamSchedule() {
 
 export async function updateTeamSchedule(scheduleData) {
   try {
+    const validStatuses = ['Working', 'Off', 'On Leave', 'Sick Leave'];
+
+    // تأكد إن كل صف فيه status صحيح
+    const sanitizedData = scheduleData.map(item => ({
+      ...item,
+      status: validStatuses.includes(item.status) ? item.status : 'Working'
+    }));
+
     const { data, error } = await supabase
       .from('team_schedule')
-      .upsert(scheduleData)
+      .upsert(sanitizedData)
       .select();
 
     if (error) throw error;
