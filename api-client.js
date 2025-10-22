@@ -1,9 +1,8 @@
 // api-client.js - Enhanced Version
 // All improvements without breaking existing functionality
 
-// === التعديل هنا ===
-// تم تغيير طريقة استدعاء المكتبة لتناسب المتصفح مباشرة
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+
 const supabaseUrl = 'https://otaztiyatvbajswowdgs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc';
 export const supabase = createClient(supabaseUrl, supabaseKey);
@@ -727,4 +726,57 @@ export function getOrderWithEscalationStatus(orderAssignment) {
                       hasInquiry ? 'inquiry' : 'normal',
     has_pending_action: hasEscalation || hasInquiry
   };
+}
+
+// =============================================
+// 🆕 AUTHENTICATION FUNCTIONS (Login / Sign Up)
+// =============================================
+
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+  if (error) throw error;
+  return data.user;
+}
+
+export async function signUp(email, password, fullName, role = 'pending') {
+  // 1. إنشاء المستخدم في Supabase Auth
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+
+  if (error) throw error;
+
+  const user = data.user;
+
+  // 2. إنشاء سجل المستخدم في جدول users
+  const { error: insertError } = await supabase
+    .from('users')
+    .insert([
+      {
+        id: user.id,
+        email: email,
+        name: fullName,
+        role: role,
+        is_active: role === 'pending' ? false : true
+      }
+    ]);
+
+  if (insertError) throw insertError;
+
+  return user;
+}
+
+export async function getUserData(email) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
