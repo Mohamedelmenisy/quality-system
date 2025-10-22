@@ -1,5 +1,7 @@
-// api-client.js - Complete Version
-// All functions included - No missing exports
+// api-client.js - Enhanced Version
+// All improvements without breaking existing functionality
+
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://otaztiyatvbajswowdgs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc';
@@ -45,6 +47,17 @@ export async function signUp(email, password, fullName, role = 'pending') {
 
   if (insertError) throw insertError;
   return user;
+}
+
+export async function getUserData(email) {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('email', email)
+    .single();
+
+  if (error) throw error;
+  return data;
 }
 
 // =============================================
@@ -367,32 +380,37 @@ export async function resolveEscalation(escalationId, feedback) {
 }
 
 export async function escalateToSenior(escalationId, seniorId, helperNotes) {
-  const { data: currentEscalation, error: fetchError } = await supabase
-    .from('escalations')
-    .select('*')
-    .eq('id', escalationId)
-    .single();
-  if (fetchError) throw fetchError;
+    try {
+        const { data: currentEscalation, error: fetchError } = await supabase
+            .from('escalations')
+            .select('*')
+            .eq('id', escalationId)
+            .single();
+        if (fetchError) throw fetchError;
 
-  const { data, error } = await supabase
-    .from('escalations')
-    .update({ 
-      escalated_to_id: seniorId,
-      notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
-      updated_at: new Date().toISOString()
-    })
-    .eq('id', escalationId)
-    .select()
-    .single();
-  if (error) throw error;
+        const { data, error } = await supabase
+            .from('escalations')
+            .update({ 
+                escalated_to_id: seniorId,
+                notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', escalationId)
+            .select()
+            .single();
+        if (error) throw error;
 
-  await createNotification(
-    seniorId,
-    `A new escalation requires your review.`,
-    'warning'
-  );
+        await createNotification(
+            seniorId,
+            `A new escalation requires your review.`,
+            'warning'
+        );
 
-  return data;
+        return data;
+    } catch (error) {
+        console.error('Error escalating to senior:', error);
+        throw error;
+    }
 }
 
 // =============================================
@@ -622,6 +640,7 @@ export async function getErrorTrends(period = '1 month') {
     .order('recorded_at');
   if (error) throw error;
   
+  // This part should have a real implementation for processing data
   return {
     labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
     values: [5, 4, 4.5, 4.2]
@@ -635,6 +654,7 @@ export async function getDepartmentPerformance() {
     .gte('reviewed_at', getDateRange('month'));
   if (error) throw error;
 
+  // This part should have a real implementation for processing data
   return {
     departments: ['Support', 'Logistics', 'Customer Service'],
     errorRates: [12, 8, 15]
