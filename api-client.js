@@ -477,47 +477,31 @@ export async function getQualityReviews(filters = {}) {
 
 // ==================== ERROR FUNCTIONS ====================
 
+// ==================== ERROR FUNCTIONS ====================
+
 export async function getAgentErrors(agentId, filters = {}) {
   try {
-    let query = supabase
-      .from('errors')
-      .select(`
-        *,
-        quality_reviews (
-          action_correctness,
-          department,
-          modified_reason,
-          modification_details,
-          order_assignments (
-            orders (
-              order_id,
-              created_at,
-              employee_name,
-              reason
-            ),
-            users!order_assignments_quality_agent_id_fkey (name)
-          )
-        ),
-        error_responses (*)
-      `)
-      .eq('employee_id', agentId)
-      .order('created_at', { ascending: false });
+    // نستدعي الدالة الجديدة التي أنشأناها في قاعدة البيانات
+    const { data, error } = await supabase
+      .rpc('get_errors_for_agent', { agent_uuid: agentId });
 
-    if (filters.status) {
-      query = query.eq('status', filters.status);
+    if (error) {
+        // إذا حدث خطأ، قم بطباعته لمساعدتنا على التشخيص
+        console.error('RPC call error:', error);
+        throw error;
     }
+    
+    let filteredData = data;
 
-    if (filters.from_date) {
-      query = query.gte('created_at', filters.from_date);
+    // بما أن الدالة تعيد كل البيانات، يمكننا الآن تطبيق الفلاتر هنا في جافاسكريبت
+    if (filters.status && filters.status !== 'All Statuses') {
+        filteredData = filteredData.filter(e => e.status === filters.status);
     }
+    
+    // يمكنك إضافة فلاتر أخرى هنا بنفس الطريقة إذا احتجت ذلك في المستقبل
 
-    if (filters.to_date) {
-      query = query.lte('created_at', filters.to_date);
-    }
+    return filteredData;
 
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
   } catch (error) {
     console.error('GetAgentErrors error:', error);
     throw error;
