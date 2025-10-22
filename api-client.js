@@ -1145,6 +1145,18 @@ export async function getDepartmentPerformance() {
   }
 }
 
+export async function getTeamPerformance() {
+  try {
+    const { data, error } = await supabase.rpc('get_team_performance');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetTeamPerformance error:', error);
+    // Return an empty array in case of an error
+    return [];
+  }
+}
+
 // ==================== DATA IMPORT FUNCTIONS ====================
 
 export async function importOrdersFromCSV(csvData) {
