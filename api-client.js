@@ -477,8 +477,6 @@ export async function getQualityReviews(filters = {}) {
 
 // ==================== ERROR FUNCTIONS ====================
 
-// ==================== ERROR FUNCTIONS ====================
-
 export async function getAgentErrors(agentId, filters = {}) {
   try {
     // نستدعي الدالة الجديدة التي أنشأناها في قاعدة البيانات
@@ -589,6 +587,17 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
     return data;
   } catch (error) {
     console.error('SubmitFinalDecision error:', error);
+    throw error;
+  }
+}
+
+export async function getAppealedErrors() {
+  try {
+    const { data, error } = await supabase.rpc('get_appealed_errors');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetAppealedErrors error:', error);
     throw error;
   }
 }
