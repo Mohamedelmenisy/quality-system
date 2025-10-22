@@ -245,9 +245,9 @@ await Promise.all([
                                     <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
                                         👁️ View
                                     </button>
-                                    ${error.status === 'pending_response' ?
-                                        `<button class="action-btn primary reply-error-btn" data-error-id="${error.error_id}">
-                                            💬 Reply
+                                     ${error.status === 'closed' ? 
+                                        <button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">
+                                         Appeal
                                         </button>` : ''}
                                 </td>
                             </tr>
