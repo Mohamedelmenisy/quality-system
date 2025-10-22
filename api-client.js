@@ -3,8 +3,7 @@
 
 // === التعديل هنا ===
 // تم تغيير طريقة استدعاء المكتبة لتناسب المتصفح مباشرة
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
+import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
 const supabaseUrl = 'https://otaztiyatvbajswowdgs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc';
 export const supabase = createClient(supabaseUrl, supabaseKey);
