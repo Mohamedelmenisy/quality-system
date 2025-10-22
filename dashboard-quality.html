@@ -291,7 +291,133 @@ document.addEventListener('click', function(e){
             table { min-width: 600px; }
         }
     </style>
-<style>.sidebar-nav a{ white-space: nowrap; }</style>
+<style>
+    .sidebar-nav a{ white-space: nowrap; }
+
+    /* START: Custom styles for the Review Escalation Modal */
+    #review-escalation-modal .modal-box {
+        background: linear-gradient(145deg, #1f1f1f, #161616); /* A bit darker, more dynamic background */
+        border: 1px solid #3a3a3a; /* A slightly more prominent border */
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7); /* Deeper shadow for a floating effect */
+        border-radius: 1rem; /* Slightly larger border radius */
+        max-width: 650px; /* A bit wider for better spacing */
+    }
+
+    #review-escalation-modal .modal-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem; /* More padding */
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    #review-escalation-modal .modal-title {
+        font-size: 1.5rem; /* Larger title */
+        font-weight: 700;
+        color: var(--text-color);
+    }
+    /* Adding a decorative icon to the header */
+    #review-escalation-modal .modal-header::before {
+        content: '🚨';
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    #review-escalation-modal .modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem; /* Increased gap between items */
+    }
+
+    #review-escalation-modal .detail-item {
+        background: rgba(44, 44, 44, 0.5); /* Semi-transparent background */
+        padding: 1rem 1.25rem;
+        border-left: 4px solid var(--primary-color); /* Accent border */
+        border-radius: 8px; /* Rounded corners for detail items */
+        margin-bottom: 0; /* Remove margin as we use gap now */
+    }
+
+    #review-escalation-modal .detail-item strong {
+        font-size: 0.8rem;
+        color: var(--text-muted); /* Softer color for the label */
+        margin-bottom: 0.6rem;
+    }
+
+    #review-escalation-modal .detail-item p {
+        font-size: 1rem;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+
+    #review-escalation-modal .form-group label {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+
+    #review-escalation-modal .form-group textarea {
+        background-color: #1a1a1a; /* Darker textarea */
+        border: 1px solid #444;
+        min-height: 140px;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    #review-escalation-modal .form-group textarea:focus {
+        border-color: var(--primary-color);
+        box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2); /* Focus glow effect */
+        background-color: #222;
+    }
+
+    #review-escalation-modal .modal-footer {
+        padding: 1.5rem;
+        background-color: #1a1a1a; /* Distinct footer background */
+        border-top: 1px solid var(--border-color);
+        border-bottom-left-radius: 1rem; /* Match parent border radius */
+        border-bottom-right-radius: 1rem;
+        gap: 0.75rem;
+    }
+
+    /* Style the buttons specifically within this modal for a more modern feel */
+    #review-escalation-modal .modal-footer .btn {
+        padding: 12px 24px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 8px;
+        border: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    #review-escalation-modal .modal-footer .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    #review-escalation-modal #resolve-escalation-btn {
+        background: var(--green);
+        color: white;
+    }
+    #review-escalation-modal #resolve-escalation-btn:hover {
+        background: #23923d;
+    }
+
+    #review-escalation-modal #toggle-senior-escalation-btn {
+        background: var(--yellow);
+        color: black;
+    }
+    #review-escalation-modal #toggle-senior-escalation-btn:hover {
+        background: #e0a800;
+    }
+    
+    #review-escalation-modal .modal-footer .btn-secondary {
+        background: #333;
+    }
+    #review-escalation-modal .modal-footer .btn-secondary:hover {
+        background: #444;
+    }
+    /* END: Custom styles */
+</style>
 </head>
 <body>
     <aside class="sidebar">
@@ -886,8 +1012,8 @@ document.addEventListener('click', function(e){
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary" id="resolve-escalation-btn">Resolve & Send Feedback</button>
-                <button class="btn btn-primary" id="toggle-senior-escalation-btn">Escalate to Senior</button>
+                <button class="btn" id="resolve-escalation-btn">Resolve & Send Feedback</button>
+                <button class="btn" id="toggle-senior-escalation-btn">Escalate to Senior</button>
                 <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
             </div>
         </div>
