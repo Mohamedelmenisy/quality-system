@@ -1,7 +1,7 @@
 // api-client.js - Complete Version
 // All functions included - No missing exports
 
-import { createClient } from '@supabase/supabase-js';
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 const supabaseUrl = 'https://otaztiyatvbajswowdgs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc';
