@@ -49,7 +49,8 @@ document.addEventListener('click', function(e){
             addCompanyEmployee,
             updateCompanyEmployee,
             getEscalations,
-            resolveEscalation
+            resolveEscalation,
+            getAppealedErrors
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -178,6 +179,7 @@ document.addEventListener('click', function(e){
         .status-responded { background-color: var(--info-color); }
         .status-finalized { background-color: var(--success-color); }
         .status-resolved { background-color: var(--success-color); } /* Added for escalations */
+        .status-under_review { background-color: var(--warning-color); color: black; } /* Added for appealed errors */
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
@@ -411,6 +413,30 @@ document.addEventListener('click', function(e){
                                 </thead>
                                 <tbody id="escalation-table-body">
                                     <tr><td colspan="6" class="empty-state">Loading pending responses...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- Appealed Errors (Under Review) -->
+                    <div class="widget">
+                        <h3>Appealed Errors (<span id="appealed-errors-count">0</span>)</h3>
+                        <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
+                            Errors that have been appealed by agents and are waiting for your final decision.
+                        </p>
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Agent</th>
+                                        <th class="wrap-text">Error Details</th>
+                                        <th class="wrap-text">Agent's Appeal Reason</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="appealed-errors-table-body">
+                                    <tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -706,7 +732,7 @@ document.addEventListener('click', function(e){
                                 <div class="form-group">
                                     <label for="theme-select">Theme</label>
                                     <select id="theme-select"><option value="dark">Dark</option><option value="light">Light</option></select>
-                                </div>
+                                 </div>
                                 <div class="form-group">
                                     <label for="language-select">Language</label>
                                     <select id="language-select"><option value="en">English</option><option value="ar">العربية</option></select>
@@ -866,6 +892,7 @@ document.addEventListener('click', function(e){
         let performanceMetrics = {};
         let notifications = [];
         let directEscalations = [];
+        let appealedErrors = [];
         let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
@@ -944,7 +971,8 @@ document.addEventListener('click', function(e){
                     loadTeamSchedule(),
                     loadPerformanceMetrics(),
                     loadNotifications(),
-                    loadDirectEscalations()
+                    loadDirectEscalations(),
+                    loadAppealedErrors()
                 ]);
                 initCharts();
                 showToast('Senior Dashboard loaded successfully', 'success');
@@ -1004,6 +1032,10 @@ document.addEventListener('click', function(e){
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
         
+        async function loadAppealedErrors() {
+            await loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
+        }
+
         async function loadPerformanceMetrics() {
             try {
                 performanceMetrics = await getPerformanceMetrics('month');
@@ -1034,10 +1066,56 @@ document.addEventListener('click', function(e){
                 </tr>
             `).join('');
             document.querySelectorAll('.review-response-btn').forEach(btn => {
-                btn.addEventListener('click', () => openFinalDecisionModal(btn.dataset.errorId));
+                btn.addEventListener('click', () => {
+                    // This now needs to open a different modal or be refactored.
+                    // For now, let's keep the old functionality for this specific button.
+                    const error = pendingErrors.find(e => e.id.toString() === btn.dataset.errorId);
+                    if (!error) return;
+                    document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                    document.getElementById('decision-modal-content').innerHTML = `
+                        <div class="escalation-details">
+                       <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
+                            <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
+                        </div>
+                        <div class="feedback-form">
+                            <label>Your Decision & Notes:</label>
+                            <textarea id="decision-notes" rows="4"></textarea>
+                            <div class="feedback-actions">
+                                <button class="btn btn-danger" onclick="handleOldFinalDecision('${btn.dataset.errorId}', 'rejected')">Reject</button>
+                                <button class="btn btn-success" onclick="handleOldFinalDecision('${btn.dataset.errorId}', 'approved')">Approve</button>
+                            </div>
+                        </div>`;
+                    showModal('final-decision-modal');
+                });
             });
         }
         
+        function renderAppealedErrorsTable() {
+            const tableBody = document.getElementById('appealed-errors-table-body');
+            if (appealedErrors.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>`;
+                return;
+            }
+            tableBody.innerHTML = appealedErrors.map(error => `
+                <tr>
+                    <td>${error.order_id || 'N/A'}</td>
+                    <td>${error.employee_username || 'Unknown'}</td>
+                    <td class="wrap-text">${error.error_details || 'N/A'}</td>
+                    <td class="wrap-text">${error.appeal_reason || 'No reason provided.'}</td>
+                    <td><span class="status-badge status-under_review">${error.status.replace('_', ' ')}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm final-decision-btn" data-error-id="${error.error_id}">
+                            Decide
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            document.querySelectorAll('.final-decision-btn').forEach(btn => {
+                btn.addEventListener('click', () => openFinalDecisionModal(btn.dataset.errorId));
+            });
+        }
+
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
             const tableBody = document.getElementById('unassigned-table-body');
             if (ordersToRender.length === 0) {
@@ -1062,7 +1140,6 @@ document.addEventListener('click', function(e){
             const tableBody = document.getElementById('assigned-table-body');
             const tableHead = tableBody.previousElementSibling;
 
-            // Add the new columns to the header if they don't exist
             if (tableHead.rows[0].cells.length < 7) {
                 tableHead.rows[0].innerHTML = `
                     <th>Order ID</th>
@@ -1088,7 +1165,7 @@ document.addEventListener('click', function(e){
                     const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
                     reviewTime = `${diffMinutes} min`;
                     slaStatus = (diffMinutes > 30) 
-                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--danger-color);">Delayed</span>`
+                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                         : `<span class="status-badge status-completed">On Time</span>`;
                 }
 
@@ -1107,10 +1184,6 @@ document.addEventListener('click', function(e){
                     </tr>
                 `;
             }).join('');
-        
-            document.querySelectorAll('.reassign-btn').forEach(btn => {
-                btn.addEventListener('click', () => openReassignModal(btn.dataset.assignmentId));
-            });
         }
 
         function renderDirectEscalationsTable() {
@@ -1185,7 +1258,6 @@ document.addEventListener('click', function(e){
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
             
-            // --- تعديل هنا: نحدد كل الأدوار التي نريد عرضها ---
             const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
             const teamToDisplay = teamMembers.filter(m => teamRoles.includes(m.role));
             
@@ -1276,7 +1348,6 @@ document.addEventListener('click', function(e){
         const populateAgentSelect = () => {
             const select = document.getElementById('agent-select');
             
-            // --- تعديل هنا: نحدد الأدوار القابلة لاستلام المهام ---
             const assignableRoles = ['quality', 'helper'];
             const assignableMembers = teamMembers.filter(m => assignableRoles.includes(m.role));
 
@@ -1286,29 +1357,29 @@ document.addEventListener('click', function(e){
             }
 
             select.innerHTML = assignableMembers.map(a => 
-                // نضيف الدور بجانب الاسم للتمييز
                 `<option value="${a.id}">${a.name} (${a.role})</option>`
             ).join('');
         };
 
 
         // Modal Handlers
-        async function openFinalDecisionModal(errorId) {
-            const error = pendingErrors.find(e => e.id.toString() === errorId);
+        function openFinalDecisionModal(errorId) {
+            const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
             if (!error) return;
-            document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+            
+            document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
                 <div class="escalation-details">
-               <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
-                    <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
+                    <div class="detail-item"><strong>Agent</strong><span>${error.employee_username || 'Unknown'}</span></div>
+                    <div class="detail-item"><strong>Error Type</strong><span>${error.error_details || 'Unknown'}</span></div>
                 </div>
-                <div class="feedback-form">
-                    <label>Your Decision & Notes:</label>
-                    <textarea id="decision-notes" rows="4"></textarea>
-                    <div class="feedback-actions">
-                        <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'rejected')">Reject</button>
-                        <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'approved')">Approve</button>
-                    </div>
+                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
+                    <strong>Agent's Appeal Reason:</strong>
+                    <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
+                </div>
+                <div class="feedback-actions">
+                    <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'closed')">Uphold (Keep as Error)</button>
+                    <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'overturned')">Overturn (Not an Error)</button>
                 </div>`;
             showModal('final-decision-modal');
         }
@@ -1370,7 +1441,7 @@ document.addEventListener('click', function(e){
         }
 
         // Action Handlers
-        async function handleFinalDecision(errorId, decision) {
+        async function handleOldFinalDecision(errorId, decision) {
             const notes = document.getElementById('decision-notes').value;
             if (!notes) {
                 showToast('Please provide your decision notes.', 'warning');
@@ -1525,6 +1596,13 @@ document.addEventListener('click', function(e){
                 }); 
             });
             
+            // Event Delegation for dynamically created buttons
+            document.body.addEventListener('click', function(event) {
+                if (event.target.classList.contains('view-assigned-btn')) {
+                    openViewAssignedModal(event.target.dataset.assignmentId);
+                }
+            });
+
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const scheduleTable = document.getElementById('schedule-table');
@@ -1624,15 +1702,25 @@ document.addEventListener('click', function(e){
                 });
             }
 
-            document.body.addEventListener('click', function(event) {
-                if (event.target.classList.contains('view-assigned-btn')) {
-                    openViewAssignedModal(event.target.dataset.assignmentId);
-                }
-            });
-
         });
 
-        window.handleFinalDecision = handleFinalDecision;
+        window.handleFinalDecision = async (errorId, decision) => {
+           try {
+               const { error } = await supabase
+                   .from('errors')
+                   .update({ status: decision })
+                   .eq('id', errorId);
+               
+               if (error) throw error;
+               
+               showToast(`Decision recorded successfully. Error is now ${decision}.`, 'success');
+               hideModal('final-decision-modal');
+               await loadAppealedErrors(); // أعد تحميل القائمة
+               
+           } catch (error) {
+               showToast('Failed to record final decision.', 'error');
+           }
+       }
     </script>
 
 <!-- START: Added Modals (DO NOT RENAME existing classes/ids elsewhere) -->
