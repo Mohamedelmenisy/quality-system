@@ -1026,7 +1026,7 @@ document.addEventListener('click', function(e){
             tableBody.innerHTML = errorsToRender.map(error => `
                 <tr>
                     <td>${error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</td>
-                     <td>${error.employee?.employee_name || 'Unknown'}</td>
+                    <td>${error.employee?.employee_username || 'Unknown'}</td>
                     <td>${error.quality_reviews?.modified_reason || 'Unknown'}</td>
                     <td class="wrap-text">${(error.error_responses?.[0]?.response_text || 'No response').substring(0, 100)}...</td>
                     <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
@@ -1303,7 +1303,7 @@ document.addEventListener('click', function(e){
             document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
                 <div class="escalation-details">
-                    <div class="detail-item"><strong>Agent</strong><span>${error.users?.name || 'Unknown'}</span></div>
+               <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
                     <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
                 </div>
                 <div class="feedback-form">
