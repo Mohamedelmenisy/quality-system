@@ -7,23 +7,6 @@
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js">
-/* START: modal helpers added */
-function showModal(id){
-  const el = document.getElementById(id);
-  if(el){ el.style.display = 'flex'; document.body.style.overflow='hidden'; }
-}
-function hideModal(id){
-  const el = document.getElementById(id);
-  if(el){ el.style.display = 'none'; document.body.style.overflow=''; }
-}
-document.addEventListener('click', function(e){
-  if(e.target.matches('.modal-close-btn')) {
-    const id = e.target.dataset.modalId;
-    if(id) hideModal(id);
-  }
-});
-/* END: modal helpers */
-
 </script>
     <script type="module">
         import { 
@@ -35,6 +18,7 @@ document.addEventListener('click', function(e){
             assignOrders,
             getPendingErrors,
             getAppealedErrors,
+            getFinalizedDecisions, // *** ADDED ***
             submitFinalDecision,
             getPerformanceMetrics,
             getTeamMembers,
@@ -42,6 +26,7 @@ document.addEventListener('click', function(e){
             updateTeamSchedule,
             getNotifications,
             markNotificationAsRead,
+            createNotification, // *** ADDED ***
             subscribeToNotifications,
             getErrorTrends,
             getDepartmentPerformance,
@@ -61,7 +46,8 @@ document.addEventListener('click', function(e){
         window.getAssignedOrders = getAssignedOrders;
         window.assignOrders = assignOrders;
         window.getPendingErrors = getPendingErrors;
-         window.getAppealedErrors = getAppealedErrors; // <--- قم بإضافة هذا السطر
+        window.getAppealedErrors = getAppealedErrors; // *** FIXED ***
+        window.getFinalizedDecisions = getFinalizedDecisions; // *** ADDED ***
         window.submitFinalDecision = submitFinalDecision;
         window.getPerformanceMetrics = getPerformanceMetrics;
         window.getTeamMembers = getTeamMembers;
@@ -69,13 +55,14 @@ document.addEventListener('click', function(e){
         window.updateTeamSchedule = updateTeamSchedule;
         window.getNotifications = getNotifications;
         window.markNotificationAsRead = markNotificationAsRead;
+        window.createNotification = createNotification; // *** ADDED ***
         window.getErrorTrends = getErrorTrends;
         window.getDepartmentPerformance = getDepartmentPerformance;
         window.importOrdersFromCSV = importOrdersFromCSV;
         window.getCompanyEmployees = getCompanyEmployees;
         window.addCompanyEmployee = addCompanyEmployee;
         window.updateCompanyEmployee = updateCompanyEmployee;
-          window.getEscalations = getEscalations;
+        window.getEscalations = getEscalations;
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
     </script>
@@ -183,6 +170,8 @@ document.addEventListener('click', function(e){
         .status-finalized { background-color: var(--success-color); }
         .status-resolved { background-color: var(--success-color); } /* Added for escalations */
         .status-under_review { background-color: var(--warning-color); color: black; } /* Added for appealed errors */
+        .status-closed { background-color: var(--danger-color); }
+        .status-overturned { background-color: var(--success-color); }
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
@@ -444,7 +433,7 @@ document.addEventListener('click', function(e){
                             </table>
                         </div>
                     </div>
-                    <!-- NEW WIDGET FOR DIRECT ESCALATIONS -->
+                    <!-- Direct Escalations -->
                     <div class="widget">
                         <h3>Direct Escalations (<span id="direct-escalations-count">0</span>)</h3>
                         <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
@@ -472,6 +461,30 @@ document.addEventListener('click', function(e){
                                 </thead>
                                 <tbody id="direct-escalations-table-body">
                                     <tr><td colspan="6" class="empty-state">Loading direct escalations...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <!-- *** NEW WIDGET: Final Decisions Log *** -->
+                    <div class="widget">
+                        <h3>Final Decisions Log (<span id="finalized-errors-count">0</span>)</h3>
+                        <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
+                            A historical record of all appealed errors that you have reviewed and finalized.
+                        </p>
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Agent</th>
+                                        <th class="wrap-text">Error Details</th>
+                                        <th>Your Decision</th>
+                                        <th>Date Finalized</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="finalized-errors-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading decision history...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -896,6 +909,7 @@ document.addEventListener('click', function(e){
         let notifications = [];
         let directEscalations = [];
         let appealedErrors = [];
+        let finalizedDecisions = []; // *** ADDED ***
         let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
@@ -954,8 +968,7 @@ document.addEventListener('click', function(e){
 
 
         // Initialize the application
-        
-async function initApp() {
+        async function initApp() {
             try {
                 showToast('Loading Senior Dashboard...', 'info');
                 const user = await getCurrentUser();
@@ -967,11 +980,8 @@ async function initApp() {
                 currentUser = { ...user, ...profile };
                 
                 updateUserInterface();
-
-                // 1. قم بإنشاء المخططات أولاً كهياكل فارغة
                 initCharts(); 
 
-                // 2. الآن قم بتحميل البيانات لملء المخططات الموجودة بالفعل
                 await Promise.all([
                     loadPendingErrors(),
                     loadUnassignedOrders(),
@@ -980,10 +990,11 @@ async function initApp() {
                     loadCompanyEmployees(),
                     loadTeamSchedule(),
                     loadPerformanceMetrics(),
-                    loadTeamPerformanceChart(), // الآن سيجد المخطط ليعمل عليه
+                    loadTeamPerformanceChart(),
                     loadNotifications(),
                     loadDirectEscalations(),
-                    loadAppealedErrors()
+                    loadAppealedErrors(),
+                    loadFinalizedDecisions() // *** ADDED ***
                 ]);
 
                 showToast('Senior Dashboard loaded successfully', 'success');
@@ -995,17 +1006,12 @@ async function initApp() {
       async function loadTeamPerformanceChart() {
             try {
                 const performanceData = await getTeamPerformance();
-                
-                // قم بتحديث الرسم البياني بالبيانات الحقيقية
                 if (teamPerformanceChart && performanceData.length > 0) {
                     const labels = performanceData.map(p => p.agent_name);
-                    
-                    // FIX: Parse the accuracy value as a float and format it to 1 decimal place.
                     const data = performanceData.map(p => parseFloat(p.accuracy).toFixed(1));
-
                     teamPerformanceChart.data.labels = labels;
                     teamPerformanceChart.data.datasets[0].data = data;
-                    teamPerformanceChart.update(); // This command redraws the chart with the new data.
+                    teamPerformanceChart.update();
                 }
             } catch (error) {
                 console.error('Error loading team performance chart:', error);
@@ -1027,7 +1033,6 @@ async function initApp() {
         async function loadDirectEscalations() {
             try {
                 if (typeof getEscalations === 'function') {
-                    // نجلب التصعيدات الموجهة للسينيور الحالي
                     const escalations = await getEscalations(currentUser.id);
                     directEscalations = escalations || [];
                     renderDirectEscalationsTable();
@@ -1060,30 +1065,24 @@ async function initApp() {
         const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
-        
-        async function loadAppealedErrors() {
-            await loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
-        }
+        const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
+        const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions); // *** ADDED ***
 
         async function loadPerformanceMetrics() {
-    try {
-        // الدالة الآن تعيد كل البيانات التي نحتاجها مباشرة
-        performanceMetrics = await getPerformanceMetrics(); 
-        
-        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
-        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime || 0} mins`;
-        
-    } catch (error) {
-        console.error('Error loading performance metrics:', error);
-        // يمكنك هنا عرض قيم افتراضية في حالة حدوث خطأ
-        document.getElementById('reviews-today').textContent = 'N/A';
-        document.getElementById('pending-escalations').textContent = 'N/A';
-        document.getElementById('team-accuracy').textContent = 'N/A';
-        document.getElementById('avg-resolution-time').textContent = 'N/A';
-    }
-}
+            try {
+                performanceMetrics = await getPerformanceMetrics(); 
+                document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
+                document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
+                document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
+                document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime || 0} mins`;
+            } catch (error) {
+                console.error('Error loading performance metrics:', error);
+                document.getElementById('reviews-today').textContent = 'N/A';
+                document.getElementById('pending-escalations').textContent = 'N/A';
+                document.getElementById('team-accuracy').textContent = 'N/A';
+                document.getElementById('avg-resolution-time').textContent = 'N/A';
+            }
+        }
 
         // Render Functions
         function renderEscalationsTable(errorsToRender = pendingErrors) {
@@ -1126,6 +1125,31 @@ async function initApp() {
             `).join('');
         }
 
+        // *** NEW FUNCTION ***
+        function renderFinalizedDecisionsTable() {
+            const tableBody = document.getElementById('finalized-errors-table-body');
+            if (finalizedDecisions.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No decision history found.</td></tr>`;
+                return;
+            }
+            tableBody.innerHTML = finalizedDecisions.map(decision => `
+                <tr style="opacity: 0.8;">
+                    <td>${decision.order_id || 'N/A'}</td>
+                    <td>${decision.employee_username || 'Unknown'}</td>
+                    <td class="wrap-text">${decision.error_details || 'N/A'}</td>
+                    <td>
+                        <span class="status-badge status-${decision.status}">
+                            ${decision.status}
+                        </span>
+                    </td>
+                    <td>${formatDateTime(decision.finalized_at)}</td>
+                    <td>
+                        <button class="btn btn-secondary btn-sm">View</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
             const tableBody = document.getElementById('unassigned-table-body');
             if (ordersToRender.length === 0) {
@@ -1148,29 +1172,13 @@ async function initApp() {
 
         function renderAssignedOrdersTable(ordersToRender = assignedOrders) {
             const tableBody = document.getElementById('assigned-table-body');
-            const tableHead = tableBody.previousElementSibling;
-
-            if (tableHead.rows[0].cells.length < 7) {
-                tableHead.rows[0].innerHTML = `
-                    <th>Order ID</th>
-                    <th>Agent</th>
-                    <th>Status</th>
-                    <th>Date Assigned</th>
-                    <th>Review Time</th>
-                    <th>SLA</th>
-                    <th>Action</th>
-                `;
-            }
-
-             if (ordersToRender.length === 0) {
+            if (ordersToRender.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found.</td></tr>`;
-                 return;
+                return;
             }
-
             tableBody.innerHTML = ordersToRender.map(a => {
                 let reviewTime = 'N/A';
                 let slaStatus = '';
-
                 if (a.status === 'completed' && a.assigned_at && a.completed_at) {
                     const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
                     reviewTime = `${diffMinutes} min`;
@@ -1178,7 +1186,6 @@ async function initApp() {
                         ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                         : `<span class="status-badge status-completed">On Time</span>`;
                 }
-
                 return `
                     <tr>
                         <td>${a.orders?.order_id || 'N/A'}</td>
@@ -1199,11 +1206,8 @@ async function initApp() {
         function renderDirectEscalationsTable() {
             const tableBody = document.getElementById('direct-escalations-table-body');
             if (!tableBody) return;
-
-            const searchTermInput = document.getElementById('direct-escalation-search');
-            const statusFilterInput = document.getElementById('direct-escalation-status-filter');
-            const searchTerm = searchTermInput ? searchTermInput.value.toLowerCase() : '';
-            const statusFilter = statusFilterInput ? statusFilterInput.value : 'all';
+            const searchTerm = document.getElementById('direct-escalation-search').value.toLowerCase();
+            const statusFilter = document.getElementById('direct-escalation-status-filter').value;
 
             const escalationsToRender = directEscalations.filter(e => {
                 const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
@@ -1222,9 +1226,7 @@ async function initApp() {
                 const escalatedBy = escalation.escalated_by?.name || 'Unknown';
                 const reason = escalation.notes || 'No reason provided.';
                 const date = formatDateTime(escalation.escalated_at);
-                
                 let statusBadge, actionContent;
-                
                 if (escalation.status === 'resolved') {
                     statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
                     actionContent = `<button class="btn btn-secondary btn-sm view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
@@ -1232,7 +1234,6 @@ async function initApp() {
                     statusBadge = `<span class="status-badge status-pending">Pending</span>`;
                     actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
                 }
-                
                 const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
 
                 return `
@@ -1250,20 +1251,14 @@ async function initApp() {
         
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
-            
             const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
             const teamToDisplay = teamMembers.filter(m => teamRoles.includes(m.role));
-            
             if (teamToDisplay.length === 0) {
-                grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`;
-                return;
+                grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`; return;
             }
-            
             grid.innerHTML = teamToDisplay.map(member => `
                 <div class="team-member-card">
-                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">
-                        ${getInitials(member.name)}
-                    </div>
+                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">${getInitials(member.name)}</div>
                     <div class="team-member-name">${member.name}</div>
                     <div class="team-member-role">${member.role}</div>
                 </div>
@@ -1273,8 +1268,7 @@ async function initApp() {
         function renderCompanyEmployeesTable(employeesToRender = companyEmployees) {
             const tableBody = document.getElementById('company-employees-table-body');
             if(employeesToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">🏢 No company employees found.</td></tr>`;
-                return;
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">🏢 No company employees found.</td></tr>`; return;
             }
             tableBody.innerHTML = employeesToRender.map(emp => `
                 <tr>
@@ -1292,17 +1286,14 @@ async function initApp() {
             const tableBody = document.getElementById('schedule-table-body');
             const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'helper');
             if (qualityTeam.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`;
-                return;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`; return;
             }
-
             const scheduleMap = {};
             teamSchedule.forEach(s => {
                 if (!scheduleMap[s.user_id]) scheduleMap[s.user_id] = {};
                 const dayOfWeek = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
                 scheduleMap[s.user_id][dayOfWeek] = s.shift_type;
             });
-            
             tableBody.innerHTML = qualityTeam.map(agent => {
                 let cells = '';
                 const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon, Tue, ..., Sun
@@ -1329,29 +1320,19 @@ async function initApp() {
 
         const populateAgentSelect = () => {
             const select = document.getElementById('agent-select');
-            
             const assignableRoles = ['quality', 'helper'];
             const assignableMembers = teamMembers.filter(m => assignableRoles.includes(m.role));
-
             if (assignableMembers.length === 0) {
-                select.innerHTML = '<option value="">No agents available</option>';
-                return;
+                select.innerHTML = '<option value="">No agents available</option>'; return;
             }
-
-            select.innerHTML = assignableMembers.map(a => 
-                `<option value="${a.id}">${a.name} (${a.role})</option>`
-            ).join('');
+            select.innerHTML = assignableMembers.map(a => `<option value="${a.id}">${a.name} (${a.role})</option>`).join('');
         };
 
 
         // Modal Handlers
         function openFinalDecisionModal(errorId) {
             const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-            if (!error) {
-                console.error("Could not find appealed error with ID:", errorId);
-                return;
-            }
-            
+            if (!error) { console.error("Could not find appealed error with ID:", errorId); return; }
             document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
                 <div class="escalation-details">
@@ -1373,10 +1354,8 @@ async function initApp() {
             const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
             if (!assignment) return;
             const review = assignment.quality_reviews?.[0];
-
             const body = document.getElementById('view-escalation-body');
             document.querySelector('#view-escalation-modal .modal-title').textContent = `Review Details: ${assignment.orders?.order_id || ''}`;
-
             if (review) {
                 body.innerHTML = `
                     <div class="detail-item"><strong>Reviewed By</strong><span>${assignment.users?.name || ''}</span></div>
@@ -1395,7 +1374,6 @@ async function initApp() {
             form.reset();
             const modalTitle = document.getElementById('employee-modal-title');
             document.getElementById('employee-id').value = employeeId || '';
-
             if (employeeId) {
                 const employee = companyEmployees.find(e => e.id.toString() === employeeId);
                 if (employee) {
@@ -1417,29 +1395,22 @@ async function initApp() {
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
             document.getElementById('shift-modal-member-name').textContent = userName;
             document.getElementById('shift-modal-day-name').textContent = days[day];
-            
             const saveBtn = document.getElementById('save-shift-btn');
             saveBtn.dataset.userId = userId;
             saveBtn.dataset.day = day;
-
             showModal('edit-shift-modal');
         }
 
         // Action Handlers
         async function handleOldFinalDecision(errorId, decision) {
             const notes = document.getElementById('decision-notes').value;
-            if (!notes) {
-                showToast('Please provide your decision notes.', 'warning');
-                return;
-            }
+            if (!notes) { showToast('Please provide your decision notes.', 'warning'); return; }
             try {
                 await submitFinalDecision(errorId, currentUser.id, decision, notes);
                 showToast(`Response ${decision} successfully`, 'success');
                 hideModal('final-decision-modal');
                 await loadPendingErrors();
-            } catch (error) {
-                showToast('Failed to submit decision', 'error');
-            }
+            } catch (error) { showToast('Failed to submit decision', 'error'); }
         }
         
         async function handleEmployeeFormSubmit(event) {
@@ -1452,7 +1423,6 @@ async function initApp() {
                 department: document.getElementById('employee-department').value,
                 title: document.getElementById('employee-title').value,
             };
-
             try {
                 if(employeeId) {
                     await updateCompanyEmployee(employeeId, employeeData);
@@ -1463,54 +1433,41 @@ async function initApp() {
                 }
                 hideModal('employee-modal');
                 await loadCompanyEmployees();
-            } catch (error) {
-                showToast(`Failed to save employee: ${error.message}`, 'error');
-            }
+            } catch (error) { showToast(`Failed to save employee: ${error.message}`, 'error'); }
         }
 
         async function handleSaveShift() {
             const { userId, day } = document.getElementById('save-shift-btn').dataset;
             const shiftType = document.getElementById('shift-select').value;
-            
             const today = new Date();
             const currentDay = today.getDay(); 
             const distance = day - currentDay;
             const targetDate = new Date(today);
             targetDate.setDate(targetDate.getDate() + distance);
             const shiftDate = targetDate.toISOString().split('T')[0];
-
             const scheduleData = { user_id: userId, shift_date: shiftDate, shift_type: shiftType };
-
             try {
                 await updateTeamSchedule([scheduleData]); 
                 showToast('Schedule updated successfully', 'success');
                 hideModal('edit-shift-modal');
                 await loadTeamSchedule(); 
-            } catch (error) {
-                showToast(`Failed to update schedule: ${error.message}`, 'error');
-            }
+            } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
         }
 
         function handleCsvImport(event) {
             const file = event.target.files[0];
             if (!file) return;
-
             const reader = new FileReader();
             reader.onload = async (e) => {
                 try {
                     const text = e.target.result;
                     const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
                     if (lines.length < 2) throw new Error("CSV file must have a header and at least one data row.");
-                    
                     const header = lines[0].split(',').map(h => h.trim());
                     const data = lines.slice(1).map(line => {
                         const values = line.split(',');
-                        return header.reduce((obj, nextKey, index) => {
-                            obj[nextKey] = values[index]?.trim();
-                            return obj;
-                        }, {});
+                        return header.reduce((obj, nextKey, index) => { obj[nextKey] = values[index]?.trim(); return obj; }, {});
                     });
-
                     showToast(`Importing ${data.length} orders...`, 'info');
                     await importOrdersFromCSV(data);
                     showToast('Orders imported successfully!', 'success');
@@ -1528,20 +1485,7 @@ async function initApp() {
         function initCharts() {
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
-                teamPerformanceChart = new Chart(teamCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: [], // <-- فارغ في البداية
-                        datasets: [{
-                            label: 'Accuracy Rate (%)',
-                            data: [], // <-- فارغ في البداية
-                            backgroundColor: 'rgba(0, 191, 255, 0.6)',
-                            borderWidth: 0,
-                            borderRadius: 4
-                        }]
-                    },
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } }
-                });
+                teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
             if (trendsCtx) errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
@@ -1573,37 +1517,14 @@ async function initApp() {
                 });
             });
             
-            const notificationBtn = document.getElementById('notification-btn');
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', (e) => { 
-                    e.stopPropagation(); 
-                    const dropdown = document.getElementById('notification-dropdown');
-                    if (dropdown) dropdown.classList.toggle('show');
-                });
-            }
+            document.getElementById('notification-btn')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown')?.classList.toggle('show'); });
+            document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown')?.classList.remove('show'); } });
+            document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => { const modal = btn.closest('.modal-overlay'); if (modal) hideModal(modal.id); }); });
             
-            document.addEventListener('click', (e) => { 
-                if (!e.target.closest('.notification-bell')) { 
-                    const dropdown = document.getElementById('notification-dropdown');
-                    if (dropdown) dropdown.classList.remove('show');
-                } 
-            });
-
-            document.querySelectorAll('.modal-close-btn').forEach(btn => { 
-                btn.addEventListener('click', () => {
-                    const modal = btn.closest('.modal-overlay');
-                    if (modal) hideModal(modal.id);
-                }); 
-            });
-            
-            // Event Delegation for dynamically created buttons
             document.body.addEventListener('click', function(event) {
-                const target = event.target.closest('button'); // More robustly find the button
+                const target = event.target.closest('button');
                 if (!target) return;
                 
-                // IMPORTANT: The .view-assigned-btn is handled by the 'injected handlers' script block.
-                // We do NOT handle it here to avoid the double-opening bug.
-
                 if (target.classList.contains('final-decision-btn')) {
                     openFinalDecisionModal(target.dataset.errorId);
                 } else if (target.classList.contains('review-response-btn')) {
@@ -1656,115 +1577,86 @@ async function initApp() {
             const scheduleTable = document.getElementById('schedule-table');
             const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
             const saveScheduleChangesBtn = document.getElementById('save-schedule-changes-btn');
-            const addScheduleMemberBtn = document.getElementById('add-schedule-member-btn');
-            const importOrdersBtn = document.getElementById('import-orders-btn');
-            const csvFileInput = document.getElementById('csv-file-input');
-            const addEmployeeBtn = document.getElementById('add-employee-btn');
-            const employeeForm = document.getElementById('employee-form');
-            const saveShiftBtn = document.getElementById('save-shift-btn');
-            const assignBtn = document.getElementById('assign-btn');
-            const selectAllCheckbox = document.getElementById('select-all-checkbox');
-            const directEscalationSearch = document.getElementById('direct-escalation-search');
-            const directEscalationStatusFilter = document.getElementById('direct-escalation-status-filter');
-            const logoutBtn = document.getElementById('logout-btn');
-            const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
-
+            
             if (editScheduleBtn) {
-                editScheduleBtn.addEventListener('click', () => {
-                    isScheduleEditMode = true;
-                    if (scheduleTable) scheduleTable.classList.add('edit-mode');
-                    editScheduleBtn.style.display = 'none';
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'inline-flex';
-                    showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
-                });
+                editScheduleBtn.addEventListener('click', () => { isScheduleEditMode = true; scheduleTable?.classList.add('edit-mode'); editScheduleBtn.style.display = 'none'; scheduleEditControls.style.display = 'inline-flex'; showToast('Edit mode enabled. Click a cell to change the shift.', 'info'); });
             }
-
             if (cancelScheduleBtn) {
-                cancelScheduleBtn.addEventListener('click', () => {
-                    isScheduleEditMode = false;
-                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
-                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
-                    showToast('Edit mode disabled. Changes were not saved.', 'warning');
-                    loadTeamSchedule(); 
-                });
+                cancelScheduleBtn.addEventListener('click', () => { isScheduleEditMode = false; scheduleTable?.classList.remove('edit-mode'); scheduleEditControls.style.display = 'none'; editScheduleBtn.style.display = 'inline-flex'; showToast('Edit mode disabled. Changes were not saved.', 'warning'); loadTeamSchedule(); });
             }
-
             if (saveScheduleChangesBtn) {
-                saveScheduleChangesBtn.addEventListener('click', () => {
-                    isScheduleEditMode = false;
-                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
-                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
-                    showToast('Schedule changes saved successfully!', 'success');
-                });
+                saveScheduleChangesBtn.addEventListener('click', () => { isScheduleEditMode = false; scheduleTable?.classList.remove('edit-mode'); scheduleEditControls.style.display = 'none'; editScheduleBtn.style.display = 'inline-flex'; showToast('Schedule changes saved successfully!', 'success'); });
             }
             
-            if (addScheduleMemberBtn) addScheduleMemberBtn.addEventListener('click', () => { showToast('Please use the "Company Employees" page to add new members.', 'info'); openEmployeeModal(); });
-            if (importOrdersBtn) importOrdersBtn.addEventListener('click', () => csvFileInput?.click());
-            if (csvFileInput) csvFileInput.addEventListener('change', handleCsvImport);
-            if (addEmployeeBtn) addEmployeeBtn.addEventListener('click', () => openEmployeeModal());
-            if (employeeForm) employeeForm.addEventListener('submit', handleEmployeeFormSubmit);
-            if (saveShiftBtn) saveShiftBtn.addEventListener('click', handleSaveShift);
-
-            if (assignBtn) {
-                assignBtn.addEventListener('click', async () => {
-                    const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-                    const agentSelect = document.getElementById('agent-select');
-                    const agentId = agentSelect ? agentSelect.value : null;
-                    if (selectedOrders.length === 0 || !agentId) { showToast('Please select orders and an agent', 'warning'); return; }
-                    try {
-                        await assignOrders(selectedOrders, agentId, currentUser.id);
-                        showToast(`${selectedOrders.length} orders assigned`, 'success');
-                        await loadUnassignedOrders();
-                        await loadAssignedOrders();
-                    } catch (error) { showToast('Failed to assign orders', 'error'); }
-                });
-            }
+            document.getElementById('add-schedule-member-btn')?.addEventListener('click', () => { showToast('Please use the "Company Employees" page to add new members.', 'info'); openEmployeeModal(); });
+            document.getElementById('import-orders-btn')?.addEventListener('click', () => document.getElementById('csv-file-input')?.click());
+            document.getElementById('csv-file-input')?.addEventListener('change', handleCsvImport);
+            document.getElementById('add-employee-btn')?.addEventListener('click', () => openEmployeeModal());
+            document.getElementById('employee-form')?.addEventListener('submit', handleEmployeeFormSubmit);
+            document.getElementById('save-shift-btn')?.addEventListener('click', handleSaveShift);
+            document.getElementById('assign-btn')?.addEventListener('click', async () => {
+                const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
+                const agentId = document.getElementById('agent-select')?.value;
+                if (selectedOrders.length === 0 || !agentId) { showToast('Please select orders and an agent', 'warning'); return; }
+                try {
+                    await assignOrders(selectedOrders, agentId, currentUser.id);
+                    showToast(`${selectedOrders.length} orders assigned`, 'success');
+                    await loadUnassignedOrders(); await loadAssignedOrders();
+                } catch (error) { showToast('Failed to assign orders', 'error'); }
+            });
             
-            if (selectAllCheckbox) selectAllCheckbox.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
-       
-            if (directEscalationSearch) directEscalationSearch.addEventListener('input', () => renderDirectEscalationsTable());
-            if (directEscalationStatusFilter) directEscalationStatusFilter.addEventListener('change', () => renderDirectEscalationsTable());
-
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showModal('logout-confirm-modal');
-                });
-            }
-
-            if (confirmLogoutBtn) {
-                confirmLogoutBtn.addEventListener('click', async () => {
-                    try {
-                        showToast('Logging out...', 'info');
-                        // Assuming a logout function exists, like supabase.auth.signOut()
-                        // const { error } = await supabase.auth.signOut();
-                        // if (error) throw error;
-                        hideModal('logout-confirm-modal');
-                        setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
-                    } catch (error) {
-                        showToast(`Logout failed: ${error.message}`, 'error');
-                        hideModal('logout-confirm-modal');
-                    }
-                });
-            }
-
+            document.getElementById('select-all-checkbox')?.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
+            document.getElementById('direct-escalation-search')?.addEventListener('input', () => renderDirectEscalationsTable());
+            document.getElementById('direct-escalation-status-filter')?.addEventListener('change', () => renderDirectEscalationsTable());
+            document.getElementById('logout-btn')?.addEventListener('click', (e) => { e.preventDefault(); showModal('logout-confirm-modal'); });
+            document.getElementById('confirm-logout-btn')?.addEventListener('click', async () => {
+                try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
+                hideModal('logout-confirm-modal');
+            });
         });
 
+        // *** UPDATED/REPLACED FUNCTION ***
         window.handleFinalDecision = async (errorId, decision) => {
            try {
-                // This assumes you have access to a 'supabase' client instance
                const { error } = await window.supabase
                    .from('errors')
-                   .update({ status: decision })
+                   .update({ status: decision }) // 'overturned' or 'closed'
                    .eq('id', errorId);
                
                if (error) throw error;
                
-               showToast(`Decision recorded successfully. Error is now ${decision}.`, 'success');
+               const user = await getCurrentUser();
+               await window.supabase.from('final_decisions').insert({
+                   error_id: errorId,
+                   decided_by_id: user.id,
+                   decision: decision,
+                   notes: 'Decision made via Senior Dashboard.'
+               });
+               
+               // --- NEW: Send notification to agent ---
+                const { data: errorData, error: fetchError } = await window.supabase
+                    .from('errors')
+                    .select('employee_id, quality_reviews(order_assignments(orders(order_id)))')
+                    .eq('id', errorId)
+                    .single();
+
+                if (fetchError) throw fetchError;
+                
+                if (errorData) {
+                    const employeeId = errorData.employee_id;
+                    const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+                    const notificationMessage = `Your appeal for order ${orderId} has been reviewed. The decision was: ${decision}.`;
+                    
+                    await createNotification(employeeId, notificationMessage, 'info');
+                }
+               
+               showToast(`Decision recorded successfully.`, 'success');
                hideModal('final-decision-modal');
-               await loadAppealedErrors(); // Reload the list
+
+               await Promise.all([
+                   loadAppealedErrors(),
+                   loadFinalizedDecisions()
+               ]);
                
            } catch (error) {
                 console.error("Error in handleFinalDecision:", error);
@@ -1772,228 +1664,8 @@ async function initApp() {
            }
        }
 
-       // Make the old function available to the inline onclick attributes
        window.handleOldFinalDecision = handleOldFinalDecision;
 
     </script>
-
-<!-- START: Added Modals (DO NOT RENAME existing classes/ids elsewhere) -->
-<!-- View Assignment Modal -->
-<div class="modal-overlay" id="view-assignment-modal" style="display:none;">
-  <div class="modal-box" style="max-width: 600px;">
-    <div class="modal-header" style="padding-bottom: 0; border: none;">
-      <h3 class="modal-title">Assignment Details</h3>
-      <button class="modal-close-btn" data-modal-id="view-assignment-modal">×</button>
-    </div>
-    <div class="modal-body" id="view-assignment-body"></div>
-    <div class="modal-footer" style="padding-top: 0; border: none;">
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-assignment-modal">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Reassign Modal -->
-<div class="modal-overlay" id="reassign-modal" style="display:none;">
-  <div class="modal-box" style="max-width: 500px;">
-    <div class="modal-header">
-      <h3 class="modal-title">Reassign</h3>
-      <button class="modal-close-btn" data-modal-id="reassign-modal">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="color: var(--text-muted-color); margin-bottom: 1.5rem; font-size: 0.9rem;">
-          Choose a new Quality Agent or Helper to take over this assignment. The order will be moved to their queue immediately.
-      </p>
-      <div class="form-group">
-        <label for="reassign-to-select">Select user to assign to</label>
-        <select id="reassign-to-select"></select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" id="reassign-confirm-btn">Confirm</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="reassign-modal">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Review Escalation Modal -->
-<div class="modal-overlay" id="review-escalation-modal" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 class="modal-title">Review Escalation</h3>
-      <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Your Feedback</label>
-        <textarea id="review-feedback-text" placeholder="Write your feedback here..." rows="6" style="width:100%;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-success" id="resolve-escalation-confirm-btn">Resolve & Send Feedback</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- View Inquiry Modal -->
-<div class="modal-overlay" id="view-inquiry-modal" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 class="modal-title">Inquiry Response</h3>
-      <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
-    </div>
-    <div class="modal-body" id="view-inquiry-body" style="white-space:pre-wrap;"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Small utility styles for modals (scoped local) -->
-<style>
-.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:2000; }
-.modal-box{ background:var(--card-bg); color: var(--text-color); width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; border: 1px solid var(--border-color); }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border-color); }
-.modal-title{ margin:0; font-size:16px; }
-.modal-body{ padding:16px; max-height:60vh; overflow:auto; }
-.modal-footer{ padding:12px 16px; border-top:1px solid var(--border-color); display:flex; gap:8px; justify-content:flex-end; }
-.modal-close-btn{ background:none; border:0; font-size:20px; cursor:pointer; color: var(--text-muted-color); }
-.btn{ padding:8px 12px; border-radius:6px; cursor:pointer; font-weight: 600; }
-.btn-primary{ background:var(--primary-color); color:#000; border: none; }
-.btn-success{ background:var(--success-color); color:#fff; border: none; }
-.btn-secondary{ background:#333; color: #fff; border: 1px solid var(--border-color); }
-.form-group label{ display:block; margin-bottom:6px; font-weight:600; }
-#review-feedback-text, #reassign-to-select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
-</style>
-<!-- END: Added Modals -->
-
-
-<script>
-/* START: injected handlers */
-document.addEventListener('DOMContentLoaded', function(){
-  // resolve escalation confirm
-  const resolveBtn = document.getElementById('resolve-escalation-confirm-btn');
-  if(resolveBtn){
-    resolveBtn.addEventListener('click', async function(){
-      const escalationModal = document.getElementById('review-escalation-modal');
-      const escalationId = escalationModal ? escalationModal.dataset.escalationId : null;
-      const feedbackText = document.getElementById('review-feedback-text');
-      const feedback = feedbackText ? feedbackText.value.trim() : null;
-      if(!feedback){ alert('Please provide feedback before resolving'); return; }
-      try{
-        if(typeof resolveEscalation === 'function'){
-          await resolveEscalation(escalationId, feedback);
-        }
-        hideModal('review-escalation-modal');
-        // reload lists if functions exist
-        if(typeof loadDirectEscalations === 'function') loadDirectEscalations();
-        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
-      }catch(err){
-        console.error(err);
-        alert('Failed to resolve escalation');
-      }
-    });
-  }
-
-  // reassign confirm
-  const reassignBtn = document.getElementById('reassign-confirm-btn');
-  if(reassignBtn){
-    reassignBtn.addEventListener('click', async function(){
-      const assignmentId = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
-      const newAgentSelect = document.getElementById('reassign-to-select');
-      const newAgentId = newAgentSelect ? newAgentSelect.value : null;
-      if(!newAgentId){ alert('Please choose a user to reassign to'); return; }
-      try{
-        if(typeof assignOrders === 'function'){
-          await assignOrders([], newAgentId); // adapt signature if needed
-        } else {
-          console.warn('assignOrders function not found');
-        }
-        hideModal('reassign-modal');
-        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
-      }catch(err){
-        console.error(err);
-        alert('Failed to reassign');
-      }
-    });
-  }
-
-  // hook generic "review escalation" buttons (buttons with class review-escalation-btn)
-  document.body.addEventListener('click', function(event) {
-    if (event.target.classList.contains('review-escalation-btn')) {
-        const id = event.target.dataset.escalationId || event.target.getAttribute('data-escalation-id');
-        const reviewModal = document.getElementById('review-escalation-modal');
-        if (reviewModal) {
-            reviewModal.dataset.escalationId = id;
-            showModal('review-escalation-modal');
-        }
-    }
-  });
-
-
-  // hook view-assignment buttons to populate modal
-  document.body.addEventListener('click', function(event) {
-    if (event.target.classList.contains('view-assigned-btn')) { // Changed from .open-view-assignment-btn
-        const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
-        let body = document.getElementById('view-assignment-body');
-        if (!body) return;
-        body.innerHTML = 'Loading...';
-        let found = null;
-        try{
-            if(typeof assignedOrders !== 'undefined' && Array.isArray(assignedOrders)){
-            found = assignedOrders.find(a=>String(a.id)===String(id));
-            }
-            if(found){
-            const statusBadge = `<span class="status-badge status-${found.status||'default'}">${found.status||'N/A'}</span>`;
-            body.innerHTML = `<div class="escalation-details" style="gap: 12px;">
-                                <div class="detail-item"><strong>Order ID</strong><span>${(found.orders && found.orders.order_id) || 'N/A'}</span></div>
-                                <div class="detail-item"><strong>Assigned To</strong><span>${found.users?.name || 'N/A'}</span></div>
-                                <div class="detail-item"><strong>Status</strong><span>${statusBadge}</span></div>
-                                <div class="detail-item"><strong>Assignment ID</strong><span>${found.id}</span></div>
-                             </div>`;
-            } else {
-            body.innerHTML = 'Assignment details not found locally.';
-            }
-        }catch(e){ body.innerHTML = 'Error loading assignment details.'; console.error(e); }
-        showModal('view-assignment-modal');
-    }
-  });
-
-  // hook reassign placeholders that used showToast text replacements
-  document.body.addEventListener('click', function(event){
-    if(event.target.classList.contains('reassign-btn')){ // Changed from .open-reassign-assignment-btn
-        const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
-        const reassignSelect = document.getElementById('reassign-to-select');
-        const reassignConfirm = document.getElementById('reassign-confirm-btn');
-        if (!reassignSelect || !reassignConfirm) return;
-        
-        reassignSelect.innerHTML = '<option value="">Loading...</option>';
-        if(typeof teamMembers !== 'undefined' && Array.isArray(teamMembers)){
-            const assignableMembers = teamMembers.filter(m => m.role === 'quality' || m.role === 'helper');
-            reassignSelect.innerHTML = assignableMembers.map(m=>`<option value="${m.id}">${m.name} (${m.role})</option>`).join('');
-        } else {
-            reassignSelect.innerHTML = '<option value="">No users</option>';
-        }
-        reassignConfirm.dataset.assignmentId = id;
-        showModal('reassign-modal');
-    }
-  });
-
-  // hook view-inquiry buttons
-  document.body.addEventListener('click', function(event) {
-    if(event.target.classList.contains('open-view-inquiry-btn')){
-        const text = event.target.dataset.inquiryText || event.target.getAttribute('data-inquiry-text') || event.target.textContent || '';
-        const inquiryBody = document.getElementById('view-inquiry-body');
-        if (inquiryBody) {
-            inquiryBody.textContent = text;
-            showModal('view-inquiry-modal');
-        }
-    }
-  });
-
-});
-/* END: injected handlers */
-</script>
-
 </body>
 </html>
