@@ -49,7 +49,8 @@ document.addEventListener('click', function(e){
             addCompanyEmployee,
             updateCompanyEmployee,
             getEscalations,
-            resolveEscalation
+            resolveEscalation,
+            getTeamPerformance
             // getAppealedErrors has been removed from import to prevent crash
         } from './api-client.js';
         
@@ -75,6 +76,7 @@ document.addEventListener('click', function(e){
         window.updateCompanyEmployee = updateCompanyEmployee;
           window.getEscalations = getEscalations;
         window.resolveEscalation = resolveEscalation;
+        window.getTeamPerformance = getTeamPerformance;
     </script>
     <style>
         :root {
@@ -977,6 +979,7 @@ document.addEventListener('click', function(e){
                     loadCompanyEmployees(),
                     loadTeamSchedule(),
                     loadPerformanceMetrics(),
+                    loadTeamPerformanceChart(),
                     loadNotifications(),
                     loadDirectEscalations(),
                     loadAppealedErrors()
@@ -986,6 +989,24 @@ document.addEventListener('click', function(e){
             } catch (error) {
                 console.error('Error initializing app:', error);
                 showToast(`Initialization failed: ${error.message}`, 'error');
+            }
+        }
+
+        async function loadTeamPerformanceChart() {
+            try {
+                const performanceData = await getTeamPerformance();
+                
+                // قم بتحديث الرسم البياني بالبيانات الحقيقية
+                if (teamPerformanceChart && performanceData.length > 0) {
+                    const labels = performanceData.map(p => p.agent_name);
+                    const data = performanceData.map(p => p.accuracy);
+
+                    teamPerformanceChart.data.labels = labels;
+                    teamPerformanceChart.data.datasets[0].data = data;
+                    teamPerformanceChart.update();
+                }
+            } catch (error) {
+                console.error('Error loading team performance chart:', error);
             }
         }
 
@@ -1505,7 +1526,22 @@ document.addEventListener('click', function(e){
         // Charts
         function initCharts() {
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
-            if (teamCtx) teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: ['Team A', 'Team B', 'Team C', 'Team D'], datasets: [{ label: 'Accuracy Rate (%)', data: [95.2, 92.8, 97.1, 94.5], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
+            if (teamCtx) {
+                teamPerformanceChart = new Chart(teamCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: [], // <-- فارغ في البداية
+                        datasets: [{
+                            label: 'Accuracy Rate (%)',
+                            data: [], // <-- فارغ في البداية
+                            backgroundColor: 'rgba(0, 191, 255, 0.6)',
+                            borderWidth: 0,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } }
+                });
+            }
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
             if (trendsCtx) errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
             const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
