@@ -551,7 +551,7 @@ export async function getPendingErrors() {
           )
         ),
         error_responses (*),
-        users!errors_employee_id_fkey (name, email)
+        employee:employees (employee_name) // <-- التعديل هنا
       `)
       .eq('status', 'pending_response')
       .order('created_at', { ascending: false });
