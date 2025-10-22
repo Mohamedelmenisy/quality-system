@@ -1026,7 +1026,7 @@ document.addEventListener('click', function(e){
             tableBody.innerHTML = errorsToRender.map(error => `
                 <tr>
                     <td>${error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</td>
-                    <td>${error.users?.name || 'Unknown'}</td>
+                     <td>${error.employee?.employee_name || 'Unknown'}</td>
                     <td>${error.quality_reviews?.modified_reason || 'Unknown'}</td>
                     <td class="wrap-text">${(error.error_responses?.[0]?.response_text || 'No response').substring(0, 100)}...</td>
                     <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
