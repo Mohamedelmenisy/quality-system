@@ -96,10 +96,18 @@ document.addEventListener('click', function(e){
             --yellow-bg: rgba(255, 193, 7, 0.1);
             --border-radius-base: 0.75rem;
         }
+        body.light-mode {
+            --bg-color: #f4f7fa;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e0e0;
+        }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; transition: background-color 0.3s; }
         .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { height: 32px; fill: var(--primary-color); }
         .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
@@ -109,9 +117,11 @@ document.addEventListener('click', function(e){
         .sidebar-nav { list-style:none; padding:0; margin:0; }
         .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; }
         .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
+        body.light-mode .sidebar-nav a:hover, body.light-mode .sidebar-nav a.active { color: white; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
         .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
+        body.light-mode .avatar-initials { color: white; }
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
         .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; display: flex; flex-direction: column; }
@@ -126,7 +136,7 @@ document.addEventListener('click', function(e){
         #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
         #welcome-message p { color: var(--text-muted); }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; }
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; transition: background-color 0.3s; }
         .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
         .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
         .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
@@ -135,7 +145,7 @@ document.addEventListener('click', function(e){
         .grid-col-span-8 { grid-column: span 8; }
         .grid-col-span-4 { grid-column: span 4; }
         .grid-col-span-6 { grid-column: span 6; }
-        .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); }
+        .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s; }
         .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
         .chart-container { position: relative; height: 350px; width: 100%; }
         .activity-feed { list-style: none; }
@@ -149,8 +159,10 @@ document.addEventListener('click', function(e){
         table { width: 100%; border-collapse: collapse; }
         th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
         th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: #2c2c2c; }
+        body.light-mode th { background-color: #f5f5f5; }
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover { background-color: #2c2c2c; }
+        body.light-mode tbody tr:hover { background-color: #f0f0f0; }
         .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
         .status-new { background-color: var(--primary-color); color: #000; }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
@@ -158,8 +170,11 @@ document.addEventListener('click', function(e){
         .status-error { background-color: var(--red-bg); color: var(--red); }
         .status-escalated { background-color: var(--yellow-bg); color: var(--yellow); }
         .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 5px 10px; border-radius: 6px; margin-right: 5px; transition: background-color 0.3s ease; }
+        body.light-mode .action-btn { background: #e0e0e0; color: #333; }
         .action-btn:hover { background: #444; }
+        body.light-mode .action-btn:hover { background: #d0d0d0; }
         .action-btn.primary { background: var(--primary-color); color: #000; }
+        body.light-mode .action-btn.primary { color: white; }
         .action-btn.primary:hover { background: var(--primary-hover); }
         .action-btn.danger { background: var(--red); color: white; }
         .action-btn.danger:hover { background: #c82333; }
@@ -167,6 +182,7 @@ document.addEventListener('click', function(e){
         .action-btn.warning:hover { background: #e0a800; }
         .search-input-container { position: relative; }
         .search-input-container input[type="search"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; width: 250px; }
+        body.light-mode .search-input-container input[type="search"] { background: #fff; }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; position: relative; }
         .notification-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
@@ -184,11 +200,15 @@ document.addEventListener('click', function(e){
         .filter-group { display: flex; align-items: center; gap: 0.5rem; }
         .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); margin-right: 0.25rem; }
         .filter-bar select, .filter-bar input[type="date"] { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        body.light-mode .filter-bar select, body.light-mode .filter-bar input[type="date"] { background: #fff; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: background-color 0.3s; }
         .btn-primary { background: var(--primary-color); color: #000; }
+        body.light-mode .btn-primary { color: white; }
         .btn-primary:hover { background: var(--primary-hover); }
         .btn-secondary { background: #333; color: white; }
+        body.light-mode .btn-secondary { background: #e0e0e0; color: #333; }
         .btn-secondary:hover { background: #444; }
+        body.light-mode .btn-secondary:hover { background: #d0d0d0; }
         .btn-danger { background: var(--red); color: white; }
         .btn-danger:hover { background: #c82333; }
         .btn-warning { background-color: var(--yellow); color: black; }
@@ -201,12 +221,14 @@ document.addEventListener('click', function(e){
         .modal-title { font-size: 1.25rem; font-weight: 700; }
         .modal-close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; }
         .detail-item { background: #2c2c2c; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; }
+        body.light-mode .detail-item { background: #f5f5f5; }
         .detail-item strong { display: block; color: var(--primary-color); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;}
         .detail-item p { margin: 0; font-size: 1rem; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group textarea, .form-group select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
+        body.light-mode .form-group input, body.light-mode .form-group textarea, body.light-mode .form-group select { background: #fff; }
         .form-group textarea { min-height: 120px; resize: vertical; }
         .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
         .settings-layout { display: flex; gap: 2rem; }
@@ -214,25 +236,30 @@ document.addEventListener('click', function(e){
         .settings-nav ul { list-style: none; padding: 0; }
         .settings-nav a { display: block; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-muted); border-radius: 8px; font-weight: 500; margin-bottom: 5px; }
         .settings-nav a:hover, .settings-nav a.active { background-color: #2c2c2c; color: var(--text-color); }
+        body.light-mode .settings-nav a:hover, body.light-mode .settings-nav a.active { background-color: #eef2f9; color: var(--primary-color); }
         .settings-content { flex-grow: 1; }
         .setting-card { background-color: #222; padding: 1.5rem; border-radius: var(--border-radius-base); }
+        body.light-mode .setting-card { background-color: #f8f9fa; }
         .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
         .setting-item:last-child { border-bottom: none; }
         .toggle-switch .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .toggle-switch .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3c3c3c; transition: .4s; border-radius: 24px; }
+        body.light-mode .slider { background-color: #ccc; }
         .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--primary-color); }
         input:checked + .slider:before { transform: translateX(20px); }
         .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
         .team-member-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
         .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
+        body.light-mode .team-member-avatar-initials { color: white; }
         .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
         .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
         .schedule-table-container { overflow-x: auto; }
         .schedule-table { width: 100%; border-collapse: collapse; text-align: center; }
         .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
         .schedule-table thead th { background-color: #2c2c2c; font-weight: 600; }
+        body.light-mode .schedule-table thead th { background-color: #f5f5f5; }
         .schedule-table .member-name { font-weight: 600; text-align: left; }
         .schedule-table .shift-cell { cursor: pointer; transition: background-color 0.2s ease; }
         .schedule-table.edit-mode .shift-cell { background-color: rgba(0, 191, 255, 0.1); }
@@ -264,8 +291,10 @@ document.addEventListener('click', function(e){
         .inquiry-badge { background: var(--yellow-bg); color: var(--yellow); padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px; }
         .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
         .payment-card { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        body.light-mode .payment-card { background: #f5f5f5; }
         .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
         .main-footer { margin-top: auto; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
+        #help .card { display: flex; align-items: center; justify-content: center; min-height: 400px; text-align: center;}
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -302,6 +331,10 @@ document.addEventListener('click', function(e){
         border-radius: 1rem; /* Slightly larger border radius */
         max-width: 650px; /* A bit wider for better spacing */
     }
+    body.light-mode #review-escalation-modal .modal-box {
+        background: #fff;
+        border: 1px solid #ccc;
+    }
 
     #review-escalation-modal .modal-header {
         border-bottom: 1px solid var(--border-color);
@@ -337,6 +370,9 @@ document.addEventListener('click', function(e){
         border-radius: 8px; /* Rounded corners for detail items */
         margin-bottom: 0; /* Remove margin as we use gap now */
     }
+    body.light-mode #review-escalation-modal .detail-item {
+        background: #f5f5f5;
+    }
 
     #review-escalation-modal .detail-item strong {
         font-size: 0.8rem;
@@ -363,11 +399,18 @@ document.addEventListener('click', function(e){
         padding: 1rem;
         transition: all 0.3s ease;
     }
+    body.light-mode #review-escalation-modal .form-group textarea {
+        background-color: #fff;
+        border-color: #ccc;
+    }
 
     #review-escalation-modal .form-group textarea:focus {
         border-color: var(--primary-color);
         box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2); /* Focus glow effect */
         background-color: #222;
+    }
+    body.light-mode #review-escalation-modal .form-group textarea:focus {
+        background-color: #fff;
     }
 
     #review-escalation-modal .modal-footer {
@@ -377,6 +420,9 @@ document.addEventListener('click', function(e){
         border-bottom-left-radius: 1rem; /* Match parent border radius */
         border-bottom-right-radius: 1rem;
         gap: 0.75rem;
+    }
+    body.light-mode #review-escalation-modal .modal-footer {
+       background-color: #f8f9fa;
     }
 
     /* Style the buttons specifically within this modal for a more modern feel */
@@ -807,12 +853,21 @@ document.addEventListener('click', function(e){
                 <div class="settings-layout">
                     <nav class="settings-nav">
                         <ul>
-                            <li><a href="#" class="active" data-section="notifications">Notifications</a></li>
+                            <li><a href="#" class="active" data-section="general">General</a></li>
+                            <li><a href="#" data-section="notifications">Notifications</a></li>
                             <li><a href="#" data-section="security">Security</a></li>
                         </ul>
                     </nav>
                     <div class="settings-content">
-                        <section class="setting-card active" id="settings-section-notifications">
+                        <section class="setting-card active" id="settings-section-general">
+                             <h3>Appearance</h3>
+                            <div class="setting-item">
+                                <span>Dark Mode</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label></div>
+                            </div>
+                        </section>
+                        <section class="setting-card" id="settings-section-notifications" style="display:none;">
+                             <h3>Email Notifications</h3>
                             <div class="setting-item">
                                 <span>Email me when new orders are assigned</span>
                                 <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-new-orders" checked><span class="slider"></span></label></div>
@@ -823,6 +878,7 @@ document.addEventListener('click', function(e){
                             </div>
                         </section>
                         <section class="setting-card" id="settings-section-security" style="display:none;">
+                            <h3>Security Settings</h3>
                             <div class="setting-item">
                                 <span>Password</span>
                                 <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
@@ -1303,6 +1359,9 @@ document.addEventListener('click', function(e){
         // Initialize the application
         async function initApp() {
             try {
+                // Apply theme and active tab from localStorage before anything else
+                applyStoredTheme();
+                
                 showToast('Loading Quality Dashboard...', 'info');
                 
                 // Get current user
@@ -1327,6 +1386,9 @@ document.addEventListener('click', function(e){
                 
                 currentUser = { ...user, ...profile };
                 
+                // Activate last used tab
+                applyStoredActiveTab();
+
                 // Update UI with user data
                 updateUserInterface();
                 
@@ -1377,13 +1439,13 @@ document.addEventListener('click', function(e){
         async function loadAssignedOrders(filters = {}) {
             try {
                 assignedOrders = await getAssignedOrders(currentUser.id, filters);
-                renderOrdersTable();
+                renderOrdersTable(assignedOrders);
                 document.getElementById('orders-count').textContent = assignedOrders.length;
             } catch (error) {
                 console.error('Error loading assigned orders:', error);
                 showToast('Failed to load assigned orders', 'error');
                 assignedOrders = [];
-                renderOrdersTable();
+                renderOrdersTable([]);
             }
         }
 
@@ -1462,11 +1524,9 @@ document.addEventListener('click', function(e){
         async function loadHelperEscalations() {
             try {
                 if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
-                    // Fetch ALL escalations (pending and resolved) by passing an empty filter object
                     const escalationsData = await getEscalations(null, {});
                     helperEscalations = escalationsData || [];
-                    renderEscalationsTable();
-                    // The count in the header should reflect only PENDING escalations
+                    applyEscalationFilters(); // Apply filters on load
                     const pendingCount = helperEscalations.filter(e => e.status === 'pending').length;
                     document.getElementById('escalations-count').textContent = pendingCount;
                 }
@@ -1474,7 +1534,7 @@ document.addEventListener('click', function(e){
                 console.error('❌ Error loading escalations:', error);
                 showToast('Failed to load escalations', 'error');
                 helperEscalations = [];
-                renderEscalationsTable();
+                renderEscalationsTable([]);
             }
         }
 
@@ -1482,44 +1542,28 @@ document.addEventListener('click', function(e){
        async function loadHelperInquiries() {
             try {
                 if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
-                    console.log('🔄 Loading inquiries for role:', currentUser.role);
                     helperInquiries = await getHelperInquiries(currentUser.id); 
-                    renderInquiriesTable();
+                    applyInquiryFilters(); // Apply filters on load
                      const pendingCount = helperInquiries.filter(i => i.status === 'pending').length;
                     document.getElementById('inquiries-count').textContent = pendingCount;
-                    console.log('✅ Inquiries loaded:', helperInquiries.length);
                 }
             } catch (error) {
                 console.error('❌ Error loading helper inquiries:', error);
                 showToast('Failed to load inquiries', 'error');
                 helperInquiries = [];
-                renderInquiriesTable();
+                renderInquiriesTable([]);
             }
         }
 
-        function renderOrdersTable() {
+        function renderOrdersTable(ordersToRender) {
             const tableBody = document.getElementById('orders-table-body');
-            const tableHead = tableBody.previousElementSibling;
 
-            // Add the new columns to the header if they don't exist
-            if (tableHead.rows[0].cells.length < 7) {
-                tableHead.rows[0].innerHTML = `
-                    <th>Order ID</th>
-                    <th>Issue Type</th>
-                    <th>Date Assigned</th>
-                    <th>Status</th>
-                    <th>Review Time</th>
-                    <th>SLA</th>
-                    <th>Actions</th>
-                `;
-            }
-
-            if (!assignedOrders || assignedOrders.length === 0) {
+            if (!ordersToRender || ordersToRender.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No assigned orders found.</td></tr>`;
                 return;
             }
 
-            tableBody.innerHTML = assignedOrders.map(order => {
+            tableBody.innerHTML = ordersToRender.map(order => {
                 const orderData = order.orders;
                 const statusClass = `status-${order.status}`;
                 
@@ -1624,27 +1668,15 @@ document.addEventListener('click', function(e){
             });
         }
 
-        function renderEscalationsTable() {
+        function renderEscalationsTable(escalationsToRender) {
             const tableBody = document.getElementById('escalations-table-body');
 
-            if (!helperEscalations || helperEscalations.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations found.</td></tr>`;
+            if (!escalationsToRender || escalationsToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations match the current filters.</td></tr>`;
                 return;
             }
 
-            const tableHead = tableBody.previousElementSibling;
-            if (tableHead.rows[0].cells.length < 6) {
-                tableHead.rows[0].innerHTML = `
-                    <th>Order ID</th>
-                    <th>Escalated By</th>
-                    <th>Reason</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                `;
-            }
-
-            tableBody.innerHTML = helperEscalations.map(escalation => {
+            tableBody.innerHTML = escalationsToRender.map(escalation => {
                 const orderData = escalation.order_assignments?.orders;
                 const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
                 const escalationDate = formatDateTime(escalation.escalated_at);
@@ -1674,7 +1706,6 @@ document.addEventListener('click', function(e){
                 `;
             }).join('');
 
-            // ربط الأحداث للأزرار
             document.querySelectorAll('.review-escalation-btn').forEach(btn => {
                 btn.addEventListener('click', function() { openReviewEscalationModal(this.dataset.escalationId); });
             });
@@ -1695,27 +1726,15 @@ document.addEventListener('click', function(e){
             });
         }
 
-        function renderInquiriesTable() {
+        function renderInquiriesTable(inquiriesToRender) {
             const tableBody = document.getElementById('inquiries-table-body');
             
-            if (!helperInquiries || helperInquiries.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries found.</div></td></tr>`;
+            if (!inquiriesToRender || inquiriesToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries match the current filters.</div></td></tr>`;
                 return;
             }
 
-            const tableHead = tableBody.previousElementSibling;
-            if (tableHead.rows[0].cells.length < 6) {
-                tableHead.rows[0].innerHTML = `
-                    <th>Order ID</th>
-                    <th>Agent</th>
-                    <th>Inquiry</th>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                `;
-            }
-
-            tableBody.innerHTML = helperInquiries.map(inquiry => {
+            tableBody.innerHTML = inquiriesToRender.map(inquiry => {
                 const orderData = inquiry.order_assignments?.orders;
                 const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
                 const inquiryDate = formatDateTime(inquiry.created_at);
@@ -2149,9 +2168,83 @@ document.addEventListener('click', function(e){
                 console.error('Error logging out:', error);
                 showToast('Failed to log out', 'error');
             } else {
+                localStorage.removeItem('qualityDashboardActiveTab'); // Clear tab on logout
+                localStorage.removeItem('theme'); // Clear theme on logout
                 window.location.href = 'login.html';
             }
         }
+        
+        // --- NEW --- Functions for Filtering
+        function applyEscalationFilters() {
+            const searchTerm = document.getElementById('escalations-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-escalation-status').value;
+            const dateFilter = document.getElementById('filter-escalation-date').value;
+            let filtered = helperEscalations;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(e => e.status === statusFilter);
+            }
+            if (dateFilter) {
+                filtered = filtered.filter(e => e.escalated_at && e.escalated_at.startsWith(dateFilter));
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(e => {
+                    const orderId = e.order_assignments?.orders?.order_id || '';
+                    const agentName = e.escalated_by?.name || '';
+                    return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                });
+            }
+            renderEscalationsTable(filtered);
+        }
+
+        function applyInquiryFilters() {
+            const searchTerm = document.getElementById('inquiries-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-inquiry-status').value;
+            const dateFilter = document.getElementById('filter-inquiry-date').value;
+            let filtered = helperInquiries;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(i => i.status === statusFilter);
+            }
+            if (dateFilter) {
+                filtered = filtered.filter(i => i.created_at && i.created_at.startsWith(dateFilter));
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(i => {
+                    const orderId = i.order_assignments?.orders?.order_id || '';
+                    const agentName = i.order_assignments?.users?.name || '';
+                    return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                });
+            }
+            renderInquiriesTable(filtered);
+        }
+
+        // --- NEW --- Functions for Tab Persistence and Theme
+        function applyStoredActiveTab() {
+            const lastActiveTab = localStorage.getItem('qualityDashboardActiveTab');
+            if (lastActiveTab && lastActiveTab !== 'dashboard') {
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById(lastActiveTab)?.classList.add('active');
+                const tabLink = document.querySelector(`.sidebar-nav a[data-tab="${lastActiveTab}"]`);
+                if(tabLink){
+                    tabLink.classList.add('active');
+                    document.getElementById('page-title-header').textContent = tabLink.textContent.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                }
+            }
+        }
+
+        function applyStoredTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.getElementById('theme-toggle');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                if(themeToggle) themeToggle.checked = false;
+            } else {
+                document.body.classList.remove('light-mode');
+                if(themeToggle) themeToggle.checked = true;
+            }
+        }
+
 
         // Event Listeners
         document.addEventListener('DOMContentLoaded', () => {
@@ -2167,6 +2260,7 @@ document.addEventListener('click', function(e){
                     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
                     document.getElementById(tabId).classList.add('active');
                     document.getElementById('page-title-header').textContent = tab.textContent.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                    localStorage.setItem('qualityDashboardActiveTab', tabId); // Save active tab
                 });
             });
             
@@ -2343,9 +2437,6 @@ document.addEventListener('click', function(e){
                 logoutUser();
             });
             
-            document.getElementById('escalate-to-senior').addEventListener('change', function() { document.getElementById('senior-escalation-reason').required = !!this.value; });
-            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { await loadHelperEscalations(); showToast('Escalations refreshed', 'info'); });
-            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { await loadHelperInquiries(); showToast('Inquiries refreshed', 'info'); });
             document.addEventListener('click', (e) => {
                 if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); }
                 if (e.target.classList.contains('modal-overlay')) {
@@ -2354,32 +2445,36 @@ document.addEventListener('click', function(e){
                 }
             });
 
-
-            // FILTER LISTENERS
-            const addFilterListener = (inputId, tableBodyId, dataArray, renderFunc) => {
-                document.getElementById(inputId).addEventListener('input', (e) => {
-                    const searchTerm = e.target.value.toLowerCase();
-                    const filteredData = dataArray.filter(item => JSON.stringify(item).toLowerCase().includes(searchTerm));
-                    renderFunc(filteredData);
-                });
-            };
-            
-            document.getElementById('filter-status').addEventListener('change', function() { loadAssignedOrders({ status: this.value }); });
-            document.getElementById('filter-from-date').addEventListener('change', function() { loadAssignedOrders({ from_date: this.value }); });
-            document.getElementById('filter-to-date').addEventListener('change', function() { loadAssignedOrders({ to_date: this.value }); });
-
-            // Search listeners for escalations and inquiries
-            document.getElementById('escalations-search-input').addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                document.querySelectorAll('#escalations-table-body tr').forEach(row => {
-                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
-                });
+            // --- NEW --- FILTER EVENT LISTENERS ---
+            document.getElementById('escalations-search-input').addEventListener('input', applyEscalationFilters);
+            document.getElementById('filter-escalation-status').addEventListener('change', applyEscalationFilters);
+            document.getElementById('filter-escalation-date').addEventListener('input', applyEscalationFilters);
+            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { 
+                await loadHelperEscalations(); 
+                showToast('Escalations refreshed', 'info');
             });
-            document.getElementById('inquiries-search-input').addEventListener('input', (e) => {
-                const searchTerm = e.target.value.toLowerCase();
-                document.querySelectorAll('#inquiries-table-body tr').forEach(row => {
-                    row.style.display = row.textContent.toLowerCase().includes(searchTerm) ? '' : 'none';
-                });
+
+            document.getElementById('inquiries-search-input').addEventListener('input', applyInquiryFilters);
+            document.getElementById('filter-inquiry-status').addEventListener('change', applyInquiryFilters);
+            document.getElementById('filter-inquiry-date').addEventListener('input', applyInquiryFilters);
+            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { 
+                await loadHelperInquiries(); 
+                showToast('Inquiries refreshed', 'info');
+            });
+            
+            // --- NEW --- SETTINGS EVENT LISTENERS ---
+            document.getElementById('change-password-btn').addEventListener('click', () => {
+                showToast('This feature is not yet implemented.', 'info', 'Coming Soon');
+            });
+
+            document.getElementById('theme-toggle').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    document.body.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.add('light-mode');
+                    localStorage.setItem('theme', 'light');
+                }
             });
         });
     </script>
