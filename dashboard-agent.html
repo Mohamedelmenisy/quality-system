@@ -219,7 +219,7 @@
         function renderErrorTables() {
             const dashboardTableBody = document.getElementById('error-table-body');
             const myErrorsTableBody = document.getElementById('my-errors-table-body');
-            
+
             const renderTable = (tbody, data) => {
                 if (data.length === 0) {
                     tbody.innerHTML = `
@@ -234,30 +234,32 @@
                 } else {
                     tbody.innerHTML = data.map(error => {
                         const orderId = error.order_id || 'N/A';
-    const orderDate = error.order_created_at || error.created_at; // نستخدم تاريخ إنشاء الطلب، وإذا لم يوجد نستخدم تاريخ إنشاء الخطأ
-    const errorType = error.error_details || 'Unknown';
-    // --- التعديل ينتهي هنا ---
+                        const orderDate = error.order_created_at || error.created_at; // نستخدم تاريخ إنشاء الطلب، وإذا لم يوجد نستخدم تاريخ إنشاء الخطأ
+                        const errorType = error.error_details || 'Unknown';
+                        // --- التعديل ينتهي هنا ---
 
-    const status = error.status.replace('_response', '').replace('_', ' ');
-    
-    return `
-        <tr>
-            <td><strong>${orderId}</strong></td>
-            <td>${formatDate(orderDate)}</td>
-            <td>${errorType}</td>
-            <td><span class="status-badge status-${status}">${status}</span></td>
-            <td class="action-buttons">
-                <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
-                    👁️ View
-                </button>
-                ${error.status === 'pending_response' ? 
-                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.error_id}">
-                        💬 Reply
-                    </button>` : ''}
-            </td>
-        </tr>
-    `;
-}).join('');
+                        const status = error.status.replace('_response', '').replace('_', ' ');
+
+                        return `
+                            <tr>
+                                <td><strong>${orderId}</strong></td>
+                                <td>${formatDate(orderDate)}</td>
+                                <td>${errorType}</td>
+                                <td><span class="status-badge status-${status}">${status}</span></td>
+                                <td class="action-buttons">
+                                    <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
+                                        👁️ View
+                                    </button>
+                                    ${error.status === 'pending_response' ?
+                                        `<button class="action-btn primary reply-error-btn" data-error-id="${error.error_id}">
+                                            💬 Reply
+                                        </button>` : ''}
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+                }
+            };
 
             renderTable(dashboardTableBody, userErrors.slice(0, 5));
             renderTable(myErrorsTableBody, userErrors);
@@ -266,7 +268,7 @@
             document.querySelectorAll('.view-error-btn').forEach(btn => {
                 btn.addEventListener('click', () => openViewErrorModal(btn.dataset.errorId));
             });
-            
+
             document.querySelectorAll('.reply-error-btn').forEach(btn => {
                 btn.addEventListener('click', () => openReplyErrorModal(btn.dataset.errorId));
             });
