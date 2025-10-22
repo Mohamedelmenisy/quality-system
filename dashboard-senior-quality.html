@@ -1553,10 +1553,13 @@ document.addEventListener('click', function(e){
             
             // Event Delegation for dynamically created buttons
             document.body.addEventListener('click', function(event) {
-                const target = event.target;
-                if (target.classList.contains('view-assigned-btn')) {
-                    openViewAssignedModal(target.dataset.assignmentId);
-                } else if (target.classList.contains('final-decision-btn')) {
+                const target = event.target.closest('button'); // More robustly find the button
+                if (!target) return;
+                
+                // IMPORTANT: The .view-assigned-btn is handled by the 'injected handlers' script block.
+                // We do NOT handle it here to avoid the double-opening bug.
+
+                if (target.classList.contains('final-decision-btn')) {
                     openFinalDecisionModal(target.dataset.errorId);
                 } else if (target.classList.contains('review-response-btn')) {
                     const errorId = target.dataset.errorId;
@@ -1579,8 +1582,6 @@ document.addEventListener('click', function(e){
                     showModal('final-decision-modal');
                 } else if (target.classList.contains('edit-employee-btn')) {
                     openEmployeeModal(target.dataset.employeeId);
-                } else if (target.classList.contains('shift-cell') && isScheduleEditMode) {
-                    openShiftModal(target.dataset);
                 } else if (target.classList.contains('view-escalation-btn')) {
                     const escalationId = target.dataset.escalationId;
                     const escalation = directEscalations.find(e => String(e.id) === String(escalationId));
@@ -1595,6 +1596,13 @@ document.addEventListener('click', function(e){
                     }
                     showModal('view-escalation-modal');
                 }
+            });
+
+            document.body.addEventListener('click', function(event) {
+                 const target = event.target.closest('td');
+                 if(target && target.classList.contains('shift-cell') && isScheduleEditMode){
+                     openShiftModal(target.dataset);
+                 }
             });
 
 
