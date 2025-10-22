@@ -961,6 +961,8 @@ document.addEventListener('click', function(e){
         // Initialize the application
         async function initApp() {
             try {
+                        console.log('Is getTeamPerformance a function?', typeof getTeamPerformance); // <-- أضف هذا السطر هنا
+
                 showToast('Loading Senior Dashboard...', 'info');
                 const user = await getCurrentUser();
                 if (!user) { window.location.href = 'login.html'; return; }
