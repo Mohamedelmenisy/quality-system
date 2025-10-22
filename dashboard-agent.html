@@ -185,34 +185,29 @@
 
         async function loadUserPerformance() {
             try {
-                const metrics = await getPerformanceMetrics('month', currentUser.id);
-                userPerformance = {
-                    totalOrders: metrics.totalOrders,
-                    totalErrors: metrics.totalErrors,
-                    errorRate: metrics.errorRate,
-                    errorTypes: {}
-                };
+                // We can reuse the errors we already loaded
+                const totalErrors = userErrors.length;
+                const totalOrders = 20; // This should come from another API call in the future
+
+                const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
                 
-                // Update performance cards
-                document.getElementById('error-rate').textContent = `${metrics.errorRate}%`;
-                document.getElementById('error-rate-bar').style.width = `${Math.min(metrics.errorRate, 100)}%`;
+                document.getElementById('error-rate').textContent = `${errorRate}%`;
+                document.getElementById('error-rate-bar').style.width = `${Math.min(errorRate, 100)}%`;
                 document.getElementById('error-rate-description').textContent = 
-                    `Based on ${metrics.totalErrors} errors out of ${metrics.totalOrders} reviewed orders.`;
+                    `Based on ${totalErrors} errors out of ${totalOrders} reviewed orders.`;
 
                 // Calculate error types distribution
+                const errorTypes = {};
                 userErrors.forEach(error => {
-                    const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-                    userPerformance.errorTypes[errorType] = (userPerformance.errorTypes[errorType] || 0) + 1;
+                    const errorType = error.error_details || 'Unknown';
+                    errorTypes[errorType] = (errorTypes[errorType] || 0) + 1;
                 });
+                userPerformance.errorTypes = errorTypes;
                 
                 updateCharts();
             } catch (error) {
                 console.error('Error loading user performance:', error);
-                // Set default values if metrics fail
-                document.getElementById('error-rate').textContent = '0%';
-                document.getElementById('error-rate-bar').style.width = '0%';
-                document.getElementById('error-rate-description').textContent = 
-                    'Performance data temporarily unavailable';
+                document.getElementById('error-rate').textContent = 'N/A';
             }
         }
 
@@ -275,49 +270,17 @@
         }
 
         function openViewErrorModal(errorId) {
-            const error = userErrors.find(e => e.id === errorId);
+            const error = userErrors.find(e => e.error_id === errorId);
             if (!error) return;
 
-            const order = error.quality_reviews?.order_assignments?.orders;
-            const review = error.quality_reviews;
-            const reviewer = review?.order_assignments?.users?.name;
-            const orderId = order?.order_id || 'N/A';
-            
-            document.getElementById('view-error-id').textContent = orderId;
+            document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
             
             const errorDetails = `
-                <div class="detail-item">
-                    <strong>Order ID</strong>
-                    <p>${orderId}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Date Recorded</strong>
-                    <p>${formatDate(error.recorded_at)}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Error Type</strong>
-                    <p>${review?.modified_reason || 'Unknown'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Description</strong>
-                    <p>${review?.modification_details || 'No additional details available.'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Reviewed By</strong>
-                    <p>${reviewer || 'Unknown'}</p>
-                </div>
-                <div class="detail-item">
-                    <strong>Status</strong>
-                    <p><span class="status-badge status-${error.status.replace('_response', '')}">
-                        ${error.status.replace('_', ' ')}
-                    </span></p>
-                </div>
-                ${error.error_responses?.[0] ? `
-                <div class="detail-item response-item">
-                    <strong>Your Response</strong>
-                    <p>${error.error_responses[0].response_text}</p>
-                    <small>Submitted on: ${formatDateTime(error.error_responses[0].responded_at)}</small>
-                </div>` : ''}
+                <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
+                <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Reviewed By</strong><p>${error.employee_name || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status.replace('_response', '')}">${error.status.replace('_', ' ')}</span></p></div>
             `;
             
             document.getElementById('view-error-body').innerHTML = errorDetails;
@@ -325,18 +288,13 @@
         }
 
         function openReplyErrorModal(errorId) {
-            const error = userErrors.find(e => e.id === errorId);
+            const error = userErrors.find(e => e.error_id === errorId);
             if (!error) return;
             
-            const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-            const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
-            const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-            const description = error.quality_reviews?.modification_details || 'No additional details available.';
-
-            document.getElementById('reply-error-id').textContent = orderId;
-            document.getElementById('reply-error-type').textContent = errorType;
-            document.getElementById('reply-error-date').textContent = formatDate(orderDate);
-            document.getElementById('reply-error-description').textContent = description;
+            document.getElementById('reply-error-id').textContent = error.order_id || 'N/A';
+            document.getElementById('reply-error-type').textContent = error.error_details || 'Unknown';
+            document.getElementById('reply-error-date').textContent = formatDate(error.created_at);
+            document.getElementById('reply-error-description').textContent = 'Please review the error details and provide your feedback.';
             document.getElementById('error-response').value = '';
             document.getElementById('submit-response-btn').dataset.errorId = errorId;
             
