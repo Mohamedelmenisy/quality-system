@@ -1,881 +1,55 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Senior Quality Portal - QualityX</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Performance - QualityX</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js">
-/* START: modal helpers added */
-function showModal(id){
-  const el = document.getElementById(id);
-  if(el){ el.style.display = 'flex'; document.body.style.overflow='hidden'; }
-}
-function hideModal(id){
-  const el = document.getElementById(id);
-  if(el){ el.style.display = 'none'; document.body.style.overflow=''; }
-}
-document.addEventListener('click', function(e){
-  if(e.target.matches('.modal-close-btn')) {
-    const id = e.target.dataset.modalId;
-    if(id) hideModal(id);
-  }
-});
-/* END: modal helpers */
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
-</script>
     <script type="module">
-        import { 
-            supabase, 
-            getCurrentUser, 
+        import {
+            supabase,
+            getCurrentUser,
             getUserById,
-            getUnassignedOrders,
-            getAssignedOrders,
-            assignOrders,
-            getPendingErrors,
-            submitFinalDecision,
+            getAgentErrors,
+            submitErrorResponse,
             getPerformanceMetrics,
-            getTeamMembers,
-            getTeamSchedule,
-            updateTeamSchedule,
             getNotifications,
             markNotificationAsRead,
             subscribeToNotifications,
-            getErrorTrends,
-            getDepartmentPerformance,
-            importOrdersFromCSV,
-            getCompanyEmployees,
-            addCompanyEmployee,
-            updateCompanyEmployee,
-            getEscalations,
-            resolveEscalation
+            subscribeToErrors,
+            updateUserProfile
         } from './api-client.js';
-        
-        window.supabase = supabase;
-        window.getCurrentUser = getCurrentUser;
-        window.getUserById = getUserById;
-        window.getUnassignedOrders = getUnassignedOrders;
-        window.getAssignedOrders = getAssignedOrders;
-        window.assignOrders = assignOrders;
-        window.getPendingErrors = getPendingErrors;
-        window.submitFinalDecision = submitFinalDecision;
-        window.getPerformanceMetrics = getPerformanceMetrics;
-        window.getTeamMembers = getTeamMembers;
-        window.getTeamSchedule = getTeamSchedule;
-        window.updateTeamSchedule = updateTeamSchedule;
-        window.getNotifications = getNotifications;
-        window.markNotificationAsRead = markNotificationAsRead;
-        window.getErrorTrends = getErrorTrends;
-        window.getDepartmentPerformance = getDepartmentPerformance;
-        window.importOrdersFromCSV = importOrdersFromCSV;
-        window.getCompanyEmployees = getCompanyEmployees;
-        window.addCompanyEmployee = addCompanyEmployee;
-        window.updateCompanyEmployee = updateCompanyEmployee;
-          window.getEscalations = getEscalations;
-        window.resolveEscalation = resolveEscalation;
-    </script>
-    <style>
-        :root {
-            --primary-color: #00bfff;
-            --primary-color-darker: #007BFF;
-            --bg-color: #121212;
-            --sidebar-bg: #1a1a1a;
-            --card-bg: #1a1a1a;
-            --text-color: #e6edf3;
-            --text-muted-color: #8b949e;
-            --border-color: #333;
-            --success-color: #28a745;
-            --warning-color: #ffc107;
-            --danger-color: #dc3545;
-            --info-color: #17a2b8;
-            --font-body: 'Poppins', sans-serif;
-            --border-radius-base: 0.75rem;
-            --green-bg: rgba(40, 167, 69, 0.1);
-            --red-bg: rgba(220, 53, 69, 0.1);
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
-        .layout { display: flex; min-height: 100vh; }
-        .sidebar {
-            width: 260px; background-color: var(--sidebar-bg); border-right: 1px solid var(--border-color);
-            display: flex; flex-direction: column; padding: 0; position: fixed; height: 100%; z-index: 1000;
-        }
-        .sidebar-header {
-            padding: 1.5rem; display: flex; align-items: center; gap: 0.75rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .sidebar-logo { height: 32px; fill: var(--primary-color); }
-        .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
-        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
-        .nav-group { margin-bottom: 1.5rem; padding: 0 1.5rem; }
-        .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted-color); font-weight: 600; margin-bottom: 0.75rem; }
-        .sidebar-nav { list-style: none; padding: 0; }
-        .sidebar-nav a {
-            display: flex; align-items: center; gap: 1rem; padding: 0.75rem 1rem; margin: 0.25rem 0;
-            text-decoration: none; color: var(--text-muted-color); font-weight: 500; border-radius: 0.5rem;
-            transition: all 0.2s ease; cursor: pointer;
-        }
-        .sidebar-nav a:hover, .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
-        .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
-        .user-profile-widget { display: flex; align-items: center; gap: 12px; }
-        .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
-        .user-name { font-weight: 600; font-size: 1rem; }
-        .user-role { font-size: 0.8rem; color: var(--text-muted-color); }
-        .user-status { font-size: 0.75rem; color: var(--success-color); margin-top: 2px; }
-        .main-wrapper { flex-grow: 1; margin-left: 260px; display: flex; flex-direction: column; }
-        .topbar {
-            background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
-            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
-            position: sticky; top: 0; z-index: 999;
-        }
-        .header-left { flex-grow: 1; }
-        .header-actions { display: flex; align-items: center; gap: 1rem; }
-        .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
-        .main-content { padding: 2rem; flex-grow: 1; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
-        .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
-        .results-table-container { overflow-x: auto; position: relative; }
-        .results-table-container::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 30px; background: linear-gradient(to right, transparent, var(--card-bg)); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
-        .results-table-container.is-scrollable::after { opacity: 1; }
-        .results-table { width: 100%; border-collapse: collapse; }
-        .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; white-space: nowrap; }
-        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap;}
-        .results-table .wrap-text { white-space: normal; max-width: 200px; }
-        .results-table tbody tr:last-child td { border-bottom: none; }
-        .results-table tbody tr:hover { background-color: #2c2c2c; }
-        .btn { padding: 0.5rem 1rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
-        .btn-primary { background-color: var(--primary-color); color: black; }
-        .btn-success { background-color: var(--success-color); color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; }
-        .btn-warning { background-color: var(--warning-color); color: black; }
-        .btn-secondary { background-color: #333; color: white; }
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1050; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
-        .modal-box { background: var(--card-bg); padding: 2rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; margin-bottom: 1rem; }
-        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
-        .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
-        .escalation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-        .detail-item { background: #222; padding: 15px; border-radius: 8px; }
-        .detail-item strong { display: block; color: var(--text-muted-color); font-size: 0.8rem; margin-bottom: 5px;}
-        .detail-item span, .detail-item p { font-size: 1rem; font-weight: 500;}
-        .feedback-form textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 8px; font-family: inherit; margin-top: 10px; }
-        .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
-        .chart-container { height: 350px; }
-        .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
-        .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); }
-        .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-transform: capitalize; }
-        .status-pending { background-color: var(--info-color); }
-        .status-completed { background-color: var(--success-color); }
-        .status-late { background-color: var(--warning-color); color: black; }
-        .status-reviewed { background-color: var(--primary-color-darker); }
-        .status-responded { background-color: var(--info-color); }
-        .status-finalized { background-color: var(--success-color); }
-        .status-resolved { background-color: var(--success-color); } /* Added for escalations */
-        .form-group { margin-bottom: 1.5rem; }
-        .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
-        .form-group.toggle { display: flex; align-items: center; justify-content: space-between; }
-        .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
-        .placeholder-content { padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
-        #welcome-message { margin-bottom: 2rem; }
-        #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
-        #welcome-message p { color: var(--text-muted-color); }
-        .notification-bell { position: relative; }
-        .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 24px; cursor: pointer; padding: 5px; }
-        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 1010; }
-        .notification-dropdown.show { display: block; animation: fadeIn 0.2s; }
-        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; }
-        .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
-        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
-        .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted-color); }
-        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
-        .toast.success { border-left: 4px solid var(--success-color); }
-        .toast.error { border-left: 4px solid var(--danger-color); }
-        .toast.warning { border-left: 4px solid var(--warning-color); }
-        .toast.info { border-left: 4px solid var(--primary-color); }
-        .toast-icon { font-size: 20px; }
-        .toast.success .toast-icon { color: var(--success-color); }
-        .toast.error .toast-icon { color: var(--danger-color); }
-        .toast.warning .toast-icon { color: var(--warning-color); }
-        .toast.info .toast-icon { color: var(--primary-color); }
-        .toast-content { flex: 1; }
-        .toast-title { font-weight: 600; margin-bottom: 5px; }
-        .toast-message { font-size: 14px; color: var(--text-muted-color); }
-        .toast-close { background: none; border: none; color: var(--text-muted-color); cursor: pointer; font-size: 18px; }
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .form-group.toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .form-group.toggle input[type="checkbox"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 44px;
-            height: 24px;
-            background-color: #333;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-            flex-shrink: 0;
-        }
-        .form-group.toggle input[type="checkbox"]::before {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            background-color: #8b949e;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease-in-out;
-        }
-        .form-group.toggle input[type="checkbox"]:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .form-group.toggle input[type="checkbox"]:checked::before {
-            transform: translateX(20px);
-            background-color: black;
-        }
-        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
-        .team-member-card { background-color: #222; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
-        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
-        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
-        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; text-transform: capitalize;}
-        .schedule-table-container { overflow-x: auto; }
-        .schedule-table { width: 100%; border-collapse: collapse; text-align: center; }
-        .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
-        .schedule-table thead th { background-color: #2c2c2c; font-weight: 600; }
-        .schedule-table .member-name { font-weight: 600; text-align: left; }
-        .schedule-table .shift-cell { cursor: default; transition: background-color 0.2s ease; }
-        .schedule-table.edit-mode .shift-cell { cursor: pointer; }
-        .schedule-table.edit-mode .shift-cell:hover { background-color: rgba(0, 191, 255, 0.1); }
-        .shift-time, .shift-leave, .shift-sick, .shift-off { display: block; font-weight: 500; }
-        .shift-leave { color: var(--warning-color); }
-        .shift-sick { color: var(--danger-color); }
-        .shift-off { color: var(--text-muted-color); }
-        .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
-        .payment-card { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-        .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
-        .main-footer { margin-top: auto; padding: 2rem; text-align: center; color: var(--text-muted-color); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
-        
-        @media (max-width: 1024px) {
-            .sidebar { width: 220px; }
-            .main-wrapper { margin-left: 220px; }
-        }
-        @media (max-width: 768px) {
-            .sidebar { width: 70px; }
-            .sidebar-title, .nav-group-title, .user-name, .user-role { display: none; }
-            .sidebar-nav a span:not(.icon) { display: none; }
-            .main-wrapper { margin-left: 70px; }
-            .main-content { padding: 1rem; }
-            .kpi-grid, .charts-grid { grid-template-columns: 1fr; }
-            .filter-panel { flex-direction: column; }
-        }
-        @media (max-width: 480px) {
-            .sidebar { display: none; }
-            .main-wrapper { margin-left: 0; }
-            .modal-box { width: 95%; padding: 1rem; }
-            .results-table-container { overflow-x: auto; }
-        }
-    </style>
-<style>.sidebar-nav a{ white-space: nowrap; }</style>
-</head>
-<body class="dark">
-    <div class="layout">
-        <aside class="sidebar">
-            <div>
-                <div class="sidebar-header">
-                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path><path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                    <h1 class="sidebar-title">QualityX</h1>
-                </div>
-                <div class="sidebar-nav-container">
-                     <div class="nav-group">
-                        <h2 class="nav-group-title">Menu</h2>
-                        <ul class="sidebar-nav">
-                            <li class="active"><a data-tab="dashboard">📊 Dashboard</a></li>
-                            <li><a data-tab="assignments">📋 Assignments</a></li>
-                            <li><a data-tab="escalations">🚨 Escalations</a></li>
-                            <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
-                            <li><a data-tab="team-members">👥 Team Members</a></li>
-                            <li><a data-tab="company-employees">🏢 Company Employees</a></li>
-                            <li><a data-tab="payments">💳 Payments</a></li>
-                            <li><a data-tab="kpis">📈 KPIs</a></li>
-                            <li><a data-tab="reports-analytics">📄 Reports & Analytics</a></li>
-                        </ul>
-                    </div>
-                    <div class="nav-group">
-                        <h2 class="nav-group-title">Account</h2>
-                        <ul class="sidebar-nav">
-                             <li><a data-tab="profile">👤 Profile</a></li>
-                             <li><a data-tab="settings">⚙️ Settings</a></li>
-                             <li><a data-tab="help">❓ Get Help</a></li>
-                             <li><a id="logout-btn">🚪 Logout</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-            <div class="sidebar-footer">
-                <div class="user-profile-widget">
-                    <div class="avatar-initials" id="sidebar-avatar-initials">ME</div>
-                    <div>
-                        <div class="user-name" id="sidebar-username">Mohamed Elmenisy</div>
-                        <div class="user-role">Senior Quality Analyst</div>
-                    </div>
-                </div>
-            </div>
-        </aside>
 
-        <div class="main-wrapper">
-            <header class="topbar">
-                <div class="header-left">
-                     <h2 class="page-title" id="page-title">Dashboard</h2>
-                </div>
-                 <div class="header-actions">
-                    <input type="search" placeholder="Global search..." style="background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); width: 250px;">
-                    <div class="notification-bell">
-                        <button id="notification-btn" class="notification-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        </button>
-                        <div id="notification-dropdown" class="notification-dropdown">
-                            <div class="notification-header">Notifications</div>
-                            <ul class="notification-list" id="notification-list">
-                                <li class="notification-item">Loading notifications...</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </header>
-
-            <main class="main-content">
-                <!-- Dashboard Tab -->
-                <div id="dashboard" class="tab-content active">
-                     <div id="welcome-message">
-                        <h2 id="welcome-user-h2">Welcome, Mohamed!</h2>
-                        <p>Here is a summary of your activity and team oversight.</p>
-                    </div>
-                    <div class="kpi-grid">
-                         <div class="widget"><h3>Reviews Today</h3><p style="font-size: 2rem; font-weight: 700;" id="reviews-today">0</p></div>
-                         <div class="widget"><h3>Pending Escalations</h3><p style="font-size: 2rem; font-weight: 700; color: var(--warning-color);" id="pending-escalations">0</p></div>
-                         <div class="widget"><h3>Avg. Resolution Time</h3><p style="font-size: 2rem; font-weight: 700;" id="avg-resolution-time">0 mins</p></div>
-                         <div class="widget"><h3>Team Accuracy</h3><p style="font-size: 2rem; font-weight: 700; color: var(--success-color);" id="team-accuracy">0%</p></div>
-                    </div>
-                     <div class="widget">
-                         <h3>Team Performance Analysis</h3>
-                         <div class="charts-grid">
-                             <div class="chart-container"><canvas id="teamPerformanceChart"></canvas></div>
-                             <div class="chart-container"><canvas id="errorTrendsChart"></canvas></div>
-                         </div>
-                     </div>
-                </div>
-                
-                <!-- Escalations Tab -->
-                <div id="escalations" class="tab-content">
-                    <div class="widget">
-                         <h3>Pending Agent Responses (<span id="pending-responses-count">0</span>)</h3>
-                         <div class="filter-panel">
-                             <input type="search" id="escalation-search" placeholder="Search by Order ID...">
-                             <select id="escalation-status-filter">
-                                 <option value="all">All Statuses</option>
-                                 <option value="pending_response">Pending Response</option>
-                                 <option value="responded">Responded</option>
-                             </select>
-                         </div>
-                        <div class="results-table-container">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Agent</th>
-                                        <th>Error Type</th>
-                                        <th>Response</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="escalation-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading pending responses...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <!-- NEW WIDGET FOR DIRECT ESCALATIONS -->
-                    <div class="widget">
-                        <h3>Direct Escalations (<span id="direct-escalations-count">0</span>)</h3>
-                        <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
-                            Cases escalated directly to you from Quality Agents or Helpers.
-                        </p>
-                         <div class="filter-panel">
-                             <input type="search" id="direct-escalation-search" placeholder="Search by Order ID, Agent, Reason...">
-                             <select id="direct-escalation-status-filter">
-                                 <option value="all">All Statuses</option>
-                                 <option value="pending">Pending</option>
-                                 <option value="resolved">Resolved</option>
-                             </select>
-                         </div>
-                        <div class="results-table-container">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Escalated By</th>
-                                        <th class="wrap-text">Reason</th>
-                                        <th>Date</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="direct-escalations-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading direct escalations...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Assignments Tab -->
-                <div id="assignments" class="tab-content">
-                    <div class="widget">
-                        <h3>Unassigned Orders (<span id="unassigned-count">0</span>)</h3>
-                        <div class="filter-panel">
-                             <input type="search" id="unassigned-search" placeholder="Search unassigned orders..." style="flex-grow: 1;">
-                            <span>Assign selected to:</span>
-                            <select id="agent-select" style="flex-grow: 1;"></select>
-                            <button id="assign-btn" class="btn btn-primary">Assign Selected</button>
-                            <button id="import-orders-btn" class="btn btn-success">Import Orders</button>
-                            <input type="file" id="csv-file-input" accept=".csv" style="display: none;">
-                        </div>
-                        <div class="results-table-container">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th><input type="checkbox" id="select-all-checkbox" /></th>
-                                        <th>Order ID</th>
-                                        <th class="wrap-text">Reason</th>
-                                        <th class="wrap-text">Employee</th>
-                                        <th>Chefz</th>
-                                        <th>Order Status</th>
-                                        <th>Requested Delivery Date</th>
-                                        <th>Payment Type</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="unassigned-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading unassigned orders...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                    <div class="widget">
-                        <h3>Assigned Orders Status</h3>
-                        <div class="filter-panel">
-                             <input type="search" id="assigned-search" placeholder="Search assigned orders..." style="flex-grow: 1;">
-                             <select id="assigned-status-filter">
-                                <option value="all">All Statuses</option>
-                                <option value="pending">Pending</option>
-                                <option value="completed">Completed</option>
-                             </select>
-                             <input type="date" id="assigned-date-filter" style="color-scheme: dark;">
-                             <button id="clear-assigned-filters" class="btn btn-secondary">Clear Filters</button>
-                        </div>
-                        <div class="results-table-container">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Agent</th>
-                                        <th>Status</th>
-                                        <th>Date Assigned</th>
-                                        <th>Review Time</th>
-                                        <th>SLA</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="assigned-table-body">
-                                    <tr><td colspan="7" class="empty-state">Loading assigned orders...</td></tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team Scheduling Tab -->
-                <div id="team-scheduling" class="tab-content">
-                    <div class="widget">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                             <h3>Weekly Team Schedule</h3>
-                             <div>
-                                <button id="add-schedule-member-btn" class="btn btn-success">Add Member</button>
-                                <!-- أزرار التحكم الجديدة -->
-                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                                <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                                     <button id="cancel-schedule-btn" class="btn btn-secondary">Cancel</button>
-                                     <button id="save-schedule-changes-btn" class="btn btn-success">Save Changes</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="schedule-table-container">
-                            <table class="results-table schedule-table" id="schedule-table">
-                                <thead>
-                                    <tr>
-                                        <th>Member</th>
-                                        <th>Monday</th>
-                                        <th>Tuesday</th>
-                                        <th>Wednesday</th>
-                                        <th>Thursday</th>
-                                        <th>Friday</th>
-                                        <th>Saturday</th>
-                                        <th>Sunday</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="schedule-table-body">
-                                    <!-- Populated by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Team Members Tab -->
-                <div id="team-members" class="tab-content">
-                    <div class="widget">
-                        <h3>Team Members</h3>
-                        <div class="team-grid" id="team-members-grid">
-                            <!-- Populated by JS -->
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Company Employees Tab -->
-                <div id="company-employees" class="tab-content">
-                    <div class="widget">
-                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                            <h3>Company Employees</h3>
-                            <button id="add-employee-btn" class="btn btn-primary">Add New Employee</button>
-                        </div>
-                        <div class="results-table-container">
-                            <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Username</th>
-                                        <th>Admin ID</th>
-                                        <th>Department</th>
-                                        <th>Title</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="company-employees-table-body">
-                                    <!-- Populated by JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Payments Tab -->
-                <div id="payments" class="tab-content">
-                    <div class="widget">
-                        <h3>Available Payment Methods</h3>
-                        <div class="payments-grid">
-                            <div class="payment-card">Visa Master Card</div>
-                            <div class="payment-card">Apple Pay</div>
-                            <div class="payment-card">Mada</div>
-                            <div class="payment-card">Wallet</div>
-                            <div class="payment-card">Wallet & Visa-Master</div>
-                            <div class="payment-card">Wallet & MADA</div>
-                            <div class="payment-card">Wallet & Apple-Pay</div>
-                            <div class="payment-card">Tamara</div>
-                            <div class="payment-card">Wallet & Tamara</div>
-                            <div class="payment-card">Wallet & STC Pay</div>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- KPIs Tab -->
-                <div id="kpis" class="tab-content">
-                     <div class="widget">
-                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
-                        <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents will be evaluated.</p>
-                        <div class="settings-grid">
-                            <div class="form-group">
-                                <label for="kpi-accuracy">Minimum Review Accuracy Target (%)</label>
-                                <input type="number" id="kpi-accuracy" value="98" min="0" max="100">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-reviews-day">Daily Reviews Target (per agent)</label>
-                                <input type="number" id="kpi-reviews-day" value="25" min="0">
-                            </div>
-                            <div class="form-group">
-                                <label for="kpi-aht">Average Handle Time Target (minutes)</label>
-                                <input type="number" id="kpi-aht" value="5" min="0">
-                            </div>
-                             <div class="form-group">
-                                <label for="kpi-escalation-rate">Allowed Escalation Rate (%)</label>
-                                <input type="number" id="kpi-escalation-rate" value="3" min="0" max="100">
-                            </div>
-                        </div>
-                        <div class="page-actions">
-                             <button class="btn btn-primary" id="update-kpi-btn">Update KPI Targets</button>
-                        </div>
-                    </div>
-                </div>
-                
-                <!-- Reports & Analytics Tab -->
-                <div id="reports-analytics" class="tab-content">
-                     <div class="widget">
-                        <h3>Advanced Reports & Analytics</h3>
-                        <div class="filter-panel">
-                            <select id="report-period">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30" selected>Last 30 Days</option>
-                                <option value="90">Last 90 Days</option>
-                                <option value="365">Last Year</option>
-                            </select>
-                            <select id="report-type">
-                                <option value="performance">Performance Report</option>
-                                <option value="errors">Error Analysis</option>
-                                <option value="department">Department Report</option>
-                            </select>
-                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-                            <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
-                        </div>
-                        <div class="charts-grid">
-                            <div class="chart-container">
-                                <canvas id="analyticsChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="errorTypesPieChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Profile Tab -->
-                <div id="profile" class="tab-content">
-                    <div class="widget">
-                        <h3>Edit Profile</h3>
-                        <div class="form-group">
-                            <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" value="Mohamed Elmenisy">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="m.elmenisy@qualityx.com" readonly style="background: #333;">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" value="">
-                        </div>
-                        <div class="page-actions">
-                             <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
-                             <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Settings Tab -->
-                <div id="settings" class="tab-content">
-                    <div class="widget">
-                        <h3>Settings</h3>
-                        <p class="text-muted-color" style="margin-top:-1rem; margin-bottom: 2rem;">Manage team settings, rules, and your preferences.</p>
-                        <div class="settings-grid">
-                            <div class="form-group">
-                                <h4>Notification Preferences</h4>
-                                <div class="form-group toggle"><label for="in-app-notifications">In-App Notifications</label><input type="checkbox" id="in-app-notifications" checked></div>
-                                <div class="form-group toggle"><label for="email-notifications">Email Notifications</label><input type="checkbox" id="email-notifications" checked></div>
-                                <div class="form-group toggle"><label for="escalation-alerts">Urgent Escalation Alerts</label><input type="checkbox" id="escalation-alerts" checked></div>
-                            </div>
-                            <div class="form-group">
-                                <h4>Interface Settings</h4>
-                                <div class="form-group">
-                                    <label for="theme-select">Theme</label>
-                                    <select id="theme-select"><option value="dark">Dark</option><option value="light">Light</option></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="language-select">Language</label>
-                                    <select id="language-select"><option value="en">English</option><option value="ar">العربية</option></select>
-                                </div>
-                            </div>
-                             <div class="form-group" style="grid-column: span 2;">
-                                <h4>Auto-Escalation Rules</h4>
-                                 <label for="auto-escalate-reason">Auto-escalate for reason:</label>
-                                <select id="auto-escalate-reason">
-                                    <option>Driver Behavior Issues</option>
-                                    <option>Financial Fraud</option>
-                                    <option>Do not auto-escalate</option>
-                                </select>
-                             </div>
-                        </div>
-                         <div class="page-actions">
-                             <button class="btn btn-primary" id="save-settings-btn">Save Settings</button>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Help Tab -->
-                <div id="help" class="tab-content">
-                     <div class="widget">
-                        <div class="placeholder-content">
-                            <h3>Help & Support</h3>
-                            <p>Access documentation or contact IT support.</p>
-                            <div style="margin-top: 20px;">
-                                <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </main>
-            <footer class="main-footer">
-                © 2025 Mohamed Elmenisy. All rights reserved.
-            </footer>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <div id="final-decision-modal" class="modal-overlay">
-      <div class="modal-box">
-        <div class="modal-header">
-            <h3 class="modal-title">Final Decision: Order <span id="decision-order-id" style="color: var(--primary-color);"></span></h3>
-            <button class="modal-close-btn" data-modal-id="final-decision-modal">×</button>
-        </div>
-        <div id="decision-modal-content"></div>
-      </div>
-    </div>
-    
-    <div id="employee-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 500px;">
-            <div class="modal-header">
-                <h3 class="modal-title" id="employee-modal-title">Add New Employee</h3>
-                <button class="modal-close-btn" data-modal-id="employee-modal">×</button>
-            </div>
-            <form id="employee-form">
-                <input type="hidden" id="employee-id">
-                <div class="form-group">
-                    <label for="employee-name">Full Name</label>
-                    <input type="text" id="employee-name" required>
-                </div>
-                <div class="form-group">
-                    <label for="employee-username">Username</label>
-                    <input type="text" id="employee-username">
-                </div>
-                <div class="form-group">
-                    <label for="employee-admin-id">Admin ID</label>
-                    <input type="text" id="employee-admin-id">
-                </div>
-                <div class="form-group">
-                    <label for="employee-department">Department</label>
-                    <input type="text" id="employee-department">
-                </div>
-                <div class="form-group">
-                    <label for="employee-title">Title</label>
-                    <input type="text" id="employee-title">
-                </div>
-                <div class="page-actions">
-                    <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="employee-modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Employee</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <div id="edit-shift-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 400px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Edit Shift</h3>
-                <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
-            </div>
-            <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
-            <div class="form-group">
-                <label for="shift-select">Shift Status</label>
-                <select id="shift-select">
-                    <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
-                    <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
-                    <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="Sick Leave">Sick Leave</option>
-                    <option value="Off">Off</option>
-                </select>
-            </div>
-            <div class="page-actions">
-                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal">Cancel</button>
-                <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Logout Confirmation Modal -->
-    <div id="logout-confirm-modal" class="modal-overlay">
-        <div class="modal-box" style="max-width: 450px; text-align: center;">
-            <div class="modal-header" style="border: none; padding-bottom: 0;">
-                <h3 class="modal-title" style="width: 100%; text-align: center;">Confirm Logout</h3>
-                <button class="modal-close-btn" data-modal-id="logout-confirm-modal" style="position: absolute; top: 10px; right: 10px;">×</button>
-            </div>
-            <p style="margin: 1.5rem 0; color: var(--text-muted-color);">Are you sure you want to log out of your account?</p>
-            <div class="page-actions" style="justify-content: center;">
-                <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="logout-confirm-modal">Cancel</button>
-                <button type="button" id="confirm-logout-btn" class="btn btn-danger">Confirm Logout</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- View Escalation Details Modal -->
-    <div id="view-escalation-modal" class="modal-overlay" style="display:none;">
-      <div class="modal-box">
-        <div class="modal-header">
-          <h3 class="modal-title">Review Details</h3>
-          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
-        </div>
-        <div id="view-escalation-body" style="display: flex; flex-direction: column; gap: 1rem;">
-          <!-- Content will be populated by JS -->
-        </div>
-        <div class="modal-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
-        </div>
-      </div>
-    </div>
-
-
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container"></div>
-    
-    <script>
         // Application State
         let currentUser = null;
-        let pendingErrors = [];
-        let unassignedOrders = [];
-        let assignedOrders = [];
-        let teamMembers = [];
-        let companyEmployees = [];
-        let teamSchedule = [];
-        let performanceMetrics = {};
+        let userErrors = [];
+        let userPerformance = {
+            errorRate: 0,
+            totalErrors: 0,
+            totalOrders: 0,
+            errorTypes: {}
+        };
         let notifications = [];
-        let directEscalations = [];
-        let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
-        let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
-        let isScheduleEditMode = false;
+        let commonErrorsChart = null;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
             const container = document.getElementById('toast-container');
+            if (!container) return;
+           
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+           
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+           
             toast.innerHTML = `
                 <div class="toast-icon">${icons[type]}</div>
                 <div class="toast-content">
@@ -884,972 +58,1965 @@ document.addEventListener('click', function(e){
                 </div>
                 <button class="toast-close">×</button>
             `;
+           
             container.appendChild(toast);
+           
             const removeToast = () => {
-                toast.style.opacity = '0';
-                toast.style.transform = 'translateX(100%)';
-                setTimeout(() => toast.parentNode?.removeChild(toast), 300);
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => toast.parentNode?.removeChild(toast), 300);
+                }
             };
+
             setTimeout(removeToast, 5000);
             toast.querySelector('.toast-close').addEventListener('click', removeToast);
         }
 
         // Helper Functions
-        const getInitials = (name) => (name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '');
-        const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-EG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Cairo' }) : 'N/A';        
-        const formatDateTime = (dateString) => dateString ? new Date(dateString).toLocaleString('en-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Cairo' }) : 'N/A';
-        const showModal = (modalId) => {
-            const modal = document.getElementById(modalId);
-            if(modal) modal.style.display = 'flex';
-        };
-        const hideModal = (modalId) => {
-            const modal = document.getElementById(modalId);
-            if(modal) modal.style.display = 'none';
-        };
-        const stringToColor = (str) => {
-            if (!str) return '#ccc';
-            let hash = 0;
-            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-            let color = '#';
-            for (let i = 0; i < 3; i++) {
-                const value = (hash >> (i * 8)) & 0xFF;
-                color += ('00' + value.toString(16)).substr(-2);
-            }
-            return color;
-        };
+        function getInitials(name) {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ?
+                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() :
+                `${names[0][0]}`.toUpperCase();
+        }
 
-        // Placeholder functions for modal opening
-        const openReassignModal = (id) => showToast(`Opening reassign for assignment ${id}...`, 'info');
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                timeZone: 'Africa/Cairo'
+            });
+        }
 
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString('en-EG', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Africa/Cairo'
+            });
+        }
 
-        // Initialize the application
+        function showModal(modalId) {
+            document.getElementById(modalId)?.classList.add('show');
+        }
+       
+        function hideModal(modalId) {
+            document.getElementById(modalId)?.classList.remove('show');
+        }
+
+        // Main Application Logic
         async function initApp() {
             try {
-                showToast('Loading Senior Dashboard...', 'info');
+                showToast('Loading your dashboard...', 'info');
+               
                 const user = await getCurrentUser();
-                if (!user) { window.location.href = 'login.html'; return; }
-                
-                const { data: profile, error } = await supabase.from('users').select('*').eq('id', user.id).single();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+               
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+               
                 if (error) throw error;
-                
+               
                 currentUser = { ...user, ...profile };
-                
                 updateUserInterface();
-                await Promise.all([
-                    loadPendingErrors(),
-                    loadUnassignedOrders(),
-                    loadAssignedOrders(),
-                    loadTeamMembers(),
-                    loadCompanyEmployees(),
-                    loadTeamSchedule(),
-                    loadPerformanceMetrics(),
-                    loadNotifications(),
-                    loadDirectEscalations()
-                ]);
                 initCharts();
-                showToast('Senior Dashboard loaded successfully', 'success');
+               
+                // Load data in parallel for better performance
+               // We need to load errors first, then calculate performance based on them.
+await loadUserErrors();
+await Promise.all([
+    loadUserPerformance(),
+    loadNotifications()
+]);
+                initRealtimeSubscriptions();
+                showToast('Dashboard loaded successfully!', 'success');
+
             } catch (error) {
                 console.error('Error initializing app:', error);
-                showToast(`Initialization failed: ${error.message}`, 'error');
+                showToast('Failed to load dashboard', 'error');
             }
         }
 
         function updateUserInterface() {
             if (!currentUser) return;
-            const name = currentUser.name || "User";
-            const initials = getInitials(name);
-            const firstName = name.split(' ')[0];
-            document.getElementById('sidebar-avatar-initials').textContent = initials;
-            document.getElementById('sidebar-username').textContent = name;
-            document.getElementById('welcome-user-h2').textContent = `Welcome, ${firstName}!`;
-            document.getElementById('profile-fullname').value = name;
-            document.getElementById('profile-email').value = currentUser.email || '';
+           
+            // Update sidebar
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('sidebar-userrole').textContent = currentUser.role;
+           
+            // Update welcome message
+            const firstName = currentUser.name.split(' ')[0];
+            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${firstName}!`;
+           
+            // Update profile form
+            document.getElementById('profile-fullname').value = currentUser.name;
+            document.getElementById('profile-email').value = currentUser.email;
             document.getElementById('profile-phone').value = currentUser.phone || '';
+            document.getElementById('profile-department').value = currentUser.department || 'N/A';
         }
-        
-        async function loadDirectEscalations() {
+
+        async function loadUserErrors(filters = {}) {
             try {
-                if (typeof getEscalations === 'function') {
-                    // نجلب التصعيدات الموجهة للسينيور الحالي
-                    const escalations = await getEscalations(currentUser.id);
-                    directEscalations = escalations || [];
-                    renderDirectEscalationsTable();
-                    document.getElementById('direct-escalations-count').textContent = directEscalations.filter(e => e.status === 'pending').length;
-                }
+                const errors = await getAgentErrors(currentUser.id, filters);
+                userErrors = errors || [];
+                renderErrorTables();
             } catch (error) {
-                showToast('Failed to load direct escalations', 'error');
-                console.error('Error loading direct escalations:', error);
+                console.error('Error loading user errors:', error);
+                showToast('Failed to load your errors', 'error');
+                userErrors = [];
+                renderErrorTables();
             }
         }
 
-        // Data Loading Functions
-        const loadData = async (loader, renderer, countElementId, dataArray) => {
+        async function loadUserPerformance() {
             try {
-                const data = await loader();
-                dataArray.splice(0, dataArray.length, ...data); // Replace array content
-                renderer();
-                if (countElementId) document.getElementById(countElementId).textContent = data.length;
+                // We can reuse the errors we already loaded
+                const totalErrors = userErrors.length;
+                const totalOrders = 20; // This should come from another API call in the future
+       
+                const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
+               
+                document.getElementById('error-rate').textContent = `${errorRate}%`;
+                document.getElementById('error-rate-bar').style.width = `${Math.min(errorRate, 100)}%`;
+                document.getElementById('error-rate-description').textContent =
+                    `Based on ${totalErrors} errors out of ${totalOrders} reviewed orders.`;
+       
+                // Calculate error types distribution
+                const errorTypes = {};
+                userErrors.forEach(error => {
+                    const errorType = error.error_details || 'Unknown';
+                    errorTypes[errorType] = (errorTypes[errorType] || 0) + 1;
+                });
+                userPerformance.errorTypes = errorTypes;
+               
+                updateCharts();
             } catch (error) {
-                showToast(`Failed to load ${countElementId || 'data'}`, 'error');
-                console.error(`Error loading data for ${countElementId}:`, error);
-                renderer(); // Render empty state
-            }
-        };
-
-        const loadPendingErrors = () => loadData(getPendingErrors, renderEscalationsTable, 'pending-responses-count', pendingErrors);
-        const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
-        const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), renderAssignedOrdersTable, null, assignedOrders);
-        const loadTeamMembers = () => loadData(getTeamMembers, () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
-        const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
-        const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
-        const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
-        
-        async function loadPerformanceMetrics() {
-            try {
-                performanceMetrics = await getPerformanceMetrics('month');
-                document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-                document.getElementById('pending-escalations').textContent = directEscalations.filter(e => e.status === 'pending').length;
-                document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-                document.getElementById('avg-resolution-time').textContent = '45 mins';
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
+                console.error('Error loading user performance:', error);
+                document.getElementById('error-rate').textContent = 'N/A';
             }
         }
 
-        // Render Functions
-        function renderEscalationsTable(errorsToRender = pendingErrors) {
-            const tableBody = document.getElementById('escalation-table-body');
-            if (errorsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">✅ No pending responses.</td></tr>`;
-                return;
-            }
-            tableBody.innerHTML = errorsToRender.map(error => `
-                <tr>
-                    <td>${error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</td>
-                    <td>${error.employee?.employee_username || 'Unknown'}</td>
-                    <td>${error.quality_reviews?.modified_reason || 'Unknown'}</td>
-                    <td class="wrap-text">${(error.error_responses?.[0]?.response_text || 'No response').substring(0, 100)}...</td>
-                    <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
-                    <td><button class="btn btn-primary btn-sm review-response-btn" data-error-id="${error.id}">Review</button></td>
-                </tr>
-            `).join('');
-            document.querySelectorAll('.review-response-btn').forEach(btn => {
-                btn.addEventListener('click', () => openFinalDecisionModal(btn.dataset.errorId));
-            });
-        }
-        
-        function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
-            const tableBody = document.getElementById('unassigned-table-body');
-            if (ordersToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📋 No unassigned orders.</td></tr>`;
-                return;
-            }
-            tableBody.innerHTML = ordersToRender.map(order => `
-                <tr>
-                    <td><input type="checkbox" class="order-checkbox" value="${order.order_id}"></td>
-                    <td>${order.order_id}</td>
-                    <td class="wrap-text">${order.reason}</td>
-                    <td class="wrap-text">${order.employee_name}</td>
-                    <td>${order.chefz || 'N/A'}</td>
-                    <td>${order.order_status}</td>
-                    <td>${formatDate(order.requested_delivery_date)}</td>
-                    <td>${order.payment_type || 'N/A'}</td>
-                </tr>
-            `).join('');
-        }
+        function renderErrorTables() {
+            const dashboardTableBody = document.getElementById('error-table-body');
+            const myErrorsTableBody = document.getElementById('my-errors-table-body');
 
-        function renderAssignedOrdersTable(ordersToRender = assignedOrders) {
-            const tableBody = document.getElementById('assigned-table-body');
-            const tableHead = tableBody.previousElementSibling;
+            const renderTable = (tbody, data) => {
+                if (data.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="empty-state">
+                                <div class="empty-state-icon">✅</div>
+                                <div>No errors found for your account.</div>
+                                <small>Great job maintaining quality standards!</small>
+                            </td>
+                        </tr>
+                    `;
+                } else {
+                    tbody.innerHTML = data.map(error => {
+                        const orderId = error.order_id || 'N/A';
+                        const orderDate = error.order_created_at || error.created_at; // نستخدم تاريخ إنشاء الطلب، وإذا لم يوجد نستخدم تاريخ إنشاء الخطأ
+                        const errorType = error.error_details || 'Unknown';
+                        // --- التعديل ينتهي هنا ---
 
-            // Add the new columns to the header if they don't exist
-            if (tableHead.rows[0].cells.length < 7) {
-                tableHead.rows[0].innerHTML = `
-                    <th>Order ID</th>
-                    <th>Agent</th>
-                    <th>Status</th>
-                    <th>Date Assigned</th>
-                    <th>Review Time</th>
-                    <th>SLA</th>
-                    <th>Action</th>
-                `;
-            }
+                        const status = error.status.replace('_response', '').replace('_', ' ');
 
-             if (ordersToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found.</td></tr>`;
-                 return;
-            }
-
-            tableBody.innerHTML = ordersToRender.map(a => {
-                let reviewTime = 'N/A';
-                let slaStatus = '';
-
-                if (a.status === 'completed' && a.assigned_at && a.completed_at) {
-                    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
-                    reviewTime = `${diffMinutes} min`;
-                    slaStatus = (diffMinutes > 30) 
-                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                        : `<span class="status-badge status-completed">On Time</span>`;
-                }
-
-                return `
-                    <tr>
-                        <td>${a.orders?.order_id || 'N/A'}</td>
-                        <td>${a.users?.name || 'Unknown'}</td>
-                        <td><span class="status-badge status-${a.status}">${a.status}</span></td>
-                        <td>${formatDateTime(a.assigned_at)}</td>
-                        <td>${reviewTime}</td>
-                        <td>${slaStatus}</td>
-                        <td>
-                            <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                            ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-        
-            // ربط الأحداث للأزرار
-            document.querySelectorAll('.view-assigned-btn').forEach(btn => {
-                btn.addEventListener('click', () => openViewAssignedModal(btn.dataset.assignmentId));
-            });
-            document.querySelectorAll('.reassign-btn').forEach(btn => {
-                btn.addEventListener('click', () => openReassignModal(btn.dataset.assignmentId));
-            });
-        }
-
-        function renderDirectEscalationsTable() {
-            const tableBody = document.getElementById('direct-escalations-table-body');
-            if (!tableBody) return;
-
-            const searchTermInput = document.getElementById('direct-escalation-search');
-            const statusFilterInput = document.getElementById('direct-escalation-status-filter');
-            const searchTerm = searchTermInput ? searchTermInput.value.toLowerCase() : '';
-            const statusFilter = statusFilterInput ? statusFilterInput.value : 'all';
-
-            const escalationsToRender = directEscalations.filter(e => {
-                const matchesStatus = statusFilter === 'all' || e.status === statusFilter;
-                const searchCorpus = `${e.order_assignments?.orders?.order_id} ${e.escalated_by?.name} ${e.notes}`.toLowerCase();
-                const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
-                return matchesStatus && matchesSearch;
-            });
-
-            if (escalationsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations found.</td></tr>`;
-                return;
-            }
-
-            tableBody.innerHTML = escalationsToRender.map(escalation => {
-                const orderId = escalation.order_assignments?.orders?.order_id || 'N/A';
-                const escalatedBy = escalation.escalated_by?.name || 'Unknown';
-                const reason = escalation.notes || 'No reason provided.';
-                const date = formatDateTime(escalation.escalated_at);
-                
-                let statusBadge, actionContent;
-                
-                if (escalation.status === 'resolved') {
-                    statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
-                    actionContent = `<button class="btn btn-secondary btn-sm view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
-                } else { // 'pending'
-                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
-                    actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
-                }
-                
-                const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
-
-                return `
-                    <tr style="${rowStyle}">
-                        <td>${orderId}</td>
-                        <td>${escalatedBy}</td>
-                        <td class="wrap-text" title="${reason}">${reason.substring(0, 50)}...</td>
-                        <td>${date}</td>
-                        <td>${statusBadge}</td>
-                        <td>${actionContent}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            document.querySelectorAll('.view-escalation-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const escalation = directEscalations.find(e => String(e.id) === String(btn.dataset.escalationId));
-                    if (!escalation) return;
-
-                    const body = document.getElementById('view-escalation-body');
-                    if(body){
-                        body.innerHTML = `
-                            <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
-                            <div class="detail-item"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
-                            <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
+                        return `
+                            <tr>
+                                <td><strong>${orderId}</strong></td>
+                                <td>${formatDate(orderDate)}</td>
+                                <td>${errorType}</td>
+                                <td><span class="status-badge status-${status}">${status}</span></td>
+                                <td class="action-buttons">
+                                    <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
+                                        👁️ View
+                                    </button>
+                                     ${error.status === 'closed' ?
+                                        `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">
+                                         Appeal
+                                        </button>` : ''}
+                                </td>
+                            </tr>
                         `;
-                    }
-                    showModal('view-escalation-modal');
-                });
-            });
-        }
-        
-        function renderTeamMembers() {
-            const grid = document.getElementById('team-members-grid');
-            
-            // --- تعديل هنا: نحدد كل الأدوار التي نريد عرضها ---
-            const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
-            const teamToDisplay = teamMembers.filter(m => teamRoles.includes(m.role));
-            
-            if (teamToDisplay.length === 0) {
-                grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`;
-                return;
-            }
-            
-            grid.innerHTML = teamToDisplay.map(member => `
-                <div class="team-member-card">
-                    <div class="team-member-avatar-initials" style="background-color: ${stringToColor(member.name)};">
-                        ${getInitials(member.name)}
-                    </div>
-                    <div class="team-member-name">${member.name}</div>
-                    <div class="team-member-role">${member.role}</div>
-                </div>
-            `).join('');
-        }
-
-        function renderCompanyEmployeesTable(employeesToRender = companyEmployees) {
-            const tableBody = document.getElementById('company-employees-table-body');
-            if(employeesToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">🏢 No company employees found.</td></tr>`;
-                return;
-            }
-            tableBody.innerHTML = employeesToRender.map(emp => `
-                <tr>
-                    <td>${emp.employee_name}</td>
-                    <td>${emp.employee_username || 'N/A'}</td>
-                    <td>${emp.admin_id || 'N/A'}</td>
-                    <td>${emp.department || 'N/A'}</td>
-                    <td>${emp.title || 'N/A'}</td>
-                    <td><button class="btn btn-secondary btn-sm edit-employee-btn" data-employee-id="${emp.id}">Edit</button></td>
-                </tr>
-            `).join('');
-            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
-                btn.addEventListener('click', () => openEmployeeModal(btn.dataset.employeeId));
-            });
-        }
-        
-        function renderTeamSchedule() {
-            const tableBody = document.getElementById('schedule-table-body');
-            const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'helper');
-            if (qualityTeam.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`;
-                return;
-            }
-
-            const scheduleMap = {};
-            teamSchedule.forEach(s => {
-                if (!scheduleMap[s.user_id]) scheduleMap[s.user_id] = {};
-                const dayOfWeek = new Date(s.shift_date + 'T00:00:00Z').getUTCDay();
-                scheduleMap[s.user_id][dayOfWeek] = s.shift_type;
-            });
-            
-            tableBody.innerHTML = qualityTeam.map(agent => {
-                let cells = '';
-                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon, Tue, ..., Sun
-                for (const day of daysOfWeek) {
-                    const shift = scheduleMap[agent.id]?.[day] || 'Off';
-                    let display, className;
-                    switch (shift) {
-                        case 'On Leave': display = 'On Leave'; className = 'shift-leave'; break;
-                        case 'Sick Leave': display = 'Sick Leave'; className = 'shift-sick'; break;
-                        case 'Off': display = 'Off'; className = 'shift-off'; break;
-                        default: display = shift; className = 'shift-time';
-                    }
-                    cells += `<td class="shift-cell" data-user-id="${agent.id}" data-day="${day}" data-user-name="${agent.name}"><span class="${className}">${display}</span></td>`;
+                    }).join('');
                 }
-                return `<tr><td class="member-name">${agent.name}</td>${cells}</tr>`;
-            }).join('');
+            };
 
-            document.querySelectorAll('.shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => {
-                    if (isScheduleEditMode) {
-                        openShiftModal(cell.dataset);
+            renderTable(dashboardTableBody, userErrors.slice(0, 5));
+            renderTable(myErrorsTableBody, userErrors);
+
+            // Add event listeners to buttons
+            document.querySelectorAll('.view-error-btn').forEach(btn => {
+                btn.addEventListener('click', () => openViewErrorModal(btn.dataset.errorId));
+            });
+
+            document.querySelectorAll('.reply-error-btn').forEach(btn => {
+                btn.addEventListener('click', () => openReplyErrorModal(btn.dataset.errorId));
+            });
+           
+            // Add event listeners to the new "Appeal" buttons
+            document.querySelectorAll('.appeal-error-btn').forEach(btn => {
+                btn.addEventListener('click', async () => {
+                    const errorId = btn.dataset.errorId;
+                   
+                    // اطلب تأكيدًا من المستخدم قبل المتابعة
+                    if (confirm('Are you sure you want to appeal this error? This will send it back for review.')) {
+                        try {
+                            // قم بتعطيل الزر لمنع الضغط المتكرر
+                            btn.disabled = true;
+                            btn.textContent = 'Appealing...';
+
+                            // قم بتحديث حالة الخطأ في قاعدة البيانات
+                            const { error } = await supabase
+                                .from('errors')
+                                .update({ status: 'under_review' })
+                                .eq('id', errorId);
+
+                            if (error) throw error;
+
+                            showToast('Error has been appealed successfully!', 'success');
+                           
+                            // أعد تحميل الأخطاء لتحديث الواجهة
+                            await loadUserErrors();
+
+                        } catch (error) {
+                            console.error('Error appealing error:', error);
+                            showToast('Failed to appeal the error. Please try again.', 'error');
+                            // أعد تمكين الزر في حالة حدوث خطأ
+                            btn.disabled = false;
+                            btn.textContent = 'Appeal';
+                        }
                     }
                 });
             });
+        }
+
+        function openViewErrorModal(errorId) {
+            const error = userErrors.find(e => e.error_id === errorId);
+            if (!error) return;
+       
+            document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
+           
+            const errorDetails = `
+                <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
+                <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Reviewed By</strong><p>${error.employee_name || 'Unknown'}</p></div>
+                <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status.replace('_response', '')}">${error.status.replace('_', ' ')}</span></p></div>
+            `;
+           
+            document.getElementById('view-error-body').innerHTML = errorDetails;
+            showModal('view-error-modal');
+        }
+
+        function openReplyErrorModal(errorId) {
+            const error = userErrors.find(e => e.error_id === errorId);
+            if (!error) return;
+           
+            document.getElementById('reply-error-id').textContent = error.order_id || 'N/A';
+            document.getElementById('reply-error-type').textContent = error.error_details || 'Unknown';
+            document.getElementById('reply-error-date').textContent = formatDate(error.created_at);
+            document.getElementById('reply-error-description').textContent = 'Please review the error details and provide your feedback.';
+            document.getElementById('error-response').value = '';
+            document.getElementById('submit-response-btn').dataset.errorId = errorId;
+           
+            showModal('reply-error-modal');
+        }
+
+        async function handleResponseSubmission() {
+            const btn = document.getElementById('submit-response-btn');
+            const errorId = btn.dataset.errorId;
+            const responseText = document.getElementById('error-response').value.trim();
+           
+            if (!responseText) {
+                showToast('Please enter your response before submitting', 'warning');
+                return;
+            }
+
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Submitting...';
+
+            try {
+                await submitErrorResponse(errorId, currentUser.id, responseText);
+                showToast('Your response has been submitted successfully!', 'success');
+                hideModal('reply-error-modal');
+               
+                // Reload data
+                await Promise.all([
+                    loadUserErrors(),
+                    loadUserPerformance()
+                ]);
+               
+            } catch (error) {
+                console.error('Error submitting response:', error);
+                showToast('Failed to submit your response. Please try again.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        }
+
+        async function loadNotifications() {
+            try {
+                notifications = await getNotifications(currentUser.id) || [];
+                updateNotificationsUI();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notifications = [];
+                updateNotificationsUI();
+            }
         }
 
         function updateNotificationsUI() {
             const list = document.getElementById('notification-list');
-            list.innerHTML = notifications.length === 0 ? '<li class="notification-item">No new notifications</li>' : 
-                notifications.map(n => `<li class="notification-item">${n.message}</li>`).join('');
-        }
+            const badge = document.getElementById('notification-badge');
+            const unreadCount = notifications.filter(n => !n.is_read).length;
 
-        const populateAgentSelect = () => {
-            const select = document.getElementById('agent-select');
-            
-            // --- تعديل هنا: نحدد الأدوار القابلة لاستلام المهام ---
-            const assignableRoles = ['quality', 'helper'];
-            const assignableMembers = teamMembers.filter(m => assignableRoles.includes(m.role));
+            // Update badge
+            badge.textContent = unreadCount;
+            badge.style.display = unreadCount > 0 ? 'flex' : 'none';
 
-            if (assignableMembers.length === 0) {
-                select.innerHTML = '<option value="">No agents available</option>';
-                return;
-            }
-
-            select.innerHTML = assignableMembers.map(a => 
-                // نضيف الدور بجانب الاسم للتمييز
-                `<option value="${a.id}">${a.name} (${a.role})</option>`
-            ).join('');
-        };
-
-
-        // Modal Handlers
-        async function openFinalDecisionModal(errorId) {
-            const error = pendingErrors.find(e => e.id.toString() === errorId);
-            if (!error) return;
-            document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-            document.getElementById('decision-modal-content').innerHTML = `
-                <div class="escalation-details">
-               <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
-                    <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
-                </div>
-                <div class="feedback-form">
-                    <label>Your Decision & Notes:</label>
-                    <textarea id="decision-notes" rows="4"></textarea>
-                    <div class="feedback-actions">
-                        <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'rejected')">Reject</button>
-                        <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'approved')">Approve</button>
-                    </div>
-                </div>`;
-            showModal('final-decision-modal');
-        }
-
-        function openViewAssignedModal(assignmentId) {
-            const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-            if (!assignment) return;
-            const review = assignment.quality_reviews?.[0];
-
-            const body = document.getElementById('view-escalation-body');
-            document.querySelector('#view-escalation-modal .modal-title').textContent = `Review Details: ${assignment.orders?.order_id || ''}`;
-
-            if (review) {
-                body.innerHTML = `
-                    <div class="detail-item"><strong>Reviewed By</strong><span>${assignment.users?.name || ''}</span></div>
-                    <div class="detail-item"><strong>Action Taken</strong><span>${review.action_correctness || 'N/A'}</span></div>
-                    <div class="detail-item"><strong>Modified Reason</strong><span>${review.modified_reason || 'None'}</span></div>
-                    <div class="detail-item"><strong>Notes</strong><p>${review.modification_details || 'No notes.'}</p></div>
-                `;
+            // Update notifications list
+            if (notifications.length === 0) {
+                list.innerHTML = '<li class="notification-item empty">No new notifications</li>';
             } else {
-                body.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
-            }
-            showModal('view-escalation-modal');
-        }
-
-        function openEmployeeModal(employeeId = null) {
-            const form = document.getElementById('employee-form');
-            form.reset();
-            const modalTitle = document.getElementById('employee-modal-title');
-            document.getElementById('employee-id').value = employeeId || '';
-
-            if (employeeId) {
-                const employee = companyEmployees.find(e => e.id.toString() === employeeId);
-                if (employee) {
-                    modalTitle.textContent = 'Edit Employee';
-                    document.getElementById('employee-name').value = employee.employee_name;
-                    document.getElementById('employee-username').value = employee.employee_username;
-                    document.getElementById('employee-admin-id').value = employee.admin_id;
-                    document.getElementById('employee-department').value = employee.department;
-                    document.getElementById('employee-title').value = employee.title;
-                }
-            } else {
-                modalTitle.textContent = 'Add New Employee';
-            }
-            showModal('employee-modal');
-        }
-
-        function openShiftModal(dataset) {
-            const { userId, day, userName } = dataset;
-            const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-            document.getElementById('shift-modal-member-name').textContent = userName;
-            document.getElementById('shift-modal-day-name').textContent = days[day];
-            
-            const saveBtn = document.getElementById('save-shift-btn');
-            saveBtn.dataset.userId = userId;
-            saveBtn.dataset.day = day;
-
-            showModal('edit-shift-modal');
-        }
-
-        // Action Handlers
-        async function handleFinalDecision(errorId, decision) {
-            const notes = document.getElementById('decision-notes').value;
-            if (!notes) {
-                showToast('Please provide your decision notes.', 'warning');
-                return;
-            }
-            try {
-                await submitFinalDecision(errorId, currentUser.id, decision, notes);
-                showToast(`Response ${decision} successfully`, 'success');
-                hideModal('final-decision-modal');
-                await loadPendingErrors();
-            } catch (error) {
-                showToast('Failed to submit decision', 'error');
-            }
-        }
-        
-        async function handleEmployeeFormSubmit(event) {
-            event.preventDefault();
-            const employeeId = document.getElementById('employee-id').value;
-            const employeeData = {
-                employee_name: document.getElementById('employee-name').value,
-                employee_username: document.getElementById('employee-username').value,
-                admin_id: document.getElementById('employee-admin-id').value,
-                department: document.getElementById('employee-department').value,
-                title: document.getElementById('employee-title').value,
-            };
-
-            try {
-                if(employeeId) {
-                    await updateCompanyEmployee(employeeId, employeeData);
-                    showToast('Employee updated successfully', 'success');
-                } else {
-                    await addCompanyEmployee(employeeData);
-                    showToast('Employee added successfully', 'success');
-                }
-                hideModal('employee-modal');
-                await loadCompanyEmployees();
-            } catch (error) {
-                showToast(`Failed to save employee: ${error.message}`, 'error');
-            }
-        }
-
-        async function handleSaveShift() {
-            const { userId, day } = document.getElementById('save-shift-btn').dataset;
-            const shiftType = document.getElementById('shift-select').value;
-            
-            const today = new Date();
-            const currentDay = today.getDay(); 
-            const distance = day - currentDay;
-            const targetDate = new Date(today);
-            targetDate.setDate(targetDate.getDate() + distance);
-            const shiftDate = targetDate.toISOString().split('T')[0];
-
-            const scheduleData = { user_id: userId, shift_date: shiftDate, shift_type: shiftType };
-
-            try {
-                await updateTeamSchedule([scheduleData]); 
-                showToast('Schedule updated successfully', 'success');
-                hideModal('edit-shift-modal');
-                await loadTeamSchedule(); 
-            } catch (error) {
-                showToast(`Failed to update schedule: ${error.message}`, 'error');
-            }
-        }
-
-        function handleCsvImport(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = async (e) => {
-                try {
-                    const text = e.target.result;
-                    const lines = text.split(/\r?\n/).filter(line => line.trim() !== '');
-                    if (lines.length < 2) throw new Error("CSV file must have a header and at least one data row.");
-                    
-                    const header = lines[0].split(',').map(h => h.trim());
-                    const data = lines.slice(1).map(line => {
-                        const values = line.split(',');
-                        return header.reduce((obj, nextKey, index) => {
-                            obj[nextKey] = values[index]?.trim();
-                            return obj;
-                        }, {});
+                list.innerHTML = notifications.map(n => `
+                    <li class="notification-item ${n.is_read ? 'read' : 'unread'}" data-notification-id="${n.id}">
+                        <div class="notification-message">
+                            <div class="notification-text">${n.message}</div>
+                            <div class="notification-time">${formatDateTime(n.created_at)}</div>
+                        </div>
+                        <div class="notification-actions">
+                            ${!n.is_read ? `
+                                <button class="mark-read-btn" data-notification-id="${n.id}" title="Mark as read">
+                                    ✓
+                                </button>
+                            ` : ''}
+                        </div>
+                    </li>
+                `).join('');
+               
+                // Add event listeners to mark-as-read buttons
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const notificationId = btn.dataset.notificationId;
+                        btn.disabled = true;
+                       
+                        try {
+                            await markNotificationAsRead(notificationId);
+                            await loadNotifications();
+                            showToast('Notification marked as read', 'success');
+                        } catch (error) {
+                            console.error('Error marking notification as read:', error);
+                            showToast('Failed to mark notification as read', 'error');
+                        }
                     });
-
-                    showToast(`Importing ${data.length} orders...`, 'info');
-                    await importOrdersFromCSV(data);
-                    showToast('Orders imported successfully!', 'success');
-                    await loadUnassignedOrders();
-                } catch (error) {
-                    showToast(`CSV Import Error: ${error.message}`, 'error');
-                } finally {
-                    event.target.value = ''; 
-                }
-            };
-            reader.readAsText(file);
+                });
+            }
         }
 
-        // Charts
-        function initCharts() {
-            const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
-            if (teamCtx) teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: ['Team A', 'Team B', 'Team C', 'Team D'], datasets: [{ label: 'Accuracy Rate (%)', data: [95.2, 92.8, 97.1, 94.5], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
-            const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
-            if (trendsCtx) errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
-            const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
-            if (analyticsCtx) analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Orders Reviewed', data: [320, 450, 410, 480], borderColor: '#00bfff', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true }, { label: 'Errors Found', data: [25, 18, 22, 15], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Monthly Performance Report', color: '#e6edf3', font: { size: 16 } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
-            const pieCtx = document.getElementById('errorTypesPieChart')?.getContext('2d');
-            if (pieCtx) errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
-        }
-        
-        // Event Listeners Setup
-        document.addEventListener('DOMContentLoaded', () => {
-            initApp();
-            
-            const tabs = document.querySelectorAll('.sidebar-nav a[data-tab]');
-            const contentAreas = document.querySelectorAll('.tab-content');
-            const pageTitle = document.getElementById('page-title');
-
-            tabs.forEach(tab => {
-                tab.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    if(tab.id === 'logout-btn') return;
-                    const tabId = tab.dataset.tab;
-                    tabs.forEach(t => t.parentElement.classList.remove('active'));
-                    tab.parentElement.classList.add('active');
-                    contentAreas.forEach(area => area.classList.remove('active'));
-                    const activeContent = document.getElementById(tabId);
-                    if (activeContent) activeContent.classList.add('active');
-                    if (pageTitle) pageTitle.textContent = tab.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
-                });
-            });
-            
-            const notificationBtn = document.getElementById('notification-btn');
-            if (notificationBtn) {
-                notificationBtn.addEventListener('click', (e) => { 
-                    e.stopPropagation(); 
-                    const dropdown = document.getElementById('notification-dropdown');
-                    if (dropdown) dropdown.classList.toggle('show');
-                });
-            }
-            
-            document.addEventListener('click', (e) => { 
-                if (!e.target.closest('.notification-bell')) { 
-                    const dropdown = document.getElementById('notification-dropdown');
-                    if (dropdown) dropdown.classList.remove('show');
-                } 
-            });
-
-            document.querySelectorAll('.modal-close-btn').forEach(btn => { 
-                btn.addEventListener('click', () => {
-                    const modal = btn.closest('.modal-overlay');
-                    if (modal) hideModal(modal.id);
-                }); 
-            });
-            
-            const editScheduleBtn = document.getElementById('edit-schedule-btn');
-            const scheduleEditControls = document.getElementById('schedule-edit-controls');
-            const scheduleTable = document.getElementById('schedule-table');
-            const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
-            const saveScheduleChangesBtn = document.getElementById('save-schedule-changes-btn');
-            const addScheduleMemberBtn = document.getElementById('add-schedule-member-btn');
-            const importOrdersBtn = document.getElementById('import-orders-btn');
-            const csvFileInput = document.getElementById('csv-file-input');
-            const addEmployeeBtn = document.getElementById('add-employee-btn');
-            const employeeForm = document.getElementById('employee-form');
-            const saveShiftBtn = document.getElementById('save-shift-btn');
-            const assignBtn = document.getElementById('assign-btn');
-            const selectAllCheckbox = document.getElementById('select-all-checkbox');
-            const directEscalationSearch = document.getElementById('direct-escalation-search');
-            const directEscalationStatusFilter = document.getElementById('direct-escalation-status-filter');
-            const logoutBtn = document.getElementById('logout-btn');
-            const confirmLogoutBtn = document.getElementById('confirm-logout-btn');
-
-            if (editScheduleBtn) {
-                editScheduleBtn.addEventListener('click', () => {
-                    isScheduleEditMode = true;
-                    if (scheduleTable) scheduleTable.classList.add('edit-mode');
-                    editScheduleBtn.style.display = 'none';
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'inline-flex';
-                    showToast('Edit mode enabled. Click a cell to change the shift.', 'info');
-                });
-            }
-
-            if (cancelScheduleBtn) {
-                cancelScheduleBtn.addEventListener('click', () => {
-                    isScheduleEditMode = false;
-                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
-                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
-                    showToast('Edit mode disabled. Changes were not saved.', 'warning');
-                    loadTeamSchedule(); 
-                });
-            }
-
-            if (saveScheduleChangesBtn) {
-                saveScheduleChangesBtn.addEventListener('click', () => {
-                    isScheduleEditMode = false;
-                    if (scheduleTable) scheduleTable.classList.remove('edit-mode');
-                    if (scheduleEditControls) scheduleEditControls.style.display = 'none';
-                    if (editScheduleBtn) editScheduleBtn.style.display = 'inline-flex';
-                    showToast('Schedule changes saved successfully!', 'success');
-                });
-            }
-            
-            if (addScheduleMemberBtn) addScheduleMemberBtn.addEventListener('click', () => { showToast('Please use the "Company Employees" page to add new members.', 'info'); openEmployeeModal(); });
-            if (importOrdersBtn) importOrdersBtn.addEventListener('click', () => csvFileInput?.click());
-            if (csvFileInput) csvFileInput.addEventListener('change', handleCsvImport);
-            if (addEmployeeBtn) addEmployeeBtn.addEventListener('click', () => openEmployeeModal());
-            if (employeeForm) employeeForm.addEventListener('submit', handleEmployeeFormSubmit);
-            if (saveShiftBtn) saveShiftBtn.addEventListener('click', handleSaveShift);
-
-            if (assignBtn) {
-                assignBtn.addEventListener('click', async () => {
-                    const selectedOrders = Array.from(document.querySelectorAll('.order-checkbox:checked')).map(cb => cb.value);
-                    const agentSelect = document.getElementById('agent-select');
-                    const agentId = agentSelect ? agentSelect.value : null;
-                    if (selectedOrders.length === 0 || !agentId) { showToast('Please select orders and an agent', 'warning'); return; }
-                    try {
-                        await assignOrders(selectedOrders, agentId, currentUser.id);
-                        showToast(`${selectedOrders.length} orders assigned`, 'success');
-                        await loadUnassignedOrders();
-                        await loadAssignedOrders();
-                    } catch (error) { showToast('Failed to assign orders', 'error'); }
-                });
-            }
-            
-            if (selectAllCheckbox) selectAllCheckbox.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
-       
-            if (directEscalationSearch) directEscalationSearch.addEventListener('input', () => renderDirectEscalationsTable());
-            if (directEscalationStatusFilter) directEscalationStatusFilter.addEventListener('change', () => renderDirectEscalationsTable());
-
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    showModal('logout-confirm-modal');
-                });
-            }
-
-            if (confirmLogoutBtn) {
-                confirmLogoutBtn.addEventListener('click', async () => {
-                    try {
-                        showToast('Logging out...', 'info');
-                        // Assuming a logout function exists, like supabase.auth.signOut()
-                        // const { error } = await supabase.auth.signOut();
-                        // if (error) throw error;
-                        hideModal('logout-confirm-modal');
-                        setTimeout(() => window.location.href = 'login.html', 500); // Redirect after logout
-                    } catch (error) {
-                        showToast(`Logout failed: ${error.message}`, 'error');
-                        hideModal('logout-confirm-modal');
+        function initRealtimeSubscriptions() {
+            // Subscribe to new notifications
+            if (typeof subscribeToNotifications === 'function') {
+                subscribeToNotifications(currentUser.id, (payload) => {
+                    if (payload.new && payload.new.user_id === currentUser.id) {
+                        showToast(payload.new.message, 'info', 'New Notification');
+                        loadNotifications();
                     }
                 });
             }
 
+            // Subscribe to new errors
+            if (typeof subscribeToErrors === 'function') {
+                subscribeToErrors(currentUser.id, (payload) => {
+                    if (payload.new && payload.new.employee_id === currentUser.id) {
+                        showToast('A new error has been logged for you', 'warning', 'New Error');
+                        loadUserErrors();
+                        loadUserPerformance();
+                    }
+                });
+            }
+        }
+
+        function initCharts() {
+            const ctx = document.getElementById('commonErrorsChart').getContext('2d');
+            commonErrorsChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['No Errors Yet'],
+                    datasets: [{
+                        data: [1],
+                        backgroundColor: ['#333'],
+                        borderWidth: 2,
+                        borderColor: '#1a1a1a'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: '#e6edf3',
+                                font: { family: 'Poppins', size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(26, 26, 26, 0.9)',
+                            titleColor: '#00bfff',
+                            bodyColor: '#e6edf3',
+                            borderColor: '#333',
+                            borderWidth: 1
+                        }
+                    },
+                    cutout: '60%'
+                }
+            });
+        }
+
+        function updateCharts() {
+            if (!commonErrorsChart) return;
+           
+            const labels = Object.keys(userPerformance.errorTypes);
+            const data = Object.values(userPerformance.errorTypes);
+           
+            if (labels.length > 0 && data.length > 0) {
+                commonErrorsChart.data.labels = labels;
+                commonErrorsChart.data.datasets[0].data = data;
+                commonErrorsChart.data.datasets[0].backgroundColor = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'
+                ];
+            } else {
+                commonErrorsChart.data.labels = ['No Errors'];
+                commonErrorsChart.data.datasets[0].data = [1];
+                commonErrorsChart.data.datasets[0].backgroundColor = ['#333'];
+            }
+           
+            commonErrorsChart.update();
+        }
+
+        // Filter Functions
+        function setupFilters() {
+            // Dashboard filters
+            const applyFiltersBtn = document.getElementById('apply-filters-btn');
+            const resetFiltersBtn = document.getElementById('reset-filters-btn');
+           
+            if (applyFiltersBtn) {
+                applyFiltersBtn.addEventListener('click', () => {
+                    const filters = {
+                        order_id: document.getElementById('filter-order-id')?.value || '',
+                        from_date: document.getElementById('filter-from-date')?.value || '',
+                        to_date: document.getElementById('filter-to-date')?.value || ''
+                    };
+                    loadUserErrors(filters);
+                });
+            }
+           
+            if (resetFiltersBtn) {
+                resetFiltersBtn.addEventListener('click', () => {
+                    document.getElementById('filter-order-id').value = '';
+                    document.getElementById('filter-from-date').value = '';
+                    document.getElementById('filter-to-date').value = '';
+                    loadUserErrors();
+                });
+            }
+
+            // My Errors filters
+            const applyMyErrorsBtn = document.getElementById('apply-my-errors-filters');
+            const resetMyErrorsBtn = document.getElementById('reset-my-errors-filters');
+           
+            if (applyMyErrorsBtn) {
+                applyMyErrorsBtn.addEventListener('click', () => {
+                    const searchTerm = document.getElementById('my-errors-search')?.value || '';
+                    const statusFilter = document.getElementById('my-errors-status')?.value || 'all';
+                   
+                    const filters = {};
+                    if (searchTerm) filters.order_id = searchTerm;
+                    if (statusFilter !== 'all') filters.status = statusFilter;
+                   
+                    loadUserErrors(filters);
+                });
+            }
+           
+            if (resetMyErrorsBtn) {
+                resetMyErrorsBtn.addEventListener('click', () => {
+                    document.getElementById('my-errors-search').value = '';
+                    document.getElementById('my-errors-status').value = 'all';
+                    loadUserErrors();
+                });
+            }
+        }
+
+        // Event Listeners Setup
+        function setupEventListeners() {
+            // Tab navigation
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                   
+                    // Update active tab
+                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                   
+                    // Show corresponding content
+                    const tabId = tab.dataset.tab;
+                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                   
+                    // Update page title
+                    document.getElementById('page-title-header').textContent =
+                        tab.textContent.replace(/[^\w\s]/gi, '').trim();
+                });
+            });
+
+            // Settings navigation
+            document.querySelectorAll('.settings-nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                   
+                    const sectionId = link.dataset.section;
+                    document.querySelectorAll('.setting-card').forEach(s => s.style.display = 'none');
+                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
+                });
+            });
+           
+            // Notifications
+            document.getElementById('notification-btn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                document.getElementById('notification-dropdown').classList.toggle('show');
+            });
+           
+            document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                const unreadNotifications = notifications.filter(n => !n.is_read);
+               
+                if (unreadNotifications.length === 0) {
+                    showToast('No unread notifications', 'info');
+                    return;
+                }
+               
+                try {
+                    await Promise.all(unreadNotifications.map(n => markNotificationAsRead(n.id)));
+                    await loadNotifications();
+                    showToast('All notifications marked as read', 'success');
+                } catch (error) {
+                    console.error('Error marking all as read:', error);
+                    showToast('Failed to mark all as read', 'error');
+                }
+            });
+           
+            // Response submission
+            document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
+           
+            // Profile saving
+            document.getElementById('save-profile-btn').addEventListener('click', async () => {
+                const name = document.getElementById('profile-fullname').value.trim();
+                const phone = document.getElementById('profile-phone').value.trim();
+               
+                if (!name) {
+                    showToast('Please enter your name', 'warning');
+                    return;
+                }
+               
+                try {
+                    await updateUserProfile(currentUser.id, { name, phone });
+                    currentUser.name = name;
+                    currentUser.phone = phone;
+                    updateUserInterface();
+                    showToast('Profile updated successfully!', 'success');
+                } catch (error) {
+                    console.error('Error updating profile:', error);
+                    showToast('Failed to update profile', 'error');
+                }
+            });
+           
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', async () => {
+                if (confirm('Are you sure you want to logout?')) {
+                    try {
+                        await supabase.auth.signOut();
+                        window.location.href = 'login.html';
+                    } catch (error) {
+                        console.error('Error during logout:', error);
+                        showToast('Error during logout', 'error');
+                    }
+                }
+            });
+           
+            // Modal close buttons
+            document.querySelectorAll('.modal-close-btn').forEach(btn => {
+                btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
+            });
+
+            // Close dropdowns and modals when clicking outside
+            document.addEventListener('click', (e) => {
+                // Close notification dropdown
+                if (!e.target.closest('.notification-bell')) {
+                    document.getElementById('notification-dropdown').classList.remove('show');
+                }
+               
+                // Close modals when clicking overlay
+                if (e.target.classList.contains('modal-overlay')) {
+                    e.target.classList.remove('show');
+                }
+            });
+
+            // Global search
+            const globalSearch = document.getElementById('global-search');
+            if (globalSearch) {
+                globalSearch.addEventListener('input', (e) => {
+                    const searchTerm = e.target.value.trim();
+                    if (searchTerm.length >= 2) {
+                        loadUserErrors({ order_id: searchTerm });
+                    } else if (searchTerm.length === 0) {
+                        loadUserErrors();
+                    }
+                });
+            }
+        }
+
+        // Initialize everything when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            setupEventListeners();
+            setupFilters();
         });
 
-        window.handleFinalDecision = handleFinalDecision;
     </script>
-
-<!-- START: Added Modals (DO NOT RENAME existing classes/ids elsewhere) -->
-<!-- View Assignment Modal -->
-<div class="modal-overlay" id="view-assignment-modal" style="display:none;">
-  <div class="modal-box" style="max-width: 600px;">
-    <div class="modal-header" style="padding-bottom: 0; border: none;">
-      <h3 class="modal-title">Assignment Details</h3>
-      <button class="modal-close-btn" data-modal-id="view-assignment-modal">×</button>
-    </div>
-    <div class="modal-body" id="view-assignment-body"></div>
-    <div class="modal-footer" style="padding-top: 0; border: none;">
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-assignment-modal">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Reassign Modal -->
-<div class="modal-overlay" id="reassign-modal" style="display:none;">
-  <div class="modal-box" style="max-width: 500px;">
-    <div class="modal-header">
-      <h3 class="modal-title">Reassign</h3>
-      <button class="modal-close-btn" data-modal-id="reassign-modal">×</button>
-    </div>
-    <div class="modal-body">
-      <p style="color: var(--text-muted-color); margin-bottom: 1.5rem; font-size: 0.9rem;">
-          Choose a new Quality Agent or Helper to take over this assignment. The order will be moved to their queue immediately.
-      </p>
-      <div class="form-group">
-        <label for="reassign-to-select">Select user to assign to</label>
-        <select id="reassign-to-select"></select>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-primary" id="reassign-confirm-btn">Confirm</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="reassign-modal">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- Review Escalation Modal -->
-<div class="modal-overlay" id="review-escalation-modal" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 class="modal-title">Review Escalation</h3>
-      <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Your Feedback</label>
-        <textarea id="review-feedback-text" placeholder="Write your feedback here..." rows="6" style="width:100%;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-success" id="resolve-escalation-confirm-btn">Resolve & Send Feedback</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
-    </div>
-  </div>
-</div>
-
-<!-- View Inquiry Modal -->
-<div class="modal-overlay" id="view-inquiry-modal" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 class="modal-title">Inquiry Response</h3>
-      <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
-    </div>
-    <div class="modal-body" id="view-inquiry-body" style="white-space:pre-wrap;"></div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
-    </div>
-  </div>
-</div>
-
-<!-- Small utility styles for modals (scoped local) -->
-<style>
-.modal-overlay{ position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:2000; }
-.modal-box{ background:var(--card-bg); color: var(--text-color); width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; border: 1px solid var(--border-color); }
-.modal-header{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid var(--border-color); }
-.modal-title{ margin:0; font-size:16px; }
-.modal-body{ padding:16px; max-height:60vh; overflow:auto; }
-.modal-footer{ padding:12px 16px; border-top:1px solid var(--border-color); display:flex; gap:8px; justify-content:flex-end; }
-.modal-close-btn{ background:none; border:0; font-size:20px; cursor:pointer; color: var(--text-muted-color); }
-.btn{ padding:8px 12px; border-radius:6px; cursor:pointer; font-weight: 600; }
-.btn-primary{ background:var(--primary-color); color:#000; border: none; }
-.btn-success{ background:var(--success-color); color:#fff; border: none; }
-.btn-secondary{ background:#333; color: #fff; border: 1px solid var(--border-color); }
-.form-group label{ display:block; margin-bottom:6px; font-weight:600; }
-#review-feedback-text, #reassign-to-select { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
-</style>
-<!-- END: Added Modals -->
-
-
-<script>
-/* START: injected handlers */
-document.addEventListener('DOMContentLoaded', function(){
-  // resolve escalation confirm
-  const resolveBtn = document.getElementById('resolve-escalation-confirm-btn');
-  if(resolveBtn){
-    resolveBtn.addEventListener('click', async function(){
-      const escalationModal = document.getElementById('review-escalation-modal');
-      const escalationId = escalationModal ? escalationModal.dataset.escalationId : null;
-      const feedbackText = document.getElementById('review-feedback-text');
-      const feedback = feedbackText ? feedbackText.value.trim() : null;
-      if(!feedback){ alert('Please provide feedback before resolving'); return; }
-      try{
-        if(typeof resolveEscalation === 'function'){
-          await resolveEscalation(escalationId, feedback);
+   
+    <style>
+        :root {
+            --primary-color: #00bfff;
+            --primary-hover: #00a4d9;
+            --bg-color: #121212;
+            --sidebar-bg: #1a1a1a;
+            --card-bg: #1a1a1a;
+            --text-color: #e6edf3;
+            --text-muted: #8b949e;
+            --border-color: #333;
+            --red: #dc3545;
+            --red-bg: rgba(220, 53, 69, 0.1);
+            --green: #28a745;
+            --green-bg: rgba(40, 167, 69, 0.1);
+            --yellow: #ffc107;
+            --yellow-bg: rgba(255, 193, 7, 0.1);
+            --border-radius-base: 0.75rem;
         }
-        hideModal('review-escalation-modal');
-        // reload lists if functions exist
-        if(typeof loadDirectEscalations === 'function') loadDirectEscalations();
-        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
-      }catch(err){
-        console.error(err);
-        alert('Failed to resolve escalation');
-      }
-    });
-  }
 
-  // reassign confirm
-  const reassignBtn = document.getElementById('reassign-confirm-btn');
-  if(reassignBtn){
-    reassignBtn.addEventListener('click', async function(){
-      const assignmentId = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
-      const newAgentSelect = document.getElementById('reassign-to-select');
-      const newAgentId = newAgentSelect ? newAgentSelect.value : null;
-      if(!newAgentId){ alert('Please choose a user to reassign to'); return; }
-      try{
-        if(typeof assignOrders === 'function'){
-          await assignOrders([], newAgentId); // adapt signature if needed
-        } else {
-          console.warn('assignOrders function not found');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        hideModal('reassign-modal');
-        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
-      }catch(err){
-        console.error(err);
-        alert('Failed to reassign');
-      }
-    });
-  }
 
-  // hook generic "review escalation" buttons (buttons with class review-escalation-btn)
-  document.body.addEventListener('click', function(event) {
-    if (event.target.classList.contains('review-escalation-btn')) {
-        const id = event.target.dataset.escalationId || event.target.getAttribute('data-escalation-id');
-        const reviewModal = document.getElementById('review-escalation-modal');
-        if (reviewModal) {
-            reviewModal.dataset.escalationId = id;
-            showModal('review-escalation-modal');
+        html {
+            scroll-behavior: smooth;
         }
-    }
-  });
 
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            min-height: 100vh;
+            line-height: 1.6;
+            font-size: 16px; /* Increased base font size */
+        }
 
-  // hook view-assignment buttons to populate modal
-  document.body.addEventListener('click', function(event) {
-    if (event.target.classList.contains('view-assigned-btn')) { // Changed from .open-view-assignment-btn
-        const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
-        let body = document.getElementById('view-assignment-body');
-        if (!body) return;
-        body.innerHTML = 'Loading...';
-        let found = null;
-        try{
-            if(typeof assignedOrders !== 'undefined' && Array.isArray(assignedOrders)){
-            found = assignedOrders.find(a=>String(a.id)===String(id));
+        .sidebar {
+            width: 260px;
+            background-color: var(--sidebar-bg);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .sidebar-logo {
+            height: 32px;
+            fill: var(--primary-color);
+        }
+
+        .sidebar-title {
+            font-size: 1.25rem;
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .sidebar-nav-container {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding-top: 1rem;
+        }
+
+        .nav-group {
+            margin-bottom: 1.5rem;
+            padding: 0 20px;
+        }
+
+        .nav-group-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 600;
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 15px;
+            border-radius: 8px;
+            color: var(--text-muted);
+            text-decoration: none;
+            margin-bottom: 10px;
+            transition: all 0.3s ease;
+            gap: 15px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .sidebar-nav a:hover,
+        .sidebar-nav a.active {
+            background-color: var(--primary-color);
+            color: #000;
+            transform: translateX(5px);
+        }
+
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .user-profile-widget {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .avatar-initials {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: black;
+            font-weight: 700;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .user-role {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .main-content {
+            margin-left: 260px;
+            width: calc(100% - 260px);
+            padding: 30px;
+            flex: 1;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            gap: 1rem;
+        }
+
+        .header-left {
+            flex-grow: 1;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .page-title {
+            font-size: 24px;
+            font-weight: 700;
+        }
+
+        #welcome-message {
+            margin-bottom: 2rem;
+        }
+
+        #welcome-message h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        #welcome-message p {
+            color: var(--text-muted);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: var(--border-radius-base);
+            border: 1px solid var(--border-color);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .card h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        .progress-card .progress-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-card .progress-label {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .progress-card .progress-value {
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #2c2c2c;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar-inner {
+            height: 100%;
+            border-radius: 5px;
+            transition: width 0.3s ease;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 250px;
+        }
+
+        .table-container {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: var(--border-radius-base);
+            border: 1px solid var(--border-color);
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 600px;
+        }
+
+        th, td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            vertical-align: middle;
+        }
+
+        th {
+            font-weight: 600;
+            font-size: 14px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            background-color: #2c2c2c;
+        }
+
+        tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        tbody tr:hover {
+            background-color: #2c2c2c;
+        }
+
+        .status-badge {
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            text-transform: capitalize;
+        }
+
+        .status-pending {
+            background-color: var(--yellow-bg);
+            color: var(--yellow);
+        }
+
+        .status-responded {
+            background-color: var(--green-bg);
+            color: var(--green);
+        }
+
+        .status-finalized {
+            background-color: var(--red-bg);
+            color: var(--red);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: #333;
+            border: none;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 12px;
+            padding: 6px 12px;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: #444;
+            transform: translateY(-1px);
+        }
+
+        .action-btn.primary {
+            background: var(--primary-color);
+            color: #000;
+            font-weight: 600;
+        }
+
+        .action-btn.primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .action-btn.warning {
+            background-color: var(--yellow);
+            color: #000;
+        }
+
+        .search-input-container {
+            position: relative;
+        }
+
+        .search-input-container input[type="search"] {
+            background: #2c2c2c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 10px 12px;
+            width: 250px;
+            transition: border-color 0.3s ease;
+        }
+
+        .search-input-container input[type="search"]:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .notification-bell {
+            position: relative;
+        }
+
+        .notification-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            position: relative;
+            transition: color 0.3s ease;
+        }
+
+        .notification-btn:hover {
+            color: var(--primary-color);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 0px;
+            right: 0px;
+            background: var(--red);
+            color: white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--card-bg);
+        }
+
+        .notification-dropdown {
+            display: none;
+            position: absolute;
+            right: 0;
+            top: 120%;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-base);
+            width: 350px;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.3);
+            z-index: 10;
+        }
+
+        .notification-dropdown.show {
+            display: block;
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .notification-list {
+            list-style: none;
+            padding: 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            transition: background-color 0.3s ease;
+        }
+
+        .notification-item:hover {
+            background-color: #2c2c2c;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-item.read {
+            opacity: 0.6;
+        }
+
+        .notification-item.empty {
+            justify-content: center;
+            text-align: center;
+            color: var(--text-muted);
+        }
+
+        .notification-message {
+            flex: 1;
+        }
+
+        .notification-text {
+            margin-bottom: 5px;
+        }
+
+        .notification-time {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .notification-actions {
+            margin-left: 10px;
+        }
+
+        .mark-read-btn {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .mark-read-btn:hover {
+            background-color: rgba(0, 191, 255, 0.1);
+        }
+
+        .filter-panel {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            padding: 20px;
+            background: var(--card-bg);
+            border-radius: var(--border-radius-base);
+            margin-bottom: 30px;
+            border: 1px solid var(--border-color);
+        }
+
+        .filter-group {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .filter-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .filter-group input,
+        .filter-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            font-family: 'Poppins';
+            background: #2c2c2c;
+            color: #fff;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-family: 'Poppins';
+        }
+
+        .btn:disabled {
+            background-color: #555;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+
+        .btn-primary {
+            background: var(--primary-color);
+            color: #000;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+        }
+
+        .btn-secondary {
+            background: #333;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #444;
+        }
+
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1001;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(5px);
+            padding: 20px;
+        }
+
+        .modal-overlay.show {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-box {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius-base);
+            border: 1px solid var(--border-color);
+            width: 90%;
+            max-width: 550px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .modal-close-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .modal-close-btn:hover {
+            background-color: #2c2c2c;
+        }
+
+        .detail-item {
+            background: #2c2c2c;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .detail-item.response-item {
+            background: var(--green-bg);
+            border-left: 4px solid var(--green);
+        }
+
+        .detail-item strong {
+            display: block;
+            color: var(--primary-color);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .detail-item p {
+            margin: 0;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-group input,
+        .form-group textarea,
+        .form-group select {
+            width: 100%;
+            background: #2c2c2c;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-color);
+            padding: 10px 12px;
+            font-family: 'Poppins';
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus,
+        .form-group select:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .form-group textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .page-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+            padding-top: 1.5rem;
+        }
+
+        .settings-layout {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .settings-nav {
+            flex: 0 0 200px;
+        }
+
+        .settings-nav ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .settings-nav a {
+            display: block;
+            padding: 0.75rem 1rem;
+            text-decoration: none;
+            color: var(--text-muted);
+            border-radius: 8px;
+            font-weight: 500;
+            margin-bottom: 5px;
+            transition: all 0.3s ease;
+        }
+
+        .settings-nav a:hover,
+        .settings-nav a.active {
+            background-color: #2c2c2c;
+            color: var(--text-color);
+        }
+
+        .settings-content {
+            flex-grow: 1;
+        }
+
+        .setting-card {
+            background-color: #222;
+            padding: 1.5rem;
+            border-radius: var(--border-radius-base);
+        }
+
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .setting-item:last-child {
+            border-bottom: none;
+        }
+
+        .toggle-switch .switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #3c3c3c;
+            transition: .4s;
+            border-radius: 24px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .slider {
+            background-color: var(--primary-color);
+        }
+
+        input:checked + .slider:before {
+            transform: translateX(20px);
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-base);
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            max-width: 350px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--green);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--red);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--yellow);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast.success .toast-icon {
+            color: var(--green);
+        }
+
+        .toast.error .toast-icon {
+            color: var(--red);
+        }
+
+        .toast.warning .toast-icon {
+            color: var(--yellow);
+        }
+
+        .toast.info .toast-icon {
+            color: var(--primary-color);
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .toast-message {
+            font-size: 14px;
+            color: var(--text-muted);
+        }
+
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 18px;
+            padding: 0;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.3s ease;
+        }
+
+        .toast-close:hover {
+            background-color: #2c2c2c;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-muted);
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .site-footer {
+            text-align: center;
+            padding: 20px;
+            margin-left: 260px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            body {
+                flex-direction: column;
             }
-            if(found){
-            const statusBadge = `<span class="status-badge status-${found.status||'default'}">${found.status||'N/A'}</span>`;
-            body.innerHTML = `<div class="escalation-details" style="gap: 12px;">
-                                <div class="detail-item"><strong>Order ID</strong><span>${(found.orders && found.orders.order_id) || 'N/A'}</span></div>
-                                <div class="detail-item"><strong>Assigned To</strong><span>${found.users?.name || 'N/A'}</span></div>
-                                <div class="detail-item"><strong>Status</strong><span>${statusBadge}</span></div>
-                                <div class="detail-item"><strong>Assignment ID</strong><span>${found.id}</span></div>
-                             </div>`;
-            } else {
-            body.innerHTML = 'Assignment details not found locally.';
+
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                /* transform: translateX(-100%); */ /* Can be toggled with JS */
+                transition: transform 0.3s ease;
             }
-        }catch(e){ body.innerHTML = 'Error loading assignment details.'; console.error(e); }
-        showModal('view-assignment-modal');
-    }
-  });
+           
+            .sidebar.active {
+                transform: translateX(0);
+            }
+           
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 20px;
+            }
+           
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+           
+            .filter-panel {
+                flex-direction: column;
+            }
+           
+            .filter-group {
+                min-width: 100%;
+            }
+           
+            .settings-layout {
+                flex-direction: column;
+            }
+           
+            .settings-nav {
+                flex: none;
+            }
+           
+            .notification-dropdown {
+                width: 300px;
+                right: -50px;
+            }
 
-  // hook reassign placeholders that used showToast text replacements
-  document.body.addEventListener('click', function(event){
-    if(event.target.classList.contains('reassign-btn')){ // Changed from .open-reassign-assignment-btn
-        const id = event.target.dataset.assignmentId || event.target.getAttribute('data-assignment-id');
-        const reassignSelect = document.getElementById('reassign-to-select');
-        const reassignConfirm = document.getElementById('reassign-confirm-btn');
-        if (!reassignSelect || !reassignConfirm) return;
-        
-        reassignSelect.innerHTML = '<option value="">Loading...</option>';
-        if(typeof teamMembers !== 'undefined' && Array.isArray(teamMembers)){
-            const assignableMembers = teamMembers.filter(m => m.role === 'quality' || m.role === 'helper');
-            reassignSelect.innerHTML = assignableMembers.map(m=>`<option value="${m.id}">${m.name} (${m.role})</option>`).join('');
-        } else {
-            reassignSelect.innerHTML = '<option value="">No users</option>';
+            .site-footer {
+                margin-left: 0;
+            }
         }
-        reassignConfirm.dataset.assignmentId = id;
-        showModal('reassign-modal');
-    }
-  });
 
-  // hook view-inquiry buttons
-  document.body.addEventListener('click', function(event) {
-    if(event.target.classList.contains('open-view-inquiry-btn')){
-        const text = event.target.dataset.inquiryText || event.target.getAttribute('data-inquiry-text') || event.target.textContent || '';
-        const inquiryBody = document.getElementById('view-inquiry-body');
-        if (inquiryBody) {
-            inquiryBody.textContent = text;
-            showModal('view-inquiry-modal');
+        /* Loading states */
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
         }
-    }
-  });
 
-});
-/* END: injected handlers */
-</script>
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--primary-color);
+            border-top: 2px solid transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                    <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <h1 class="sidebar-title">QualityX</h1>
+            </div>
+            <div class="sidebar-nav-container">
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Menu</h2>
+                    <ul class="sidebar-nav">
+                        <li><a class="active" data-tab="dashboard"><span>📊</span>Dashboard</a></li>
+                        <li><a data-tab="my-errors"><span>❌</span>My Errors</a></li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Account</h2>
+                    <ul class="sidebar-nav">
+                        <li><a data-tab="profile"><span>👤</span>Profile</a></li>
+                        <li><a data-tab="settings"><span>⚙️</span>Settings</a></li>
+                        <li><a data-tab="help"><span>❓</span>Get Help</a></li>
+                        <li><a id="logout-btn"><span>🚪</span>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-profile-widget">
+                <div class="avatar-initials" id="sidebar-avatar-initials">--</div>
+                <div>
+                    <div class="user-name" id="sidebar-username">Loading...</div>
+                    <div class="user-role" id="sidebar-userrole">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <div class="header-left">
+                <h2 class="page-title" id="page-title-header">Dashboard</h2>
+            </div>
+            <div class="header-actions">
+                <div class="search-input-container">
+                    <input type="search" id="global-search" placeholder="Search my errors...">
+                </div>
+                <div class="notification-bell">
+                    <button id="notification-btn" class="notification-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                        </svg>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    </button>
+                    <div id="notification-dropdown" class="notification-dropdown">
+                        <div class="notification-header">
+                            <span>Notifications</span>
+                            <button id="mark-all-read-btn" class="mark-read-btn">Mark all as read</button>
+                        </div>
+                        <ul class="notification-list" id="notification-list">
+                            <li class="notification-item">Loading notifications...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="dashboard" class="tab-content active">
+            <div id="welcome-message">
+                <h2 id="welcome-user-h2">Welcome back!</h2>
+                <p>Here's a look at your performance metrics for this month.</p>
+            </div>
+            <section class="stats-grid">
+                <div class="card progress-card">
+                    <h3>Your Current Error Rate</h3>
+                    <div class="progress-info">
+                        <span class="progress-label">This Month</span>
+                        <span class="progress-value" id="error-rate">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div>
+                    </div>
+                    <p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-rate-description">Based on 0 errors out of 0 reviewed orders.</p>
+                </div>
+                <div class="card">
+                    <h3>Most Frequent Error Types</h3>
+                    <div class="chart-container">
+                        <canvas id="commonErrorsChart"></canvas>
+                    </div>
+                </div>
+            </section>
+            <section class="filter-panel">
+                <div class="filter-group">
+                    <label for="filter-order-id">Order ID</label>
+                    <input type="search" id="filter-order-id" placeholder="Search by Order ID...">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-from-date">From</label>
+                    <input type="date" id="filter-from-date" style="color-scheme: dark;">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-to-date">To</label>
+                    <input type="date" id="filter-to-date" style="color-scheme: dark;">
+                </div>
+                <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
+                <button class="btn btn-secondary" id="reset-filters-btn">Reset</button>
+            </section>
+            <section class="table-container">
+                <h3>Recent Errors Logged</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Status</th><th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="error-table-body">
+                        <tr><td colspan="5" class="empty-state">Loading your errors...</td></tr>
+                    </tbody>
+                </table>
+            </section>
+        </div>
+
+        <div id="my-errors" class="tab-content">
+            <div class="card">
+                <h3>All My Errors</h3>
+                <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
+                <div class="filter-panel">
+                    <div class="filter-group">
+                        <label for="my-errors-search">Search</label>
+                        <input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type...">
+                    </div>
+                    <div class="filter-group">
+                        <label for="my-errors-status">Status</label>
+                        <select id="my-errors-status">
+                            <option value="all">All Statuses</option>
+                            <option value="pending_response">Pending Response</option>
+                            <option value="responded">Responded</option>
+                            <option value="finalized">Finalized</option>
+                        </select>
+                    </div>
+                    <button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button>
+                    <button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th><th>Error Date</th><th>Error Type</th><th>Status</th><th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="my-errors-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading your errors...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile" class="tab-content">
+            <div class="card">
+                <h3>Edit Profile</h3>
+                <div class="form-group">
+                    <label for="profile-fullname">Full Name</label>
+                    <input type="text" id="profile-fullname">
+                </div>
+                <div class="form-group">
+                    <label for="profile-email">Email Address</label>
+                    <input type="email" id="profile-email" readonly style="background: #333;">
+                </div>
+                <div class="form-group">
+                    <label for="profile-phone">Phone Number</label>
+                    <input type="tel" id="profile-phone">
+                </div>
+                <div class="form-group">
+                    <label for="profile-department">Department</label>
+                    <input type="text" id="profile-department" readonly style="background: #333;">
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
+                    <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h3>Account Settings</h3>
+                <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your notification and account preferences.</p>
+                <div class="settings-layout">
+                    <nav class="settings-nav">
+                        <ul>
+                            <li><a href="#" class="active" data-section="notifications">Notifications</a></li>
+                            <li><a href="#" data-section="security">Security</a></li>
+                        </ul>
+                    </nav>
+                    <div class="settings-content">
+                        <section class="setting-card active" id="settings-section-notifications">
+                            <div class="setting-item">
+                                <span>Email me when an error is logged</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-errors" checked><span class="slider"></span></label></div>
+                            </div>
+                            <div class="setting-item">
+                                <span>Email me a weekly performance summary</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-summary" checked><span class="slider"></span></label></div>
+                            </div>
+                        </section>
+                        <section class="setting-card" id="settings-section-security" style="display:none;">
+                            <div class="setting-item">
+                                <span>Password</span>
+                                <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="help" class="tab-content">
+            <div class="card">
+                <div class="placeholder-content">
+                    <h3>Help Center</h3>
+                    <p>Find answers to common questions or contact support for assistance.</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="site-footer">
+            © 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
+    </main>
+
+    <!-- View Error Modal -->
+    <div class="modal-overlay" id="view-error-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Error Details: <span id="view-error-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-error-modal">×</button>
+            </div>
+            <div class="modal-body" id="view-error-body"></div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-error-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reply Error Modal -->
+    <div class="modal-overlay" id="reply-error-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Reply to Error: <span id="reply-error-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="reply-error-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Error Type</strong>
+                    <p id="reply-error-type">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Date</strong>
+                    <p id="reply-error-date">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Description</strong>
+                    <p id="reply-error-description">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="error-response">Your Response *</label>
+                    <textarea id="error-response" placeholder="Please provide your response to this error..." required></textarea>
+                    <small style="color: var(--text-muted);">This response will be reviewed by the quality team.</small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="reply-error-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-response-btn">Submit Response</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
 
 </body>
 </html>
