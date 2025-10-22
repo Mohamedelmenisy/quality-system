@@ -233,31 +233,31 @@
                     `;
                 } else {
                     tbody.innerHTML = data.map(error => {
-                        const orderId = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-                        const orderDate = error.quality_reviews?.order_assignments?.orders?.created_at || error.recorded_at;
-                        const errorType = error.quality_reviews?.modified_reason || 'Unknown';
-                        const status = error.status.replace('_response', '').replace('_', ' ');
-                        
-                        return `
-                            <tr>
-                                <td><strong>${orderId}</strong></td>
-                                <td>${formatDate(orderDate)}</td>
-                                <td>${errorType}</td>
-                                <td><span class="status-badge status-${status}">${status}</span></td>
-                                <td class="action-buttons">
-                                    <button class="action-btn view-error-btn" data-error-id="${error.id}">
-                                        👁️ View
-                                    </button>
-                                    ${error.status === 'pending_response' ? 
-                                        `<button class="action-btn primary reply-error-btn" data-error-id="${error.id}">
-                                            💬 Reply
-                                        </button>` : ''}
-                                </td>
-                            </tr>
-                        `;
-                    }).join('');
-                }
-            };
+                        const orderId = error.order_id || 'N/A';
+    const orderDate = error.order_created_at || error.created_at; // نستخدم تاريخ إنشاء الطلب، وإذا لم يوجد نستخدم تاريخ إنشاء الخطأ
+    const errorType = error.error_details || 'Unknown';
+    // --- التعديل ينتهي هنا ---
+
+    const status = error.status.replace('_response', '').replace('_', ' ');
+    
+    return `
+        <tr>
+            <td><strong>${orderId}</strong></td>
+            <td>${formatDate(orderDate)}</td>
+            <td>${errorType}</td>
+            <td><span class="status-badge status-${status}">${status}</span></td>
+            <td class="action-buttons">
+                <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
+                    👁️ View
+                </button>
+                ${error.status === 'pending_response' ? 
+                    `<button class="action-btn primary reply-error-btn" data-error-id="${error.error_id}">
+                        💬 Reply
+                    </button>` : ''}
+            </td>
+        </tr>
+    `;
+}).join('');
 
             renderTable(dashboardTableBody, userErrors.slice(0, 5));
             renderTable(myErrorsTableBody, userErrors);
