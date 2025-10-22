@@ -994,24 +994,25 @@ document.addEventListener('click', function(e){
             }
         }
 
-        async function loadTeamPerformanceChart() {
+      async function loadTeamPerformanceChart() {
             try {
                 const performanceData = await getTeamPerformance();
                 
                 // قم بتحديث الرسم البياني بالبيانات الحقيقية
                 if (teamPerformanceChart && performanceData.length > 0) {
                     const labels = performanceData.map(p => p.agent_name);
-                    const data = performanceData.map(p => p.accuracy);
+                    
+                    // FIX: Parse the accuracy value as a float and format it to 1 decimal place.
+                    const data = performanceData.map(p => parseFloat(p.accuracy).toFixed(1));
 
                     teamPerformanceChart.data.labels = labels;
                     teamPerformanceChart.data.datasets[0].data = data;
-                    teamPerformanceChart.update();
+                    teamPerformanceChart.update(); // This command redraws the chart with the new data.
                 }
             } catch (error) {
                 console.error('Error loading team performance chart:', error);
             }
         }
-
         function updateUserInterface() {
             if (!currentUser) return;
             const name = currentUser.name || "User";
