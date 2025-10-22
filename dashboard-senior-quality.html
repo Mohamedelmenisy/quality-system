@@ -959,10 +959,9 @@ document.addEventListener('click', function(e){
 
 
         // Initialize the application
-        async function initApp() {
+        
+async function initApp() {
             try {
-                        console.log('Is getTeamPerformance a function?', typeof getTeamPerformance); // <-- أضف هذا السطر هنا
-
                 showToast('Loading Senior Dashboard...', 'info');
                 const user = await getCurrentUser();
                 if (!user) { window.location.href = 'login.html'; return; }
@@ -973,6 +972,11 @@ document.addEventListener('click', function(e){
                 currentUser = { ...user, ...profile };
                 
                 updateUserInterface();
+
+                // 1. قم بإنشاء المخططات أولاً كهياكل فارغة
+                initCharts(); 
+
+                // 2. الآن قم بتحميل البيانات لملء المخططات الموجودة بالفعل
                 await Promise.all([
                     loadPendingErrors(),
                     loadUnassignedOrders(),
@@ -981,19 +985,18 @@ document.addEventListener('click', function(e){
                     loadCompanyEmployees(),
                     loadTeamSchedule(),
                     loadPerformanceMetrics(),
-                    loadTeamPerformanceChart(),
+                    loadTeamPerformanceChart(), // الآن سيجد المخطط ليعمل عليه
                     loadNotifications(),
                     loadDirectEscalations(),
                     loadAppealedErrors()
                 ]);
-                initCharts();
+
                 showToast('Senior Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
                 showToast(`Initialization failed: ${error.message}`, 'error');
             }
         }
-
       async function loadTeamPerformanceChart() {
             try {
                 const performanceData = await getTeamPerformance();
