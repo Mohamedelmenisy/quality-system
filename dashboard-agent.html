@@ -896,7 +896,7 @@
                     <div class="card progress-card"><h3>Your Current Error Rate</h3><div class="progress-info"><span class="progress-label">This Month</span><span class="progress-value" id="error-rate">0%</span></div><div class="progress-bar"><div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div></div><p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-rate-description">Based on 0 errors out of 0 reviewed orders.</p></div>
                     <div class="card"><h3>Most Frequent Error Types</h3><div class="chart-container"><canvas id="commonErrorsChart"></canvas></div></div>
                 </section>
-                <section class="filter-panel"><div class="filter-group"><label for="filter-order-id">Order ID</label><input type="search" id="filter-order-id" autocomplete="off" placeholder="Search by Order ID..."></div><div class="filter-group"><label for="filter-from-date">From</label><input type="date" id="filter-from-date" style="color-scheme: dark;"></div><div class="filter-group"><label for="filter-to-date">To</label><input type="date" id="filter-to-date" style="color-scheme: dark;"></div><button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button><button class="btn btn-secondary" id="reset-filters-btn">Reset</button></section>
+                <section class="filter-panel"><div class="filter-group"><label for="filter-order-id">Order ID</label><input type="search" id="filter-order-id" placeholder="Search by Order ID..."></div><div class="filter-group"><label for="filter-from-date">From</label><input type="date" id="filter-from-date" style="color-scheme: dark;"></div><div class="filter-group"><label for="filter-to-date">To</label><input type="date" id="filter-to-date" style="color-scheme: dark;"></div><button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button><button class="btn btn-secondary" id="reset-filters-btn">Reset</button></section>
                 <section class="table-container"><h3>Recent Errors Logged</h3><table><thead><tr><th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="error-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="dashboard-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></section>
             </div>
 
@@ -933,25 +933,5 @@
     <div class="modal-overlay" id="confirmation-modal"><div class="modal-box" style="max-width: 400px; text-align: center;"><div class="modal-header" style="border: none; justify-content: center;"><h3 class="modal-title" id="confirmation-title">Are you sure?</h3></div><div class="modal-body" style="padding: 0 1rem 1rem;"><p id="confirmation-message" style="color: var(--text-muted);">This action cannot be undone.</p></div><div class="modal-footer" style="justify-content: center;"><button class="btn btn-secondary modal-close-btn" data-modal-id="confirmation-modal">Cancel</button><button class="btn btn-primary" id="confirmation-confirm-btn">Confirm</button></div></div></div>
 
     <div class="toast-container" id="toast-container"></div>
-    <!-- Appeal Error Modal -->
-<div class="modal-overlay" id="appeal-error-modal">
-    <div class="modal-box" style="max-width: 500px;">
-        <div class="modal-header">
-            <h3 class="modal-title">Appeal Error</h3>
-            <button class="modal-close-btn" data-modal-id="appeal-error-modal">×</button>
-        </div>
-        <div class="modal-body">
-            <p style="color: var(--text-muted); margin-bottom: 1rem;">Please provide the reason for your appeal. This will be sent to a senior quality analyst for review.</p>
-            <div class="form-group">
-                <label for="appeal-reason">Reason for Appeal *</label>
-                <textarea id="appeal-reason" rows="4" placeholder="Explain why you believe the quality assessment was incorrect..."></textarea>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn btn-secondary modal-close-btn" data-modal-id="appeal-error-modal">Cancel</button>
-            <button class="btn btn-primary" id="submit-appeal-btn">Submit Appeal</button>
-        </div>
-    </div>
-</div>
 </body>
 </html>
