@@ -268,10 +268,8 @@
                 const status = error.status.replace(/_/g, ' ');
 
                 let actionButtons = '';
-                // The main view button is always available
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ ${error.final_decision ? 'View Decision' : 'View'}</button>`;
-                
-                // The appeal button is only available if the status is 'closed' AND there is no final decision yet
+                const viewButtonText = error.final_decision ? 'View Decision' : 'View';
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ ${viewButtonText}</button>`;
                 const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
 
                 if (error.status === 'closed' && !error.final_decision) {
@@ -474,7 +472,7 @@
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { color: '#e6edf3', font: { family: 'Poppins', size: 14 } } },
-                    tooltip: { backgroundColor: 'rgba(26, 26, 26, 0.9)', titleColor: '#00bfff', bodyColor: '#e6edf3', borderColor: '#333', borderWidth: 1, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 12 } }
+                    tooltip: { backgroundColor: 'rgba(26, 26, 26, 0.9)', titleColor: '#00bfff', bodyColor: '#e6edf3', borderColor: '#333', borderWidth: 1, titleFont: { family: 'Poppins', size: 14, weight: 'bold' }, bodyFont: { family: 'Poppins', size: 12 } }
                 },
                 cutout: '60%'
             }
@@ -750,7 +748,7 @@
     .status-responded, .status-overturned { background-color: var(--green-bg); color: var(--green); }
     .status-finalized, .status-closed { background-color: var(--red-bg); color: var(--red); }
     .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
-    .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 12px; padding: 6px 12px; border-radius: 6px; transition: all 0.3s ease; white-space: nowrap; }
+    .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 8px 16px; border-radius: 6px; transition: all 0.3s ease; white-space: nowrap; }
     .action-btn:hover { background: #444; transform: translateY(-1px); }
     .action-btn.warning { background-color: var(--yellow-bg); color: var(--yellow); }
     .action-btn.warning:hover { background-color: rgba(255, 193, 7, 0.2); }
@@ -895,7 +893,7 @@
 
             <div id="my-errors" class="tab-content">
                 <div class="card"><h3>All My Errors</h3><p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
-                    <div class="filter-panel"><div class="filter-group"><label for="my-errors-search">Search</label><input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type..." autocomplete="off"></div><div class="filter-group"><label for="my-errors-status">Status</label><select id="my-errors-status"><option value="all">All Statuses</option><option value="pending_response">Pending Response</option><option value="responded">Responded</option><option value="finalized">Finalized</option></select></div><button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button><button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button></div>
+                    <div class="filter-panel"><div class="filter-group"><label for="my-errors-search">Search</label><input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type..." autocomplete="off"></div><div class="filter-group"><label for="my-errors-status">Status</label><select id="my-errors-status"><option value="all">All Statuses</option><option value="closed">Closed</option><option value="under_review">Under Review</option><option value="overturned">Overturned</option></select></div><button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button><button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button></div>
                     <div class="table-container"><table><thead><tr><th>Order ID</th><th>Error Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="my-errors-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="my-errors-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></div>
                 </div>
             </div>
