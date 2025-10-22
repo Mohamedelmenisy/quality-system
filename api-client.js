@@ -602,6 +602,18 @@ export async function getAppealedErrors() {
   }
 }
 
+// *** NEW FUNCTION ***
+export async function getFinalizedDecisions() {
+  try {
+    const { data, error } = await supabase.rpc('get_finalized_decisions');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetFinalizedDecisions error:', error);
+    throw error;
+  }
+}
+
 // ==================== ESCALATION FUNCTIONS ====================
 
 export async function submitEscalation(assignmentId, escalatedById, escalatedToId, reason) {
