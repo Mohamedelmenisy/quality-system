@@ -49,8 +49,8 @@ document.addEventListener('click', function(e){
             addCompanyEmployee,
             updateCompanyEmployee,
             getEscalations,
-            resolveEscalation,
-            getAppealedErrors
+            resolveEscalation
+            // getAppealedErrors has been removed from import to prevent crash
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -897,6 +897,13 @@ document.addEventListener('click', function(e){
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
 
+        // FIX: Placeholder function to prevent app from crashing.
+        // The real function should be implemented and exported from './api-client.js'
+        const getAppealedErrors = async () => {
+            console.warn("Using placeholder for getAppealedErrors. Please implement this function in api-client.js");
+            return []; // Return an empty array to allow the UI to load without data.
+        };
+
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
             const container = document.getElementById('toast-container');
@@ -1065,29 +1072,6 @@ document.addEventListener('click', function(e){
                     <td><button class="btn btn-primary btn-sm review-response-btn" data-error-id="${error.id}">Review</button></td>
                 </tr>
             `).join('');
-            document.querySelectorAll('.review-response-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    // This now needs to open a different modal or be refactored.
-                    // For now, let's keep the old functionality for this specific button.
-                    const error = pendingErrors.find(e => e.id.toString() === btn.dataset.errorId);
-                    if (!error) return;
-                    document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
-                    document.getElementById('decision-modal-content').innerHTML = `
-                        <div class="escalation-details">
-                       <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
-                            <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
-                        </div>
-                        <div class="feedback-form">
-                            <label>Your Decision & Notes:</label>
-                            <textarea id="decision-notes" rows="4"></textarea>
-                            <div class="feedback-actions">
-                                <button class="btn btn-danger" onclick="handleOldFinalDecision('${btn.dataset.errorId}', 'rejected')">Reject</button>
-                                <button class="btn btn-success" onclick="handleOldFinalDecision('${btn.dataset.errorId}', 'approved')">Approve</button>
-                            </div>
-                        </div>`;
-                    showModal('final-decision-modal');
-                });
-            });
         }
         
         function renderAppealedErrorsTable() {
@@ -1110,10 +1094,6 @@ document.addEventListener('click', function(e){
                     </td>
                 </tr>
             `).join('');
-
-            document.querySelectorAll('.final-decision-btn').forEach(btn => {
-                btn.addEventListener('click', () => openFinalDecisionModal(btn.dataset.errorId));
-            });
         }
 
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
@@ -1236,23 +1216,6 @@ document.addEventListener('click', function(e){
                     </tr>
                 `;
             }).join('');
-
-            document.querySelectorAll('.view-escalation-btn').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const escalation = directEscalations.find(e => String(e.id) === String(btn.dataset.escalationId));
-                    if (!escalation) return;
-
-                    const body = document.getElementById('view-escalation-body');
-                    if(body){
-                        body.innerHTML = `
-                            <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
-                            <div class="detail-item"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
-                            <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
-                        `;
-                    }
-                    showModal('view-escalation-modal');
-                });
-            });
         }
         
         function renderTeamMembers() {
@@ -1293,9 +1256,6 @@ document.addEventListener('click', function(e){
                     <td><button class="btn btn-secondary btn-sm edit-employee-btn" data-employee-id="${emp.id}">Edit</button></td>
                 </tr>
             `).join('');
-            document.querySelectorAll('.edit-employee-btn').forEach(btn => {
-                btn.addEventListener('click', () => openEmployeeModal(btn.dataset.employeeId));
-            });
         }
         
         function renderTeamSchedule() {
@@ -1329,14 +1289,6 @@ document.addEventListener('click', function(e){
                 }
                 return `<tr><td class="member-name">${agent.name}</td>${cells}</tr>`;
             }).join('');
-
-            document.querySelectorAll('.shift-cell').forEach(cell => {
-                cell.addEventListener('click', () => {
-                    if (isScheduleEditMode) {
-                        openShiftModal(cell.dataset);
-                    }
-                });
-            });
         }
 
         function updateNotificationsUI() {
@@ -1365,7 +1317,10 @@ document.addEventListener('click', function(e){
         // Modal Handlers
         function openFinalDecisionModal(errorId) {
             const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-            if (!error) return;
+            if (!error) {
+                console.error("Could not find appealed error with ID:", errorId);
+                return;
+            }
             
             document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
@@ -1377,7 +1332,7 @@ document.addEventListener('click', function(e){
                     <strong>Agent's Appeal Reason:</strong>
                     <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
                 </div>
-                <div class="feedback-actions">
+                <div class="feedback-actions" style="margin-top: 1rem;">
                     <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'closed')">Uphold (Keep as Error)</button>
                     <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'overturned')">Overturn (Not an Error)</button>
                 </div>`;
@@ -1598,10 +1553,50 @@ document.addEventListener('click', function(e){
             
             // Event Delegation for dynamically created buttons
             document.body.addEventListener('click', function(event) {
-                if (event.target.classList.contains('view-assigned-btn')) {
-                    openViewAssignedModal(event.target.dataset.assignmentId);
+                const target = event.target;
+                if (target.classList.contains('view-assigned-btn')) {
+                    openViewAssignedModal(target.dataset.assignmentId);
+                } else if (target.classList.contains('final-decision-btn')) {
+                    openFinalDecisionModal(target.dataset.errorId);
+                } else if (target.classList.contains('review-response-btn')) {
+                    const errorId = target.dataset.errorId;
+                    const error = pendingErrors.find(e => e.id.toString() === errorId);
+                    if (!error) return;
+                    document.getElementById('decision-order-id').textContent = error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A';
+                    document.getElementById('decision-modal-content').innerHTML = `
+                        <div class="escalation-details">
+                            <div class="detail-item"><strong>Agent</strong><span>${error.employee?.employee_username || 'Unknown'}</span></div>
+                            <div class="detail-item"><strong>Error Type</strong><span>${error.quality_reviews?.modified_reason || 'Unknown'}</span></div>
+                        </div>
+                        <div class="feedback-form">
+                            <label>Your Decision & Notes:</label>
+                            <textarea id="decision-notes" rows="4"></textarea>
+                            <div class="feedback-actions">
+                                <button class="btn btn-danger" onclick="handleOldFinalDecision('${errorId}', 'rejected')">Reject</button>
+                                <button class="btn btn-success" onclick="handleOldFinalDecision('${errorId}', 'approved')">Approve</button>
+                            </div>
+                        </div>`;
+                    showModal('final-decision-modal');
+                } else if (target.classList.contains('edit-employee-btn')) {
+                    openEmployeeModal(target.dataset.employeeId);
+                } else if (target.classList.contains('shift-cell') && isScheduleEditMode) {
+                    openShiftModal(target.dataset);
+                } else if (target.classList.contains('view-escalation-btn')) {
+                    const escalationId = target.dataset.escalationId;
+                    const escalation = directEscalations.find(e => String(e.id) === String(escalationId));
+                    if (!escalation) return;
+                    const body = document.getElementById('view-escalation-body');
+                    if(body){
+                        body.innerHTML = `
+                            <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Original Reason</strong><p style="white-space: pre-wrap;">${escalation.notes || ''}</p></div>
+                            <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p style="white-space: pre-wrap;">${escalation.feedback || 'Not provided.'}</p></div>
+                        `;
+                    }
+                    showModal('view-escalation-modal');
                 }
             });
+
 
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
@@ -1706,7 +1701,8 @@ document.addEventListener('click', function(e){
 
         window.handleFinalDecision = async (errorId, decision) => {
            try {
-               const { error } = await supabase
+                // This assumes you have access to a 'supabase' client instance
+               const { error } = await window.supabase
                    .from('errors')
                    .update({ status: decision })
                    .eq('id', errorId);
@@ -1715,12 +1711,17 @@ document.addEventListener('click', function(e){
                
                showToast(`Decision recorded successfully. Error is now ${decision}.`, 'success');
                hideModal('final-decision-modal');
-               await loadAppealedErrors(); // أعد تحميل القائمة
+               await loadAppealedErrors(); // Reload the list
                
            } catch (error) {
+                console.error("Error in handleFinalDecision:", error);
                showToast('Failed to record final decision.', 'error');
            }
        }
+
+       // Make the old function available to the inline onclick attributes
+       window.handleOldFinalDecision = handleOldFinalDecision;
+
     </script>
 
 <!-- START: Added Modals (DO NOT RENAME existing classes/ids elsewhere) -->
