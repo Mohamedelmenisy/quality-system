@@ -1,7 +1,7 @@
 // api-client.js - Enhanced Version
 // All improvements without breaking existing functionality
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.3/+esm';
+import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://otaztiyatvbajswowdgs.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im90YXp0aXlhdHZiYWpzd293ZGdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjA3MDI4NTYsImV4cCI6MjA3NjI3ODg1Nn0.wmAvCpj8TpKjeuWF1OrjvXnxucMCFhhQrK0skA0SQhc';
@@ -727,9 +727,8 @@ export function getOrderWithEscalationStatus(orderAssignment) {
     has_pending_action: hasEscalation || hasInquiry
   };
 }
-
 // =============================================
-// 🆕 AUTHENTICATION FUNCTIONS (Login / Sign Up)
+// AUTHENTICATION FUNCTIONS (Login / Sign Up)
 // =============================================
 
 export async function signIn(email, password) {
@@ -737,6 +736,7 @@ export async function signIn(email, password) {
     email,
     password
   });
+
   if (error) throw error;
   return data.user;
 }
@@ -779,4 +779,47 @@ export async function getUserData(email) {
 
   if (error) throw error;
   return data;
+}
+
+// ==================== ESCALATION TO SENIOR FUNCTION ====================
+export async function escalateToSenior(escalationId, seniorId, helperNotes) {
+  try {
+    console.log('🔄 Escalating to senior:', { escalationId, seniorId });
+    
+    // Get current escalation
+    const { data: currentEscalation, error: fetchError } = await supabase
+      .from('escalations')
+      .select('*')
+      .eq('id', escalationId)
+      .single();
+
+    if (fetchError) throw fetchError;
+
+    // Update escalation to redirect to senior
+    const { data, error } = await supabase
+      .from('escalations')
+      .update({ 
+        escalated_to_id: seniorId,
+        notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', escalationId)
+      .select()
+      .single();
+
+    if (error) throw error;
+
+    // Create notification for the senior
+    await createNotification(
+      seniorId,
+      `A new escalation requires your review.`,
+      'warning'
+    );
+
+    console.log('✅ Escalation forwarded to senior successfully');
+    return data;
+  } catch (error) {
+    console.error('💥 EscalateToSenior error:', error);
+    throw error;
+  }
 }
