@@ -188,14 +188,14 @@
                 // We can reuse the errors we already loaded
                 const totalErrors = userErrors.length;
                 const totalOrders = 20; // This should come from another API call in the future
-
+        
                 const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
                 
                 document.getElementById('error-rate').textContent = `${errorRate}%`;
                 document.getElementById('error-rate-bar').style.width = `${Math.min(errorRate, 100)}%`;
                 document.getElementById('error-rate-description').textContent = 
                     `Based on ${totalErrors} errors out of ${totalOrders} reviewed orders.`;
-
+        
                 // Calculate error types distribution
                 const errorTypes = {};
                 userErrors.forEach(error => {
@@ -272,7 +272,7 @@
         function openViewErrorModal(errorId) {
             const error = userErrors.find(e => e.error_id === errorId);
             if (!error) return;
-
+        
             document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
             
             const errorDetails = `
@@ -703,6 +703,7 @@
             display: flex; 
             min-height: 100vh; 
             line-height: 1.6;
+            font-size: 16px; /* Increased base font size */
         }
 
         .sidebar { 
@@ -1600,13 +1601,27 @@
             opacity: 0.5; 
         }
 
+        .site-footer {
+            text-align: center;
+            padding: 20px;
+            margin-left: 260px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border-color);
+            flex-shrink: 0;
+        }
+
         /* Responsive Design */
         @media (max-width: 768px) {
+            body {
+                flex-direction: column;
+            }
+
             .sidebar {
                 width: 100%;
                 height: auto;
                 position: relative;
-                transform: translateX(-100%);
+                /* transform: translateX(-100%); */ /* Can be toggled with JS */
                 transition: transform 0.3s ease;
             }
             
@@ -1643,6 +1658,10 @@
             .notification-dropdown {
                 width: 300px;
                 right: -50px;
+            }
+
+            .site-footer {
+                margin-left: 0;
             }
         }
 
@@ -1903,6 +1922,9 @@
                 </div>
             </div>
         </div>
+        <footer class="site-footer">
+            © 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
     </main>
 
     <!-- View Error Modal -->
