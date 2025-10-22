@@ -126,7 +126,6 @@
         const confirmBtn = modal.querySelector('#confirmation-confirm-btn');
         confirmBtn.textContent = confirmText;
 
-        // Clone and replace the button to remove old event listeners
         const newConfirmBtn = confirmBtn.cloneNode(true);
         confirmBtn.parentNode.replaceChild(newConfirmBtn, confirmBtn);
 
@@ -211,7 +210,7 @@
     async function loadUserPerformance() {
         try {
             const totalErrors = userErrors.length;
-            const totalOrders = 20;
+            const totalOrders = 20; // This should ideally come from the backend
     
             const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
             
@@ -222,8 +221,8 @@
     
             const errorTypes = {};
             userErrors.forEach(error => {
-                const errorType = error.error_details || 'Unknown';
-                errorTypes[errorType] = (errorTypes[errorType] || 0) + 1;
+                const type = error.error_type || 'Unknown';
+                errorTypes[type] = (errorTypes[type] || 0) + 1;
             });
             userPerformance.errorTypes = errorTypes;
             
@@ -238,7 +237,8 @@
         renderPaginatedTable('error-table-body', userErrors, dashboardCurrentPage, 'dashboard-pagination');
         renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
     }
-
+    
+    // *** UPDATED/REPLACED FUNCTION ***
     function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
         const tbody = document.getElementById(tbodyId);
         const paginationControls = document.getElementById(paginationId);
@@ -263,32 +263,34 @@
         } else {
             tbody.innerHTML = paginatedData.map(error => {
                 const orderId = error.order_id || 'N/A';
-                const orderDate = error.order_created_at || error.created_at;
-                const errorType = error.error_details || 'Unknown';
-                const status = error.status.replace('_response', '').replace(/_/g, ' ');
+                const orderDate = error.created_at;
+                const errorType = error.error_type || 'Unknown';
+                const status = error.status.replace(/_/g, ' ');
 
-                const appealButton = `
-                    <button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">
-                     Appeal
-                    </button>`;
+                let actionButtons = '';
+                // The main view button is always available
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ ${error.final_decision ? 'View Decision' : 'View'}</button>`;
+                
+                // The appeal button is only available if the status is 'closed' AND there is no final decision yet
+                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
+
+                if (error.status === 'closed' && !error.final_decision) {
+                    actionButtons = viewButton + appealButton;
+                } else {
+                    actionButtons = viewButton;
+                }
                 
                 return `
                     <tr>
                         <td><strong>${orderId}</strong></td>
                         <td>${formatDate(orderDate)}</td>
                         <td>${errorType}</td>
-                        <td><span class="status-badge status-${error.status.replace('_response', '')}">${status}</span></td>
-                        <td class="action-buttons">
-                            <button class="action-btn view-error-btn" data-error-id="${error.error_id}">
-                                👁️ View
-                            </button>
-                            ${error.status === 'closed' ? appealButton : ''}
-                        </td>
+                        <td><span class="status-badge status-${error.status}">${status}</span></td>
+                        <td class="action-buttons">${actionButtons}</td>
                     </tr>
                 `;
             }).join('');
 
-            // Update Pagination
             paginationControls.style.display = 'flex';
             paginationControls.querySelector('.page-info').textContent = `Page ${currentPage} of ${totalPages}`;
             paginationControls.querySelector('.prev-btn').disabled = currentPage === 1;
@@ -296,13 +298,12 @@
         }
     }
 
+
     function setupPaginationListeners() {
         document.getElementById('dashboard-pagination').addEventListener('click', e => {
-            if (e.target.classList.contains('prev-btn')) {
-                if (dashboardCurrentPage > 1) {
-                    dashboardCurrentPage--;
-                    renderPaginatedTable('error-table-body', userErrors, dashboardCurrentPage, 'dashboard-pagination');
-                }
+            if (e.target.classList.contains('prev-btn') && dashboardCurrentPage > 1) {
+                dashboardCurrentPage--;
+                renderPaginatedTable('error-table-body', userErrors, dashboardCurrentPage, 'dashboard-pagination');
             } else if (e.target.classList.contains('next-btn')) {
                  const totalPages = Math.ceil(userErrors.length / ITEMS_PER_PAGE);
                 if (dashboardCurrentPage < totalPages) {
@@ -313,11 +314,9 @@
         });
 
         document.getElementById('my-errors-pagination').addEventListener('click', e => {
-            if (e.target.classList.contains('prev-btn')) {
-                if (myErrorsCurrentPage > 1) {
-                    myErrorsCurrentPage--;
-                    renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
-                }
+            if (e.target.classList.contains('prev-btn') && myErrorsCurrentPage > 1) {
+                myErrorsCurrentPage--;
+                renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
             } else if (e.target.classList.contains('next-btn')) {
                 const totalPages = Math.ceil(filteredUserErrors.length / ITEMS_PER_PAGE);
                 if (myErrorsCurrentPage < totalPages) {
@@ -327,26 +326,46 @@
             }
         });
     }
-
+    
+    // *** UPDATED/REPLACED FUNCTION ***
     function openViewErrorModal(errorId) {
-        const error = userErrors.find(e => e.error_id === errorId);
+        const error = userErrors.find(e => String(e.error_id) === String(errorId));
         if (!error) return;
     
         document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
         
-        const errorDetails = `
+        let contentHtml = `
             <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
             <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
-            <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
-            <div class="detail-item"><strong>Reviewed By</strong><p>${error.employee_name || 'Unknown'}</p></div>
-            <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status.replace('_response', '')}">${error.status.replace(/_/g, ' ')}</span></p></div>
+            <div class="detail-item"><strong>Error Type</strong><p>${error.error_type || 'Unknown'}</p></div>
+            <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
         `;
+
+        // Check if there is a final decision and display it
+        if (error.final_decision) {
+            const decisionClass = error.final_decision === 'overturned' ? 'status-responded' : 'status-finalized'; // Use existing classes
+            contentHtml += `
+                <hr style="border-color: var(--border-color); margin: 1rem 0;">
+                <div class="detail-item" style="background-color: #222;">
+                    <strong>Senior's Final Decision</strong>
+                    <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${error.final_decision}</span> by ${error.decided_by_name || 'Senior'}</p>
+                    <small style="color: var(--text-muted);">${formatDateTime(error.decided_at)}</small>
+                </div>
+                <div class="detail-item">
+                    <strong>Senior's Notes</strong>
+                    <p style="white-space: pre-wrap; color: var(--text-muted);">${error.decision_notes || 'No notes provided.'}</p>
+                </div>
+            `;
+        } else if (error.status === 'under_review') {
+             contentHtml += `<hr style="border-color: var(--border-color); margin: 1rem 0;"><p style="color: var(--text-muted);">Your appeal is currently under review by a senior quality analyst.</p>`;
+        }
         
-        document.getElementById('view-error-body').innerHTML = errorDetails;
+        document.getElementById('view-error-body').innerHTML = contentHtml;
         showModal('view-error-modal');
     }
 
     async function handleResponseSubmission() {
+        // This function might be deprecated if appeals are the only response, but we'll leave it.
         const btn = document.getElementById('submit-response-btn');
         const errorId = btn.dataset.errorId;
         const responseText = document.getElementById('error-response').value.trim();
@@ -356,10 +375,8 @@
             return;
         }
 
-        const originalText = btn.textContent;
         btn.disabled = true;
         btn.textContent = 'Submitting...';
-
         try {
             await submitErrorResponse(errorId, currentUser.id, responseText);
             showToast('Your response has been submitted successfully!', 'success');
@@ -371,7 +388,7 @@
             showToast('Failed to submit your response. Please try again.', 'error');
         } finally {
             btn.disabled = false;
-            btn.textContent = originalText;
+            btn.textContent = 'Submit Response';
         }
     }
 
@@ -415,10 +432,8 @@
                     try {
                         await markNotificationAsRead(notificationId);
                         await loadNotifications();
-                        showToast('Notification marked as read', 'success');
                     } catch (error) {
                         console.error('Error marking notification as read:', error);
-                        showToast('Failed to mark notification as read', 'error');
                     }
                 });
             });
@@ -458,22 +473,8 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: { 
-                        position: 'bottom', 
-                        labels: { 
-                            color: '#e6edf3', 
-                            font: { family: 'Poppins', size: 14 } 
-                        } 
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(26, 26, 26, 0.9)',
-                        titleColor: '#00bfff',
-                        bodyColor: '#e6edf3',
-                        borderColor: '#333',
-                        borderWidth: 1,
-                        titleFont: { size: 14, weight: 'bold' },
-                        bodyFont: { size: 12 }
-                    }
+                    legend: { position: 'bottom', labels: { color: '#e6edf3', font: { family: 'Poppins', size: 14 } } },
+                    tooltip: { backgroundColor: 'rgba(26, 26, 26, 0.9)', titleColor: '#00bfff', bodyColor: '#e6edf3', borderColor: '#333', borderWidth: 1, titleFont: { size: 14, weight: 'bold' }, bodyFont: { size: 12 } }
                 },
                 cutout: '60%'
             }
@@ -505,7 +506,6 @@
                 from_date: document.getElementById('filter-from-date')?.value || null,
                 to_date: document.getElementById('filter-to-date')?.value || null
             };
-            // Remove null keys
             Object.keys(filters).forEach(key => filters[key] == null && delete filters[key]);
             loadUserErrors(filters);
         });
@@ -522,15 +522,11 @@
             const statusFilter = document.getElementById('my-errors-status').value;
             
             filteredUserErrors = userErrors.filter(error => {
-                const searchMatch = !searchTerm || 
-                    (error.order_id && error.order_id.toLowerCase().includes(searchTerm)) ||
-                    (error.error_details && error.error_details.toLowerCase().includes(searchTerm));
-
+                const searchMatch = !searchTerm || (error.order_id && error.order_id.toLowerCase().includes(searchTerm)) || (error.error_type && error.error_type.toLowerCase().includes(searchTerm));
                 const statusMatch = statusFilter === 'all' || error.status === statusFilter;
-
                 return searchMatch && statusMatch;
             });
-            myErrorsCurrentPage = 1; // Reset to first page
+            myErrorsCurrentPage = 1;
             renderErrorTables();
         });
         
@@ -544,22 +540,18 @@
     }
 
     function setupEventListeners() {
-        // Tab navigation
         document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
             tab.addEventListener('click', e => {
                 e.preventDefault();
                 document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
                 tab.classList.add('active');
-                
                 const tabId = tab.dataset.tab;
                 document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
                 document.getElementById(tabId).classList.add('active');
-                
                 document.getElementById('page-title-header').textContent = tab.textContent.replace(/[^\w\s]/gi, '').trim();
             });
         });
 
-        // Settings navigation
         document.querySelectorAll('.settings-nav a').forEach(link => {
             link.addEventListener('click', e => {
                 e.preventDefault();
@@ -571,7 +563,6 @@
             });
         });
 
-        // Event Delegation for action buttons (View and Appeal)
         document.querySelector('.main-content').addEventListener('click', (e) => {
             const viewBtn = e.target.closest('.view-error-btn');
             const appealBtn = e.target.closest('.appeal-error-btn');
@@ -582,20 +573,15 @@
                 const errorId = appealBtn.dataset.errorId;
                 const modal = document.getElementById('appeal-error-modal');
                 if (modal) {
-                    modal.querySelector('#appeal-reason').value = ''; // Clear reason field
-                    modal.querySelector('#submit-appeal-btn').dataset.errorId = errorId; // Store the ID on the submit button
+                    modal.querySelector('#appeal-reason').value = '';
+                    modal.querySelector('#submit-appeal-btn').dataset.errorId = errorId;
                     showModal('appeal-error-modal');
                 }
             }
         });
         
-        // Notifications dropdown
-        document.getElementById('notification-btn').addEventListener('click', e => {
-            e.stopPropagation();
-            document.getElementById('notification-dropdown').classList.toggle('show');
-        });
+        document.getElementById('notification-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-dropdown').classList.toggle('show'); });
         
-        // Mark all notifications as read
         document.getElementById('mark-all-read-btn').addEventListener('click', async e => {
             e.stopPropagation();
             const unread = notifications.filter(n => !n.is_read);
@@ -604,94 +590,64 @@
                 await Promise.all(unread.map(n => markNotificationAsRead(n.id)));
                 await loadNotifications();
                 showToast('All notifications marked as read', 'success');
-            } catch (error) {
-                showToast('Failed to mark all as read', 'error');
-            }
+            } catch (error) { showToast('Failed to mark all as read', 'error'); }
         });
         
-        // Submit error response
         document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
         
-        // Submit appeal
         document.getElementById('submit-appeal-btn').addEventListener('click', async function() {
             const btn = this;
             const errorId = btn.dataset.errorId;
             const reason = document.getElementById('appeal-reason').value.trim();
+            if (!reason) { showToast('Please provide a reason for your appeal.', 'warning'); return; }
 
-            if (!reason) {
-                showToast('Please provide a reason for your appeal.', 'warning');
-                return;
-            }
-
-            const originalText = btn.textContent;
-            btn.disabled = true;
-            btn.textContent = 'Submitting...';
-
+            btn.disabled = true; btn.textContent = 'Submitting...';
             try {
-                // Update the database with the new status and reason
-                const { error } = await supabase
-                    .from('errors')
-                    .update({ 
-                        status: 'under_review',
-                        appeal_reason: reason // Assuming 'appeal_reason' column exists
-                    })
-                    .eq('id', errorId);
-
+                const { error: responseError } = await supabase.from('error_responses').insert({
+                    error_id: errorId,
+                    response_by_id: currentUser.id,
+                    response_text: reason,
+                    response_type: 'appeal'
+                });
+                if(responseError) throw responseError;
+                
+                const { error } = await supabase.from('errors').update({ status: 'under_review' }).eq('id', errorId);
                 if (error) throw error;
                 
                 showToast('Appeal submitted successfully!', 'success');
                 hideModal('appeal-error-modal');
-                await loadUserErrors(); // Reload data to show the status change
+                await loadUserErrors();
 
             } catch (error) {
                 console.error('Error submitting appeal:', error);
                 showToast('Failed to submit appeal.', 'error');
             } finally {
-                btn.disabled = false;
-                btn.textContent = originalText;
+                btn.disabled = false; btn.textContent = 'Submit Appeal';
             }
         });
         
-        // Save profile changes
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const name = document.getElementById('profile-fullname').value.trim();
             const phone = document.getElementById('profile-phone').value.trim();
             if (!name) return showToast('Please enter your name', 'warning');
-            
             try {
                 await updateUserProfile(currentUser.id, { name, phone });
                 currentUser = { ...currentUser, name, phone };
                 updateUserInterface();
                 showToast('Profile updated successfully!', 'success');
-            } catch (error) {
-                showToast('Failed to update profile', 'error');
-            }
+            } catch (error) { showToast('Failed to update profile', 'error'); }
         });
         
-        // Logout button
         document.getElementById('logout-btn').addEventListener('click', () => {
             showConfirmationModal({
-                title: 'Logout',
-                message: 'Are you sure you want to logout?',
-                confirmText: 'Logout',
+                title: 'Logout', message: 'Are you sure you want to logout?', confirmText: 'Logout',
                 onConfirm: async () => {
-                    try {
-                        await supabase.auth.signOut();
-                        window.location.href = 'login.html';
-                    } catch (error) {
-                        showToast('Error during logout', 'error');
-                    }
+                    try { await supabase.auth.signOut(); window.location.href = 'login.html'; } catch (error) { showToast('Error during logout', 'error'); }
                 }
             });
         });
 
-        // Change password button
-        document.getElementById('change-password-btn').addEventListener('click', () => {
-            showToast('Opening password change dialog...', 'info');
-            showModal('change-password-modal');
-        });
-
-        // Settings toggles
+        document.getElementById('change-password-btn').addEventListener('click', () => { showModal('change-password-modal'); });
         document.querySelectorAll('.setting-item .toggle-switch input').forEach(toggle => {
             toggle.addEventListener('change', () => {
                 const label = toggle.closest('.setting-item').querySelector('span').textContent;
@@ -700,22 +656,15 @@
             });
         });
         
-        // Modal close buttons
         document.querySelectorAll('.modal-close-btn').forEach(btn => {
             btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
         });
 
-        // Global click listener for closing dropdowns/modals
         document.addEventListener('click', e => {
-            if (!e.target.closest('.notification-bell')) {
-                document.getElementById('notification-dropdown').classList.remove('show');
-            }
-            if (e.target.classList.contains('modal-overlay')) {
-                e.target.classList.remove('show');
-            }
+            if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); }
+            if (e.target.classList.contains('modal-overlay')) { e.target.classList.remove('show'); }
         });
 
-        // Global search input synchronization
         const globalSearch = document.getElementById('global-search');
         globalSearch.addEventListener('input', e => {
             const searchTerm = e.target.value.trim().toLowerCase();
@@ -724,7 +673,6 @@
         });
     }
 
-    // Initialize the application when the DOM is fully loaded
     document.addEventListener('DOMContentLoaded', () => {
         initApp();
         setupEventListeners();
@@ -798,9 +746,9 @@
     tbody tr:last-child td { border-bottom: none; }
     tbody tr:hover { background-color: #2c2c2c; }
     .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-transform: capitalize; }
-    .status-pending, .status-under_review { background-color: var(--yellow-bg); color: var(--yellow); }
-    .status-responded, .status-closed { background-color: var(--green-bg); color: var(--green); }
-    .status-finalized { background-color: var(--red-bg); color: var(--red); }
+    .status-pending, .status-under_review, .status-pending_response { background-color: var(--yellow-bg); color: var(--yellow); }
+    .status-responded, .status-overturned { background-color: var(--green-bg); color: var(--green); }
+    .status-finalized, .status-closed { background-color: var(--red-bg); color: var(--red); }
     .action-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
     .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 12px; padding: 6px 12px; border-radius: 6px; transition: all 0.3s ease; white-space: nowrap; }
     .action-btn:hover { background: #444; transform: translateY(-1px); }
