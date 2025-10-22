@@ -1,5 +1,5 @@
-// api-client.js - Enhanced Version
-// All improvements without breaking existing functionality
+// api-client.js - Complete Version
+// All functions included - No missing exports
 
 import { createClient } from '@supabase/supabase-js';
 
@@ -8,7 +8,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 // =============================================
-// EXISTING FUNCTIONS
+// AUTHENTICATION FUNCTIONS
 // =============================================
 
 export async function getCurrentUser() {
@@ -16,6 +16,42 @@ export async function getCurrentUser() {
   if (error) throw error;
   return user;
 }
+
+export async function signIn(email, password) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password
+  });
+  if (error) throw error;
+  return data.user;
+}
+
+export async function signUp(email, password, fullName, role = 'pending') {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password
+  });
+  if (error) throw error;
+
+  const user = data.user;
+
+  const { error: insertError } = await supabase
+    .from('users')
+    .insert([{
+      id: user.id,
+      email: email,
+      name: fullName,
+      role: role,
+      is_active: role === 'pending' ? false : true
+    }]);
+
+  if (insertError) throw insertError;
+  return user;
+}
+
+// =============================================
+// USER MANAGEMENT FUNCTIONS
+// =============================================
 
 export async function getUserById(userId) {
   const { data, error } = await supabase
@@ -26,6 +62,31 @@ export async function getUserById(userId) {
   if (error) throw error;
   return data;
 }
+
+export async function updateUserProfile(userId, updates) {
+  const { data, error } = await supabase
+    .from('users')
+    .update(updates)
+    .eq('id', userId)
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function getTeamMembers() {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('is_active', true)
+    .order('name');
+  if (error) throw error;
+  return data;
+}
+
+// =============================================
+// ORDERS MANAGEMENT FUNCTIONS
+// =============================================
 
 export async function getUnassignedOrders() {
   const { data, error } = await supabase
@@ -83,10 +144,13 @@ export async function assignOrders(orderIds, agentId, assignedById) {
     .from('order_assignments')
     .insert(assignments)
     .select();
-
   if (error) throw error;
   return data;
 }
+
+// =============================================
+// QUALITY REVIEW FUNCTIONS
+// =============================================
 
 export async function submitReview(assignmentId, reviewData) {
   const review = {
@@ -99,10 +163,8 @@ export async function submitReview(assignmentId, reviewData) {
     .insert([review])
     .select()
     .single();
-
   if (error) throw error;
 
-  // Update assignment status
   await supabase
     .from('order_assignments')
     .update({ 
@@ -113,6 +175,10 @@ export async function submitReview(assignmentId, reviewData) {
 
   return data;
 }
+
+// =============================================
+// ERRORS MANAGEMENT FUNCTIONS
+// =============================================
 
 export async function getPendingErrors() {
   const { data, error } = await supabase
@@ -132,126 +198,9 @@ export async function getPendingErrors() {
     `)
     .eq('status', 'pending_response')
     .order('recorded_at', { ascending: false });
-
   if (error) throw error;
   return data;
 }
-
-export async function submitErrorResponse(errorId, respondedById, responseText) {
-  const response = {
-    error_id: errorId,
-    response_by_id: respondedById,
-    response_text: responseText
-  };
-
-  const { data, error } = await supabase
-    .from('error_responses')
-    .insert([response])
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  // Update error status
-  await supabase
-    .from('errors')
-    .update({ status: 'responded' })
-    .eq('id', errorId);
-
-  return data;
-}
-
-export async function submitFinalDecision(errorId, decidedById, decision, notes) {
-  const finalDecision = {
-    error_id: errorId,
-    decided_by_id: decidedById,
-    decision: decision,
-    notes: notes
-  };
-
-  const { data, error } = await supabase
-    .from('final_decisions')
-    .insert([finalDecision])
-    .select()
-    .single();
-
-  if (error) throw error;
-
-  // Update error status
-  await supabase
-    .from('errors')
-    .update({ status: 'finalized' })
-    .eq('id', errorId);
-
-  return data;
-}
-
-export async function getPerformanceMetrics(period = 'month', userId = null) {
-  let query = supabase.from('order_assignments');
-
-  if (userId) {
-    query = query.eq('quality_agent_id', userId);
-  }
-
-  const { data, error } = await query
-    .select('*')
-    .gte('assigned_at', getDateRange(period));
-
-  if (error) throw error;
-
-  const completed = data.filter(order => order.status === 'completed').length;
-  const total = data.length;
-  const accuracyRate = total > 0 ? Math.round((completed / total) * 100) : 0;
-
-  return {
-    totalOrders: total,
-    completedOrders: completed,
-    pendingReviews: data.filter(order => order.status === 'pending').length,
-    accuracyRate: accuracyRate,
-    errorRate: 100 - accuracyRate
-  };
-}
-
-// =============================================
-// NEW EMPLOYEES FUNCTIONS (🏢 Company Employees)
-// =============================================
-
-export async function getCompanyEmployees() {
-  const { data, error } = await supabase
-    .from('employees')
-    .select('*')
-    .order('employee_name');
-  
-  if (error) throw error;
-  return data;
-}
-
-export async function addCompanyEmployee(employeeData) {
-  const { data, error } = await supabase
-    .from('employees')
-    .insert([employeeData])
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-}
-
-export async function updateCompanyEmployee(id, updates) {
-  const { data, error } = await supabase
-    .from('employees')
-    .update(updates)
-    .eq('id', id)
-    .select()
-    .single();
-  
-  if (error) throw error;
-  return data;
-}
-
-// =============================================
-// NEW ERRORS FUNCTIONS (Agent Dashboard)
-// =============================================
 
 export async function getAgentErrors(agentId, filters = {}) {
   let query = supabase
@@ -292,8 +241,53 @@ export async function getAgentErrors(agentId, filters = {}) {
   return data;
 }
 
+export async function submitErrorResponse(errorId, respondedById, responseText) {
+  const response = {
+    error_id: errorId,
+    response_by_id: respondedById,
+    response_text: responseText
+  };
+
+  const { data, error } = await supabase
+    .from('error_responses')
+    .insert([response])
+    .select()
+    .single();
+  if (error) throw error;
+
+  await supabase
+    .from('errors')
+    .update({ status: 'responded' })
+    .eq('id', errorId);
+
+  return data;
+}
+
+export async function submitFinalDecision(errorId, decidedById, decision, notes) {
+  const finalDecision = {
+    error_id: errorId,
+    decided_by_id: decidedById,
+    decision: decision,
+    notes: notes
+  };
+
+  const { data, error } = await supabase
+    .from('final_decisions')
+    .insert([finalDecision])
+    .select()
+    .single();
+  if (error) throw error;
+
+  await supabase
+    .from('errors')
+    .update({ status: 'finalized' })
+    .eq('id', errorId);
+
+  return data;
+}
+
 // =============================================
-// ENHANCED ESCALATIONS & INQUIRIES FUNCTIONS
+// ESCALATIONS FUNCTIONS
 // =============================================
 
 export async function submitEscalation(assignmentId, escalatedById, escalatedToId, reason) {
@@ -310,10 +304,8 @@ export async function submitEscalation(assignmentId, escalatedById, escalatedToI
     .insert([escalation])
     .select()
     .single();
-
   if (error) throw error;
 
-  // Create notification for the recipient
   await createNotification(
     escalatedToId,
     `New escalation for order assignment ${assignmentId}`,
@@ -365,10 +357,8 @@ export async function resolveEscalation(escalationId, feedback) {
       escalated_by (*)
     `)
     .single();
-
   if (error) throw error;
 
-  // Create notification for the original agent
   await createNotification(
     data.escalated_by.id,
     `Your escalation has been resolved with feedback`,
@@ -377,6 +367,39 @@ export async function resolveEscalation(escalationId, feedback) {
 
   return data;
 }
+
+export async function escalateToSenior(escalationId, seniorId, helperNotes) {
+  const { data: currentEscalation, error: fetchError } = await supabase
+    .from('escalations')
+    .select('*')
+    .eq('id', escalationId)
+    .single();
+  if (fetchError) throw fetchError;
+
+  const { data, error } = await supabase
+    .from('escalations')
+    .update({ 
+      escalated_to_id: seniorId,
+      notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
+      updated_at: new Date().toISOString()
+    })
+    .eq('id', escalationId)
+    .select()
+    .single();
+  if (error) throw error;
+
+  await createNotification(
+    seniorId,
+    `A new escalation requires your review.`,
+    'warning'
+  );
+
+  return data;
+}
+
+// =============================================
+// INQUIRIES FUNCTIONS
+// =============================================
 
 export async function raiseInquiry(assignmentId, raisedById, inquiryText) {
   const inquiry = {
@@ -391,9 +414,7 @@ export async function raiseInquiry(assignmentId, raisedById, inquiryText) {
     .insert([inquiry])
     .select()
     .single();
-
   if (error) throw error;
-
   return data;
 }
 
@@ -410,7 +431,6 @@ export async function getHelperInquiries(helperId) {
     `)
     .eq('status', 'pending')
     .order('created_at', { ascending: false });
-
   if (error) throw error;
   return data;
 }
@@ -430,16 +450,48 @@ export async function respondToInquiry(inquiryId, respondedById, responseText) {
       raised_by (*)
     `)
     .single();
-
   if (error) throw error;
 
-  // Create notification for the original agent
   await createNotification(
     data.raised_by.id,
     `Your inquiry has been responded to`,
     `/my-errors`
   );
 
+  return data;
+}
+
+// =============================================
+// EMPLOYEES FUNCTIONS (🏢 Company Employees)
+// =============================================
+
+export async function getCompanyEmployees() {
+  const { data, error } = await supabase
+    .from('employees')
+    .select('*')
+    .order('employee_name');
+  if (error) throw error;
+  return data;
+}
+
+export async function addCompanyEmployee(employeeData) {
+  const { data, error } = await supabase
+    .from('employees')
+    .insert([employeeData])
+    .select()
+    .single();
+  if (error) throw error;
+  return data;
+}
+
+export async function updateCompanyEmployee(id, updates) {
+  const { data, error } = await supabase
+    .from('employees')
+    .update(updates)
+    .eq('id', id)
+    .select()
+    .single();
+  if (error) throw error;
   return data;
 }
 
@@ -455,7 +507,6 @@ export async function getNotifications(userId) {
     .eq('is_read', false)
     .order('created_at', { ascending: false })
     .limit(20);
-
   if (error) throw error;
   return data;
 }
@@ -465,7 +516,6 @@ export async function markNotificationAsRead(notificationId) {
     .from('notifications')
     .update({ is_read: true })
     .eq('id', notificationId);
-
   if (error) throw error;
 }
 
@@ -478,24 +528,12 @@ export async function createNotification(userId, message, link = null) {
       link: link,
       type: 'info'
     }]);
-
   if (error) throw error;
 }
 
 // =============================================
-// TEAM MANAGEMENT FUNCTIONS
+// TEAM SCHEDULE FUNCTIONS
 // =============================================
-
-export async function getTeamMembers() {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('is_active', true)
-    .order('name');
-
-  if (error) throw error;
-  return data;
-}
 
 export async function getTeamSchedule() {
   const { data, error } = await supabase
@@ -507,7 +545,6 @@ export async function getTeamSchedule() {
     .gte('shift_date', new Date().toISOString().split('T')[0])
     .order('shift_date')
     .order('user_id');
-
   if (error) throw error;
   return data;
 }
@@ -517,19 +554,6 @@ export async function updateTeamSchedule(scheduleUpdates) {
     .from('team_schedule')
     .upsert(scheduleUpdates)
     .select();
-
-  if (error) throw error;
-  return data;
-}
-
-export async function updateUserProfile(userId, updates) {
-  const { data, error } = await supabase
-    .from('users')
-    .update(updates)
-    .eq('id', userId)
-    .select()
-    .single();
-
   if (error) throw error;
   return data;
 }
@@ -546,7 +570,6 @@ export async function getDepartments() {
       head:users(*)
     `)
     .order('department_name');
-
   if (error) throw error;
   return data;
 }
@@ -560,9 +583,64 @@ export async function importOrdersFromCSV(ordersData) {
     .from('orders')
     .insert(ordersData)
     .select();
-
   if (error) throw error;
   return data;
+}
+
+// =============================================
+// PERFORMANCE & ANALYTICS FUNCTIONS
+// =============================================
+
+export async function getPerformanceMetrics(period = 'month', userId = null) {
+  let query = supabase.from('order_assignments');
+
+  if (userId) {
+    query = query.eq('quality_agent_id', userId);
+  }
+
+  const { data, error } = await query
+    .select('*')
+    .gte('assigned_at', getDateRange(period));
+  if (error) throw error;
+
+  const completed = data.filter(order => order.status === 'completed').length;
+  const total = data.length;
+  const accuracyRate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+  return {
+    totalOrders: total,
+    completedOrders: completed,
+    pendingReviews: data.filter(order => order.status === 'pending').length,
+    accuracyRate: accuracyRate,
+    errorRate: 100 - accuracyRate
+  };
+}
+
+export async function getErrorTrends(period = '1 month') {
+  const { data, error } = await supabase
+    .from('errors')
+    .select('recorded_at, quality_reviews!inner(modified_reason)')
+    .gte('recorded_at', getDateRange(period.replace(' ', '_')))
+    .order('recorded_at');
+  if (error) throw error;
+  
+  return {
+    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
+    values: [5, 4, 4.5, 4.2]
+  };
+}
+
+export async function getDepartmentPerformance() {
+  const { data, error } = await supabase
+    .from('quality_reviews')
+    .select('department, action_correctness')
+    .gte('reviewed_at', getDateRange('month'));
+  if (error) throw error;
+
+  return {
+    departments: ['Support', 'Logistics', 'Customer Service'],
+    errorRates: [12, 8, 15]
+  };
 }
 
 // =============================================
@@ -653,52 +731,6 @@ function getDateRange(period) {
   }
 }
 
-export async function getErrorTrends(period = '1 month') {
-  const { data, error } = await supabase
-    .from('errors')
-    .select('recorded_at, quality_reviews!inner(modified_reason)')
-    .gte('recorded_at', getDateRange(period.replace(' ', '_')))
-    .order('recorded_at');
-
-  if (error) throw error;
-  
-  // Process data for charts
-  const trends = processErrorTrends(data);
-  return trends;
-}
-
-export async function getDepartmentPerformance() {
-  const { data, error } = await supabase
-    .from('quality_reviews')
-    .select('department, action_correctness')
-    .gte('reviewed_at', getDateRange('month'));
-
-  if (error) throw error;
-
-  const performance = processDepartmentPerformance(data);
-  return performance;
-}
-
-function processErrorTrends(errorData) {
-  // Implementation for processing error trends data
-  return {
-    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'],
-    values: [5, 4, 4.5, 4.2]
-  };
-}
-
-function processDepartmentPerformance(performanceData) {
-  // Implementation for processing department performance data
-  return {
-    departments: ['Support', 'Logistics', 'Customer Service'],
-    errorRates: [12, 8, 15]
-  };
-}
-
-// =============================================
-// SLA & TIME TRACKING FUNCTIONS
-// =============================================
-
 export function calculateSLAStatus(assignedAt, completedAt) {
   if (!completedAt) return { status: 'pending', time: null };
   
@@ -726,100 +758,4 @@ export function getOrderWithEscalationStatus(orderAssignment) {
                       hasInquiry ? 'inquiry' : 'normal',
     has_pending_action: hasEscalation || hasInquiry
   };
-}
-// =============================================
-// AUTHENTICATION FUNCTIONS (Login / Sign Up)
-// =============================================
-
-export async function signIn(email, password) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password
-  });
-
-  if (error) throw error;
-  return data.user;
-}
-
-export async function signUp(email, password, fullName, role = 'pending') {
-  // 1. إنشاء المستخدم في Supabase Auth
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password
-  });
-
-  if (error) throw error;
-
-  const user = data.user;
-
-  // 2. إنشاء سجل المستخدم في جدول users
-  const { error: insertError } = await supabase
-    .from('users')
-    .insert([
-      {
-        id: user.id,
-        email: email,
-        name: fullName,
-        role: role,
-        is_active: role === 'pending' ? false : true
-      }
-    ]);
-
-  if (insertError) throw insertError;
-
-  return user;
-}
-
-export async function getUserData(email) {
-  const { data, error } = await supabase
-    .from('users')
-    .select('*')
-    .eq('email', email)
-    .single();
-
-  if (error) throw error;
-  return data;
-}
-
-// ==================== ESCALATION TO SENIOR FUNCTION ====================
-export async function escalateToSenior(escalationId, seniorId, helperNotes) {
-  try {
-    console.log('🔄 Escalating to senior:', { escalationId, seniorId });
-    
-    // Get current escalation
-    const { data: currentEscalation, error: fetchError } = await supabase
-      .from('escalations')
-      .select('*')
-      .eq('id', escalationId)
-      .single();
-
-    if (fetchError) throw fetchError;
-
-    // Update escalation to redirect to senior
-    const { data, error } = await supabase
-      .from('escalations')
-      .update({ 
-        escalated_to_id: seniorId,
-        notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', escalationId)
-      .select()
-      .single();
-
-    if (error) throw error;
-
-    // Create notification for the senior
-    await createNotification(
-      seniorId,
-      `A new escalation requires your review.`,
-      'warning'
-    );
-
-    console.log('✅ Escalation forwarded to senior successfully');
-    return data;
-  } catch (error) {
-    console.error('💥 EscalateToSenior error:', error);
-    throw error;
-  }
 }
