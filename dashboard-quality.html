@@ -2419,26 +2419,6 @@ document.addEventListener('click', function(e){
   </div>
 </div>
 
-<!-- Review Escalation Modal (ALT) -->
-<div class="modal-overlay" id="review-escalation-modal-alt" style="display:none;">
-  <div class="modal-box">
-    <div class="modal-header">
-      <h3 class="modal-title">Review Escalation</h3>
-      <button class="modal-close-btn" data-modal-id="review-escalation-modal-alt">×</button>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Your Feedback</label>
-        <textarea id="review-feedback-text" placeholder="Write your feedback here..." rows="6" style="width:100%;"></textarea>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-success" id="resolve-escalation-confirm-btn">Resolve & Send Feedback</button>
-      <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal-alt">Cancel</button>
-    </div>
-  </div>
-</div>
-
 <!-- View Inquiry Modal (ALT) -->
 <div class="modal-overlay" id="view-inquiry-modal-alt" style="display:none;">
   <div class="modal-box">
@@ -2455,37 +2435,37 @@ document.addEventListener('click', function(e){
 
 <!-- Small utility styles for modals (scoped local) -->
 <style>
-#review-escalation-modal-alt .modal-box, #view-inquiry-modal-alt .modal-box, #reassign-modal .modal-box, #view-assignment-modal .modal-box { 
+#view-inquiry-modal-alt .modal-box, #reassign-modal .modal-box, #view-assignment-modal .modal-box { 
     background:#fff; color: #333; width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; 
 }
-#review-escalation-modal-alt .modal-header, #view-inquiry-modal-alt .modal-header, #reassign-modal .modal-header, #view-assignment-modal .modal-header {
+#view-inquiry-modal-alt .modal-header, #reassign-modal .modal-header, #view-assignment-modal .modal-header {
     display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee;
 }
-#review-escalation-modal-alt .modal-title, #view-inquiry-modal-alt .modal-title, #reassign-modal .modal-title, #view-assignment-modal .modal-title {
+#view-inquiry-modal-alt .modal-title, #reassign-modal .modal-title, #view-assignment-modal .modal-title {
     margin:0; font-size:16px;
 }
-#review-escalation-modal-alt .modal-body, #view-inquiry-modal-alt .modal-body, #reassign-modal .modal-body, #view-assignment-modal .modal-body {
+#view-inquiry-modal-alt .modal-body, #reassign-modal .modal-body, #view-assignment-modal .modal-body {
     padding:16px; max-height:60vh; overflow:auto;
 }
-#review-escalation-modal-alt .modal-footer, #view-inquiry-modal-alt .modal-footer, #reassign-modal .modal-footer, #view-assignment-modal .modal-footer {
+#view-inquiry-modal-alt .modal-footer, #reassign-modal .modal-footer, #view-assignment-modal .modal-footer {
     padding:12px 16px; border-top:1px solid #eee; display:flex; gap:8px; justify-content:flex-end;
 }
-#review-escalation-modal-alt .modal-close-btn, #view-inquiry-modal-alt .modal-close-btn, #reassign-modal .modal-close-btn, #view-assignment-modal .modal-close-btn {
+#view-inquiry-modal-alt .modal-close-btn, #reassign-modal .modal-close-btn, #view-assignment-modal .modal-close-btn {
     background:none; border:0; font-size:20px; cursor:pointer; color: #555;
 }
-#review-escalation-modal-alt .btn, #view-inquiry-modal-alt .btn, #reassign-modal .btn, #view-assignment-modal .btn { 
+#view-inquiry-modal-alt .btn, #reassign-modal .btn, #view-assignment-modal .btn { 
     padding:8px 12px; border-radius:6px; cursor:pointer; border:1px solid #ccc; background:#f5f5f5; 
 }
-#review-escalation-modal-alt .btn-primary, #view-inquiry-modal-alt .btn-primary, #reassign-modal .btn-primary, #view-assignment-modal .btn-primary { 
+#view-inquiry-modal-alt .btn-primary, #reassign-modal .btn-primary, #view-assignment-modal .btn-primary { 
     background:#2563eb; color:#fff; border-color:transparent; 
 }
-#review-escalation-modal-alt .btn-success, #view-inquiry-modal-alt .btn-success, #reassign-modal .btn-success, #view-assignment-modal .btn-success { 
+#view-inquiry-modal-alt .btn-success, #reassign-modal .btn-success, #view-assignment-modal .btn-success { 
     background:#16a34a; color:#fff; border-color:transparent; 
 }
-#review-escalation-modal-alt .btn-secondary, #view-inquiry-modal-alt .btn-secondary, #reassign-modal .btn-secondary, #view-assignment-modal .btn-secondary {
+#view-inquiry-modal-alt .btn-secondary, #reassign-modal .btn-secondary, #view-assignment-modal .btn-secondary {
      background:#e5e7eb; 
 }
-#review-escalation-modal-alt .form-group label, #view-inquiry-modal-alt .form-group label, #reassign-modal .form-group label, #view-assignment-modal .form-group label {
+#view-inquiry-modal-alt .form-group label, #reassign-modal .form-group label, #view-assignment-modal .form-group label {
      display:block; margin-bottom:6px; font-weight:600; 
 }
 </style>
@@ -2495,29 +2475,6 @@ document.addEventListener('click', function(e){
 <script>
 /* START: injected handlers */
 document.addEventListener('DOMContentLoaded', function(){
-  // resolve escalation confirm
-  const resolveBtn = document.getElementById('resolve-escalation-confirm-btn');
-  if(resolveBtn){
-    resolveBtn.addEventListener('click', async function(){
-      const escalationId = document.getElementById('review-escalation-modal-alt').dataset.escalationId;
-      const feedback = document.getElementById('review-feedback-text').value.trim();
-      if(!feedback){ alert('Please provide feedback before resolving'); return; }
-      try{
-        if(typeof resolveEscalation === 'function'){
-          await resolveEscalation(escalationId, feedback);
-          showToast('Escalation resolved', 'success');
-        }
-        hideModal('review-escalation-modal-alt');
-        // reload lists if functions exist
-        if(typeof loadHelperEscalations === 'function') loadHelperEscalations();
-        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
-      }catch(err){
-        console.error(err);
-        alert('Failed to resolve escalation');
-      }
-    });
-  }
-
   // reassign confirm
   const reassignBtn = document.getElementById('reassign-confirm-btn');
   if(reassignBtn){
@@ -2540,22 +2497,6 @@ document.addEventListener('DOMContentLoaded', function(){
       }
     });
   }
-
-  // hook generic "review escalation" buttons (buttons with class review-escalation-btn)
-  document.body.addEventListener('click', function(e) {
-      if (e.target && e.target.classList.contains('review-escalation-btn')) {
-          const id = e.target.dataset.escalationId || e.target.getAttribute('data-escalation-id');
-          const modal = document.getElementById('review-escalation-modal-alt');
-          if (modal) {
-              modal.dataset.escalationId = id;
-              // Also clear previous feedback
-              const feedbackText = document.getElementById('review-feedback-text');
-              if(feedbackText) feedbackText.value = '';
-              showModal('review-escalation-modal-alt');
-          }
-      }
-  });
-
 
   // hook view-assignment buttons to populate modal
   document.querySelectorAll('.open-view-assignment-btn').forEach(btn=>{
