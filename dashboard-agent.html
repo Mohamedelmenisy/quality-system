@@ -635,7 +635,7 @@
                         status: 'under_review',
                         appeal_reason: reason // Assuming 'appeal_reason' column exists
                     })
-                    .eq('error_id', errorId);
+                    .eq('id', errorId);
 
                 if (error) throw error;
                 
