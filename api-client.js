@@ -1048,58 +1048,35 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ====================
 
-export async function getPerformanceMetrics(period = 'month', agentId = null) {
+export async function getPerformanceMetrics() { // أزلنا agentId و period لأنه لم يعد مطلوبًا هنا
   try {
-    let dateFilter = new Date();
+    // استدعِ دالة RPC الجديدة
+    const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
     
-    switch (period) {
-      case 'week':
-        dateFilter.setDate(dateFilter.getDate() - 7);
-        break;
-      case 'month':
-        dateFilter.setMonth(dateFilter.getMonth() - 1);
-        break;
-      case 'quarter':
-        dateFilter.setMonth(dateFilter.getMonth() - 3);
-        break;
-      default:
-        dateFilter.setMonth(dateFilter.getMonth() - 1);
+    if (error) {
+      console.error('Error fetching performance metrics:', error);
+      throw error;
     }
 
-    const { data: ordersData, error: ordersError } = await supabase
-      .from('order_assignments')
-      .select('id, status, assigned_at')
-      .gte('assigned_at', dateFilter.toISOString());
+    // Supabase RPC returns an array, we need the first (and only) result
+    const metrics = data[0];
 
-    if (ordersError) throw ordersError;
-
-    const { data: reviewsData, error: reviewsError } = await supabase
-      .from('quality_reviews')
-      .select('id, action_correctness, reviewed_at')
-      .gte('reviewed_at', dateFilter.toISOString());
-
-    if (reviewsError) throw reviewsError;
-
-    const totalOrders = ordersData.length;
-    const completedOrders = ordersData.filter(o => o.status === 'completed').length;
-    const correctReviews = reviewsData.filter(r => r.action_correctness === 'correct').length;
-    
-    const accuracyRate = reviewsData.length > 0 ? (correctReviews / reviewsData.length * 100).toFixed(2) : 0;
-
+    // أعد تنسيق البيانات لتكون متوافقة مع ما تتوقعه الواجهة
     return {
-      totalOrders,
-      completedOrders,
-      accuracyRate: parseFloat(accuracyRate),
-      pendingReviews: totalOrders - completedOrders
+      completedOrders: metrics.reviews_today || 0,
+      pendingEscalations: metrics.pending_escalations || 0,
+      avgResolutionTime: metrics.avg_resolution_time_minutes ? Math.round(metrics.avg_resolution_time_minutes) : 0,
+      accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
     };
+
   } catch (error) {
     console.error('GetPerformanceMetrics error:', error);
-    // Return default values if there's an error
+    // Return default values in case of an error
     return {
-      totalOrders: 0,
       completedOrders: 0,
-      accuracyRate: 0,
-      pendingReviews: 0
+      pendingEscalations: 0,
+      avgResolutionTime: 0,
+      accuracyRate: 0.0
     };
   }
 }
