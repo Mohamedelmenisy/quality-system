@@ -34,6 +34,7 @@ document.addEventListener('click', function(e){
             getAssignedOrders,
             assignOrders,
             getPendingErrors,
+            getAppealedErrors,
             submitFinalDecision,
             getPerformanceMetrics,
             getTeamMembers,
@@ -51,7 +52,6 @@ document.addEventListener('click', function(e){
             getEscalations,
             resolveEscalation,
             getTeamPerformance
-            // getAppealedErrors has been removed from import to prevent crash
         } from './api-client.js';
         
         window.supabase = supabase;
