@@ -1867,39 +1867,42 @@ async function openViewAssignedModal(assignmentId) {
                 hideModal('logout-confirm-modal');
             });
         });
-
 window.handleFinalDecision = async (errorId, decision) => {
     try {
         if (!currentUser || !currentUser.id) {
             throw new Error("Could not identify the current user. Please refresh and try again.");
         }
         const seniorUserId = currentUser.id;
-        
-        // --- START: READ NOTES FROM TEXTAREA ---
         const notes = document.getElementById('decision-notes')?.value || '';
-        // --- END: READ NOTES FROM TEXTAREA ---
 
-        // Find the agent's user ID to send a notification
+        // --- START: NEW & CORRECTED DATA FETCHING ---
         const { data: errorData, error: fetchError } = await window.supabase
             .from('errors')
-            .select('employee_id, employees!inner(user_id), order_assignments!inner(orders!inner(order_id))')
+            .select(`
+                employees!inner(user_id),
+                quality_reviews!inner(
+                    order_assignments!inner(
+                        orders!inner(order_id)
+                    )
+                )
+            `)
             .eq('id', errorId)
             .single();
 
-        if (fetchError || !errorData?.employees?.user_id) {
-             console.error("Fetch error or missing agent user_id:", fetchError);
-             throw new Error("Could not find the agent's user ID to notify.");
+        if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
+            console.error("Fetch error or missing critical data:", fetchError, errorData);
+            throw new Error("Could not find the agent's User ID or Order ID to notify.");
         }
         
-        const orderId = errorData.order_assignments.orders.order_id;
+        const agentUserId = errorData.employees.user_id;
+        const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+        // --- END: NEW & CORRECTED DATA FETCHING ---
 
         // 1. Submit the final decision with notes
         await submitFinalDecision(errorId, seniorUserId, decision, notes);
         
         // 2. Create a notification for the agent
-        const agentUserId = errorData.employees.user_id;
         const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
-        
         await createNotification(agentUserId, notificationMessage, 'info');
 
         showToast(`Decision recorded and notification sent successfully.`, 'success');
@@ -1917,7 +1920,6 @@ window.handleFinalDecision = async (errorId, decision) => {
     }
 };
         
-
        window.handleOldFinalDecision = handleOldFinalDecision;
 
     </script>
