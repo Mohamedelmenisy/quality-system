@@ -68,6 +68,7 @@
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
+     window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
     <style>
         :root {
@@ -1712,21 +1713,21 @@ async function openViewAssignedModal(assignmentId) {
         }
         
         function initRealtimeSubscriptions() {
-            subscribeToAssignmentUpdates((payload) => {
-                console.log('Assignment updated:', payload.new);
-                const updatedAssignment = payload.new;
-                
-                // ابحث عن الطلب في القائمة المحلية وقم بتحديثه
-                const index = assignedOrders.findIndex(a => a.id === updatedAssignment.id);
-                if (index !== -1) {
-                    // دمج البيانات القديمة مع الجديدة للحفاظ على تفاصيل الطلب
-                    assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
-                    // إعادة عرض الجدول بالبيانات المحدثة
-                    applyAssignedOrdersFilters(); // استخدمنا هذه الدالة لأنها تعيد العرض
-                    showToast(`Order ${assignedOrders[index].orders.order_id} is now ${updatedAssignment.status}`, 'info');
-                }
-            });
+    // استدع الدالة من window
+    window.subscribeToAssignmentUpdates((payload) => {
+        console.log('Assignment updated:', payload.new);
+        const updatedAssignment = payload.new;
+        
+        const index = assignedOrders.findIndex(a => a.id === updatedAssignment.id);
+        if (index !== -1) {
+            assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
+            applyAssignedOrdersFilters();
+            // سنعدل الرسالة لتكون أكثر فائدة
+            const orderId = assignedOrders[index].orders?.order_id || 'An order';
+            showToast(`${orderId} is now ${updatedAssignment.status.replace('_', ' ')}`, 'info');
         }
+    });
+}
 
         // Event Listeners Setup
         document.addEventListener('DOMContentLoaded', () => {
