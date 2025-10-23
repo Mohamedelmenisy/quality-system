@@ -333,16 +333,10 @@
         });
     }
     
-    // =======================================================
-    // == START: APPLIED FIX TO THE openViewErrorModal FUNCTION ==
-    // =======================================================
     function openViewErrorModal(errorId) {
-        // Find the error by `error_id` which matches the data attribute in the button
-        const error = userErrors.find(e => String(e.error_id) === String(errorId));
-        if (!error) {
-            console.error('Error not found with ID:', errorId);
-            return;
-        }
+        // *** FIXED: Finding error by `id` as per old version's data structure ***
+        const error = userErrors.find(e => String(e.id) === String(errorId));
+        if (!error) return;
     
         document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
         
@@ -374,9 +368,6 @@
         document.getElementById('view-error-body').innerHTML = contentHtml;
         showModal('view-error-modal');
     }
-    // =======================================================
-    // == END: APPLIED FIX TO THE openViewErrorModal FUNCTION ==
-    // =======================================================
 
     async function handleResponseSubmission() {
         const btn = document.getElementById('submit-response-btn');
@@ -889,60 +880,59 @@
         </div>
     </aside>
 
-<main class="main-content">
-<div class="content-wrapper">
-    <header>
-        <div class="header-left"><h2 class="page-title" id="page-title-header">Dashboard</h2></div>
-        <div class="header-actions">
-            <div class="search-input-container"><input type="search" id="global-search" placeholder="Search my errors..."></div>
-            <div class="notification-bell">
-                <button id="notification-btn" class="notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notification-badge" id="notification-badge" style="display: none;">0</span></button>
-                <div id="notification-dropdown" class="notification-dropdown">
-                    <div class="notification-header"><span>Notifications</span><button id="mark-all-read-btn" class="mark-read-btn">Mark all as read</button></div>
-                    <ul class="notification-list" id="notification-list"><li class="notification-item">Loading notifications...</li></ul>
+    <main class="main-content">
+    <div class="content-wrapper">
+        <header>
+            <div class="header-left"><h2 class="page-title" id="page-title-header">Dashboard</h2></div>
+            <div class="header-actions">
+                <div class="search-input-container"><input type="search" id="global-search" placeholder="Search my errors..."></div>
+                <div class="notification-bell">
+                    <button id="notification-btn" class="notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notification-badge" id="notification-badge" style="display: none;">0</span></button>
+                    <div id="notification-dropdown" class="notification-dropdown">
+                        <div class="notification-header"><span>Notifications</span><button id="mark-all-read-btn" class="mark-read-btn">Mark all as read</button></div>
+                        <ul class="notification-list" id="notification-list"><li class="notification-item">Loading notifications...</li></ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="dashboard" class="tab-content active">
+            <div id="welcome-message"><h2 id="welcome-user-h2">Welcome back!</h2><p>Here's a look at your performance metrics for this month.</p></div>
+            <section class="stats-grid">
+                <div class="card progress-card"><h3>Your Current Error Rate</h3><div class="progress-info"><span class="progress-label">This Month</span><span class="progress-value" id="error-rate">0%</span></div><div class="progress-bar"><div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div></div><p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-rate-description">Based on 0 errors out of 0 reviewed orders.</p></div>
+                <div class="card"><h3>Most Frequent Error Types</h3><div class="chart-container"><canvas id="commonErrorsChart"></canvas></div></div>
+            </section>
+            <section class="filter-panel"><div class="filter-group"><label for="filter-order-id">Order ID</label><input type="search" id="filter-order-id" placeholder="Search by Order ID..."></div><div class="filter-group"><label for="filter-from-date">From</label><input type="date" id="filter-from-date" style="color-scheme: dark;"></div><div class="filter-group"><label for="filter-to-date">To</label><input type="date" id="filter-to-date" style="color-scheme: dark;"></div><button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button><button class="btn btn-secondary" id="reset-filters-btn">Reset</button></section>
+            <section class="table-container"><h3>Recent Errors Logged</h3><table><thead><tr><th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="error-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="dashboard-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></section>
+        </div>
+
+        <div id="my-errors" class="tab-content">
+            <div class="card"><h3>All My Errors</h3><p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
+                <div class="filter-panel"><div class="filter-group"><label for="my-errors-search">Search</label><input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type..."></div><div class="filter-group"><label for="my-errors-status">Status</label><select id="my-errors-status"><option value="all">All Statuses</option><option value="closed">Closed</option><option value="under_review">Under Review</option><option value="overturned">Overturned</option></select></div><button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button><button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button></div>
+                <div class="table-container"><table><thead><tr><th>Order ID</th><th>Error Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="my-errors-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="my-errors-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></div>
+            </div>
+        </div>
+
+        <div id="profile" class="tab-content"><div class="card"><h3>Edit Profile</h3><div class="form-group"><label for="profile-fullname">Full Name</label><input type="text" id="profile-fullname"></div><div class="form-group"><label for="profile-email">Email Address</label><input type="email" id="profile-email" readonly style="background: #333;"></div><div class="form-group"><label for="profile-phone">Phone Number</label><input type="tel" id="profile-phone"></div><div class="form-group"><label for="profile-department">Department</label><input type="text" id="profile-department" readonly style="background: #333;"></div><div class="page-actions"><button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button><button class="btn btn-primary" id="save-profile-btn">Save Changes</button></div></div></div>
+
+        <div id="settings" class="tab-content">
+            <div class="card"><h3>Account Settings</h3><p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your notification and account preferences.</p>
+                <div class="settings-layout">
+                    <nav class="settings-nav"><ul><li><a href="#" class="active" data-section="notifications">Notifications</a></li><li><a href="#" data-section="security">Security</a></li></ul></nav>
+                    <div class="settings-content">
+                        <section class="setting-card active" id="settings-section-notifications"><div class="setting-item"><span>Email me when an error is logged</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-errors" checked><span class="slider"></span></label></div></div><div class="setting-item"><span>Email me a weekly performance summary</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-summary" checked><span class="slider"></span></label></div></div><div class="setting-item"><span>Enable Push Notifications</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="push-notifications"><span class="slider"></span></label></div></div></section>
+                        <section class="setting-card" id="settings-section-security" style="display:none;"><div class="setting-item"><span>Password</span><button class="btn btn-secondary" id="change-password-btn">Change Password</button></div></section>
+                    </div>
                 </div>
             </div>
         </div>
-    </header>
 
-    <div id="dashboard" class="tab-content active">
-        <div id="welcome-message"><h2 id="welcome-user-h2">Welcome back!</h2><p>Here's a look at your performance metrics for this month.</p></div>
-        <section class="stats-grid">
-            <div class="card progress-card"><h3>Your Current Error Rate</h3><div class="progress-info"><span class="progress-label">This Month</span><span class="progress-value" id="error-rate">0%</span></div><div class="progress-bar"><div class="progress-bar-inner" id="error-rate-bar" style="width: 0%; background-color: var(--red);"></div></div><p style="font-size: 12px; color: var(--text-muted); margin-top: 10px;" id="error-rate-description">Based on 0 errors out of 0 reviewed orders.</p></div>
-            <div class="card"><h3>Most Frequent Error Types</h3><div class="chart-container"><canvas id="commonErrorsChart"></canvas></div></div>
-        </section>
-        <section class="filter-panel"><div class="filter-group"><label for="filter-order-id">Order ID</label><input type="search" id="filter-order-id" placeholder="Search by Order ID..."></div><div class="filter-group"><label for="filter-from-date">From</label><input type="date" id="filter-from-date" style="color-scheme: dark;"></div><div class="filter-group"><label for="filter-to-date">To</label><input type="date" id="filter-to-date" style="color-scheme: dark;"></div><button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button><button class="btn btn-secondary" id="reset-filters-btn">Reset</button></section>
-        <section class="table-container"><h3>Recent Errors Logged</h3><table><thead><tr><th>Order ID</th><th>Order Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="error-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="dashboard-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></section>
+        <div id="help" class="tab-content"><div class="card"><div class="placeholder-content"><h3>Help Center</h3><p>Find answers to common questions or contact support for assistance.</p><div style="margin-top: 20px;"><button class="btn btn-primary" id="contact-support-btn">Contact Support</button></div></div></div></div>
     </div>
-
-    <div id="my-errors" class="tab-content">
-        <div class="card"><h3>All My Errors</h3><p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">A detailed list and history of all your errors.</p>
-            <div class="filter-panel"><div class="filter-group"><label for="my-errors-search">Search</label><input type="search" id="my-errors-search" placeholder="Search by Order ID or Error Type..."></div><div class="filter-group"><label for="my-errors-status">Status</label><select id="my-errors-status"><option value="all">All Statuses</option><option value="closed">Closed</option><option value="under_review">Under Review</option><option value="overturned">Overturned</option></select></div><button class="btn btn-primary" id="apply-my-errors-filters">Apply Filters</button><button class="btn btn-secondary" id="reset-my-errors-filters">Reset</button></div>
-            <div class="table-container"><table><thead><tr><th>Order ID</th><th>Error Date</th><th>Error Type</th><th>Status</th><th>Action</th></tr></thead><tbody id="my-errors-table-body"><tr><td colspan="5" class="empty-state">Loading your errors...</td></tr></tbody></table><div class="pagination-controls" id="my-errors-pagination"><span class="page-info">Page 1 of 1</span><button class="btn btn-secondary prev-btn">Previous</button><button class="btn btn-secondary next-btn">Next</button></div></div>
-        </div>
-    </div>
-
-    <div id="profile" class="tab-content"><div class="card"><h3>Edit Profile</h3><div class="form-group"><label for="profile-fullname">Full Name</label><input type="text" id="profile-fullname"></div><div class="form-group"><label for="profile-email">Email Address</label><input type="email" id="profile-email" readonly style="background: #333;"></div><div class="form-group"><label for="profile-phone">Phone Number</label><input type="tel" id="profile-phone"></div><div class="form-group"><label for="profile-department">Department</label><input type="text" id="profile-department" readonly style="background: #333;"></div><div class="page-actions"><button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button><button class="btn btn-primary" id="save-profile-btn">Save Changes</button></div></div></div>
-
-    <div id="settings" class="tab-content">
-        <div class="card"><h3>Account Settings</h3><p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your notification and account preferences.</p>
-            <div class="settings-layout">
-                <nav class="settings-nav"><ul><li><a href="#" class="active" data-section="notifications">Notifications</a></li><li><a href="#" data-section="security">Security</a></li></ul></nav>
-                <div class="settings-content">
-                    <section class="setting-card active" id="settings-section-notifications"><div class="setting-item"><span>Email me when an error is logged</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-errors" checked><span class="slider"></span></label></div></div><div class="setting-item"><span>Email me a weekly performance summary</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-summary" checked><span class="slider"></span></label></div></div><div class="setting-item"><span>Enable Push Notifications</span><div class="toggle-switch"><label class="switch"><input type="checkbox" id="push-notifications"><span class="slider"></span></label></div></div></section>
-                    <section class="setting-card" id="settings-section-security" style="display:none;"><div class="setting-item"><span>Password</span><button class="btn btn-secondary" id="change-password-btn">Change Password</button></div></section>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <div id="help" class="tab-content"><div class="card"><div class="placeholder-content"><h3>Help Center</h3><p>Find answers to common questions or contact support for assistance.</p><div style="margin-top: 20px;"><button class="btn btn-primary" id="contact-support-btn">Contact Support</button></div></div></div></div>
-</div>
-<footer class="site-footer">© 2025 Mohamed Elmenisy. All rights reserved.</footer>
+    <footer class="site-footer">© 2025 Mohamed Elmenisy. All rights reserved.</footer>
 </main>
 
 <!-- Modals -->
-
 <div class="modal-overlay" id="view-error-modal"><div class="modal-box"><div class="modal-header"><h3 class="modal-title">Error Details: <span id="view-error-id" style="color: var(--primary-color);"></span></h3><button class="modal-close-btn" data-modal-id="view-error-modal">×</button></div><div class="modal-body" id="view-error-body"></div><div class="modal-footer"><button class="btn btn-primary modal-close-btn" data-modal-id="view-error-modal">Close</button></div></div></div>
 <div class="modal-overlay" id="reply-error-modal"><div class="modal-box"><div class="modal-header"><h3 class="modal-title">Reply to Error: <span id="reply-error-id" style="color: var(--primary-color);"></span></h3><button class="modal-close-btn" data-modal-id="reply-error-modal">×</button></div><div class="modal-body"><div class="detail-item"><strong>Error Type</strong><p id="reply-error-type">Loading...</p></div><div class="detail-item"><strong>Date</strong><p id="reply-error-date">Loading...</p></div><div class="form-group"><label for="error-response">Your Response *</label><textarea id="error-response" placeholder="Please provide your response to this error..." required></textarea><small style="color: var(--text-muted);">This response will be reviewed by the quality team.</small></div></div><div class="modal-footer"><button class="btn btn-secondary modal-close-btn" data-modal-id="reply-error-modal">Cancel</button><button class="btn btn-primary" id="submit-response-btn">Submit Response</button></div></div></div>
 <div class="modal-overlay" id="change-password-modal"><div class="modal-box"><div class="modal-header"><h3 class="modal-title">Change Password</h3><button class="modal-close-btn" data-modal-id="change-password-modal">×</button></div><div class="modal-body"><div class="form-group"><label for="current-password">Current Password</label><input type="password" id="current-password"></div><div class="form-group"><label for="new-password">New Password</label><input type="password" id="new-password"></div><div class="form-group"><label for="confirm-password">Confirm New Password</label><input type="password" id="confirm-password"></div></div><div class="modal-footer"><button class="btn btn-secondary modal-close-btn" data-modal-id="change-password-modal">Cancel</button><button class="btn btn-primary" id="submit-password-change-btn">Update Password</button></div></div></div>
@@ -971,7 +961,6 @@
 </div>
 
 <!-- *** FIXED: ADDED AUTOFILL PREVENTION SCRIPT *** -->
-
 <script>
 document.addEventListener("DOMContentLoaded", function() {
     // حل أقوى - نمنع الـ autofill من مستوى أعلى
