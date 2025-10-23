@@ -15,12 +15,12 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 export async function signUp(email, password, name, department = null) {
   try {
     console.log('🚀 Starting signup for:', email);
-    
+
     const { data, error } = await supabase.auth.signUp({
       email: email,
       password: password,
       options: {
-        data: { 
+        data: {
           name: name,
           department: department
         }
@@ -66,7 +66,7 @@ export async function signUp(email, password, name, department = null) {
 export async function signIn(email, password) {
   try {
     console.log('🔐 Attempting login for:', email);
-    
+
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email,
       password: password
@@ -79,12 +79,12 @@ export async function signIn(email, password) {
 
     const user = data.user;
     console.log('✅ Login successful, user ID:', user.id);
-    
+
     const { error: updateError } = await supabase
       .from('users')
-      .update({ 
-        last_seen: new Date(), 
-        status: 'online' 
+      .update({
+        last_seen: new Date(),
+        status: 'online'
       })
       .eq('id', user.id);
 
@@ -132,7 +132,7 @@ export async function getCurrentUser() {
 export async function getUserData(email) {
   try {
     console.log('🔍 Searching for user:', email);
-    
+
     const { data, error } = await supabase
       .from('users')
       .select('*')
@@ -140,7 +140,7 @@ export async function getUserData(email) {
       .single();
 
     console.log('📊 Query result - Data:', data, 'Error:', error);
-    
+
     if (error) {
       console.error('❌ Get user data error:', error);
       throw new Error('User data not found in database');
@@ -258,7 +258,7 @@ export async function getErrorReasons() {
       .select('reason_text')
       .eq('is_active', true)
       .order('reason_text');
-      
+
     if (error) throw error;
     return data.map(item => item.reason_text);
   } catch (error) {
@@ -272,12 +272,12 @@ export async function getCompanyDepartments() {
     const { data, error } = await supabase
       .from('employees')
       .select('department');
-      
+
     if (error) throw error;
-    
+
     const departments = [...new Set(data.map(item => item.department).filter(Boolean))];
     return departments.sort();
-    
+
   } catch (error) {
     console.error('GetCompanyDepartments error:', error);
     return [];
@@ -322,11 +322,11 @@ export async function getUnassignedOrders() {
     if (assignedOrderIds.length > 0) {
       query = query.not('order_id', 'in', `(${assignedOrderIds.map(id => `'${id}'`).join(',')})`);
     }
-    
+
     const { data, error } = await query.order('created_at', { ascending: false });
-    
+
     if (error) throw error;
-    
+
     return data;
   } catch (error) {
     console.error('GetUnassignedOrders error:', error);
@@ -382,6 +382,22 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
     return data;
   } catch (error) {
     console.error('💥 ReassignOrder error:', error);
+    throw error;
+  }
+}
+
+// أضف هذه الوظيفة الجديدة لتحديث الحالة
+export async function updateAssignmentStatus(assignmentId, newStatus) {
+  try {
+    const { data, error } = await supabase
+      .from('order_assignments')
+      .update({ status: newStatus })
+      .eq('id', assignmentId);
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('UpdateAssignmentStatus error:', error);
     throw error;
   }
 }
@@ -457,7 +473,7 @@ export async function submitReview(assignmentId, reviewData) {
         .select('id')
         .eq('employee_username', employeeNameToFind)
         .single();
-        
+
       if (employeeByUsername) {
         employee = employeeByUsername;
       } else {
@@ -518,13 +534,13 @@ export async function getAgentErrors(agentId, filters = {}) {
         console.error('RPC call error:', error);
         throw error;
     }
-    
+
     let filteredData = data;
 
     if (filters.status && filters.status !== 'All Statuses') {
         filteredData = filteredData.filter(e => e.status === filters.status);
     }
-    
+
     return filteredData;
 
   } catch (error) {
@@ -696,7 +712,7 @@ export async function getEscalations(userId = null, filters = {}) {
 export async function getHelperEscalations(helperId) {
   try {
     console.log('🔍 Fetching escalations for helper:', helperId);
-    
+
     const { data, error } = await supabase
       .from('escalations')
       .select(`
@@ -752,7 +768,7 @@ export async function resolveEscalation(escalationId, feedback) {
 
     const { data, error } = await supabase
       .from('escalations')
-      .update({ 
+      .update({
         status: 'resolved',
         feedback: feedback,
         resolved_at: new Date().toISOString()
@@ -780,7 +796,7 @@ export async function resolveEscalation(escalationId, feedback) {
 export async function escalateToSenior(escalationId, seniorId, helperNotes) {
   try {
     console.log('🔄 Escalating to senior:', { escalationId, seniorId });
-    
+
     const { data: currentEscalation, error: fetchError } = await supabase
       .from('escalations')
       .select('*')
@@ -791,7 +807,7 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 
     const { data, error } = await supabase
       .from('escalations')
-      .update({ 
+      .update({
         escalated_to_id: seniorId,
         notes: `${currentEscalation.notes}\n\n--- Helper Notes ---\n${helperNotes}`,
         updated_at: new Date().toISOString()
@@ -821,7 +837,7 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 export async function raiseInquiry(assignmentId, agentId, inquiryText) {
   try {
     console.log('🔄 Raising inquiry for assignment:', assignmentId);
-    
+
     const { data, error } = await supabase
       .from('inquiries')
       .insert({
@@ -856,7 +872,7 @@ export async function raiseInquiry(assignmentId, agentId, inquiryText) {
 export async function getHelperInquiries(helperId) {
   try {
     console.log('🔍 Fetching inquiries for helper:', helperId);
-    
+
     const { data, error } = await supabase
       .from('inquiries')
       .select(`
@@ -902,7 +918,7 @@ export async function getHelperInquiries(helperId) {
 export async function respondToInquiry(inquiryId, helperId, response) {
   try {
     console.log('🔄 Responding to inquiry:', inquiryId);
-    
+
     const { data: inquiryData, error: fetchError } = await supabase
       .from('inquiries')
       .select('raised_by_id, order_assignments!inquiries_order_id_fkey(orders(order_id))')
@@ -913,7 +929,7 @@ export async function respondToInquiry(inquiryId, helperId, response) {
 
     const { data, error } = await supabase
       .from('inquiries')
-      .update({ 
+      .update({
         status: 'responded',
         response_text: response,
         responded_by_id: helperId,
@@ -951,7 +967,7 @@ export async function getTeamMembers(roles = []) {
       .select('*')
       .eq('is_active', true)
       .order('name');
-      
+
     if (roles.length > 0) {
       query = query.in('role', roles);
     }
@@ -1071,7 +1087,7 @@ export async function createNotification(userId, message, type = 'info') {
 export async function getPerformanceMetrics() {
   try {
     const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
-    
+
     if (error) {
       console.error('Error fetching performance metrics:', error);
       throw error;
@@ -1208,6 +1224,19 @@ export function subscribeToNotifications(userId, callback) {
       .subscribe();
   } catch (error) {
     console.error('SubscribeToNotifications error:', error);
+    return { unsubscribe: () => {} };
+  }
+}
+
+// أضف هذه الوظيفة الجديدة للاستماع لتحديثات التعيينات
+export function subscribeToAssignmentUpdates(callback) {
+  try {
+    return supabase
+      .channel('assignment-updates')
+      .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'order_assignments' }, callback)
+      .subscribe();
+  } catch (error) {
+    console.error('SubscribeToAssignmentUpdates error:', error);
     return { unsubscribe: () => {} };
   }
 }
