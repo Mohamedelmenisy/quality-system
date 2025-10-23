@@ -266,26 +266,26 @@
             const errorType = error.error_details || 'Unknown';
             const status = error.status.replace(/_/g, ' ');
 
-            // --- START: NEW & IMPROVED BUTTON LOGIC ---
+            // --- START: MODIFIED BUTTON LOGIC ---
             let actionButtons = '';
             
             // Check if a final decision exists
             if (error.final_decision) {
                 // If decision exists, show only "View Decision" button
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View Decision</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View Decision</button>`;
             } else if (error.status === 'under_review') {
                 // If under review, show only a "View" button (appeal is already submitted)
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
             } else if (error.status === 'closed') {
                 // If closed and no decision yet, allow appeal
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
-                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
+                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.id}">Appeal</button>`;
                 actionButtons = viewButton + appealButton;
             } else {
                 // Fallback for any other statuses
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
             }
-            // --- END: NEW & IMPROVED BUTTON LOGIC ---
+            // --- END: MODIFIED BUTTON LOGIC ---
             
             return `
                 <tr>
@@ -336,7 +336,11 @@
     function openViewErrorModal(errorId) {
         // *** FIXED: Finding error by `id` as per old version's data structure ***
         const error = userErrors.find(e => String(e.id) === String(errorId));
-        if (!error) return;
+        if (!error) {
+            console.error("Error not found for ID:", errorId);
+            showToast('Could not find error details.', 'error');
+            return;
+        }
     
         document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
         
