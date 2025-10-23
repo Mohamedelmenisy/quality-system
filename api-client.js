@@ -430,10 +430,7 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 // api-client.js
 export async function submitReview(assignmentId, reviewData) {
   try {
-    console.log("1. submitReview called in api-client.js");
-    console.log("   - Assignment ID:", assignmentId);
-    console.log("   - Review Data Received:", reviewData); // <-- أهم سطر
-
+    // 1. إضافة المراجعة إلى quality_reviews
     const { data: review, error: reviewError } = await supabase
       .from('quality_reviews')
       .insert({
@@ -448,15 +445,20 @@ export async function submitReview(assignmentId, reviewData) {
       .select()
       .single();
 
-    if (reviewError) {
-      console.error("❌ ERROR at step 1 (Inserting review):", reviewError);
-      throw reviewError;
-    }
-    console.log("✅ Step 1 successful. Review inserted with ID:", review.id);
+    if (reviewError) throw reviewError;
 
-    // ... بقية الكود التشخيصي
+    // 2. تحديث حالة الطلب
+    await supabase
+      .from('order_assignments')
+      .update({ status: 'completed', completed_at: 'now()' })
+      .eq('id', assignmentId);
+    
+    // (لا يوجد أي كود آخر هنا، نحن نعتمد على الـ Trigger)
+
+    return review;
   } catch (error) {
-    // ...
+    console.error('SubmitReview error:', error);
+    throw error;
   }
 }
 
