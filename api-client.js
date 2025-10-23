@@ -936,19 +936,18 @@ export async function respondToInquiry(inquiryId, helperId, response) {
 
 // ==================== TEAM & SCHEDULING FUNCTIONS ====================
 
-export async function getTeamMembers(role = null) {
+// api-client.js
+
+export async function getTeamMembers() { // <-- قمنا بإزالة 'role'
   try {
-    let query = supabase
+    const { data, error } = await supabase
       .from('users')
       .select('*')
-      .eq('is_active', true)
+      .eq('is_active', true) // <-- نحافظ على هذا الفلتر لجلب المستخدمين النشطين فقط
       .order('name');
+      
+    // تم حذف الفلتر الخاص بالـ role بالكامل
 
-    if (role) {
-      query = query.eq('role', role);
-    }
-
-    const { data, error } = await query;
     if (error) throw error;
     return data;
   } catch (error) {
