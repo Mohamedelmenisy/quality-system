@@ -1,0 +1,2735 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quality Command Center - QualityX</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js">
+/* START: modal helpers added */
+function showModal(id){
+  const el = document.getElementById(id);
+  if(el){ el.style.display = 'flex'; document.body.style.overflow='hidden'; }
+}
+function hideModal(id){
+  const el = document.getElementById(id);
+  if(el){ el.style.display = 'none'; document.body.style.overflow=''; }
+}
+document.addEventListener('click', function(e){
+  if(e.target.matches('.modal-close-btn')) {
+    const id = e.target.dataset.modalId;
+    if(id) hideModal(id);
+  }
+});
+/* END: modal helpers */
+
+</script>
+    <script type="module">
+        import { 
+            supabase, 
+            getCurrentUser, 
+            getUserById,
+            getAssignedOrders,
+            getEscalations, 
+            submitReview,
+            submitEscalation,
+            getPerformanceMetrics,
+            getTeamMembers,
+            getTeamSchedule,
+            updateTeamSchedule,
+            getNotifications,
+            markNotificationAsRead,
+            subscribeToNotifications,
+            subscribeToAssignments,
+            // New functions for escalations
+            getHelperEscalations,
+            resolveEscalation,
+            escalateToSenior,
+            // New functions for inquiries
+            raiseInquiry,
+            getHelperInquiries,
+            respondToInquiry,
+            // New function for company employees
+            getCompanyEmployees
+        } from './api-client.js';
+        
+        window.supabase = supabase;
+        window.getCurrentUser = getCurrentUser;
+        window.getUserById = getUserById;
+        window.getAssignedOrders = getAssignedOrders;
+        window.getEscalations = getEscalations;
+        window.submitReview = submitReview;
+        window.submitEscalation = submitEscalation;
+        window.getPerformanceMetrics = getPerformanceMetrics;
+        window.getTeamMembers = getTeamMembers;
+        window.getTeamSchedule = getTeamSchedule;
+        window.updateTeamSchedule = updateTeamSchedule;
+        window.getNotifications = getNotifications;
+        window.markNotificationAsRead = markNotificationAsRead;
+        window.subscribeToNotifications = subscribeToNotifications; 
+        window.subscribeToAssignments = subscribeToAssignments;
+        // New functions
+        window.getHelperEscalations = getHelperEscalations;
+        window.resolveEscalation = resolveEscalation;
+        window.escalateToSenior = escalateToSenior;
+        window.raiseInquiry = raiseInquiry;
+        window.getHelperInquiries = getHelperInquiries;
+        window.respondToInquiry = respondToInquiry;
+        window.getCompanyEmployees = getCompanyEmployees;
+    </script>
+    <style>
+        :root {
+            --primary-color: #00bfff;
+            --primary-hover: #00a4d9;
+            --bg-color: #121212;
+            --sidebar-bg: #1a1a1a;
+            --card-bg: #1a1a1a;
+            --text-color: #e6edf3;
+            --text-muted: #8b949e;
+            --border-color: #333;
+            --red: #dc3545;
+            --red-bg: rgba(220, 53, 69, 0.1);
+            --green: #28a745;
+            --green-bg: rgba(40, 167, 69, 0.1);
+            --yellow: #ffc107;
+            --yellow-bg: rgba(255, 193, 7, 0.1);
+            --border-radius-base: 0.75rem;
+        }
+        body.light-mode {
+            --bg-color: #f4f7fa;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --text-color: #2c3e50;
+            --text-muted: #7f8c8d;
+            --border-color: #e0e0e0;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; transition: background-color 0.3s, border-color 0.3s; }
+        .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
+        .sidebar-logo { height: 32px; fill: var(--primary-color); }
+        .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
+        .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
+        .nav-group { margin-bottom: 1.5rem; padding: 0 20px; }
+        .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
+        .sidebar-nav { list-style:none; padding:0; margin:0; }
+        .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
+        body.light-mode .sidebar-nav a:hover, body.light-mode .sidebar-nav a.active { color: white; }
+        .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
+        .user-profile-widget { display: flex; align-items: center; gap: 12px; }
+        .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
+        body.light-mode .avatar-initials { color: white; }
+        .user-name { font-weight: 600; font-size: 1rem; }
+        .user-role { font-size: 0.8rem; color: var(--text-muted); }
+        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; display: flex; flex-direction: column; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 1rem; }
+        .header-left { flex-grow: 1; }
+        .header-actions { display: flex; align-items: center; gap: 1rem; }
+        .page-title { font-size: 24px; font-weight: 700; }
+        #welcome-message { margin-bottom: 2rem; }
+        #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
+        #welcome-message p { color: var(--text-muted); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; transition: all 0.3s; }
+        .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
+        .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .grid-col-span-12 { grid-column: span 12; }
+        .grid-col-span-8 { grid-column: span 8; }
+        .grid-col-span-4 { grid-column: span 4; }
+        .grid-col-span-6 { grid-column: span 6; }
+        .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s; }
+        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        body.light-mode .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+        .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .chart-container { position: relative; height: 350px; width: 100%; }
+        .activity-feed { list-style: none; }
+        .activity-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .activity-item:last-child { border-bottom: none; }
+        .activity-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .activity-text { font-size: 0.9rem; }
+        .activity-text strong { color: var(--text-color); }
+        .activity-time { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .table-container { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); overflow-x: auto;}
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
+        th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: rgba(0,0,0,0.1); }
+        body.light-mode th { background-color: #f5f5f5; }
+        tbody tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background-color: rgba(255,255,255,0.05); }
+        body.light-mode tbody tr:hover { background-color: #f0f0f0; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-new { background-color: var(--primary-color); color: #000; }
+        .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
+        .status-completed { background-color: var(--green-bg); color: var(--green); }
+        .status-error { background-color: var(--red-bg); color: var(--red); }
+        .status-escalated { background-color: var(--yellow-bg); color: var(--yellow); }
+        .action-btn { background: #333; border: none; cursor: pointer; color: var(--text-color); font-size: 14px; padding: 8px 14px; border-radius: 6px; margin-right: 5px; transition: all 0.3s ease; }
+        body.light-mode .action-btn { background: #e0e0e0; color: #333; }
+        .action-btn:hover { background: #444; transform: translateY(-2px); }
+        body.light-mode .action-btn:hover { background: #d0d0d0; }
+        .action-btn.primary { background: var(--primary-color); color: #000; }
+        body.light-mode .action-btn.primary { color: white; }
+        .action-btn.primary:hover { background: var(--primary-hover); }
+        .action-btn.danger { background: var(--red); color: white; }
+        .action-btn.danger:hover { background: #c82333; }
+        .action-btn.warning { background: var(--yellow); color: #000; }
+        .action-btn.warning:hover { background: #e0a800; }
+        .search-input-container { position: relative; }
+        .search-input-container input[type="search"] { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; width: 250px; }
+        body.light-mode .search-input-container input[type="search"] { background: #fff; }
+        .notification-bell { position: relative; }
+        .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; position: relative; }
+        .notification-badge { position: absolute; top: -5px; right: -5px; background: var(--red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 10px; display: flex; align-items: center; justify-content: center; }
+        .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 10; }
+        .notification-dropdown.show { display: block; }
+        .notification-header { padding: 1rem; border-bottom: 1px solid var(--border-color); font-weight: 600; display: flex; justify-content: space-between; align-items: center; }
+        .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
+        .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
+        .notification-item:last-child { border-bottom: none; }
+        .notification-message { flex: 1; }
+        .notification-time { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
+        .notification-actions { margin-left: 10px; }
+        .mark-read-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
+        .filter-group { display: flex; align-items: center; gap: 0.5rem; }
+        .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); margin-right: 0.25rem; }
+        .filter-bar select, .filter-bar input[type="date"] { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        body.light-mode .filter-bar select, body.light-mode .filter-bar input[type="date"] { background: #fff; }
+        .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .btn-primary { background: var(--primary-color); color: #000; }
+        body.light-mode .btn-primary { color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-secondary { background: #333; color: white; }
+        body.light-mode .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #444; }
+        body.light-mode .btn-secondary:hover { background: #d0d0d0; }
+        .btn-danger { background: var(--red); color: white; }
+        .btn-danger:hover { background: #c82333; }
+        .btn-warning { background-color: var(--yellow); color: black; }
+        .btn-warning:hover { background-color: #e0a800; }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1001; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
+        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-box { background: linear-gradient(145deg, #1f1f1f, #161616); border: 1px solid #3a3a3a; box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7); border-radius: 1rem; width: 90%; max-width: 650px; max-height: 90vh; overflow-y: auto; display: flex; flex-direction: column; }
+        body.light-mode .modal-box { background: var(--card-bg); border-color: var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding: 1.5rem; }
+        .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--text-color); }
+        .modal-close-btn { background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer; transition: color 0.3s; }
+        .modal-close-btn:hover { color: var(--text-color); }
+        .modal-body { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.25rem; }
+        .detail-item { background: rgba(44, 44, 44, 0.5); padding: 1rem 1.25rem; border-left: 4px solid var(--primary-color); border-radius: 8px; margin-bottom: 0; }
+        body.light-mode .detail-item { background: #f5f5f5; border-left-color: var(--primary-color); }
+        .detail-item strong { display: block; color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase; margin-bottom: 0.6rem; letter-spacing: 0.5px;}
+        .detail-item p { margin: 0; font-size: 1rem; color: var(--text-color); line-height: 1.6; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: auto; padding: 1.5rem; background-color: #1a1a1a; border-top: 1px solid var(--border-color); border-bottom-left-radius: 1rem; border-bottom-right-radius: 1rem; }
+        body.light-mode .modal-footer { background-color: #f8f9fa; }
+        .modal-footer .btn { padding: 12px 24px; font-size: 0.9rem; font-weight: 700; border-radius: 8px; }
+        .form-group { margin-bottom: 1.5rem; }
+        .form-group label { display: block; font-weight: 600; font-size: 1rem; margin-bottom: 0.75rem; }
+        .form-group input, .form-group textarea, .form-group select { width: 100%; background: #1a1a1a; border: 1px solid #444; border-radius: 8px; color: var(--text-color); padding: 12px; transition: all 0.3s ease; }
+        body.light-mode .form-group input, body.light-mode .form-group textarea, body.light-mode .form-group select { background: #fff; border-color: #ccc; }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2); background-color: #222; }
+        body.light-mode .form-group input:focus, body.light-mode .form-group textarea:focus, body.light-mode .form-group select:focus { background-color: #fff; }
+        .form-group textarea { min-height: 120px; resize: vertical; }
+        .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+        .settings-layout { display: flex; gap: 2rem; }
+        .settings-nav { flex: 0 0 200px; }
+        .settings-nav ul { list-style: none; padding: 0; }
+        .settings-nav a { display: block; padding: 0.75rem 1rem; text-decoration: none; color: var(--text-muted); border-radius: 8px; font-weight: 500; margin-bottom: 5px; }
+        .settings-nav a:hover, .settings-nav a.active { background-color: #2c2c2c; color: var(--text-color); }
+        body.light-mode .settings-nav a:hover, body.light-mode .settings-nav a.active { background-color: #eef2f9; color: var(--primary-color); }
+        .settings-content { flex-grow: 1; }
+        .setting-card { background-color: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); }
+        .setting-item { display: flex; justify-content: space-between; align-items: center; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
+        .setting-item:last-child { border-bottom: none; }
+        .toggle-switch .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .toggle-switch .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #3c3c3c; transition: .4s; border-radius: 24px; }
+        body.light-mode .slider { background-color: #ccc; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+        .team-member-card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
+        .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
+        body.light-mode .team-member-avatar-initials { color: white; }
+        .team-member-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .team-member-role { color: var(--primary-color); font-size: 0.9rem; font-weight: 500; }
+        .schedule-table-container { overflow-x: auto; }
+        .schedule-table { width: 100%; border-collapse: collapse; text-align: center; }
+        .schedule-table th, .schedule-table td { padding: 1rem; border: 1px solid var(--border-color); }
+        .schedule-table thead th { background-color: rgba(0,0,0,0.1); font-weight: 600; }
+        body.light-mode .schedule-table thead th { background-color: #f5f5f5; }
+        .schedule-table .member-name { font-weight: 600; text-align: left; }
+        .schedule-table .shift-cell { cursor: pointer; transition: background-color 0.2s ease; }
+        .schedule-table.edit-mode .shift-cell { background-color: rgba(0, 191, 255, 0.1); }
+        .shift-time { display: block; font-weight: 500; }
+        .shift-leave { color: var(--yellow); font-weight: 600; }
+        .shift-sick { color: var(--red); font-weight: 600; }
+        .shift-off { color: var(--text-muted); }
+        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
+        .toast.success { border-left: 4px solid var(--green); }
+        .toast.error { border-left: 4px solid var(--red); }
+        .toast.warning { border-left: 4px solid var(--yellow); }
+        .toast.info { border-left: 4px solid var(--primary-color); }
+        .toast-icon { font-size: 20px; }
+        .toast.success .toast-icon { color: var(--green); }
+        .toast.error .toast-icon { color: var(--red); }
+        .toast.warning .toast-icon { color: var(--yellow); }
+        .toast.info .toast-icon { color: var(--primary-color); }
+        .toast-content { flex: 1; }
+        .toast-title { font-weight: 600; margin-bottom: 5px; }
+        .toast-message { font-size: 14px; color: var(--text-muted); }
+        .toast-close { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
+        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .inquiry-badge { background: var(--yellow-bg); color: var(--yellow); padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px; }
+        .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+        .payment-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+        body.light-mode .payment-card { background: #f5f5f5; }
+        .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
+        .main-footer { margin-top: auto; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
+        #help .card { display: flex; align-items: center; justify-content: center; min-height: 400px; text-align: center;}
+        @media (max-width: 1024px) {
+            .sidebar { width: 220px; }
+            .main-content { margin-left: 220px; width: calc(100% - 220px); }
+            .dashboard-grid { grid-template-columns: 1fr; }
+            .grid-col-span-8, .grid-col-span-4, .grid-col-span-6 { grid-column: span 1; }
+        }
+        @media (max-width: 768px) {
+            .sidebar { width: 70px; }
+            .sidebar-title, .nav-group-title, .user-name, .user-role { display: none; }
+            .sidebar-nav a span:not(.icon) { display: none; }
+            .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 15px; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .filter-bar { flex-direction: column; }
+            .filter-group { min-width: 100%; }
+            .header-actions { flex-direction: column; align-items: flex-end; gap: 10px; }
+            .search-input-container input[type="search"] { width: 200px; }
+        }
+        @media (max-width: 480px) {
+            .sidebar { display: none; }
+            .main-content { margin-left: 0; width: 100%; }
+            .modal-box { width: 95%; padding: 1rem; }
+            .table-container { overflow-x: auto; }
+            table { min-width: 600px; }
+        }
+    </style>
+<style>
+    .sidebar-nav a{ white-space: nowrap; }
+
+    /* START: Custom styles for the Review Escalation Modal */
+    #review-escalation-modal .modal-box,
+    #review-order-modal .modal-box,
+    #escalate-order-modal .modal-box,
+    #raise-inquiry-modal .modal-box,
+    #view-order-modal .modal-box,
+    #respond-inquiry-modal .modal-box,
+    #view-inquiry-modal .modal-box,
+    #logout-confirm-modal .modal-box,
+    #view-escalation-modal .modal-box {
+        background: linear-gradient(145deg, #1f1f1f, #161616); /* A bit darker, more dynamic background */
+        border: 1px solid #3a3a3a; /* A slightly more prominent border */
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.7); /* Deeper shadow for a floating effect */
+        border-radius: 1rem; /* Slightly larger border radius */
+        max-width: 650px; /* A bit wider for better spacing */
+    }
+    body.light-mode #review-escalation-modal .modal-box,
+    body.light-mode #review-order-modal .modal-box,
+    body.light-mode #escalate-order-modal .modal-box,
+    body.light-mode #raise-inquiry-modal .modal-box,
+    body.light-mode #view-order-modal .modal-box,
+    body.light-mode #respond-inquiry-modal .modal-box,
+    body.light-mode #view-inquiry-modal .modal-box,
+    body.light-mode #logout-confirm-modal .modal-box,
+    body.light-mode #view-escalation-modal .modal-box {
+        background: #fff;
+        border: 1px solid #ccc;
+    }
+
+    #review-escalation-modal .modal-header,
+    #review-order-modal .modal-header,
+    #escalate-order-modal .modal-header,
+    #raise-inquiry-modal .modal-header,
+    #view-order-modal .modal-header,
+    #respond-inquiry-modal .modal-header,
+    #view-inquiry-modal .modal-header,
+    #logout-confirm-modal .modal-header,
+    #view-escalation-modal .modal-header {
+        border-bottom: 1px solid var(--border-color);
+        padding: 1.5rem; /* More padding */
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    #review-escalation-modal .modal-title,
+    #review-order-modal .modal-title,
+    #escalate-order-modal .modal-title,
+    #raise-inquiry-modal .modal-title,
+    #view-order-modal .modal-title,
+    #respond-inquiry-modal .modal-title,
+    #view-inquiry-modal .modal-title,
+    #logout-confirm-modal .modal-title,
+    #view-escalation-modal .modal-title {
+        font-size: 1.5rem; /* Larger title */
+        font-weight: 700;
+        color: var(--text-color);
+    }
+    /* Adding a decorative icon to the header */
+    #review-escalation-modal .modal-header::before {
+        content: '🚨';
+        font-size: 1.5rem;
+        line-height: 1;
+    }
+
+    #review-escalation-modal .modal-body,
+    #review-order-modal .modal-body,
+    #escalate-order-modal .modal-body,
+    #raise-inquiry-modal .modal-body,
+    #view-order-modal .modal-body,
+    #respond-inquiry-modal .modal-body,
+    #view-inquiry-modal .modal-body,
+    #logout-confirm-modal .modal-body,
+    #view-escalation-modal .modal-body {
+        padding: 1.5rem;
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem; /* Increased gap between items */
+    }
+
+    #review-escalation-modal .detail-item,
+    #review-order-modal .detail-item,
+    #escalate-order-modal .detail-item,
+    #raise-inquiry-modal .detail-item,
+    #view-order-modal .detail-item,
+    #respond-inquiry-modal .detail-item,
+    #view-inquiry-modal .detail-item,
+    #view-escalation-modal .detail-item {
+        background: rgba(44, 44, 44, 0.5); /* Semi-transparent background */
+        padding: 1rem 1.25rem;
+        border-left: 4px solid var(--primary-color); /* Accent border */
+        border-radius: 8px; /* Rounded corners for detail items */
+        margin-bottom: 0; /* Remove margin as we use gap now */
+    }
+    body.light-mode #review-escalation-modal .detail-item,
+    body.light-mode #review-order-modal .detail-item,
+    body.light-mode #escalate-order-modal .detail-item,
+    body.light-mode #raise-inquiry-modal .detail-item,
+    body.light-mode #view-order-modal .detail-item,
+    body.light-mode #respond-inquiry-modal .detail-item,
+    body.light-mode #view-inquiry-modal .detail-item,
+    body.light-mode #view-escalation-modal .detail-item {
+        background: #f5f5f5;
+    }
+
+    #review-escalation-modal .detail-item strong,
+    #review-order-modal .detail-item strong,
+    #escalate-order-modal .detail-item strong,
+    #raise-inquiry-modal .detail-item strong,
+    #view-order-modal .detail-item strong,
+    #respond-inquiry-modal .detail-item strong,
+    #view-inquiry-modal .detail-item strong,
+    #view-escalation-modal .detail-item strong {
+        font-size: 0.8rem;
+        color: var(--text-muted); /* Softer color for the label */
+        margin-bottom: 0.6rem;
+    }
+
+    #review-escalation-modal .detail-item p,
+    #review-order-modal .detail-item p,
+    #escalate-order-modal .detail-item p,
+    #raise-inquiry-modal .detail-item p,
+    #view-order-modal .detail-item p,
+    #respond-inquiry-modal .detail-item p,
+    #view-inquiry-modal .detail-item p,
+    #view-escalation-modal .detail-item p {
+        font-size: 1rem;
+        color: var(--text-color);
+        line-height: 1.6;
+    }
+
+    #review-escalation-modal .form-group label,
+    #review-order-modal .form-group label,
+    #escalate-order-modal .form-group label,
+    #raise-inquiry-modal .form-group label,
+    #respond-inquiry-modal .form-group label {
+        font-weight: 600;
+        font-size: 1rem;
+        margin-bottom: 0.75rem;
+    }
+    
+    #review-escalation-modal .modal-footer,
+    #review-order-modal .modal-footer,
+    #escalate-order-modal .modal-footer,
+    #raise-inquiry-modal .modal-footer,
+    #view-order-modal .modal-footer,
+    #respond-inquiry-modal .modal-footer,
+    #view-inquiry-modal .modal-footer,
+    #logout-confirm-modal .modal-footer,
+    #view-escalation-modal .modal-footer {
+        padding: 1.5rem;
+        background-color: #1a1a1a; /* Distinct footer background */
+        border-top: 1px solid var(--border-color);
+        border-bottom-left-radius: 1rem; /* Match parent border radius */
+        border-bottom-right-radius: 1rem;
+        gap: 0.75rem;
+    }
+    body.light-mode #review-escalation-modal .modal-footer,
+    body.light-mode #review-order-modal .modal-footer,
+    body.light-mode #escalate-order-modal .modal-footer,
+    body.light-mode #raise-inquiry-modal .modal-footer,
+    body.light-mode #view-order-modal .modal-footer,
+    body.light-mode #respond-inquiry-modal .modal-footer,
+    body.light-mode #view-inquiry-modal .modal-footer,
+    body.light-mode #logout-confirm-modal .modal-footer,
+    body.light-mode #view-escalation-modal .modal-footer {
+       background-color: #f8f9fa;
+    }
+
+    /* Style the buttons specifically within this modal for a more modern feel */
+    .modal-footer .btn {
+        padding: 12px 24px;
+        font-size: 0.9rem;
+        font-weight: 700;
+        border-radius: 8px;
+        border: none;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .modal-footer .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    #review-escalation-modal #resolve-escalation-btn {
+        background: var(--green);
+        color: white;
+    }
+    #review-escalation-modal #resolve-escalation-btn:hover {
+        background: #23923d;
+    }
+
+    #review-escalation-modal #toggle-senior-escalation-btn {
+        background: var(--yellow);
+        color: black;
+    }
+    #review-escalation-modal #toggle-senior-escalation-btn:hover {
+        background: #e0a800;
+    }
+    
+    .modal-footer .btn-secondary {
+        background: #333;
+    }
+    .modal-footer .btn-secondary:hover {
+        background: #444;
+    }
+    /* END: Custom styles */
+</style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div>
+            <div class="sidebar-header">
+                <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                    <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                </svg>
+                <h1 class="sidebar-title">QualityX</h1>
+            </div>
+            <div class="sidebar-nav-container">
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Menu</h2>
+                    <ul class="sidebar-nav">
+                        <li><a class="active" data-tab="dashboard"><span>📊</span>Dashboard</a></li>
+                        <li><a data-tab="my-assigned-orders"><span>📋</span>Assigned Orders</a></li>
+                        <li><a data-tab="team-scheduling"><span>📅</span>Team Scheduling</a></li>
+                        <li><a data-tab="team-members"><span>👥</span>Team Members</a></li>
+                        <li><a data-tab="company-employees"><span>🏢</span>Company Employees</a></li>
+                        <li><a data-tab="payments"><span>💳</span>Payments</a></li>
+                    </ul>
+                </div>
+                <!-- New Quality Workflow Section -->
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Quality Workflow</h2>
+                    <ul class="sidebar-nav">
+                        <li><a data-tab="escalations" id="escalations-tab" style="display: none;"><span>🚨</span>Escalations</a></li>
+                        <li><a data-tab="inquiries" id="inquiries-tab" style="display: none;"><span>❓</span>Inquiries</a></li>
+                    </ul>
+                </div>
+                <div class="nav-group">
+                    <h2 class="nav-group-title">Account</h2>
+                    <ul class="sidebar-nav">
+                        <li><a data-tab="profile"><span>👤</span>Profile</a></li>
+                        <li><a data-tab="settings"><span>⚙️</span>Settings</a></li>
+                        <li><a data-tab="help"><span>❓</span>Get Help</a></li>
+                        <li><a id="logout-btn"><span>🚪</span>Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <div class="user-profile-widget">
+                <div class="avatar-initials" id="sidebar-avatar-initials">FA</div>
+                <div>
+                    <div class="user-name" id="sidebar-username">Loading...</div>
+                    <div class="user-role" id="sidebar-userrole">Loading...</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header>
+            <div class="header-left">
+                <h2 class="page-title" id="page-title-header">Dashboard</h2>
+            </div>
+            <div class="header-actions">
+                <div class="search-input-container">
+                    <input type="search" id="global-search" placeholder="Search orders...">
+                </div>
+                <div class="notification-bell">
+                    <button id="notification-btn" class="notification-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                        <span class="notification-badge" id="notification-badge" style="display: none;">0</span>
+                    </button>
+                    <div id="notification-dropdown" class="notification-dropdown">
+                        <div class="notification-header">
+                            <span>Notifications</span>
+                            <button id="mark-all-read-btn" class="mark-read-btn">Mark all as read</button>
+                        </div>
+                        <ul class="notification-list" id="notification-list">
+                            <li class="notification-item">Loading notifications...</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <div id="dashboard" class="tab-content active">
+            <div id="welcome-message">
+                <h2 id="welcome-user-h2">Welcome back!</h2>
+                <p>Your central hub for monitoring quality and driving team excellence.</p>
+            </div>
+
+            <div class="filter-bar">
+                <div class="search-input-container" style="width: 100%;">
+                    <input type="search" id="dashboard-search-input" placeholder="Search anything... (e.g., Order ID, Issue Type, Member Name)" style="width: 100%;">
+                </div>
+            </div>
+
+            <div class="kpi-grid">
+                <div class="kpi-card">
+                    <div class="kpi-title">Today's Reviews</div>
+                    <div class="kpi-value" id="todays-reviews">0</div>
+                    <div class="kpi-change" id="todays-reviews-change" style="color: var(--green);"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Open Cases</div>
+                    <div class="kpi-value" id="open-cases">0</div>
+                    <div class="kpi-change" id="open-cases-change" style="color: var(--yellow);"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Avg. Quality Score</div>
+                    <div class="kpi-value" id="quality-score">0%</div>
+                    <div class="kpi-change" id="quality-score-change" style="color: var(--green);"></div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-title">Escalation Rate</div>
+                    <div class="kpi-value" id="escalation-rate">0%</div>
+                    <div class="kpi-change" id="escalation-rate-change" style="color: var(--red);"></div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card grid-col-span-8">
+                    <h3>Monthly Performance</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyPerformanceChart"></canvas>
+                    </div>
+                </div>
+                <div class="card grid-col-span-4">
+                    <h3>Issue Types (Last 30 Days)</h3>
+                    <div class="chart-container" style="height: 200px; margin-bottom: 1.5rem;">
+                        <canvas id="issueTypesChart"></canvas>
+                    </div>
+                    <h3>Recent Activity</h3>
+                    <ul class="activity-feed" id="recent-activity">
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="my-assigned-orders" class="tab-content">
+            <div class="filter-bar">
+                <div class="filter-group search-input-container">
+                    <input type="search" id="orders-search-input" placeholder="Search by ID, issue...">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-status">Status:</label>
+                    <select id="filter-status">
+                        <option value="all">All</option>
+                        <option value="pending">Pending</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                        <option value="completed_today">Completed Today</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-issue-type">Issue:</label>
+                    <select id="filter-issue-type">
+                        <option value="all">All Types</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-from-date">From:</label>
+                    <input type="date" id="filter-from-date">
+                </div>
+                <div class="filter-group">
+                    <label for="filter-to-date">To:</label>
+                    <input type="date" id="filter-to-date">
+                </div>
+                <button class="btn btn-secondary" id="export-csv-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export CSV
+                </button>
+            </div>
+
+            <div class="card">
+                <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Issue Type</th>
+                                <th>Date Assigned</th>
+                                <th>Status</th>
+                                <th>Review Time</th>
+                                <th>SLA</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <tr><td colspan="7" class="empty-state">Loading assigned orders...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Escalations Tab -->
+        <div id="escalations" class="tab-content">
+            <div class="card">
+                <h3>Escalations (<span id="escalations-count">0</span>)</h3>
+                <div class="filter-bar">
+                    <div class="filter-group search-input-container">
+                        <input type="search" id="escalations-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                     <div class="filter-group">
+                        <label for="filter-escalation-status">Status:</label>
+                        <select id="filter-escalation-status">
+                             <option value="all">All</option>
+                             <option value="pending">Pending</option>
+                             <option value="resolved">Resolved</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-escalation-date">Date:</label>
+                        <input type="date" id="filter-escalation-date">
+                    </div>
+                    <button class="btn btn-secondary" id="refresh-escalations-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Escalated By</th>
+                                <th>Agent's Reason</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="escalations-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading escalations...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- New Inquiries Tab -->
+        <div id="inquiries" class="tab-content">
+            <div class="card">
+                <h3>Inquiries (<span id="inquiries-count">0</span>)</h3>
+                <div class="filter-bar">
+                    <div class="filter-group search-input-container">
+                        <input type="search" id="inquiries-search-input" placeholder="Search by Order ID, Agent...">
+                    </div>
+                     <div class="filter-group">
+                        <label for="filter-inquiry-status">Status:</label>
+                        <select id="filter-inquiry-status">
+                             <option value="all">All</option>
+                             <option value="pending">Pending</option>
+                             <option value="responded">Responded</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label for="filter-inquiry-date">Date:</label>
+                        <input type="date" id="filter-inquiry-date">
+                    </div>
+                    <button class="btn btn-secondary" id="refresh-inquiries-btn">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 4v6h-6"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        Refresh
+                    </button>
+                </div>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Agent</th>
+                                <th>Inquiry</th>
+                                <th>Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="inquiries-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading inquiries...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="team-scheduling" class="tab-content">
+            <div class="card">
+                <div class="schedule-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                    <h3>Weekly Team Schedule</h3>
+                </div>
+                <div class="schedule-table-container">
+                    <table class="schedule-table" id="schedule-table">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Monday</th>
+                                <th>Tuesday</th>
+                                <th>Wednesday</th>
+                                <th>Thursday</th>
+                                <th>Friday</th>
+                                <th>Saturday</th>
+                                <th>Sunday</th>
+                            </tr>
+                        </thead>
+                        <tbody id="schedule-table-body">
+                            <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="team-members" class="tab-content">
+            <div class="card">
+                <h3>Team Members</h3>
+                <div class="team-grid" id="team-grid">
+                    <div class="empty-state">Loading team members...</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="company-employees" class="tab-content">
+            <div class="card">
+                <h3>Company Employees</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Employee Name</th>
+                                <th>Username</th>
+                                <th>Department</th>
+                                <th>Title</th>
+                                <th>Admin ID</th>
+                            </tr>
+                        </thead>
+                        <tbody id="employees-table-body">
+                            <tr><td colspan="5" class="empty-state">Loading company employees...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="payments" class="tab-content">
+            <div class="card">
+                <h3>Available Payment Methods</h3>
+                <div class="payments-grid">
+                    <div class="payment-card">Visa Master Card</div>
+                    <div class="payment-card">Apple Pay</div>
+                    <div class="payment-card">Mada</div>
+                    <div class="payment-card">Wallet</div>
+                    <div class="payment-card">Wallet & Visa-Master</div>
+                    <div class="payment-card">Wallet & MADA</div>
+                    <div class="payment-card">Wallet & Apple-Pay</div>
+                    <div class="payment-card">Tamara</div>
+                    <div class="payment-card">Wallet & Tamara</div>
+                    <div class="payment-card">Wallet & STC Pay</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="profile" class="tab-content">
+            <div class="card">
+                <h3>Edit Profile</h3>
+                <div class="form-group">
+                    <label for="profile-fullname">Full Name</label>
+                    <input type="text" id="profile-fullname">
+                </div>
+                <div class="form-group">
+                    <label for="profile-email">Email Address</label>
+                    <input type="email" id="profile-email" readonly style="background-color: var(--border-color); cursor: not-allowed;">
+                </div>
+                <div class="form-group">
+                    <label for="profile-phone">Phone Number</label>
+                    <input type="tel" id="profile-phone">
+                </div>
+                <div class="form-group">
+                    <label for="profile-department">Department</label>
+                    <input type="text" id="profile-department" readonly style="background-color: var(--border-color); cursor: not-allowed;">
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-secondary" id="cancel-profile-btn">Cancel</button>
+                    <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="settings" class="tab-content">
+            <div class="card">
+                <h3>Account Settings</h3>
+                <p class="text-muted" style="margin-top:-1rem; margin-bottom: 2rem;">Manage your notification and account preferences.</p>
+                <div class="settings-layout">
+                    <nav class="settings-nav">
+                        <ul>
+                            <li><a href="#" class="active" data-section="general">General</a></li>
+                            <li><a href="#" data-section="notifications">Notifications</a></li>
+                            <li><a href="#" data-section="security">Security</a></li>
+                        </ul>
+                    </nav>
+                    <div class="settings-content">
+                        <section class="setting-card active" id="settings-section-general">
+                             <h3>Appearance</h3>
+                            <div class="setting-item">
+                                <span>Dark Mode</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="theme-toggle"><span class="slider"></span></label></div>
+                            </div>
+                        </section>
+                        <section class="setting-card" id="settings-section-notifications" style="display:none;">
+                             <h3>Email Notifications</h3>
+                            <div class="setting-item">
+                                <span>Email me when new orders are assigned</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-new-orders" checked><span class="slider"></span></label></div>
+                            </div>
+                            <div class="setting-item">
+                                <span>Email me escalation notifications</span>
+                                <div class="toggle-switch"><label class="switch"><input type="checkbox" id="email-escalations" checked><span class="slider"></span></label></div>
+                            </div>
+                        </section>
+                        <section class="setting-card" id="settings-section-security" style="display:none;">
+                            <h3>Security Settings</h3>
+                            <div class="setting-item">
+                                <span>Password</span>
+                                <button class="btn btn-secondary" id="change-password-btn">Change Password</button>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="help" class="tab-content">
+            <div class="card">
+                <div class="placeholder-content">
+                    <h3>Help Center</h3>
+                    <p>Find answers to common questions or contact support for assistance.</p>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-primary" id="contact-support-btn">Contact Support</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <footer class="main-footer">
+            © 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
+    </main>
+
+    <!-- Review Order Modal -->
+    <div class="modal-overlay" id="review-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Order: <span id="review-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="review-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="review-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Employee</strong>
+                    <p id="review-employee-name">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Issue Type</strong>
+                    <p id="review-issue-type">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="review-action">Action *</label>
+                    <select id="review-action" required>
+                        <option value="">Select action</option>
+                        <option value="correct">Mark as Correct</option>
+                        <option value="error">Mark as Error</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="review-department">Department</label>
+                    <select id="review-department">
+                        <option value="customer_service">Customer Service</option>
+                        <option value="logistics">Logistics</option>
+                        <option value="operations">Operations</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="review-modified-reason">Modified Reason (if applicable)</label>
+                    <input type="text" id="review-modified-reason" placeholder="Enter modified reason...">
+                </div>
+                <div class="form-group">
+                    <label for="review-notes">Additional Notes</label>
+                    <textarea id="review-notes" placeholder="Add any additional notes..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="review-order-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-review-btn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Escalate Order Modal -->
+    <div class="modal-overlay" id="escalate-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Escalate Order: <span id="escalate-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="escalate-order-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="escalate-to">Escalate To *</label>
+                    <select id="escalate-to" required>
+                        <option value="">Select recipient</option>
+                        <option value="helper">Helper</option>
+                        <option value="senior">Senior Quality Analyst</option>
+                        <option value="manager">Quality Manager</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="escalate-reason">Reason for Escalation *</label>
+                    <textarea id="escalate-reason" placeholder="Explain why you are escalating this order..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="escalate-notes">Additional Notes</label>
+                    <textarea id="escalate-notes" placeholder="Add any additional context..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="escalate-order-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-escalation-btn">Submit Escalation</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Raise Inquiry Modal -->
+    <div class="modal-overlay" id="raise-inquiry-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Raise Inquiry: <span id="inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="raise-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="inquiry-order-details">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="inquiry-text">Your Inquiry *</label>
+                    <textarea id="inquiry-text" placeholder="Describe your question or concern..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="raise-inquiry-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-inquiry-btn">Submit Inquiry</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Order Modal -->
+    <div class="modal-overlay" id="view-order-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Order Details: <span id="view-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-order-modal">×</button>
+            </div>
+            <div class="modal-body" id="view-order-body">
+                <!-- Details will be populated by JavaScript -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-order-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Escalation Modal (Main) -->
+    <div class="modal-overlay" id="review-escalation-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Review Escalation: <span id="review-escalation-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="review-escalation-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="escalation-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Employee</strong>
+                    <p id="escalation-employee-name">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Issue Type</strong>
+                    <p id="escalation-issue-type">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent's Reason for Escalation</strong>
+                    <p id="agent-escalation-reason">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="helper-feedback">Your Feedback / Final Decision *</label>
+                    <textarea id="helper-feedback" placeholder="Provide your feedback and final decision..." required></textarea>
+                </div>
+                <div class="form-group" id="senior-escalation-section" style="display: none;">
+                    <label for="escalate-to-senior">Escalate to Senior *</label>
+                    <select id="escalate-to-senior" required>
+                        <option value="">Select Senior Quality Analyst</option>
+                    </select>
+                    <label for="senior-escalation-reason" style="margin-top: 10px;">Reason for Escalation to Senior *</label>
+                    <textarea id="senior-escalation-reason" placeholder="Explain why you are escalating this to senior..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" id="resolve-escalation-btn">Resolve & Send Feedback</button>
+                <button class="btn" id="toggle-senior-escalation-btn">Escalate to Senior</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="review-escalation-modal">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Respond to Inquiry Modal -->
+    <div class="modal-overlay" id="respond-inquiry-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Respond to Inquiry: <span id="respond-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="respond-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Order Details</strong>
+                    <p id="respond-inquiry-order-details">Loading...</p>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="agent-inquiry-text">Loading...</p>
+                </div>
+                <div class="form-group">
+                    <label for="helper-response">Your Response *</label>
+                    <textarea id="helper-response" placeholder="Provide your response to the agent's inquiry..." required></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="respond-inquiry-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-inquiry-response-btn">Send Response</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Inquiry/Response Modal (Main) -->
+    <div class="modal-overlay" id="view-inquiry-modal">
+        <div class="modal-box" style="max-width: 550px;">
+            <div class="modal-header">
+                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="detail-item">
+                    <strong>Agent's Inquiry</strong>
+                    <p id="view-inquiry-text">Loading...</p>
+                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+                </div>
+                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                    <strong>Helper's Response</strong>
+                    <p id="view-inquiry-response-text">Loading...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Team Member Modal -->
+    <div class="modal-overlay" id="add-member-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Team Member</h3>
+                <button class="modal-close-btn" data-modal-id="add-member-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="new-member-name">Full Name *</label>
+                    <input type="text" id="new-member-name" placeholder="Enter full name" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-member-email">Email Address *</label>
+                    <input type="email" id="new-member-email" placeholder="Enter email address" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-member-role">Role *</label>
+                    <select id="new-member-role" required>
+                        <option value="">Select role</option>
+                        <option value="quality">Quality Agent</option>
+                        <option value="senior">Senior Quality Analyst</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="new-member-department">Department</label>
+                    <input type="text" id="new-member-department" placeholder="Enter department">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="add-member-modal">Cancel</button>
+                <button class="btn btn-primary" id="submit-new-member-btn">Add Member</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Schedule Modal -->
+    <div class="modal-overlay" id="edit-schedule-modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">Edit Schedule</h3>
+                <button class="modal-close-btn" data-modal-id="edit-schedule-modal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label for="schedule-member">Team Member</label>
+                    <select id="schedule-member">
+                        <!-- Options will be populated by JavaScript -->
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-day">Day of Week</label>
+                    <select id="schedule-day">
+                        <option value="1">Monday</option>
+                        <option value="2">Tuesday</option>
+                        <option value="3">Wednesday</option>
+                        <option value="4">Thursday</option>
+                        <option value="5">Friday</option>
+                        <option value="6">Saturday</option>
+                        <option value="7">Sunday</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="schedule-shift">Shift</label>
+                    <select id="schedule-shift">
+                        <option value="09:00-17:00">09:00 - 17:00</option>
+                        <option value="11:00-19:00">11:00 - 19:00</option>
+                        <option value="14:00-22:00">14:00 - 22:00</option>
+                        <option value="off">Off</option>
+                        <option value="leave">On Leave</option>
+                        <option value="sick">Sick Leave</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-schedule-modal">Cancel</button>
+                <button class="btn btn-primary" id="save-schedule-change-btn">Save Change</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal-overlay" id="logout-confirm-modal">
+        <div class="modal-box" style="max-width: 400px; text-align: center;">
+            <div class="modal-header" style="border-bottom: none; justify-content: center;">
+                <h3 class="modal-title">Confirm Logout</h3>
+            </div>
+            <div class="modal-body">
+                <p style="font-size: 1.1rem; color: var(--text-muted); margin-bottom: 2rem;">Are you sure you want to log out?</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center;">
+                <button class="btn btn-secondary" id="cancel-logout-btn">Cancel</button>
+                <button class="btn btn-danger" id="confirm-logout-btn">Logout</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- View Escalation Details Modal (Main) -->
+    <div id="view-escalation-modal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">Escalation Details</h3>
+          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
+        </div>
+        <div id="view-escalation-body" style="display: flex; flex-direction: column; gap: 1rem;">
+          <!-- Content will be populated by JS -->
+        </div>
+        <div class="modal-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notifications Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+        // Application State
+        let currentUser = null;
+        let assignedOrders = [];
+        let teamMembers = [];
+        let teamSchedule = [];
+        let performanceMetrics = {};
+        let notifications = [];
+        let companyEmployees = [];
+        let monthlyPerformanceChart = null;
+        let issueTypesChart = null;
+        
+        // New state variables
+        let helperEscalations = [];
+        let helperInquiries = [];
+        let isSeniorEscalationMode = false;
+
+        // Toast Notification System
+        function showToast(message, type = 'info', title = '') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <div class="toast-icon">${icons[type]}</div>
+                <div class="toast-content">
+                    ${title ? `<div class="toast-title">${title}</div>` : ''}
+                    <div class="toast-message">${message}</div>
+                </div>
+                <button class="toast-close">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove after 5 seconds
+            const removeToast = () => {
+                 if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateX(100%)';
+                    setTimeout(() => {
+                        if (toast.parentNode) {
+                            toast.parentNode.removeChild(toast);
+                        }
+                    }, 300);
+                }
+            };
+            setTimeout(removeToast, 5000);
+            
+            // Close button functionality
+            toast.querySelector('.toast-close').addEventListener('click', removeToast);
+        }
+
+        // Helper Functions
+        function getInitials(name) {
+            if (!name) return '';
+            const names = name.split(' ');
+            return names.length > 1 ? 
+                `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase() : 
+                `${names[0][0]}`.toUpperCase();
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleDateString('en-EG', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric',
+                timeZone: 'Africa/Cairo'
+            });
+        }
+
+        function formatDateTime(dateString) {
+            if (!dateString) return 'N/A';
+            return new Date(dateString).toLocaleString('en-EG', { 
+                year: 'numeric', 
+                month: 'short', 
+                day: 'numeric', 
+                hour: '2-digit', 
+                minute: '2-digit',
+                timeZone: 'Africa/Cairo'
+            });
+        }
+
+        function showModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.classList.add('show');
+                // Use the style-based display for injected modals if they don't use the 'show' class
+                if (el.style.display !== 'flex') {
+                    el.style.display = 'flex';
+                }
+            }
+        }
+
+        function hideModal(modalId) {
+            const el = document.getElementById(modalId);
+            if (el) {
+                el.classList.remove('show');
+                 // Use the style-based display for injected modals if they don't use the 'show' class
+                if (el.style.display !== 'none') {
+                    el.style.display = 'none';
+                }
+            }
+        }
+
+
+        // Initialize the application
+        async function initApp() {
+            try {
+                // Apply theme and active tab from localStorage before anything else
+                applyStoredTheme();
+                
+                showToast('Loading Quality Dashboard...', 'info');
+                
+                // Get current user
+                const user = await getCurrentUser();
+                if (!user) {
+                    window.location.href = 'login.html';
+                    return;
+                }
+                
+                // Get user profile
+                const { data: profile, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                
+                if (error) {
+                    console.error('Error fetching user profile:', error);
+                    showToast('Failed to load user profile', 'error');
+                    return;
+                }
+                
+                currentUser = { ...user, ...profile };
+                
+                // Activate last used tab
+                applyStoredActiveTab();
+
+                // Update UI with user data
+                updateUserInterface();
+                
+                // Load user data
+                await loadAssignedOrders();
+                await loadPerformanceMetrics();
+                await loadTeamMembers();
+                await loadTeamSchedule();
+                await loadNotifications();
+                await loadHelperEscalations();
+                await loadHelperInquiries();
+                await loadCompanyEmployees();
+                
+                // Initialize real-time subscriptions
+                initRealtimeSubscriptions();
+                
+                // Initialize charts
+                initCharts();
+                
+                showToast('Quality Dashboard loaded successfully', 'success');
+            } catch (error) {
+                console.error('Error initializing app:', error);
+                showToast('Failed to initialize dashboard', 'error');
+            }
+        }
+
+        function updateUserInterface() {
+            document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
+            document.getElementById('sidebar-username').textContent = currentUser.name;
+            document.getElementById('sidebar-userrole').textContent = currentUser.role;
+            document.getElementById('welcome-user-h2').textContent = `Welcome back, ${currentUser.name.split(' ')[0]}!`;
+            
+            // Show/hide escalation and inquiry tabs based on role
+            const helperRoles = ['quality', 'admin', 'helper'];
+            if (helperRoles.includes(currentUser.role)) {
+                document.getElementById('escalations-tab').style.display = 'flex';
+                document.getElementById('inquiries-tab').style.display = 'flex';
+            }
+            
+            // Profile form
+            document.getElementById('profile-fullname').value = currentUser.name;
+            document.getElementById('profile-email').value = currentUser.email;
+            document.getElementById('profile-phone').value = currentUser.phone || '';
+            document.getElementById('profile-department').value = currentUser.department || 'N/A';
+        }
+
+        // Load assigned orders
+        async function loadAssignedOrders(filters = {}) {
+            try {
+                assignedOrders = await getAssignedOrders(currentUser.id, filters);
+                renderOrdersTable(assignedOrders);
+                document.getElementById('orders-count').textContent = assignedOrders.length;
+            } catch (error) {
+                console.error('Error loading assigned orders:', error);
+                showToast('Failed to load assigned orders', 'error');
+                assignedOrders = [];
+                renderOrdersTable([]);
+            }
+        }
+
+        // Load performance metrics
+        async function loadPerformanceMetrics() {
+            try {
+                performanceMetrics = await getPerformanceMetrics('month');
+                
+                // Update KPI cards
+                document.getElementById('todays-reviews').textContent = performanceMetrics.completedOrders || 0;
+                document.getElementById('open-cases').textContent = performanceMetrics.pendingReviews || 0;
+                document.getElementById('quality-score').textContent = `${performanceMetrics.accuracyRate || 0}%`;
+                document.getElementById('escalation-rate').textContent = `${performanceMetrics.errorRate || 0}%`;
+                
+                // Update charts
+                updateCharts();
+                
+            } catch (error) {
+                console.error('Error loading performance metrics:', error);
+            }
+        }
+
+        // Load team members
+        async function loadTeamMembers() {
+            try {
+                teamMembers = await getTeamMembers();
+                renderTeamMembers();
+                populateTeamMemberDropdowns();
+            } catch (error) {
+                console.error('Error loading team members:', error);
+                showToast('Failed to load team members', 'error');
+                teamMembers = [];
+                renderTeamMembers();
+            }
+        }
+
+        // Load company employees
+        async function loadCompanyEmployees() {
+            try {
+                companyEmployees = await getCompanyEmployees();
+                renderCompanyEmployeesTable();
+            } catch (error) {
+                console.error('Error loading company employees:', error);
+                showToast('Failed to load company employees', 'error');
+                companyEmployees = [];
+                renderCompanyEmployeesTable();
+            }
+        }
+
+        // Load team schedule
+        async function loadTeamSchedule() {
+            try {
+                teamSchedule = await getTeamSchedule();
+                renderTeamSchedule();
+            } catch (error) {
+                console.error('Error loading team schedule:', error);
+                showToast('Failed to load team schedule', 'error');
+                teamSchedule = [];
+                renderTeamSchedule();
+            }
+        }
+
+        // Load notifications
+        async function loadNotifications() {
+            try {
+                notifications = await getNotifications(currentUser.id);
+                updateNotificationsUI();
+            } catch (error) {
+                console.error('Error loading notifications:', error);
+                notifications = [];
+                updateNotificationsUI();
+            }
+        }
+
+        // Load helper escalations
+        async function loadHelperEscalations() {
+            try {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
+                    const escalationsData = await getEscalations(null, {});
+                    helperEscalations = escalationsData || [];
+                    applyEscalationFilters(); // Apply filters on load
+                    const pendingCount = helperEscalations.filter(e => e.status === 'pending').length;
+                    document.getElementById('escalations-count').textContent = pendingCount;
+                }
+            } catch (error) {
+                console.error('❌ Error loading escalations:', error);
+                showToast('Failed to load escalations', 'error');
+                helperEscalations = [];
+                renderEscalationsTable([]);
+            }
+        }
+
+        // Load helper inquiries
+       async function loadHelperInquiries() {
+            try {
+                if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
+                    helperInquiries = await getHelperInquiries(currentUser.id); 
+                    applyInquiryFilters(); // Apply filters on load
+                     const pendingCount = helperInquiries.filter(i => i.status === 'pending').length;
+                    document.getElementById('inquiries-count').textContent = pendingCount;
+                }
+            } catch (error) {
+                console.error('❌ Error loading helper inquiries:', error);
+                showToast('Failed to load inquiries', 'error');
+                helperInquiries = [];
+                renderInquiriesTable([]);
+            }
+        }
+
+        function renderOrdersTable(ordersToRender) {
+            const tableBody = document.getElementById('orders-table-body');
+
+            if (!ordersToRender || ordersToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No assigned orders found.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = ordersToRender.map(order => {
+                const orderData = order.orders;
+                const statusClass = `status-${order.status}`;
+                
+                let reviewTime = 'N/A';
+                let slaStatus = '';
+
+                if (order.status === 'completed' && order.assigned_at && order.completed_at) {
+                    const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
+                    reviewTime = `${diffMinutes} min`;
+                    slaStatus = (diffMinutes > 30) 
+                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
+                        : `<span class="status-badge status-completed">On Time</span>`;
+                }
+                
+                let specialStatusBadge = '';
+                if (order.escalations && order.escalations.length > 0) {
+                    const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
+                    if (latestEscalation.status === 'resolved') {
+                        specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green);">Resolved</button>`;
+                    } else {
+                        specialStatusBadge = `<span class="inquiry-badge" title="This order is escalated">Escalation Pending</span>`;
+                    }
+                }
+                else if (order.inquiries && order.inquiries.length > 0) {
+                    const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                    if (latestInquiry.status === 'responded') {
+                        specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
+                    } else {
+                        specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
+                    }
+                }
+
+                return `
+                    <tr>
+                        <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
+                        <td>${orderData?.reason || 'N/A'}</td>
+                        <td>${formatDateTime(order.assigned_at)}</td>
+                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                        <td>${reviewTime}</td>
+                        <td>${slaStatus}</td>
+                        <td>
+                            <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                            ${order.status === 'pending' ? 
+                                `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                                 <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                                 <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                                ''
+                            }
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Re-bind all events for buttons
+            document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+            document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+        
+            // Add new event listeners for the new buttons
+            document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const escalationId = btn.dataset.escalationId;
+                    const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
+                    const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
+                    
+                    if (!escalation) {
+                        showToast('Could not find escalation details.', 'error');
+                        return;
+                    }
+        
+                    const body = document.getElementById('view-escalation-body');
+                    if (body) {
+                        body.innerHTML = `
+                            <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
+                            <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
+                        `;
+                        showModal('view-escalation-modal');
+                    }
+                });
+            });
+        
+            document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const inquiryId = btn.dataset.inquiryId;
+                    const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+                    const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+                    
+                    if (inquiry) {
+                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                        showModal('view-inquiry-modal');
+                    } else {
+                        showToast('Could not find inquiry details.', 'error');
+                    }
+                });
+            });
+        }
+
+        function renderEscalationsTable(escalationsToRender) {
+            const tableBody = document.getElementById('escalations-table-body');
+
+            if (!escalationsToRender || escalationsToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations match the current filters.</td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = escalationsToRender.map(escalation => {
+                const orderData = escalation.order_assignments?.orders;
+                const escalatedByName = escalation.escalated_by?.name || 'Unknown Agent';
+                const escalationDate = formatDateTime(escalation.escalated_at);
+                const reasonPreview = escalation.notes ? (escalation.notes.length > 50 ? escalation.notes.substring(0, 50) + '...' : escalation.notes) : 'No reason';
+
+                let statusBadge, actionContent;
+                
+                if (escalation.status === 'resolved') {
+                    statusBadge = `<span class="status-badge status-completed">Resolved</span>`;
+                    actionContent = `<button class="action-btn view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
+                } else { // 'pending'
+                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+                    actionContent = `<button class="action-btn primary review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
+                }
+
+                const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${escalatedByName}</td>
+                        <td title="${escalation.notes || ''}">${reasonPreview}</td>
+                        <td>${escalationDate}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionContent}</td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.querySelectorAll('.review-escalation-btn').forEach(btn => {
+                btn.addEventListener('click', function() { openReviewEscalationModal(this.dataset.escalationId); });
+            });
+            document.querySelectorAll('.view-escalation-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const escalation = helperEscalations.find(e => String(e.id) === String(this.dataset.escalationId));
+                    if (escalation) {
+                        const body = document.getElementById('view-escalation-body');
+                        body.innerHTML = `
+                            <div class="detail-item"><strong>Order ID</strong><span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Escalated By</strong><span>${escalation.escalated_by?.name || 'N/A'}</span></div>
+                            <div class="detail-item"><strong>Agent's Reason</strong><p>${escalation.notes || ''}</p></div>
+                            <div class="detail-item" style="background: var(--green-bg);"><strong>Your Feedback</strong><p>${escalation.feedback || 'Not provided.'}</p></div>
+                        `;
+                        showModal('view-escalation-modal');
+                    }
+                });
+            });
+        }
+
+        function renderInquiriesTable(inquiriesToRender) {
+            const tableBody = document.getElementById('inquiries-table-body');
+            
+            if (!inquiriesToRender || inquiriesToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries match the current filters.</div></td></tr>`;
+                return;
+            }
+
+            tableBody.innerHTML = inquiriesToRender.map(inquiry => {
+                const orderData = inquiry.order_assignments?.orders;
+                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+                const inquiryDate = formatDateTime(inquiry.created_at);
+                const inquiryPreview = inquiry.inquiry_text ? (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 'No inquiry text';
+                
+                let statusBadge, actionContent;
+
+                if (inquiry.status === 'responded') {
+                    statusBadge = `<span class="status-badge status-completed">Responded</span>`;
+                    actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
+                } else { // status is 'pending'
+                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+                    actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
+                }
+                
+                const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.7; background-color: var(--card-bg);' : '';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                        <td>${agentName}</td>
+                        <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
+                        <td>${inquiryDate}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionContent}</td>
+                    </tr>
+                `;
+            }).join('');
+            
+            document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
+                btn.addEventListener('click', function() { openRespondInquiryModal(this.dataset.inquiryId); });
+            });
+
+           document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const inquiry = helperInquiries.find(i => String(i.id) === String(this.dataset.inquiryId));
+                    if (inquiry) {
+                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                        showModal('view-inquiry-modal');
+                    }
+                });
+            });
+        }
+
+        function renderCompanyEmployeesTable() {
+            const tableBody = document.getElementById('employees-table-body');
+
+            if (companyEmployees.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="5" class="empty-state">
+                            <div class="empty-state-icon">🏢</div>
+                            <div>No company employees found.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                tableBody.innerHTML = companyEmployees.map(employee => `
+                    <tr>
+                        <td>${employee.employee_name || 'N/A'}</td>
+                        <td>${employee.employee_username || 'N/A'}</td>
+                        <td>${employee.department || 'N/A'}</td>
+                        <td>${employee.title || 'N/A'}</td>
+                        <td>${employee.admin_id || 'N/A'}</td>
+                    </tr>
+                `).join('');
+            }
+        }
+
+        function renderTeamMembers() {
+            const teamGrid = document.getElementById('team-grid');
+            
+            if (teamMembers.length === 0) {
+                teamGrid.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👥</div>
+                        <div>No team members found.</div>
+                    </div>
+                `;
+            } else {
+                teamGrid.innerHTML = teamMembers.map(member => {
+                    const color = stringToColor(member.name);
+                    return `
+                        <div class="team-member-card">
+                            <div class="team-member-avatar-initials" style="background-color: ${color};">
+                                ${getInitials(member.name)}
+                            </div>
+                            <div class="team-member-name">${member.name}</div>
+                            <div class="team-member-role">${member.role}</div>
+                            <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                                ${member.department || 'No department'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        function renderTeamSchedule() {
+            const tableBody = document.getElementById('schedule-table-body');
+            
+            if (teamSchedule.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="8" class="empty-state">
+                            <div class="empty-state-icon">📅</div>
+                            <div>No schedule data available.</div>
+                        </td>
+                    </tr>
+                `;
+            } else {
+                const scheduleByUser = {};
+                teamSchedule.forEach(shift => {
+                    if (!scheduleByUser[shift.user_id]) {
+                        scheduleByUser[shift.user_id] = {
+                            user: shift.users,
+                            shifts: {}
+                        };
+                    }
+                    const shiftDate = new Date(shift.shift_date);
+                    const dayOfWeek = shiftDate.getDay(); 
+                    scheduleByUser[shift.user_id].shifts[dayOfWeek] = shift;
+                });
+
+                tableBody.innerHTML = Object.values(scheduleByUser).map(userSchedule => {
+                    const shifts = [];
+                    for (let day = 1; day <= 7; day++) {
+                        const shift = userSchedule.shifts[day % 7];
+                        let display = 'Off';
+                        let className = 'shift-off';
+                        
+                        if (shift) {
+                            if (shift.shift_type === 'off') {
+                                display = 'Off';
+                                className = 'shift-off';
+                            } else if (shift.shift_type === 'leave') {
+                                display = 'On Leave';
+                                className = 'shift-leave';
+                            } else if (shift.shift_type === 'sick') {
+                                display = 'Sick Leave';
+                                className = 'shift-sick';
+                            } else {
+                                display = shift.shift_type;
+                                className = 'shift-time';
+                            }
+                        }
+                        
+                        shifts.push(`<td class="shift-cell" data-user-id="${userSchedule.user.id}" data-day="${day}"><span class="${className}">${display}</span></td>`);
+                    }
+                    
+                    return `
+                        <tr>
+                            <td class="member-name">${userSchedule.user.name}</td>
+                            ${shifts.join('')}
+                        </tr>
+                    `;
+                }).join('');
+            }
+        }
+
+        function populateTeamMemberDropdowns() {
+            const memberSelect = document.getElementById('schedule-member');
+            if (memberSelect) {
+                memberSelect.innerHTML = teamMembers.map(member => 
+                    `<option value="${member.id}">${member.name}</option>`
+                ).join('');
+            }
+        }
+
+        function populateSeniorDropdown() {
+            const seniorSelect = document.getElementById('escalate-to-senior');
+            const seniorMembers = teamMembers.filter(m => m.role === 'senior');
+            
+            if (seniorMembers.length === 0) {
+                seniorSelect.innerHTML = '<option value="">No senior analysts available</option>';
+                return;
+            }
+            
+            seniorSelect.innerHTML = '<option value="">Select Senior Quality Analyst</option>' +
+                seniorMembers.map(member => 
+                    `<option value="${member.id}">${member.name} - ${member.department || 'No Department'}</option>`
+                ).join('');
+        }
+
+        function updateNotificationsUI() {
+            const notificationList = document.getElementById('notification-list');
+            const notificationBadge = document.getElementById('notification-badge');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+                notificationBadge.style.display = 'none';
+            } else {
+                notificationList.innerHTML = notifications.map(notification => `
+                    <li class="notification-item">
+                        <div class="notification-message">
+                            <div>${notification.message}</div>
+                            <div class="notification-time">${formatDateTime(notification.created_at)}</div>
+                        </div>
+                        <div class="notification-actions">
+                            <button class="mark-read-btn" data-notification-id="${notification.id}">Mark read</button>
+                        </div>
+                    </li>
+                `).join('');
+                
+                notificationBadge.textContent = notifications.length;
+                notificationBadge.style.display = 'flex';
+                
+                document.querySelectorAll('.mark-read-btn').forEach(btn => {
+                    btn.addEventListener('click', async (e) => {
+                        e.stopPropagation();
+                        const notificationId = btn.dataset.notificationId;
+                        await markNotificationAsRead(notificationId);
+                        await loadNotifications();
+                    });
+                });
+            }
+        }
+
+        function initRealtimeSubscriptions() {
+            try {
+                if (typeof window.subscribeToNotifications === 'function') {
+                    window.subscribeToNotifications(currentUser.id, (payload) => {
+                        console.log('New notification received:', payload);
+                        showToast(payload.new.message, 'info', 'New Notification');
+                        loadNotifications();
+                    });
+                }
+                
+                if (typeof window.subscribeToAssignments === 'function') {
+                    window.subscribeToAssignments(currentUser.id, (payload) => {
+                        console.log('New order assigned:', payload);
+                        showToast('A new order has been assigned to you', 'info', 'New Assignment');
+                        loadAssignedOrders();
+                    });
+                }
+            } catch (error) {
+                console.error('Error initializing real-time subscriptions:', error);
+            }
+        }
+
+        function initCharts() {
+            const isLightMode = document.body.classList.contains('light-mode');
+            const textColor = isLightMode ? '#2c3e50' : '#e6edf3';
+            const gridColor = isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+
+            if (monthlyPerformanceChart) monthlyPerformanceChart.destroy();
+            const monthlyCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
+            monthlyPerformanceChart = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+                    datasets: [
+                        {
+                            label: 'Correct Reviews',
+                            data: [45, 52, 48, 55, 58, 62],
+                            borderColor: '#28a745',
+                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Errors Found',
+                            data: [8, 6, 10, 7, 5, 4],
+                            borderColor: '#dc3545',
+                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } },
+                    scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } }
+            });
+            
+            if (issueTypesChart) issueTypesChart.destroy();
+            const issueCtx = document.getElementById('issueTypesChart').getContext('2d');
+            issueTypesChart = new Chart(issueCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'],
+                    datasets: [{
+                        data: [45, 25, 18, 12],
+                        backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
+            });
+        }
+
+        function updateCharts() { /* Placeholder for future implementation */ }
+
+        // MODAL FUNCTIONS
+        function openInquiryResponseModal(inquiryId) {
+            let inquiry, order;
+            // Search through assigned orders to find the specific inquiry
+            for (const assignedOrder of assignedOrders) {
+                if (!assignedOrder.inquiries) continue;
+                const foundInquiry = assignedOrder.inquiries.find(i => String(i.id) === String(inquiryId));
+                if (foundInquiry) {
+                    inquiry = foundInquiry;
+                    order = assignedOrder.orders;
+                    break;
+                }
+            }
+
+            if (inquiry) {
+                document.getElementById('view-inquiry-order-id').textContent = order?.order_id || 'N/A';
+                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                document.getElementById('view-inquiry-agent-name').textContent = `By: ${currentUser.name}`; // It's my own inquiry
+                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                showModal('view-inquiry-modal');
+            } else {
+                showToast('Could not find inquiry details.', 'error');
+            }
+        }
+        window.openInquiryResponseModal = openInquiryResponseModal;
+
+        async function openViewOrderModal(orderAssignmentId) {
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            const order = orderAssignment.orders;
+            document.getElementById('view-order-id').textContent = order.order_id;
+            document.getElementById('view-order-body').innerHTML = `
+                <div class="detail-item"><strong>Order ID</strong><p>${order.order_id}</p></div>
+                <div class="detail-item"><strong>Employee</strong><p>${order.employee_name}</p></div>
+                <div class="detail-item"><strong>Reason</strong><p>${order.reason}</p></div>
+                <div class="detail-item"><strong>Amount</strong><p>${order.amount || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Chefz</strong><p>${order.chefz || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Order Status</strong><p>${order.order_status}</p></div>
+                <div class="detail-item"><strong>Requested Delivery</strong><p>${order.requested_delivery_date || 'N/A'}</p></div>
+                <div class="detail-item"><strong>Payment Type</strong><p>${order.payment_type || 'N/A'}</p></div>
+            `;
+            showModal('view-order-modal');
+        }
+
+        async function openReviewOrderModal(orderAssignmentId) {
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            const order = orderAssignment.orders;
+            document.getElementById('review-order-id').textContent = order.order_id;
+            document.getElementById('review-order-details').textContent = order.reason;
+            document.getElementById('review-employee-name').textContent = order.employee_name;
+            document.getElementById('review-issue-type').textContent = order.reason;
+            document.getElementById('submit-review-btn').dataset.assignmentId = orderAssignmentId;
+            document.getElementById('review-action').value = '';
+            document.getElementById('review-department').value = 'customer_service';
+            document.getElementById('review-modified-reason').value = '';
+            document.getElementById('review-notes').value = '';
+            const submitBtn = document.getElementById('submit-review-btn');
+            submitBtn.className = 'btn btn-primary';
+            submitBtn.textContent = 'Submit Review';
+            document.querySelector('label[for="review-notes"]').textContent = 'Additional Notes';
+            showModal('review-order-modal');
+        }
+
+        async function openEscalateOrderModal(orderAssignmentId) {
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            const order = orderAssignment.orders;
+            document.getElementById('escalate-order-id').textContent = order.order_id;
+            document.getElementById('submit-escalation-btn').dataset.assignmentId = orderAssignmentId;
+            showModal('escalate-order-modal');
+        }
+
+        async function openRaiseInquiryModal(orderAssignmentId) {
+            const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
+            const order = orderAssignment.orders;
+            document.getElementById('inquiry-order-id').textContent = order.order_id;
+            document.getElementById('inquiry-order-details').textContent = order.reason;
+            document.getElementById('submit-inquiry-btn').dataset.assignmentId = orderAssignmentId;
+            showModal('raise-inquiry-modal');
+        }
+
+        async function openReviewEscalationModal(escalationId) {
+            const escalation = helperEscalations.find(e => String(e.id) === String(escalationId));
+            if (!escalation) { showToast('Escalation not found', 'error'); return; }
+            const order = escalation.order_assignments?.orders;
+            
+            const modal = document.getElementById('review-escalation-modal');
+            modal.querySelector('#review-escalation-order-id').textContent = order?.order_id || 'N/A';
+            modal.querySelector('#escalation-order-details').textContent = order?.reason || 'No details';
+            modal.querySelector('#escalation-employee-name').textContent = order?.employee_name || 'N/A';
+            modal.querySelector('#escalation-issue-type').textContent = order?.reason || 'N/A';
+            modal.querySelector('#agent-escalation-reason').textContent = escalation.notes || 'No reason provided';
+            modal.querySelector('#resolve-escalation-btn').dataset.escalationId = escalationId;
+            modal.querySelector('#toggle-senior-escalation-btn').dataset.escalationId = escalationId;
+            
+            resetEscalationModal();
+            showModal('review-escalation-modal');
+        }
+
+
+        async function openRespondInquiryModal(inquiryId) {
+            const inquiry = helperInquiries.find(i => String(i.id) === String(inquiryId));
+            if (!inquiry) { showToast('Inquiry not found', 'error'); return; }
+            const order = inquiry.order_assignments?.orders;
+            document.getElementById('respond-inquiry-order-id').textContent = order?.order_id || 'N/A';
+            document.getElementById('respond-inquiry-order-details').textContent = order?.reason || 'No details';
+            document.getElementById('agent-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text';
+            document.getElementById('submit-inquiry-response-btn').dataset.inquiryId = inquiryId;
+            showModal('respond-inquiry-modal');
+        }
+
+        function resetEscalationModal() {
+            const modal = document.getElementById('review-escalation-modal');
+            modal.querySelector('#helper-feedback').value = '';
+            modal.querySelector('#senior-escalation-section').style.display = 'none';
+            const toggleBtn = modal.querySelector('#toggle-senior-escalation-btn');
+            toggleBtn.textContent = 'Escalate to Senior';
+            toggleBtn.className = 'btn btn-primary';
+            modal.querySelector('#escalate-to-senior').value = '';
+            modal.querySelector('#senior-escalation-reason').value = '';
+            isSeniorEscalationMode = false;
+        }
+
+
+        function stringToColor(str) {
+            let hash = 0;
+            if (!str) return '#cccccc';
+            for (let i = 0; i < str.length; i++) { hash = str.charCodeAt(i) + ((hash << 5) - hash); }
+            let color = '#';
+            for (let i = 0; i < 3; i++) {
+                const value = (hash >> (i * 8)) & 0xFF;
+                color += ('00' + value.toString(16)).substr(-2);
+            }
+            return color;
+        }
+        
+        async function logoutUser() {
+            const { error } = await supabase.auth.signOut();
+            if (error) {
+                console.error('Error logging out:', error);
+                showToast('Failed to log out', 'error');
+            } else {
+                localStorage.removeItem('qualityDashboardActiveTab'); // Clear tab on logout
+                localStorage.removeItem('theme'); // Clear theme on logout
+                window.location.href = 'login.html';
+            }
+        }
+        
+        // --- NEW --- Functions for Filtering
+        function applyEscalationFilters() {
+            const searchTerm = document.getElementById('escalations-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-escalation-status').value;
+            const dateFilter = document.getElementById('filter-escalation-date').value;
+            let filtered = helperEscalations;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(e => e.status === statusFilter);
+            }
+            if (dateFilter) {
+                filtered = filtered.filter(e => e.escalated_at && e.escalated_at.startsWith(dateFilter));
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(e => {
+                    const orderId = e.order_assignments?.orders?.order_id || '';
+                    const agentName = e.escalated_by?.name || '';
+                    return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                });
+            }
+            renderEscalationsTable(filtered);
+        }
+
+        function applyInquiryFilters() {
+            const searchTerm = document.getElementById('inquiries-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-inquiry-status').value;
+            const dateFilter = document.getElementById('filter-inquiry-date').value;
+            let filtered = helperInquiries;
+            if (statusFilter !== 'all') {
+                filtered = filtered.filter(i => i.status === statusFilter);
+            }
+            if (dateFilter) {
+                filtered = filtered.filter(i => i.created_at && i.created_at.startsWith(dateFilter));
+            }
+            if (searchTerm) {
+                filtered = filtered.filter(i => {
+                    const orderId = i.order_assignments?.orders?.order_id || '';
+                    const agentName = i.order_assignments?.users?.name || '';
+                    return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
+                });
+            }
+            renderInquiriesTable(filtered);
+        }
+
+        // --- NEW --- Functions for Tab Persistence and Theme
+        function applyStoredActiveTab() {
+            const lastActiveTab = localStorage.getItem('qualityDashboardActiveTab');
+            if (lastActiveTab && lastActiveTab !== 'dashboard') {
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                
+                document.getElementById(lastActiveTab)?.classList.add('active');
+                const tabLink = document.querySelector(`.sidebar-nav a[data-tab="${lastActiveTab}"]`);
+                if(tabLink){
+                    tabLink.classList.add('active');
+                    document.getElementById('page-title-header').textContent = tabLink.textContent.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                }
+            }
+        }
+
+        function applyStoredTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            const themeToggle = document.getElementById('theme-toggle');
+            if (savedTheme === 'light') {
+                document.body.classList.add('light-mode');
+                if(themeToggle) themeToggle.checked = false;
+            } else {
+                document.body.classList.remove('light-mode');
+                if(themeToggle) themeToggle.checked = true;
+            }
+        }
+
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            initApp();
+            
+            // Tab navigation
+            document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
+                tab.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.sidebar-nav a').forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+                    const tabId = tab.dataset.tab;
+                    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                    document.getElementById(tabId).classList.add('active');
+                    document.getElementById('page-title-header').textContent = tab.textContent.replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                    localStorage.setItem('qualityDashboardActiveTab', tabId); // Save active tab
+                });
+            });
+            
+            document.querySelectorAll('.settings-nav a').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    document.querySelectorAll('.settings-nav a').forEach(a => a.classList.remove('active'));
+                    link.classList.add('active');
+                    const sectionId = link.dataset.section;
+                    document.querySelectorAll('.setting-card').forEach(section => section.style.display = 'none');
+                    document.getElementById(`settings-section-${sectionId}`).style.display = 'block';
+                });
+            });
+            
+            document.getElementById('notification-btn').addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown').classList.toggle('show'); });
+            
+            document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
+                e.stopPropagation();
+                for (const notification of notifications) { await markNotificationAsRead(notification.id); }
+                await loadNotifications();
+                showToast('All notifications marked as read', 'success');
+            });
+            
+            document.querySelectorAll('.modal-close-btn').forEach(btn => btn.addEventListener('click', () => {
+                const modalId = btn.dataset.modalId;
+                if(modalId) hideModal(modalId);
+            }));
+
+            document.getElementById('submit-review-btn').addEventListener('click', async () => {
+                const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
+                const action = document.getElementById('review-action').value;
+                if (!action) { showToast('Please select an action', 'warning'); return; }
+                try {
+                    console.log("1. 'Submit Review' button clicked.");
+    
+                    const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
+                    const action = document.getElementById('review-action').value;
+                    const department = document.getElementById('review-department').value;
+                    const modifiedReason = document.getElementById('review-modified-reason').value;
+                    const notes = document.getElementById('review-notes').value;
+
+                    if (!action) {
+                        showToast('Please select an action (Correct/Error).', 'warning');
+                        return;
+                    }
+
+                    const reviewData = {
+                        action_correctness: action,
+                        department: department,
+                        modified_reason: modifiedReason,
+                        notes: notes
+                    };
+                    
+                    showToast('Submitting your review...', 'info');
+                    await submitReview(assignmentId, reviewData);
+                    
+                    showToast('Review submitted successfully!', 'success');
+                    hideModal('review-order-modal');
+                    
+                    await loadAssignedOrders();
+                    await loadPerformanceMetrics();
+
+                } catch (error) {
+                    console.error("💥 Error caught in dashboard-quality.html:", error);
+                    showToast(`Failed to submit review: ${error.message}`, 'error');
+                }
+            });
+
+            document.getElementById('review-action').addEventListener('change', function() {
+                const submitBtn = document.getElementById('submit-review-btn');
+                const notesLabel = document.querySelector('label[for="review-notes"]');
+                if (this.value === 'error') {
+                    submitBtn.className = 'btn btn-danger';
+                    submitBtn.textContent = 'Submit as Error';
+                    notesLabel.textContent = 'Reason for Error *';
+                } else {
+                    submitBtn.className = 'btn btn-primary';
+                    submitBtn.textContent = 'Submit Review';
+                    notesLabel.textContent = 'Additional Notes';
+                }
+            });
+            
+            document.getElementById('submit-escalation-btn').addEventListener('click', async () => {
+                try {
+                    const escalateToRole = document.getElementById('escalate-to').value;
+                    const reason = document.getElementById('escalate-reason').value;
+                    const assignmentId = document.getElementById('submit-escalation-btn').dataset.assignmentId;
+
+                    if (!escalateToRole || !reason) {
+                        showToast('Please select a recipient and provide a reason.', 'warning');
+                        return;
+                    }
+
+                    const recipient = teamMembers.find(m => m.role === escalateToRole);
+
+                    if (!recipient) {
+                        showToast(`No user with the role '${escalateToRole}' is available to escalate to.`, 'error');
+                        return;
+                    }
+
+                    const escalatedToId = recipient.id;
+
+                    await submitEscalation(assignmentId, currentUser.id, escalatedToId, reason);
+                    
+                    showToast('Order escalated successfully!', 'success');
+                    hideModal('escalate-order-modal');
+                    await loadAssignedOrders(); 
+                    
+                } catch (error) {
+                    console.error('Error submitting escalation:', error);
+                    showToast(`Failed to escalate order: ${error.message}`, 'error');
+                }
+            });
+
+            document.getElementById('submit-inquiry-btn').addEventListener('click', async () => {
+                const assignmentId = document.getElementById('submit-inquiry-btn').dataset.assignmentId;
+                const inquiryText = document.getElementById('inquiry-text').value;
+                if (!inquiryText.trim()) { showToast('Please provide your inquiry', 'warning'); return; }
+                try {
+                    await raiseInquiry(assignmentId, currentUser.id, inquiryText);
+                    showToast('Inquiry submitted successfully', 'success');
+                    hideModal('raise-inquiry-modal');
+                    await loadAssignedOrders();
+                } catch (error) { showToast('Failed to submit inquiry', 'error'); }
+            });
+            
+            document.getElementById('toggle-senior-escalation-btn').addEventListener('click', () => {
+                const modal = document.getElementById('review-escalation-modal');
+                const section = modal.querySelector('#senior-escalation-section');
+                const button = modal.querySelector('#toggle-senior-escalation-btn');
+                isSeniorEscalationMode = !isSeniorEscalationMode;
+                section.style.display = isSeniorEscalationMode ? 'block' : 'none';
+                button.textContent = isSeniorEscalationMode ? 'Cancel Senior Escalation' : 'Escalate to Senior';
+                button.className = isSeniorEscalationMode ? 'btn btn-secondary' : 'btn btn-warning';
+                if(isSeniorEscalationMode) populateSeniorDropdown();
+            });
+
+            
+            document.getElementById('resolve-escalation-btn').addEventListener('click', async () => {
+                const escalationId = document.getElementById('resolve-escalation-btn').dataset.escalationId;
+                const feedback = document.getElementById('helper-feedback').value;
+                if (!feedback.trim()) { showToast('Please provide your feedback before resolving', 'warning'); return; }
+                try {
+                    await resolveEscalation(escalationId, feedback);
+                    showToast('Escalation resolved successfully', 'success');
+                    hideModal('review-escalation-modal');
+                    await loadHelperEscalations();
+                } catch (error) { showToast('Failed to resolve escalation', 'error'); }
+            });
+
+            document.getElementById('submit-inquiry-response-btn').addEventListener('click', async () => {
+                const inquiryId = document.getElementById('submit-inquiry-response-btn').dataset.inquiryId;
+                const response = document.getElementById('helper-response').value;
+                if (!response.trim()) { showToast('Please provide your response', 'warning'); return; }
+                try {
+                    await respondToInquiry(inquiryId, currentUser.id, response);
+                    showToast('Response sent successfully', 'success');
+                    hideModal('respond-inquiry-modal');
+                    await loadHelperInquiries();
+                } catch (error) { showToast('Failed to send response', 'error'); }
+            });
+            
+            // Logout Button Logic
+            document.getElementById('logout-btn').addEventListener('click', (e) => {
+                e.preventDefault();
+                showModal('logout-confirm-modal');
+            });
+            
+            document.getElementById('cancel-logout-btn').addEventListener('click', () => {
+                hideModal('logout-confirm-modal');
+            });
+
+            document.getElementById('confirm-logout-btn').addEventListener('click', () => {
+                logoutUser();
+            });
+            
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown').classList.remove('show'); }
+                if (e.target.classList.contains('modal-overlay')) {
+                    const modalId = e.target.id;
+                    if(modalId) hideModal(modalId);
+                }
+            });
+
+            // --- NEW --- FILTER EVENT LISTENERS ---
+            document.getElementById('escalations-search-input').addEventListener('input', applyEscalationFilters);
+            document.getElementById('filter-escalation-status').addEventListener('change', applyEscalationFilters);
+            document.getElementById('filter-escalation-date').addEventListener('input', applyEscalationFilters);
+            document.getElementById('refresh-escalations-btn').addEventListener('click', async () => { 
+                await loadHelperEscalations(); 
+                showToast('Escalations refreshed', 'info');
+            });
+
+            document.getElementById('inquiries-search-input').addEventListener('input', applyInquiryFilters);
+            document.getElementById('filter-inquiry-status').addEventListener('change', applyInquiryFilters);
+            document.getElementById('filter-inquiry-date').addEventListener('input', applyInquiryFilters);
+            document.getElementById('refresh-inquiries-btn').addEventListener('click', async () => { 
+                await loadHelperInquiries(); 
+                showToast('Inquiries refreshed', 'info');
+            });
+            
+            // --- NEW --- SETTINGS EVENT LISTENERS ---
+            document.getElementById('change-password-btn').addEventListener('click', () => {
+                showToast('This feature is not yet implemented.', 'info', 'Coming Soon');
+            });
+
+            document.getElementById('theme-toggle').addEventListener('change', (e) => {
+                if (e.target.checked) {
+                    document.body.classList.remove('light-mode');
+                    localStorage.setItem('theme', 'dark');
+                } else {
+                    document.body.classList.add('light-mode');
+                    localStorage.setItem('theme', 'light');
+                }
+                initCharts(); // Re-initialize charts with new theme colors
+            });
+        });
+    </script>
+
+<!-- START: Added Modals (DO NOT RENAME existing classes/ids elsewhere) -->
+<!-- View Assignment Modal -->
+<div class="modal-overlay" id="view-assignment-modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Assignment Details</h3>
+      <button class="modal-close-btn" data-modal-id="view-assignment-modal">×</button>
+    </div>
+    <div class="modal-body" id="view-assignment-body"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-assignment-modal">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Reassign Modal -->
+<div class="modal-overlay" id="reassign-modal" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Reassign</h3>
+      <button class="modal-close-btn" data-modal-id="reassign-modal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Select user to assign to</label>
+        <select id="reassign-to-select"></select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" id="reassign-confirm-btn">Confirm</button>
+      <button class="btn btn-secondary modal-close-btn" data-modal-id="reassign-modal">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- View Inquiry Modal (ALT) -->
+<div class="modal-overlay" id="view-inquiry-modal-alt" style="display:none;">
+  <div class="modal-box">
+    <div class="modal-header">
+      <h3 class="modal-title">Inquiry Response</h3>
+      <button class="modal-close-btn" data-modal-id="view-inquiry-modal-alt">×</button>
+    </div>
+    <div class="modal-body" id="view-inquiry-body-alt" style="white-space:pre-wrap;"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary modal-close-btn" data-modal-id="view-inquiry-modal-alt">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Small utility styles for modals (scoped local) -->
+<style>
+#view-inquiry-modal-alt .modal-box, #reassign-modal .modal-box, #view-assignment-modal .modal-box { 
+    background:#fff; color: #333; width:720px; max-width:95%; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,0.2); padding:0; overflow:hidden; 
+}
+#view-inquiry-modal-alt .modal-header, #reassign-modal .modal-header, #view-assignment-modal .modal-header {
+    display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eee;
+}
+#view-inquiry-modal-alt .modal-title, #reassign-modal .modal-title, #view-assignment-modal .modal-title {
+    margin:0; font-size:16px;
+}
+#view-inquiry-modal-alt .modal-body, #reassign-modal .modal-body, #view-assignment-modal .modal-body {
+    padding:16px; max-height:60vh; overflow:auto;
+}
+#view-inquiry-modal-alt .modal-footer, #reassign-modal .modal-footer, #view-assignment-modal .modal-footer {
+    padding:12px 16px; border-top:1px solid #eee; display:flex; gap:8px; justify-content:flex-end;
+}
+#view-inquiry-modal-alt .modal-close-btn, #reassign-modal .modal-close-btn, #view-assignment-modal .modal-close-btn {
+    background:none; border:0; font-size:20px; cursor:pointer; color: #555;
+}
+#view-inquiry-modal-alt .btn, #reassign-modal .btn, #view-assignment-modal .btn { 
+    padding:8px 12px; border-radius:6px; cursor:pointer; border:1px solid #ccc; background:#f5f5f5; 
+}
+#view-inquiry-modal-alt .btn-primary, #reassign-modal .btn-primary, #view-assignment-modal .btn-primary { 
+    background:#2563eb; color:#fff; border-color:transparent; 
+}
+#view-inquiry-modal-alt .btn-success, #reassign-modal .btn-success, #view-assignment-modal .btn-success { 
+    background:#16a34a; color:#fff; border-color:transparent; 
+}
+#view-inquiry-modal-alt .btn-secondary, #reassign-modal .btn-secondary, #view-assignment-modal .btn-secondary {
+     background:#e5e7eb; 
+}
+#view-inquiry-modal-alt .form-group label, #reassign-modal .form-group label, #view-assignment-modal .form-group label {
+     display:block; margin-bottom:6px; font-weight:600; 
+}
+</style>
+<!-- END: Added Modals -->
+
+
+<script>
+/* START: injected handlers */
+document.addEventListener('DOMContentLoaded', function(){
+  // reassign confirm
+  const reassignBtn = document.getElementById('reassign-confirm-btn');
+  if(reassignBtn){
+    reassignBtn.addEventListener('click', async function(){
+      const assignmentId = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
+      const newAgentId = document.getElementById('reassign-to-select').value;
+      if(!newAgentId){ alert('Please choose a user to reassign to'); return; }
+      try{
+        if(typeof assignOrders === 'function'){
+          await assignOrders([], newAgentId); // adapt signature if needed
+          showToast('Order reassigned', 'success');
+        } else {
+          console.warn('assignOrders function not found');
+        }
+        hideModal('reassign-modal');
+        if(typeof loadAssignedOrders === 'function') loadAssignedOrders();
+      }catch(err){
+        console.error(err);
+        alert('Failed to reassign');
+      }
+    });
+  }
+
+  // hook view-assignment buttons to populate modal
+  document.querySelectorAll('.open-view-assignment-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const id = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
+      // try to find local assignedOrders array
+      let body = document.getElementById('view-assignment-body');
+      body.innerHTML = 'Loading...';
+      let found = null;
+      try{
+        if(typeof assignedOrders !== 'undefined' && Array.isArray(assignedOrders)){
+          found = assignedOrders.find(a=>String(a.id)===String(id) || String(a.assignment_id)===String(id));
+        }
+        if(found){
+          body.innerHTML = `<div><strong>Assignment:</strong> ${found.id || found.assignment_id}</div>
+                            <div><strong>User:</strong> ${found.users?.name || found.user || 'N/A'}</div>
+                            <div><strong>Status:</strong> ${found.status||'N/A'}</div>
+                            <div><strong>Order:</strong> ${found.order_id || (found.orders && found.orders.order_id) || 'N/A'}</div>
+                            <div style="margin-top:8px;"><strong>Notes:</strong><pre style="white-space:pre-wrap;margin-top:4px;padding:8px;background:#f0f0f0;border-radius:4px;">${found.notes||'N/A'}</pre></div>`;
+        } else {
+          body.innerHTML = 'Assignment details not found locally.';
+        }
+      }catch(e){ body.innerHTML = 'Error loading assignment details.'; console.error(e); }
+      showModal('view-assignment-modal');
+    });
+  });
+
+  // hook reassign placeholders that used showToast text replacements
+  document.querySelectorAll('.open-reassign-assignment-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const id = this.dataset.assignmentId || this.getAttribute('data-assignment-id');
+      document.getElementById('reassign-to-select').innerHTML = '<option value="">Loading...</option>';
+      // populate teamMembers if exists
+      if(typeof teamMembers !== 'undefined' && Array.isArray(teamMembers)){
+        document.getElementById('reassign-to-select').innerHTML = teamMembers.map(m=>`<option value="${m.id}">${m.name||m.email||m.id}</option>`).join('');
+      } else {
+        document.getElementById('reassign-to-select').innerHTML = '<option value="">No users</option>';
+      }
+      document.getElementById('reassign-confirm-btn').dataset.assignmentId = id;
+      showModal('reassign-modal');
+    });
+  });
+
+  // hook view-inquiry buttons
+  document.querySelectorAll('.open-view-inquiry-btn').forEach(btn=>{
+    btn.addEventListener('click', function(){
+      const text = this.dataset.inquiryText || this.getAttribute('data-inquiry-text') || this.textContent || '';
+      document.getElementById('view-inquiry-body-alt').textContent = text;
+      showModal('view-inquiry-modal-alt');
+    });
+  });
+
+});
+/* END: injected handlers */
+</script>
+
+</body>
+</html>
