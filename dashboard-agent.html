@@ -9,11 +9,12 @@
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script type="module">
-    // [AI-FIX] Removed unused imports 'getUserById' and the problematic 'submitErrorResponse' to fix the loading error.
     import { 
         supabase, 
         getCurrentUser, 
+        getUserById, 
         getAgentErrors, 
+        submitErrorResponse,
         getPerformanceMetrics,
         getNotifications,
         markNotificationAsRead,
@@ -265,19 +266,26 @@
             const errorType = error.error_details || 'Unknown';
             const status = error.status.replace(/_/g, ' ');
 
+            // --- START: NEW & IMPROVED BUTTON LOGIC ---
             let actionButtons = '';
             
+            // Check if a final decision exists
             if (error.final_decision) {
+                // If decision exists, show only "View Decision" button
                 actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View Decision</button>`;
             } else if (error.status === 'under_review') {
+                // If under review, show only a "View" button (appeal is already submitted)
                 actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
             } else if (error.status === 'closed') {
+                // If closed and no decision yet, allow appeal
                 const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
                 const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
                 actionButtons = viewButton + appealButton;
             } else {
+                // Fallback for any other statuses
                 actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
             }
+            // --- END: NEW & IMPROVED BUTTON LOGIC ---
             
             return `
                 <tr>
@@ -326,6 +334,7 @@
     }
     
     function openViewErrorModal(errorId) {
+        // *** FIXED: Finding error by `id` as per old version's data structure ***
         const error = userErrors.find(e => String(e.id) === String(errorId));
         if (!error) return;
     
@@ -360,35 +369,32 @@
         showModal('view-error-modal');
     }
 
-    // This function and its modal are not currently used, but kept for potential future use.
-    // async function handleResponseSubmission() {
-    //     const btn = document.getElementById('submit-response-btn');
-    //     const errorId = btn.dataset.errorId;
-    //     const responseText = document.getElementById('error-response').value.trim();
+    async function handleResponseSubmission() {
+        const btn = document.getElementById('submit-response-btn');
+        const errorId = btn.dataset.errorId;
+        const responseText = document.getElementById('error-response').value.trim();
         
-    //     if (!responseText) {
-    //         showToast('Please enter your response before submitting', 'warning');
-    //         return;
-    //     }
+        if (!responseText) {
+            showToast('Please enter your response before submitting', 'warning');
+            return;
+        }
 
-    //     btn.disabled = true;
-    //     btn.textContent = 'Submitting...';
-    //     try {
-    //         // The function 'submitErrorResponse' was removed from imports to fix loading.
-    //         // If this feature is needed, ensure the function is correctly exported from api-client.js and re-imported.
-    //         // await submitErrorResponse(errorId, currentUser.id, responseText);
-    //         showToast('Your response has been submitted successfully!', 'success');
-    //         hideModal('reply-error-modal');
-    //         await loadUserErrors();
-    //         await loadUserPerformance();
-    //     } catch (error) {
-    //         console.error('Error submitting response:', error);
-    //         showToast('Failed to submit your response. Please try again.', 'error');
-    //     } finally {
-    //         btn.disabled = false;
-    //         btn.textContent = 'Submit Response';
-    //     }
-    // }
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+        try {
+            await submitErrorResponse(errorId, currentUser.id, responseText);
+            showToast('Your response has been submitted successfully!', 'success');
+            hideModal('reply-error-modal');
+            await loadUserErrors();
+            await loadUserPerformance();
+        } catch (error) {
+            console.error('Error submitting response:', error);
+            showToast('Failed to submit your response. Please try again.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = 'Submit Response';
+        }
+    }
 
     async function loadNotifications() {
         try {
@@ -498,16 +504,24 @@
         commonErrorsChart.update();
     }
     
+    // *** THIS IS THE SEARCH/FILTER LOGIC FROM THE OLD VERSION ***
     function setupFilters() {
+        // Apply filters for dashboard
         document.getElementById('apply-filters-btn').addEventListener('click', () => {
             const orderId = document.getElementById('filter-order-id').value;
             const fromDate = document.getElementById('filter-from-date').value;
             const toDate = document.getElementById('filter-to-date').value;
             
-            loadUserErrors({ order_id: orderId, from_date: fromDate, to_date: toDate });
+            loadUserErrors({
+                order_id: orderId,
+                from_date: fromDate,
+                to_date: toDate
+            });
+            
             showToast('Filters applied', 'success');
         });
         
+        // Reset filters for dashboard
         document.getElementById('reset-filters-btn').addEventListener('click', () => {
             document.getElementById('filter-order-id').value = '';
             document.getElementById('filter-from-date').value = '';
@@ -516,6 +530,7 @@
             showToast('Filters reset', 'info');
         });
         
+        // Apply filters for my errors
         document.getElementById('apply-my-errors-filters').addEventListener('click', () => {
             const search = document.getElementById('my-errors-search').value;
             const status = document.getElementById('my-errors-status').value;
@@ -528,6 +543,7 @@
             showToast('Filters applied', 'success');
         });
         
+        // Reset filters for my errors
         document.getElementById('reset-my-errors-filters').addEventListener('click', () => {
             document.getElementById('my-errors-search').value = '';
             document.getElementById('my-errors-status').value = 'all';
@@ -590,7 +606,7 @@
             } catch (error) { showToast('Failed to mark all as read', 'error'); }
         });
         
-        // document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
+        document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
         
         document.getElementById('submit-appeal-btn').addEventListener('click', async function() {
             const btn = this;
@@ -643,7 +659,7 @@
                 }
             });
         });
-        
+
         document.getElementById('change-password-btn').addEventListener('click', () => { showModal('change-password-modal'); });
         document.querySelectorAll('.setting-item .toggle-switch input').forEach(toggle => {
             toggle.addEventListener('change', () => {
@@ -923,6 +939,7 @@
 <div class="modal-overlay" id="confirmation-modal"><div class="modal-box" style="max-width: 400px; text-align: center;"><div class="modal-header" style="border: none; justify-content: center;"><h3 class="modal-title" id="confirmation-title">Are you sure?</h3></div><div class="modal-body" style="padding: 0 1rem 1rem;"><p id="confirmation-message" style="color: var(--text-muted);">This action cannot be undone.</p></div><div class="modal-footer" style="justify-content: center;"><button class="btn btn-secondary modal-close-btn" data-modal-id="confirmation-modal">Cancel</button><button class="btn btn-primary" id="confirmation-confirm-btn">Confirm</button></div></div></div>
 
 <div class="toast-container" id="toast-container"></div>
+<!-- Appeal Error Modal -->
 <div class="modal-overlay" id="appeal-error-modal">
     <div class="modal-box" style="max-width: 500px;">
         <div class="modal-header">
@@ -943,14 +960,18 @@
     </div>
 </div>
 
+<!-- *** FIXED: ADDED AUTOFILL PREVENTION SCRIPT *** -->
 <script>
 document.addEventListener("DOMContentLoaded", function() {
+    // حل أقوى - نمنع الـ autofill من مستوى أعلى
     const observer = new MutationObserver(function(mutations) {
         mutations.forEach(function(mutation) {
             mutation.addedNodes.forEach(function(node) {
-                if (node.nodeType === 1) {
+                if (node.nodeType === 1) { // Element node
                     const inputs = node.querySelectorAll ? node.querySelectorAll('input[type="search"]') : [];
                     inputs.forEach(disableAutofill);
+                    
+                    // إذا كان الـ node نفسه input
                     if (node.tagName === 'INPUT' && node.type === 'search') {
                         disableAutofill(node);
                     }
@@ -964,11 +985,31 @@ document.addEventListener("DOMContentLoaded", function() {
             input.value = '';
         }
         input.autocomplete = 'new-password';
+        input.autocorrect = 'off';
+        input.autocapitalize = 'off';
+        input.spellcheck = false;
         input.name = 'search-' + Math.random().toString(36).substring(7);
     }
     
-    observer.observe(document.body, { childList: true, subtree: true });
+    // بدء المراقبة
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // تطبيق على الحقول الموجودة حالياً
     document.querySelectorAll('input[type="search"]').forEach(disableAutofill);
+    
+    // حل إضافي: إخفاء الحقول مؤقتاً ثم إظهارها
+    setTimeout(() => {
+        document.querySelectorAll('input[type="search"]').forEach(input => {
+            input.style.visibility = 'hidden';
+            setTimeout(() => {
+                input.value = '';
+                input.style.visibility = 'visible';
+            }, 100);
+        });
+    }, 10);
 });
 </script>
 
