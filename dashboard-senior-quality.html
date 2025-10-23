@@ -1845,59 +1845,86 @@ async function openViewAssignedModal(assignmentId) {
             });
         });
 window.handleFinalDecision = async (errorId, decision) => {
-    try {
-        if (!currentUser || !currentUser.id) {
-            throw new Error("Could not identify the current user. Please refresh and try again.");
-        }
-        const seniorUserId = currentUser.id;
-        const notes = document.getElementById('decision-notes')?.value || '';
-
-        // --- START: NEW & CORRECTED DATA FETCHING ---
-        const { data: errorData, error: fetchError } = await window.supabase
-            .from('errors')
-            .select(`
-                employees!inner(user_id),
-                quality_reviews!inner(
-                    order_assignments!inner(
-                        orders!inner(order_id)
-                    )
-                )
-            `)
-            .eq('id', errorId)
-            .single();
-
-        if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
-            console.error("Fetch error or missing critical data:", fetchError, errorData);
-            throw new Error("Could not find the agent's User ID or Order ID to notify.");
-        }
-        
-        const agentUserId = errorData.employees.user_id;
-        const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
-        // --- END: NEW & CORRECTED DATA FETCHING ---
-
-        // 1. Submit the final decision with notes
-        await submitFinalDecision(errorId, seniorUserId, decision, notes);
-        
-        // 2. Create a notification for the agent
-        const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
-        await createNotification(agentUserId, notificationMessage, 'info');
-
-        showToast(`Decision recorded and notification sent successfully.`, 'success');
-        hideModal('final-decision-modal');
-
-        // Refresh the lists
-        await Promise.all([
-            loadAppealedErrors(),
-            loadFinalizedDecisions()
-        ]);
-
-    } catch (error) {
-        console.error("Error in handleFinalDecision:", error);
-        showToast(error.message || 'Failed to record final decision.', 'error');
+  try {
+    // --- 0. تحقق من المستخدم الحالي ---
+    if (!currentUser || !currentUser.id) {
+      throw new Error("Could not identify the current user. Please refresh and try again.");
     }
+    const seniorUserId = currentUser.id;
+    const notes = document.getElementById('decision-notes')?.value || '';
+
+    // --- 1. تأكيد البيانات المطلوبة (Agent + Order) ---
+    const { data: errorData, error: fetchError } = await window.supabase
+      .from('errors')
+      .select(`
+        id,
+        employees!inner(user_id),
+        quality_reviews!inner(
+          order_assignments!inner(
+            orders!inner(order_id)
+          )
+        )
+      `)
+      .eq('id', errorId)
+      .single();
+
+    if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
+      console.error("Fetch error or missing critical data:", fetchError, errorData);
+      throw new Error("Could not find the agent's User ID or Order ID to notify.");
+    }
+
+    const agentUserId = errorData.employees.user_id;
+    const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+
+    // --- 2. تطبيع القرار قبل الإرسال (mapping + lowercase) ---
+    const normalizedDecision = decision.toLowerCase();
+    const allowedDecisions = ['approved', 'rejected', 'modified'];
+    if (!allowedDecisions.includes(normalizedDecision)) {
+      throw new Error(`Invalid decision value: ${decision}`);
+    }
+
+    // --- 3. تسجيل القرار النهائي في final_decisions ---
+    const { error: insertError } = await submitFinalDecision(errorId, seniorUserId, normalizedDecision, notes);
+    if (insertError) throw insertError;
+
+    // --- 4. تحديث حالة الخطأ في جدول errors ---
+    // mapping بين القرار والحالة الجديدة
+    const statusMap = {
+      approved: 'closed',      // الخطأ تأكد
+      rejected: 'overturned',  // الخطأ اتلغى
+      modified: 'closed'       // تم تعديل القرار وانتهى
+    };
+    const newErrorStatus = statusMap[normalizedDecision] || 'closed';
+
+    const { error: updateError } = await supabase
+      .from('errors')
+      .update({
+        status: newErrorStatus,
+        decided_by_id: seniorUserId,
+        finalized_at: new Date()
+      })
+      .eq('id', errorId);
+
+    if (updateError) throw updateError;
+
+    // --- 5. إنشاء إشعار للـ Agent ---
+    const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${normalizedDecision}.`;
+    await createNotification(agentUserId, notificationMessage, 'info');
+
+    // --- 6. تحديث الواجهة وإظهار نجاح ---
+    showToast(`✅ Decision recorded and notification sent successfully.`, 'success');
+    hideModal('final-decision-modal');
+
+    await Promise.all([
+      loadAppealedErrors(),
+      loadFinalizedDecisions()
+    ]);
+
+  } catch (error) {
+    console.error("Error in handleFinalDecision:", error);
+    showToast(error.message || '❌ Failed to record final decision.', 'error');
+  }
 };
-        
-       window.handleOldFinalDecision = handleOldFinalDecision;
 
     </script>
 </body>
