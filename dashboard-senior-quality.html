@@ -1441,12 +1441,13 @@ function openFinalDecisionModal(errorId) {
         </div>
 
         <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
-          <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'closed')">Uphold (Keep as Error)</button>
-          <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturned')">Overturn (Not an Error)</button>
+          <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'uphold')">Uphold (Keep as Error)</button>
+          <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturn')">Overturn (Not an Error)</button>
         </div>`;
         
     showModal('final-decision-modal');
 }
+        
         
         
         async function openViewAssignedModal(assignmentId) {
