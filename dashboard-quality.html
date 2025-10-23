@@ -84,6 +84,7 @@ document.addEventListener('click', function(e){
         // FIX: Make these functions globally available
         window.getErrorReasons = getErrorReasons;
         window.getCompanyDepartments = getCompanyDepartments;
+        window.updateAssignmentStatus = updateAssignmentStatus;
     </script>
     <style>
         :root {
@@ -2173,7 +2174,7 @@ async function loadCompanyDepartments() {
 
         async function openReviewOrderModal(orderAssignmentId) {
             // --- أضف هذا السطر في البداية ---
-            await updateAssignmentStatus(orderAssignmentId, 'in_progress');
+        await window.updateAssignmentStatus(orderAssignmentId, 'in_progress');
             // ---------------------------------
         
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
