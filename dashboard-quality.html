@@ -27,12 +27,12 @@ document.addEventListener('click', function(e){
 </script>
     <script type="module">
     console.log("--- SCRIPT DASHBOARD-QUALITY IS RUNNING ---"); // <-- أضف هذا السطر هنا
-        import { 
-            supabase, 
-            getCurrentUser, 
+        import {
+            supabase,
+            getCurrentUser,
             getUserById,
             getAssignedOrders,
-            getEscalations, 
+            getEscalations,
             submitReview,
             submitEscalation,
             getPerformanceMetrics,
@@ -53,8 +53,9 @@ document.addEventListener('click', function(e){
             respondToInquiry,
             // New function for company employees
             getCompanyEmployees,
-            getErrorReasons, 
+            getErrorReasons,
             getCompanyDepartments,
+            updateAssignmentStatus // <--- أضف هذه
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -70,7 +71,7 @@ document.addEventListener('click', function(e){
         window.updateTeamSchedule = updateTeamSchedule;
         window.getNotifications = getNotifications;
         window.markNotificationAsRead = markNotificationAsRead;
-        window.subscribeToNotifications = subscribeToNotifications; 
+        window.subscribeToNotifications = subscribeToNotifications;
         window.subscribeToAssignments = subscribeToAssignments;
         // New functions
         window.getHelperEscalations = getHelperEscalations;
@@ -171,9 +172,10 @@ document.addEventListener('click', function(e){
         tbody tr:last-child td { border-bottom: none; }
         tbody tr:hover { background-color: rgba(255,255,255,0.05); }
         body.light-mode tbody tr:hover { background-color: #f0f0f0; }
-        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; }
+        .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; display: inline-block; text-transform: capitalize; }
         .status-new { background-color: var(--primary-color); color: #000; }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
+        .status-in_progress { background-color: var(--primary-color); color: #000; }
         .status-completed { background-color: var(--green-bg); color: var(--green); }
         .status-error { background-color: var(--red-bg); color: var(--red); }
         .status-escalated { background-color: var(--yellow-bg); color: var(--yellow); }
@@ -1696,12 +1698,12 @@ async function loadCompanyDepartments() {
                         <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
                         <td>${orderData?.reason || 'N/A'}</td>
                         <td>${formatDateTime(order.assigned_at)}</td>
-                        <td><span class="status-badge ${statusClass}">${order.status}</span></td>
+                        <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
                         <td>${reviewTime}</td>
                         <td>${slaStatus}</td>
                         <td>
                             <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                            ${order.status === 'pending' ? 
+                            ${order.status === 'pending' || order.status === 'in_progress' ? 
                                 `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
                                  <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
                                  <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
@@ -2170,6 +2172,10 @@ async function loadCompanyDepartments() {
         }
 
         async function openReviewOrderModal(orderAssignmentId) {
+            // --- أضف هذا السطر في البداية ---
+            await updateAssignmentStatus(orderAssignmentId, 'in_progress');
+            // ---------------------------------
+        
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
             const errorReasonSelect = document.getElementById('review-error-type');
             if(errorReasonSelect){
