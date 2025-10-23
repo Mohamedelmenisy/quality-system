@@ -1457,12 +1457,13 @@
         </div>
 
         <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
-          <button class="btn btn-danger" onclick="window.handleFinalDecision('${error.error_id}', 'upheld')">Uphold (Keep as Error)</button>
-          <button class="btn btn-success" onclick="window.handleFinalDecision('${error.error_id}', 'overturned')">Overturn (Not an Error)</button>
+          <button class="btn btn-danger" onclick="window.handleFinalDecision('${error.error_id}', 'rejected')">Uphold (Keep as Error)</button>
+          <button class="btn btn-success" onclick="window.handleFinalDecision('${error.error_id}', 'approved')">Overturn (Not an Error)</button>
         </div>`;
         
     showModal('final-decision-modal');
 }
+        
         
         // FIX: New function to show details of a finalized decision from the log
         function openFinalDecisionDetailsModal(errorId) {
