@@ -221,8 +221,7 @@
     
             const errorTypes = {};
             userErrors.forEach(error => {
-                // *** FIXED: Using old version's logic to get error type ***
-                const type = error.quality_reviews?.modified_reason || 'Unknown';
+                const type = error.error_details || 'Unknown';
                 errorTypes[type] = (errorTypes[type] || 0) + 1;
             });
             userPerformance.errorTypes = errorTypes;
@@ -264,8 +263,7 @@
             tbody.innerHTML = paginatedData.map(error => {
                 const orderId = error.order_id || 'N/A';
                 const orderDate = error.created_at;
-                // *** FIXED: Using old version's logic to get error type ***
-                const errorType = error.quality_reviews?.modified_reason || 'Unknown';
+                const errorType = error.error_details || 'Unknown';
                 const status = error.status.replace(/_/g, ' ');
 
                 let actionButtons = '';
@@ -337,7 +335,7 @@
         let contentHtml = `
             <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
             <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
-            <div class="detail-item"><strong>Error Type</strong><p>${error.quality_reviews?.modified_reason || 'Unknown'}</p></div>
+            <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
             <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
         `;
 
