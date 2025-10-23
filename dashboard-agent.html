@@ -948,36 +948,54 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // الانتظار قليلاً لضمان تحميل الصفحة بالكامل
-  setTimeout(function() {
-    const searchInputs = document.querySelectorAll('input[type="search"]');
+  const searchInputs = document.querySelectorAll('input[type="search"]');
+  
+  searchInputs.forEach(input => {
+    // منع الـ autocomplete تماماً
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
     
-    searchInputs.forEach(input => {
-      // إعادة تعيين كاملة للحقل
-      input.type = "text";
-      input.value = "";
-      input.autocomplete = "new-password";
-      input.name = "search-field";
-      
-      // تغيير النوع مرة أخرى إلى search بعد فترة
-      setTimeout(() => {
-        input.type = "search";
-      }, 100);
-      
-      // مراقبة مستمرة لمنع ظهور البريد الإلكتروني
-      const observer = new MutationObserver(function(mutations) {
-        mutations.forEach(function(mutation) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
-            if (input.value.includes("@")) {
-              input.value = "";
-            }
-          }
-        });
-      });
-      
-      observer.observe(input, { attributes: true, attributeFilter: ['value'] });
+    // تغيير اسم الحقل
+    input.name = "search-" + Date.now();
+    
+    // إزالة أي قيمة حالية فوراً
+    input.value = "";
+    
+    // مراقبة التغييرات وإزالة البريد الإلكتروني فور ظهوره
+    let checkInterval = setInterval(() => {
+      if (input.value.includes("@")) {
+        input.value = "";
+      }
+    }, 50);
+    
+    // إيقاف المراقبة بعد 5 ثوانٍ (بعد أن تستقر الصفحة)
+    setTimeout(() => {
+      clearInterval(checkInterval);
+    }, 5000);
+    
+    // أيضاً مراقبة أي تغيير مباشر
+    input.addEventListener("input", function() {
+      if (this.value.includes("@")) {
+        this.value = "";
+      }
     });
-  }, 500);
+    
+    // عند التركيز على الحقل
+    input.addEventListener("focus", function() {
+      if (this.value.includes("@")) {
+        this.value = "";
+      }
+    });
+    
+    // عند فقدان التركيز
+    input.addEventListener("blur", function() {
+      if (this.value.includes("@")) {
+        this.value = "";
+      }
+    });
+  });
 });
 </script>
 </body>
