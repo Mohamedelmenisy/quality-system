@@ -51,7 +51,7 @@ document.addEventListener('click', function(e){
             getHelperInquiries,
             respondToInquiry,
             // New function for company employees
-            getCompanyEmployees, // FIX: Corrected function name from getCompanyEmployee to getCompanyEmployees
+            getCompanyEmployees,
             getErrorReasons, 
             getCompanyDepartments,
         } from './api-client.js';
@@ -79,6 +79,9 @@ document.addEventListener('click', function(e){
         window.getHelperInquiries = getHelperInquiries;
         window.respondToInquiry = respondToInquiry;
         window.getCompanyEmployees = getCompanyEmployees;
+        // FIX: Make these functions globally available
+        window.getErrorReasons = getErrorReasons;
+        window.getCompanyDepartments = getCompanyDepartments;
     </script>
     <style>
         :root {
@@ -1019,9 +1022,10 @@ document.addEventListener('click', function(e){
                         <option value="operations">Operations</option>
                     </select>
                 </div>
+                <!-- FIX: Changed input to select and corrected the ID -->
                 <div class="form-group">
-                    <label for="review-modified-reason">Modified Reason (if applicable)</label>
-                    <input type="text" id="review-modified-reason" placeholder="Enter modified reason...">
+                    <label for="review-error-type">Error Reason (if applicable)</label>
+                    <select id="review-error-type"></select>
                 </div>
                 <div class="form-group">
                     <label for="review-notes">Additional Notes</label>
@@ -1481,8 +1485,8 @@ document.addEventListener('click', function(e){
                 await loadHelperEscalations();
                 await loadHelperInquiries();
                 await loadCompanyEmployees();
-                await loadErrorReasons(), 
-                await loadCompanyDepartments(),
+                await loadErrorReasons(); 
+                await loadCompanyDepartments();
                 
                 // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
@@ -2166,14 +2170,16 @@ async function loadCompanyDepartments() {
 
         async function openReviewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
-              const errorReasonSelect = document.getElementById('review-error-type'); // تأكد من أن لديك select بهذا الـ id
-    errorReasonSelect.innerHTML = '<option value="">Select error reason...</option>' + 
-        errorReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('');
-
-    // تعبئة قائمة الأقسام
-    const departmentSelect = document.getElementById('review-department');
-    departmentSelect.innerHTML = '<option value="">Select department...</option>' + 
-        companyDepartments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+            const errorReasonSelect = document.getElementById('review-error-type');
+            if(errorReasonSelect){
+                errorReasonSelect.innerHTML = '<option value="">Select error reason...</option>' + 
+                    errorReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('');
+            }
+            const departmentSelect = document.getElementById('review-department');
+            if(departmentSelect){
+                departmentSelect.innerHTML = '<option value="">Select department...</option>' + 
+                    companyDepartments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+            }
             
             if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
@@ -2184,7 +2190,7 @@ async function loadCompanyDepartments() {
             document.getElementById('submit-review-btn').dataset.assignmentId = orderAssignmentId;
             document.getElementById('review-action').value = '';
             document.getElementById('review-department').value = 'customer_service';
-            document.getElementById('review-modified-reason').value = '';
+            if(document.getElementById('review-error-type')) document.getElementById('review-error-type').value = '';
             document.getElementById('review-notes').value = '';
             const submitBtn = document.getElementById('submit-review-btn');
             submitBtn.className = 'btn btn-primary';
@@ -2394,15 +2400,11 @@ async function loadCompanyDepartments() {
                 if(modalId) hideModal(modalId);
             }));
 
-            // =================================================================
-            // START: MODIFIED CODE BLOCK
-            // =================================================================
             document.getElementById('submit-review-btn').addEventListener('click', async () => {
                 try {
                     const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
                     const action = document.getElementById('review-action').value;
                     const department = document.getElementById('review-department').value;
-                    // الكود الجديد
                     const modifiedReason = document.getElementById('review-error-type').value;
                     const notes = document.getElementById('review-notes').value;
 
@@ -2410,34 +2412,27 @@ async function loadCompanyDepartments() {
                         showToast('Please select an action (Correct/Error).', 'warning');
                         return;
                     }
-
-                    // --- التعديل يبدأ هنا ---
-
-                    // 1. ابحث عن الطلب الحالي للحصول على اسم الموظف
+                    
                     const currentAssignment = assignedOrders.find(o => o.id.toString() === assignmentId.toString());
                     if (!currentAssignment) {
                         throw new Error("Could not find the assignment details to get employee name.");
                     }
                     const employeeName = currentAssignment.orders?.employee_name;
 
-                    // 2. قم بإنشاء كائن البيانات مع إضافة اسم الموظف
                     const reviewData = {
                         action_correctness: action,
                         department: department,
                         modified_reason: modifiedReason,
                         notes: notes,
-                        employee_raw_name: employeeName // <-- تمت إضافة اسم الموظف هنا
+                        employee_raw_name: employeeName 
                     };
                     
-                    // --- التعديل ينتهي هنا ---
-
                     showToast('Submitting your review...', 'info');
                     await submitReview(assignmentId, reviewData);
                     
                     showToast('Review submitted successfully!', 'success');
                     hideModal('review-order-modal');
                     
-                    // أعد تحميل البيانات لتحديث الواجهة
                     await loadAssignedOrders();
                     await loadPerformanceMetrics();
 
@@ -2446,9 +2441,6 @@ async function loadCompanyDepartments() {
                     showToast(`Failed to submit review: ${error.message}`, 'error');
                 }
             });
-            // =================================================================
-            // END: MODIFIED CODE BLOCK
-            // =================================================================
 
             document.getElementById('review-action').addEventListener('change', function() {
                 const submitBtn = document.getElementById('submit-review-btn');
