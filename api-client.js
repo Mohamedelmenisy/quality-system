@@ -602,58 +602,9 @@ export async function getPendingErrors() {
   }
 }
 
-// ========== START: NEW FUNCTION ADDED HERE ==========
-// هذه هي الدالة الجديدة التي تم إضافتها لحل المشكلة
-export async function getAppealedErrors() {
-  try {
-    console.log('🔄 Fetching appealed errors for senior review...');
-    
-    // نستعلم عن الأخطاء التي رد عليها الموظف وتنتظر قراراً نهائياً
-    const { data, error } = await supabase
-      .from('errors')
-      .select(`
-        id,
-        status,
-        created_at,
-        employee:employees (employee_name),
-        quality_reviews (
-            id,
-            modified_reason,
-            modification_details,
-            order_assignments (
-                orders ( order_id )
-            )
-        ),
-        error_responses (
-            response_text,
-            responded_at
-        )
-      `)
-      .in('status', ['responded', 'appealed']) // 'responded' هي الحالة التي تسبق القرار
-      .order('created_at', { ascending: true });
-
-    if (error) {
-      console.error('❌ Error fetching appealed errors:', error);
-      throw error;
-    }
-    
-    console.log(`✅ Found ${data.length} appealed errors.`);
-    return data;
-
-  } catch (error) {
-    console.error('💥 Critical error in getAppealedErrors:', error);
-    throw error;
-  }
-}
-// ========== END: NEW FUNCTION ADDED HERE ==========
-
-
 export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
   try {
-    console.log(`[1/3] Attempting to insert final decision for error: ${errorId}`);
-    
-    // Step 1: Insert the final decision
-    const { data: decisionData, error: decisionError } = await supabase
+    const { data, error } = await supabase
       .from('final_decisions')
       .insert({
         error_id: errorId,
@@ -665,41 +616,27 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
       .select()
       .single();
 
-    if (decisionError) {
-      console.error('❌ [FAIL] Error inserting final decision:', decisionError);
-      throw decisionError;
-    }
-    
-    console.log('✅ [SUCCESS 1/3] Final decision inserted successfully.');
+    if (error) throw error;
 
-    // Step 2: Update the error status to 'finalized'
-    console.log(`[2/3] Attempting to update error status to 'finalized' for error: ${errorId}`);
-    
-    const { data: updateData, error: updateError } = await supabase
+    await supabase
       .from('errors')
       .update({ status: 'finalized' })
-      .eq('id', errorId)
-      .select(); // Use select() to see what was updated
+      .eq('id', errorId);
 
-    if (updateError) {
-      console.error('❌ [FAIL] Error updating error status:', updateError);
-      // This is a critical warning, not a full stop. The decision is saved.
-      console.warn('⚠️ Decision was saved, but the error status could not be updated in the database.');
-      // We will still return the decision data so the UI can partially update
-      return decisionData;
-    }
-
-    if (updateData && updateData.length > 0) {
-      console.log('✅ [SUCCESS 2/3] Error status updated to finalized.');
-    } else {
-      console.warn('⚠️ [WARN 2/3] Update command ran without error, but no rows were updated. Check if RLS policy is blocking the update.');
-    }
-    
-    console.log('[3/3] SubmitFinalDecision process completed.');
-    return decisionData;
-    
+    return data;
   } catch (error) {
-    console.error('💥 [CRITICAL] An error occurred in the submitFinalDecision function:', error);
+    console.error('SubmitFinalDecision error:', error);
+    throw error;
+  }
+}
+
+export async function getAppealedErrors() {
+  try {
+    const { data, error } = await supabase.rpc('get_appealed_errors');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetAppealedErrors error:', error);
     throw error;
   }
 }
