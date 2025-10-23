@@ -251,6 +251,42 @@ export async function getDepartments() {
     return data;
 }
 
+// api-client.js
+
+export async function getErrorReasons() {
+  try {
+    const { data, error } = await supabase
+      .from('error_reasons')
+      .select('reason_text')
+      .eq('is_active', true)
+      .order('reason_text');
+      
+    if (error) throw error;
+    return data.map(item => item.reason_text);
+  } catch (error) {
+    console.error('GetErrorReasons error:', error);
+    return [];
+  }
+}
+// api-client.js
+
+export async function getCompanyDepartments() {
+  try {
+    const { data, error } = await supabase
+      .from('employees')
+      .select('department');
+      
+    if (error) throw error;
+    
+    // استخراج الأسماء الفريدة وإزالة القيم الفارغة
+    const departments = [...new Set(data.map(item => item.department).filter(Boolean))];
+    return departments.sort();
+    
+  } catch (error) {
+    console.error('GetCompanyDepartments error:', error);
+    return [];
+  }
+}
 
 // ==================== ORDER FUNCTIONS ====================
 
