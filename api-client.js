@@ -356,6 +356,36 @@ export async function assignOrders(orderIds, agentId, assignedById) {
   }
 }
 
+// أضف هذه الوظيفة الجديدة
+export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
+  try {
+    console.log(`🔄 Reassigning assignment ${assignmentId} to agent ${newAgentId}`);
+
+    const { data, error } = await supabase
+      .from('order_assignments')
+      .update({
+        quality_agent_id: newAgentId,
+        assigned_by_id: reassignedById,
+        assigned_at: 'now()', // تحديث تاريخ التعيين
+        status: 'pending' // إعادة الحالة إلى pending للموظف الجديد
+      })
+      .eq('id', assignmentId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('❌ Reassign order error:', error);
+      throw error;
+    }
+
+    console.log('✅ Order reassigned successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('💥 ReassignOrder error:', error);
+    throw error;
+  }
+}
+
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
     let query = supabase
