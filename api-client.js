@@ -601,6 +601,53 @@ export async function getPendingErrors() {
     throw error;
   }
 }
+
+// ========== START: NEW FUNCTION ADDED HERE ==========
+// هذه هي الدالة الجديدة التي تم إضافتها لحل المشكلة
+export async function getAppealedErrors() {
+  try {
+    console.log('🔄 Fetching appealed errors for senior review...');
+    
+    // نستعلم عن الأخطاء التي رد عليها الموظف وتنتظر قراراً نهائياً
+    const { data, error } = await supabase
+      .from('errors')
+      .select(`
+        id,
+        status,
+        created_at,
+        employee:employees (employee_name),
+        quality_reviews (
+            id,
+            modified_reason,
+            modification_details,
+            order_assignments (
+                orders ( order_id )
+            )
+        ),
+        error_responses (
+            response_text,
+            responded_at
+        )
+      `)
+      .in('status', ['responded', 'appealed']) // 'responded' هي الحالة التي تسبق القرار
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('❌ Error fetching appealed errors:', error);
+      throw error;
+    }
+    
+    console.log(`✅ Found ${data.length} appealed errors.`);
+    return data;
+
+  } catch (error) {
+    console.error('💥 Critical error in getAppealedErrors:', error);
+    throw error;
+  }
+}
+// ========== END: NEW FUNCTION ADDED HERE ==========
+
+
 export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
   try {
     console.log(`[1/3] Attempting to insert final decision for error: ${errorId}`);
