@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -9,9 +8,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { 
-            supabase, 
-            getCurrentUser, 
+        import {
+            supabase,
+            getCurrentUser,
             getUserById,
             getUnassignedOrders,
             getAssignedOrders,
@@ -36,9 +35,10 @@
             updateCompanyEmployee,
             getEscalations,
             resolveEscalation,
-            getTeamPerformance
+            getTeamPerformance,
+            reassignOrder
         } from './api-client.js';
-        
+
         // Make functions globally available for inline event handlers if needed
         window.supabase = supabase;
         window.getCurrentUser = getCurrentUser;
@@ -275,7 +275,7 @@
         .main-footer { margin-top: auto; padding: 2rem; text-align: center; color: var(--text-muted-color); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
         .pagination-controls { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
         .pagination-controls .page-info { font-size: 0.9rem; color: var(--text-muted-color); }
-        
+
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-wrapper { margin-left: 220px; }
@@ -385,7 +385,7 @@
                          </div>
                      </div>
                 </div>
-                
+
                 <!-- Escalations Tab -->
                 <div id="escalations" class="tab-content">
                     <div class="widget">
@@ -660,7 +660,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- KPIs Tab -->
                 <div id="kpis" class="tab-content">
                      <div class="widget">
@@ -689,7 +689,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Reports & Analytics Tab -->
                 <div id="reports-analytics" class="tab-content">
                      <div class="widget">
@@ -811,7 +811,7 @@
         <div class="modal-body" id="decision-modal-content"></div>
       </div>
     </div>
-    
+
     <div id="employee-modal" class="modal-overlay">
         <div class="modal-box" style="max-width: 500px;">
             <div class="modal-header">
@@ -891,7 +891,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- [AI-FIX] New modal for Reassign functionality -->
     <div id="reassign-modal" class="modal-overlay">
       <div class="modal-box" style="max-width: 500px;">
@@ -912,7 +912,7 @@
         </div>
       </div>
     </div>
-    
+
     <!-- [AI-FIX] The new, correct modal for viewing review details -->
     <div id="view-review-details-modal" class="modal-overlay">
       <div class="modal-box">
@@ -946,7 +946,7 @@
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
-    
+
     <script>
         // Application State
         let currentUser = null;
@@ -965,7 +965,7 @@
         let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
-        
+
         // [AI-FIX] Pagination state
         let assignedOrdersCurrentPage = 1;
         const ASSIGNED_ITEMS_PER_PAGE = 10;
@@ -997,7 +997,7 @@
 
         // Helper Functions
         const getInitials = (name) => (name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '');
-        const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-EG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Cairo' }) : 'N/A';        
+        const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-EG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Cairo' }) : 'N/A';
         const formatDateTime = (dateString) => dateString ? new Date(dateString).toLocaleString('en-EG', { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Cairo' }) : 'N/A';
         const showModal = (modalId) => {
             const modal = document.getElementById(modalId);
@@ -1037,20 +1037,20 @@
         async function initApp() {
             try {
                 showToast('Loading Senior Dashboard...', 'info');
-                
+
                 // [AI-FIX] Restore active tab on page load
                 applyStoredTab();
 
                 const user = await getCurrentUser();
                 if (!user) { window.location.href = 'login.html'; return; }
-                
+
                 const { data: profile, error } = await supabase.from('users').select('*').eq('id', user.id).single();
                 if (error) throw error;
-                
+
                 currentUser = { ...user, ...profile };
-                
+
                 updateUserInterface();
-                initCharts(); 
+                initCharts();
 
                 await Promise.all([
                     loadPendingErrors(),
@@ -1099,7 +1099,7 @@
             document.getElementById('profile-email').value = currentUser.email || '';
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
-        
+
         async function loadDirectEscalations() {
             try {
                 if (typeof getEscalations === 'function') {
@@ -1140,7 +1140,7 @@
 
         async function loadPerformanceMetrics() {
             try {
-                performanceMetrics = await getPerformanceMetrics(); 
+                performanceMetrics = await getPerformanceMetrics();
                 document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
                 document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
                 document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
@@ -1172,7 +1172,7 @@
                 </tr>
             `).join('');
         }
-        
+
         function renderAppealedErrorsTable() {
             const tableBody = document.getElementById('appealed-errors-table-body');
             if (appealedErrors.length === 0) {
@@ -1237,7 +1237,7 @@
         function renderAssignedOrdersTable() {
             const tableBody = document.getElementById('assigned-table-body');
             const paginationControls = document.getElementById('assigned-orders-pagination');
-            
+
             if (filteredAssignedOrders.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
                 paginationControls.style.display = 'none';
@@ -1256,7 +1256,7 @@
                 if (a.status === 'completed' && a.assigned_at && a.completed_at) {
                     const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
                     reviewTime = `${diffMinutes} min`;
-                    slaStatus = (diffMinutes > 30) 
+                    slaStatus = (diffMinutes > 30)
                         ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                         : `<span class="status-badge status-completed">On Time</span>`;
                 }
@@ -1275,7 +1275,7 @@
                     </tr>
                 `;
             }).join('');
-            
+
             // Update pagination controls
             paginationControls.querySelector('.page-info').textContent = `Page ${assignedOrdersCurrentPage} of ${totalPages}`;
             paginationControls.querySelector('.prev-btn').disabled = assignedOrdersCurrentPage === 1;
@@ -1328,7 +1328,7 @@
                 `;
             }).join('');
         }
-        
+
         function renderTeamMembers() {
             const grid = document.getElementById('team-members-grid');
             const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
@@ -1361,7 +1361,7 @@
                 </tr>
             `).join('');
         }
-        
+
         function renderTeamSchedule() {
             const tableBody = document.getElementById('schedule-table-body');
             const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'helper');
@@ -1394,7 +1394,7 @@
 
         function updateNotificationsUI() {
             const list = document.getElementById('notification-list');
-            list.innerHTML = notifications.length === 0 ? '<li class="notification-item">No new notifications</li>' : 
+            list.innerHTML = notifications.length === 0 ? '<li class="notification-item">No new notifications</li>' :
                 notifications.map(n => `<li class="notification-item">${n.message}</li>`).join('');
         }
 
@@ -1465,7 +1465,7 @@
 
             showModal('view-escalation-modal');
         }
-        
+
         // [AI-FIX] Corrected function to show review details in the right modal.
        // dashboard-senior-quality.html
 
@@ -1536,7 +1536,7 @@ async function openViewAssignedModal(assignmentId) {
             }
             showModal('employee-modal');
         }
-        
+
         // [AI-FIX] New function to open the reassign modal.
         function openReassignModal(assignmentId) {
             const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
@@ -1544,13 +1544,13 @@ async function openViewAssignedModal(assignmentId) {
 
             const select = document.getElementById('reassign-agent-select');
             const assignableMembers = teamMembers.filter(m => m.role === 'quality' && m.id !== assignment.quality_agent_id);
-            
+
             if (assignableMembers.length > 0) {
                  select.innerHTML = assignableMembers.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
             } else {
                  select.innerHTML = `<option value="">No other agents available</option>`;
             }
-            
+
             document.getElementById('reassign-confirm-btn').dataset.assignmentId = assignmentId;
             showModal('reassign-modal');
         }
@@ -1578,7 +1578,7 @@ async function openViewAssignedModal(assignmentId) {
                 await loadPendingErrors();
             } catch (error) { showToast('Failed to submit decision', 'error'); }
         }
-        
+
         async function handleEmployeeFormSubmit(event) {
             event.preventDefault();
             const employeeId = document.getElementById('employee-id').value;
@@ -1606,17 +1606,17 @@ async function openViewAssignedModal(assignmentId) {
             const { userId, day } = document.getElementById('save-shift-btn').dataset;
             const shiftType = document.getElementById('shift-select').value;
             const today = new Date();
-            const currentDay = today.getDay(); 
+            const currentDay = today.getDay();
             const distance = day - currentDay;
             const targetDate = new Date(today);
             targetDate.setDate(targetDate.getDate() + distance);
             const shiftDate = targetDate.toISOString().split('T')[0];
             const scheduleData = { user_id: userId, shift_date: shiftDate, shift_type: shiftType };
             try {
-                await updateTeamSchedule([scheduleData]); 
+                await updateTeamSchedule([scheduleData]);
                 showToast('Schedule updated successfully', 'success');
                 hideModal('edit-shift-modal');
-                await loadTeamSchedule(); 
+                await loadTeamSchedule();
             } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
         }
 
@@ -1641,7 +1641,7 @@ async function openViewAssignedModal(assignmentId) {
                 } catch (error) {
                     showToast(`CSV Import Error: ${error.message}`, 'error');
                 } finally {
-                    event.target.value = ''; 
+                    event.target.value = '';
                 }
             };
             reader.readAsText(file);
@@ -1671,7 +1671,7 @@ async function openViewAssignedModal(assignmentId) {
                 errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
             }
         }
-        
+
         // [AI-FIX] New function for filtering assigned orders
         function applyAssignedOrdersFilters() {
             const searchTerm = document.getElementById('assigned-search').value.toLowerCase();
@@ -1685,7 +1685,7 @@ async function openViewAssignedModal(assignmentId) {
                 const matchesDate = !dateFilter || (a.assigned_at && a.assigned_at.startsWith(dateFilter));
                 return matchesSearch && matchesStatus && matchesDate;
             });
-            
+
             assignedOrdersCurrentPage = 1; // Reset to first page after filtering
             renderAssignedOrdersTable();
         }
@@ -1696,7 +1696,7 @@ async function openViewAssignedModal(assignmentId) {
             if (lastTab) {
                 document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
                 document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                
+
                 const tabLink = document.querySelector(`a[data-tab="${lastTab}"]`);
                 if(tabLink) {
                     tabLink.parentElement.classList.add('active');
@@ -1705,11 +1705,11 @@ async function openViewAssignedModal(assignmentId) {
                 }
             }
         }
-        
+
         // Event Listeners Setup
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
-            
+
             const tabs = document.querySelectorAll('.sidebar-nav a[data-tab]');
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
@@ -1720,19 +1720,19 @@ async function openViewAssignedModal(assignmentId) {
                     applyStoredTab();
                 });
             });
-            
+
             document.getElementById('notification-btn')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown')?.classList.toggle('show'); });
             document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown')?.classList.remove('show'); } });
             document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => { const modalId = btn.dataset.modalId; if (modalId) hideModal(modalId); }); });
-            
+
             // Main event delegation for buttons
             document.body.addEventListener('click', function(event) {
                 const target = event.target.closest('button');
                 if (!target) return;
-                
+
                 const assignmentId = target.dataset.assignmentId;
                 const errorId = target.dataset.errorId;
-                
+
                 if (target.classList.contains('final-decision-btn')) {
                     openFinalDecisionModal(errorId);
                 } else if (target.classList.contains('review-response-btn')) {
@@ -1749,7 +1749,7 @@ async function openViewAssignedModal(assignmentId) {
                     // Logic for viewing escalation details...
                 }
             });
-            
+
             // Schedule editing
             document.body.addEventListener('click', function(event) {
                  const target = event.target.closest('td');
@@ -1780,34 +1780,53 @@ async function openViewAssignedModal(assignmentId) {
                     renderAssignedOrdersTable();
                 }
             });
-            
+
             // [AI-FIX] Event listener for Reassign confirm button
             document.getElementById('reassign-confirm-btn')?.addEventListener('click', async (e) => {
-                const assignmentId = e.target.dataset.assignmentId;
+                const btn = e.target;
+                const assignmentId = btn.dataset.assignmentId;
                 const newAgentId = document.getElementById('reassign-agent-select').value;
+
                 if (!assignmentId || !newAgentId) {
-                    showToast('Please select an agent.', 'warning');
+                    showToast('Please select an agent to reassign to.', 'warning');
                     return;
                 }
-                showToast(`Reassigning order... (API call needed)`, 'info');
-                // Placeholder for API call: await reassignOrder(assignmentId, newAgentId);
-                hideModal('reassign-modal');
-                await loadAssignedOrders();
+
+                btn.disabled = true;
+                btn.textContent = 'Reassigning...';
+
+                try {
+                    await reassignOrder(assignmentId, newAgentId, currentUser.id);
+
+                    showToast('Order reassigned successfully!', 'success');
+                    hideModal('reassign-modal');
+
+                    // تحديث الجداول لعرض البيانات الجديدة
+                    await loadAssignedOrders();
+
+                } catch (error) {
+                    console.error('Failed to reassign order:', error);
+                    showToast(`Error: ${error.message}`, 'error');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Confirm Reassignment';
+                }
             });
+
 
             // Other existing event listeners
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const scheduleTable = document.getElementById('schedule-table');
             const cancelScheduleBtn = document.getElementById('cancel-schedule-btn');
-            
+
             if (editScheduleBtn) {
                 editScheduleBtn.addEventListener('click', () => { isScheduleEditMode = true; scheduleTable?.classList.add('edit-mode'); editScheduleBtn.style.display = 'none'; scheduleEditControls.style.display = 'inline-flex'; showToast('Edit mode enabled. Click a cell to change the shift.', 'info'); });
             }
             if (cancelScheduleBtn) {
                 cancelScheduleBtn.addEventListener('click', () => { isScheduleEditMode = false; scheduleTable?.classList.remove('edit-mode'); scheduleEditControls.style.display = 'none'; editScheduleBtn.style.display = 'inline-flex'; showToast('Edit mode disabled. Changes were not saved.', 'warning'); loadTeamSchedule(); });
             }
-            
+
             document.getElementById('import-orders-btn')?.addEventListener('click', () => document.getElementById('csv-file-input')?.click());
             document.getElementById('csv-file-input')?.addEventListener('change', handleCsvImport);
             document.getElementById('add-employee-btn')?.addEventListener('click', () => openEmployeeModal());
@@ -1823,7 +1842,7 @@ async function openViewAssignedModal(assignmentId) {
                     await loadUnassignedOrders(); await loadAssignedOrders();
                 } catch (error) { showToast('Failed to assign orders', 'error'); }
             });
-            
+
             document.getElementById('select-all-checkbox')?.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
             document.getElementById('direct-escalation-search')?.addEventListener('input', () => renderDirectEscalationsTable());
             document.getElementById('direct-escalation-status-filter')?.addEventListener('change', () => renderDirectEscalationsTable());
@@ -1853,7 +1872,7 @@ window.handleFinalDecision = async (errorId, decision, orderId) => {
 
         const agentUserId = errorData.employees.user_id;
         const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
-        
+
         const { error: notificationError } = await createNotification(agentUserId, notificationMessage, 'info');
         if (notificationError) {
             console.warn("Decision was saved, but failed to send notification:", notificationError);
