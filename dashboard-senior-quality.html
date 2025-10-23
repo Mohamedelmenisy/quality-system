@@ -1909,10 +1909,10 @@ window.handleFinalDecision = async (errorId, decision) => {
     if (insertError) throw insertError;
 
     // --- 4. تحديث حالة الخطأ في جدول errors ---
-    // mapping بين القرار والحالة الجديدة
+    // ✅ التصحيح النهائي حسب منطقك
     const statusMap = {
-      approved: 'closed',      // الخطأ تأكد
-      rejected: 'overturned',  // الخطأ اتلغى
+      approved: 'overturned',  // Overturn → الخطأ اتلغى
+      rejected: 'closed',      // Uphold → الخطأ اتأكد
       modified: 'closed'       // تم تعديل القرار وانتهى
     };
     const newErrorStatus = statusMap[normalizedDecision] || 'closed';
