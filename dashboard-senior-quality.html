@@ -1062,7 +1062,7 @@
         const loadPendingErrors = () => loadData(getPendingErrors, renderEscalationsTable, 'pending-responses-count', pendingErrors);
         const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
         const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), renderAssignedOrdersTable, null, assignedOrders);
-        const loadTeamMembers = () => loadData(getTeamMembers, () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
+        const loadTeamMembers = () => loadData(() => getTeamMembers(['quality', 'helper', 'senior', 'admin']), () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
         const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
