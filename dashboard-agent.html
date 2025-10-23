@@ -221,7 +221,8 @@
     
             const errorTypes = {};
             userErrors.forEach(error => {
-                const type = error.error_type || 'Unknown';
+                // *** FIXED: Using old version's logic to get error type ***
+                const type = error.quality_reviews?.modified_reason || 'Unknown';
                 errorTypes[type] = (errorTypes[type] || 0) + 1;
             });
             userPerformance.errorTypes = errorTypes;
@@ -263,13 +264,15 @@
             tbody.innerHTML = paginatedData.map(error => {
                 const orderId = error.order_id || 'N/A';
                 const orderDate = error.created_at;
-                const errorType = error.error_type || 'Unknown';
+                // *** FIXED: Using old version's logic to get error type ***
+                const errorType = error.quality_reviews?.modified_reason || 'Unknown';
                 const status = error.status.replace(/_/g, ' ');
 
                 let actionButtons = '';
                 const viewButtonText = error.final_decision ? 'View Decision' : 'View';
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ ${viewButtonText}</button>`;
-                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
+                // *** FIXED: Using error.id from old version's data structure ***
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ ${viewButtonText}</button>`;
+                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.id}">Appeal</button>`;
 
                 if (error.status === 'closed' && !error.appeal_reason) {
                     actionButtons = viewButton + appealButton;
@@ -325,7 +328,8 @@
     }
     
     function openViewErrorModal(errorId) {
-        const error = userErrors.find(e => String(e.error_id) === String(errorId));
+        // *** FIXED: Finding error by `id` as per old version's data structure ***
+        const error = userErrors.find(e => String(e.id) === String(errorId));
         if (!error) return;
     
         document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
@@ -333,7 +337,7 @@
         let contentHtml = `
             <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
             <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
-            <div class="detail-item"><strong>Error Type</strong><p>${error.error_type || 'Unknown'}</p></div>
+            <div class="detail-item"><strong>Error Type</strong><p>${error.quality_reviews?.modified_reason || 'Unknown'}</p></div>
             <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
         `;
 
@@ -949,6 +953,59 @@
         </div>
     </div>
 </div>
+
+<!-- *** FIXED: ADDED AUTOFILL PREVENTION SCRIPT *** -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // حل أقوى - نمنع الـ autofill من مستوى أعلى
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    const inputs = node.querySelectorAll ? node.querySelectorAll('input[type="search"]') : [];
+                    inputs.forEach(disableAutofill);
+                    
+                    // إذا كان الـ node نفسه input
+                    if (node.tagName === 'INPUT' && node.type === 'search') {
+                        disableAutofill(node);
+                    }
+                }
+            });
+        });
+    });
+    
+    function disableAutofill(input) {
+        if (input.value.includes('@')) {
+            input.value = '';
+        }
+        input.autocomplete = 'new-password';
+        input.autocorrect = 'off';
+        input.autocapitalize = 'off';
+        input.spellcheck = false;
+        input.name = 'search-' + Math.random().toString(36).substring(7);
+    }
+    
+    // بدء المراقبة
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // تطبيق على الحقول الموجودة حالياً
+    document.querySelectorAll('input[type="search"]').forEach(disableAutofill);
+    
+    // حل إضافي: إخفاء الحقول مؤقتاً ثم إظهارها
+    setTimeout(() => {
+        document.querySelectorAll('input[type="search"]').forEach(input => {
+            input.style.visibility = 'hidden';
+            setTimeout(() => {
+                input.value = '';
+                input.style.visibility = 'visible';
+            }, 100);
+        });
+    }, 10);
+});
+</script>
 
 </body>
 </html>
