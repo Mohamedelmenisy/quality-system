@@ -427,63 +427,38 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
+// api-client.js
 export async function submitReview(assignmentId, reviewData) {
-    try {
-        const { data: review, error: reviewError } = await supabase
-            .from('quality_reviews')
-            .insert({
-                assignment_id: assignmentId,
-                action_correctness: reviewData.action_correctness,
-                department: reviewData.department,
-                modified_reason: reviewData.modified_reason,
-                modification_details: reviewData.notes, // Translating 'notes' to 'modification_details'
-                reviewed_at: new Date()
-            })
-            .select()
-            .single();
+  try {
+    console.log("1. submitReview called in api-client.js");
+    console.log("   - Assignment ID:", assignmentId);
+    console.log("   - Review Data Received:", reviewData); // <-- أهم سطر
 
-        if (reviewError) throw reviewError;
+    const { data: review, error: reviewError } = await supabase
+      .from('quality_reviews')
+      .insert({
+        assignment_id: assignmentId,
+        action_correctness: reviewData.action_correctness,
+        department: reviewData.department,
+        modified_reason: reviewData.modified_reason,
+        modification_details: reviewData.notes,
+        reviewed_at: new Date(),
+        employee_raw_name: reviewData.employee_raw_name
+      })
+      .select()
+      .single();
 
-        // تحديث حالة الطلب وإضافة وقت الإكمال
-        await supabase
-            .from('order_assignments')
-            .update({ status: 'completed', completed_at: 'now()' }) // <-- تم التعديل هنا
-            .eq('id', assignmentId);
-
-        // --- الجزء الأهم: إنشاء سجل خطأ إذا كانت المراجعة 'error' ---
-        if (reviewData.action_correctness === 'error') {
-            const { data: assignmentData } = await supabase
-                .from('order_assignments')
-                .select('orders(employee_name)')
-                .eq('id', assignmentId)
-                .single();
-
-            if (assignmentData && assignmentData.orders.employee_name) {
-                const { data: employee } = await supabase
-                    .from('users')
-                    .select('id')
-                    .eq('name', assignmentData.orders.employee_name) // أو admin_id إذا كان الربط به
-                    .single();
-
-                if (employee) {
-                    await supabase.from('errors').insert({
-                        review_id: review.id,
-                        employee_id: employee.id
-                        // يمكنك إضافة باقي تفاصيل الخطأ هنا
-                    });
-                } else {
-                    console.warn(`Could not find user with name: ${assignmentData.orders.employee_name} to log an error.`);
-                }
-            }
-        }
-
-        return review;
-    } catch (error) {
-        console.error('SubmitReview error:', error);
-        throw error;
+    if (reviewError) {
+      console.error("❌ ERROR at step 1 (Inserting review):", reviewError);
+      throw reviewError;
     }
-}
+    console.log("✅ Step 1 successful. Review inserted with ID:", review.id);
 
+    // ... بقية الكود التشخيصي
+  } catch (error) {
+    // ...
+  }
+}
 
 export async function getQualityReviews(filters = {}) {
   try {
