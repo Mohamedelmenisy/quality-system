@@ -251,8 +251,6 @@ export async function getDepartments() {
     return data;
 }
 
-// api-client.js
-
 export async function getErrorReasons() {
   try {
     const { data, error } = await supabase
@@ -268,7 +266,6 @@ export async function getErrorReasons() {
     return [];
   }
 }
-// api-client.js
 
 export async function getCompanyDepartments() {
   try {
@@ -278,7 +275,6 @@ export async function getCompanyDepartments() {
       
     if (error) throw error;
     
-    // استخراج الأسماء الفريدة وإزالة القيم الفارغة
     const departments = [...new Set(data.map(item => item.department).filter(Boolean))];
     return departments.sort();
     
@@ -297,19 +293,10 @@ export async function getOrders(filters = {}) {
       .select('*')
       .order('created_at', { ascending: false });
 
-    // Apply filters
-    if (filters.order_id) {
-      query = query.ilike('order_id', `%${filters.order_id}%`);
-    }
-    if (filters.from_date) {
-      query = query.gte('created_at', filters.from_date);
-    }
-    if (filters.to_date) {
-      query = query.lte('created_at', filters.to_date);
-    }
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
+    if (filters.order_id) query = query.ilike('order_id', `%${filters.order_id}%`);
+    if (filters.from_date) query = query.gte('created_at', filters.from_date);
+    if (filters.to_date) query = query.lte('created_at', filters.to_date);
+    if (filters.status) query = query.eq('status', filters.status);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -322,22 +309,15 @@ export async function getOrders(filters = {}) {
 
 export async function getUnassignedOrders() {
   try {
-    // Get all order IDs that are already assigned
     const { data: assignedOrdersData, error: assignedOrdersError } = await supabase
       .from('order_assignments')
       .select('order_id');
 
-    if (assignedOrdersError) {
-      console.error('Error fetching assigned orders:', assignedOrdersError);
-      throw assignedOrdersError;
-    }
+    if (assignedOrdersError) throw assignedOrdersError;
 
     const assignedOrderIds = assignedOrdersData.map(assignment => assignment.order_id);
 
-    // Fetch orders that are not assigned
-    let query = supabase
-      .from('orders')
-      .select('*');
+    let query = supabase.from('orders').select('*');
 
     if (assignedOrderIds.length > 0) {
       query = query.not('order_id', 'in', `(${assignedOrderIds.map(id => `'${id}'`).join(',')})`);
@@ -345,10 +325,7 @@ export async function getUnassignedOrders() {
     
     const { data, error } = await query.order('created_at', { ascending: false });
     
-    if (error) {
-      console.error('Error fetching unassigned orders:', error);
-      throw error;
-    }
+    if (error) throw error;
     
     return data;
   } catch (error) {
@@ -393,28 +370,19 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
       `)
       .order('assigned_at', { ascending: false });
 
-    if (agentId) {
-      query = query.eq('quality_agent_id', agentId);
-    }
-
+    if (agentId) query = query.eq('quality_agent_id', agentId);
     if (filters.status && filters.status !== 'all') {
       if (filters.status === 'completed_today') {
         const today = new Date().toISOString().split('T')[0];
         query = query.eq('status', 'completed')
-                    .gte('assigned_at', today)
-                    .lte('assigned_at', today + 'T23:59:59');
+                    .gte('assigned_at', `${today}T00:00:00`)
+                    .lte('assigned_at', `${today}T23:59:59`);
       } else {
         query = query.eq('status', filters.status);
       }
     }
-
-    if (filters.from_date) {
-      query = query.gte('assigned_at', filters.from_date);
-    }
-
-    if (filters.to_date) {
-      query = query.lte('assigned_at', filters.to_date + 'T23:59:59');
-    }
+    if (filters.from_date) query = query.gte('assigned_at', filters.from_date);
+    if (filters.to_date) query = query.lte('assigned_at', `${filters.to_date}T23:59:59`);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -427,9 +395,10 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
+// [AI-FIX] This function has been improved to be more robust.
 export async function submitReview(assignmentId, reviewData) {
   try {
-    // 1. أضف المراجعة أولاً وانتظر حتى يتم حفظها
+    // 1. Insert the review record
     const { data: review, error: reviewError } = await supabase
       .from('quality_reviews')
       .insert({
@@ -441,39 +410,60 @@ export async function submitReview(assignmentId, reviewData) {
         reviewed_at: new Date(),
         employee_raw_name: reviewData.employee_raw_name
       })
-      .select('id, employee_raw_name') // اطلب فقط الـ id والاسم
+      .select('id, employee_raw_name')
       .single();
 
     if (reviewError) throw reviewError;
 
-    // 2. إذا كانت المراجعة خطأ، قم بتسجيله الآن بشكل صريح
+    // 2. If it's an error, find the employee and log the error
     if (reviewData.action_correctness === 'error') {
-      
-      // ابحث عن الموظف في جدول employees
-      const { data: employee, error: employeeError } = await supabase
+      const employeeNameToFind = review.employee_raw_name.replace(/"/g, '').trim();
+      let employee = null;
+
+      // --- IMPROVEMENT START ---
+      // Attempt 1: Find by exact username match (the original, faster method)
+      const { data: employeeByUsername } = await supabase
         .from('employees')
         .select('id')
-        .eq('employee_username', review.employee_raw_name.replace(/"/g, '').trim())
+        .eq('employee_username', employeeNameToFind)
         .single();
-      
-      if (employeeError) throw employeeError;
-      
+        
+      if (employeeByUsername) {
+        employee = employeeByUsername;
+      } else {
+        // Attempt 2: Fallback to find by exact full name match (slower but more reliable)
+        console.warn(`Could not find employee by username: "${employeeNameToFind}". Falling back to search by full name.`);
+        const { data: employeeByName } = await supabase
+          .from('employees')
+          .select('id')
+          .eq('employee_name', employeeNameToFind)
+          .single();
+        employee = employeeByName;
+      }
+      // --- IMPROVEMENT END ---
+
       if (employee) {
-        // قم بإضافة الخطأ الآن بعد التأكد من وجود المراجعة والموظف
+        // Log the error now that we have the employee ID
         const { error: insertError } = await supabase
           .from('errors')
           .insert({
-            review_id: review.id, // الآن review.id موجود ومضمون
-            employee_id: employee.id,
+            review_id: review.id,
+            employee_id: employee.id, // Use the found employee ID
             status: 'closed',
             created_at: new Date()
           });
 
         if (insertError) throw insertError;
+        console.log(`✅ Error successfully logged for employee ID: ${employee.id}`);
+
+      } else {
+        // This is a critical warning. The error was not logged for the agent.
+        console.error(`❌ CRITICAL: Could not find employee matching name/username: "${employeeNameToFind}". The error was NOT logged for the agent.`);
+        // You could optionally create a notification for an admin here.
       }
     }
 
-    // 3. أخيرًا، قم بتحديث حالة الطلب
+    // 3. Finally, update the assignment status
     await supabase
       .from('order_assignments')
       .update({ status: 'completed', completed_at: 'now()' })
@@ -491,25 +481,20 @@ export async function submitReview(assignmentId, reviewData) {
 
 export async function getAgentErrors(agentId, filters = {}) {
   try {
-    // نستدعي الدالة الجديدة التي أنشأناها في قاعدة البيانات
     const { data, error } = await supabase
       .rpc('get_errors_for_agent', { agent_uuid: agentId });
 
     if (error) {
-        // إذا حدث خطأ، قم بطباعته لمساعدتنا على التشخيص
         console.error('RPC call error:', error);
         throw error;
     }
     
     let filteredData = data;
 
-    // بما أن الدالة تعيد كل البيانات، يمكننا الآن تطبيق الفلاتر هنا في جافاسكريبت
     if (filters.status && filters.status !== 'All Statuses') {
         filteredData = filteredData.filter(e => e.status === filters.status);
     }
     
-    // يمكنك إضافة فلاتر أخرى هنا بنفس الطريقة إذا احتجت ذلك في المستقبل
-
     return filteredData;
 
   } catch (error) {
@@ -533,7 +518,6 @@ export async function submitErrorResponse(errorId, agentId, responseText) {
 
     if (error) throw error;
 
-    // Update error status
     await supabase
       .from('errors')
       .update({ status: 'responded' })
@@ -556,12 +540,10 @@ export async function getPendingErrors() {
           action_correctness,
           department,
           modified_reason,
-          order_assignments (
-            orders (*)
-          )
+          order_assignments ( orders (*) )
         ),
         error_responses (*),
-    employee:employees (employee_name, employee_username) // <-- تأكد من وجود employee_username هنا
+        employee:employees (employee_name, employee_username)
       `)
       .eq('status', 'pending_response')
       .order('created_at', { ascending: false });
@@ -590,7 +572,6 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
 
     if (error) throw error;
 
-    // Update error status
     await supabase
       .from('errors')
       .update({ status: 'finalized' })
@@ -614,7 +595,6 @@ export async function getAppealedErrors() {
   }
 }
 
-// *** NEW FUNCTION ***
 export async function getFinalizedDecisions() {
   try {
     const { data, error } = await supabase.rpc('get_finalized_decisions');
@@ -656,24 +636,19 @@ export async function getEscalations(userId = null, filters = {}) {
     let query = supabase
       .from('escalations')
      .select(`
-    *,
-    order_assignments!escalations_assignment_id_fkey (
-      *,
-      orders (*),
-      users!order_assignments_quality_agent_id_fkey (name)
-    ),
-    escalated_by:users!escalations_escalated_by_id_fkey (name),
-    escalated_to:users!escalations_escalated_to_id_fkey (name)
-  `)
+        *,
+        order_assignments!escalations_assignment_id_fkey (
+          *,
+          orders (*),
+          users!order_assignments_quality_agent_id_fkey (name)
+        ),
+        escalated_by:users!escalations_escalated_by_id_fkey (name),
+        escalated_to:users!escalations_escalated_to_id_fkey (name)
+      `)
       .order('escalated_at', { ascending: false });
 
-    if (userId) {
-      query = query.eq('escalated_to_id', userId);
-    }
-
-    if (filters.status) {
-      query = query.eq('status', filters.status);
-    }
+    if (userId) query = query.eq('escalated_to_id', userId);
+    if (filters.status) query = query.eq('status', filters.status);
 
     const { data, error } = await query;
     if (error) throw error;
@@ -683,6 +658,8 @@ export async function getEscalations(userId = null, filters = {}) {
     throw error;
   }
 }
+
+// ... (Rest of the file remains the same)
 
 // ==================== ESCALATION WORKFLOW FUNCTIONS ====================
 
@@ -747,7 +724,7 @@ export async function resolveEscalation(escalationId, feedback) {
       .from('escalations')
       .update({ 
         status: 'resolved',
-        feedback: feedback, // <-- **نخزن الرد في الحقل الجديد**
+        feedback: feedback,
         resolved_at: new Date().toISOString()
       })
       .eq('id', escalationId)
@@ -756,7 +733,6 @@ export async function resolveEscalation(escalationId, feedback) {
 
     if (error) throw error;
 
-    // إرسال إشعار للشخص الذي قام بالتصعيد
     if (escalationData) {
       const orderId = escalationData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
@@ -775,7 +751,6 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
   try {
     console.log('🔄 Escalating to senior:', { escalationId, seniorId });
     
-    // Get current escalation
     const { data: currentEscalation, error: fetchError } = await supabase
       .from('escalations')
       .select('*')
@@ -784,7 +759,6 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 
     if (fetchError) throw fetchError;
 
-    // Update escalation to redirect to senior
     const { data, error } = await supabase
       .from('escalations')
       .update({ 
@@ -798,7 +772,6 @@ export async function escalateToSenior(escalationId, seniorId, helperNotes) {
 
     if (error) throw error;
 
-    // Create notification for the senior
     await createNotification(
       seniorId,
       `A new escalation requires your review.`,
@@ -822,7 +795,7 @@ export async function raiseInquiry(assignmentId, agentId, inquiryText) {
     const { data, error } = await supabase
       .from('inquiries')
       .insert({
-        order_id: assignmentId, // Using order_id field for assignment_id
+        order_id: assignmentId,
         raised_by_id: agentId,
         inquiry_text: inquiryText,
         status: 'pending',
@@ -833,7 +806,6 @@ export async function raiseInquiry(assignmentId, agentId, inquiryText) {
 
     if (error) throw error;
 
-    // Get 'quality' team members to notify
     const qualityAgents = await getTeamMembers('quality');
     for (const agent of qualityAgents) {
       await createNotification(
@@ -901,19 +873,14 @@ export async function respondToInquiry(inquiryId, helperId, response) {
   try {
     console.log('🔄 Responding to inquiry:', inquiryId);
     
-    // Get inquiry details first
     const { data: inquiryData, error: fetchError } = await supabase
       .from('inquiries')
       .select('raised_by_id, order_assignments!inquiries_order_id_fkey(orders(order_id))')
       .eq('id', inquiryId)
       .single();
 
-    if (fetchError) {
-      console.error('Error fetching inquiry details:', fetchError);
-      throw fetchError;
-    }
+    if (fetchError) throw fetchError;
 
-    // Update inquiry with response
     const { data, error } = await supabase
       .from('inquiries')
       .update({ 
@@ -928,7 +895,6 @@ export async function respondToInquiry(inquiryId, helperId, response) {
 
     if (error) throw error;
 
-    // Create notification for the original agent
     if (inquiryData) {
       const orderId = inquiryData.order_assignments?.orders?.order_id || 'Unknown';
       await createNotification(
@@ -948,11 +914,7 @@ export async function respondToInquiry(inquiryId, helperId, response) {
 
 // ==================== TEAM & SCHEDULING FUNCTIONS ====================
 
-// api-client.js
-
-// api-client.js
-
-export async function getTeamMembers(roles = []) { // الدالة الآن تقبل مصفوفة من الأدوار
+export async function getTeamMembers(roles = []) {
   try {
     let query = supabase
       .from('users')
@@ -960,9 +922,8 @@ export async function getTeamMembers(roles = []) { // الدالة الآن تق
       .eq('is_active', true)
       .order('name');
       
-    // إذا تم تحديد أدوار، قم بالفلترة بناءً عليها
     if (roles.length > 0) {
-      query = query.in('role', roles); // استخدم .in للبحث في قائمة
+      query = query.in('role', roles);
     }
 
     const { data, error } = await query;
@@ -998,7 +959,6 @@ export async function updateTeamSchedule(scheduleData) {
   try {
     const validStatuses = ['Working', 'Off', 'On Leave', 'Sick Leave'];
 
-    // تأكد إن كل صف فيه status صحيح
     const sanitizedData = scheduleData.map(item => ({
       ...item,
       status: validStatuses.includes(item.status) ? item.status : 'Working'
@@ -1078,9 +1038,8 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ====================
 
-export async function getPerformanceMetrics() { // أزلنا agentId و period لأنه لم يعد مطلوبًا هنا
+export async function getPerformanceMetrics() {
   try {
-    // استدعِ دالة RPC الجديدة
     const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
     
     if (error) {
@@ -1088,10 +1047,8 @@ export async function getPerformanceMetrics() { // أزلنا agentId و period 
       throw error;
     }
 
-    // Supabase RPC returns an array, we need the first (and only) result
     const metrics = data[0];
 
-    // أعد تنسيق البيانات لتكون متوافقة مع ما تتوقعه الواجهة
     return {
       completedOrders: metrics.reviews_today || 0,
       pendingEscalations: metrics.pending_escalations || 0,
@@ -1101,13 +1058,7 @@ export async function getPerformanceMetrics() { // أزلنا agentId و period 
 
   } catch (error) {
     console.error('GetPerformanceMetrics error:', error);
-    // Return default values in case of an error
-    return {
-      completedOrders: 0,
-      pendingEscalations: 0,
-      avgResolutionTime: 0,
-      accuracyRate: 0.0
-    };
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0.0 };
   }
 }
 
@@ -1120,13 +1071,10 @@ export async function getErrorTrends(period = '6 months') {
 
     if (error) throw error;
 
-    // Process data for charts
     const monthlyData = {};
     data.forEach(error => {
       const month = new Date(error.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-      if (!monthlyData[month]) {
-        monthlyData[month] = 0;
-      }
+      if (!monthlyData[month]) monthlyData[month] = 0;
       monthlyData[month]++;
     });
 
@@ -1150,13 +1098,9 @@ export async function getDepartmentPerformance() {
 
     const departmentData = {};
     data.forEach(review => {
-      if (!departmentData[review.department]) {
-        departmentData[review.department] = { total: 0, errors: 0 };
-      }
+      if (!departmentData[review.department]) departmentData[review.department] = { total: 0, errors: 0 };
       departmentData[review.department].total++;
-      if (review.action_correctness === 'error') {
-        departmentData[review.department].errors++;
-      }
+      if (review.action_correctness === 'error') departmentData[review.department].errors++;
     });
 
     const departments = Object.keys(departmentData);
@@ -1165,10 +1109,7 @@ export async function getDepartmentPerformance() {
       return parseFloat(rate);
     });
 
-    return {
-      departments,
-      errorRates
-    };
+    return { departments, errorRates };
   } catch (error) {
     console.error('GetDepartmentPerformance error:', error);
     throw error;
@@ -1182,7 +1123,6 @@ export async function getTeamPerformance() {
     return data;
   } catch (error) {
     console.error('GetTeamPerformance error:', error);
-    // Return an empty array in case of an error
     return [];
   }
 }
@@ -1191,7 +1131,6 @@ export async function getTeamPerformance() {
 
 export async function importOrdersFromCSV(csvData) {
   try {
-    // Parse CSV data and transform to match orders table structure
     const orders = csvData.map(row => ({
       order_id: row.order_id,
       employee_name: row.employee_name,
@@ -1213,7 +1152,6 @@ export async function importOrdersFromCSV(csvData) {
 
     if (error) throw error;
 
-    // Create notifications for new orders
     const qualityAgents = await getTeamMembers('quality');
     for (const agent of qualityAgents) {
       await createNotification(
@@ -1236,22 +1174,11 @@ export function subscribeToNotifications(userId, callback) {
   try {
     return supabase
       .channel('notifications')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `user_id=eq.${userId}`
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, callback)
       .subscribe();
   } catch (error) {
     console.error('SubscribeToNotifications error:', error);
-    return {
-      unsubscribe: () => {}
-    };
+    return { unsubscribe: () => {} };
   }
 }
 
@@ -1259,22 +1186,11 @@ export function subscribeToAssignments(agentId, callback) {
   try {
     return supabase
       .channel('assignments')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'order_assignments',
-          filter: `quality_agent_id=eq.${agentId}`
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_assignments', filter: `quality_agent_id=eq.${agentId}` }, callback)
       .subscribe();
   } catch (error) {
     console.error('SubscribeToAssignments error:', error);
-    return {
-      unsubscribe: () => {}
-    };
+    return { unsubscribe: () => {} };
   }
 }
 
@@ -1282,22 +1198,11 @@ export function subscribeToEscalations(userId, callback) {
   try {
     return supabase
       .channel('escalations')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'escalations',
-          filter: `escalated_to_id=eq.${userId}`
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'escalations', filter: `escalated_to_id=eq.${userId}` }, callback)
       .subscribe();
   } catch (error) {
     console.error('SubscribeToEscalations error:', error);
-    return {
-      unsubscribe: () => {}
-    };
+    return { unsubscribe: () => {} };
   }
 }
 
@@ -1305,21 +1210,11 @@ export function subscribeToInquiries(callback) {
   try {
     return supabase
       .channel('inquiries')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'inquiries'
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'inquiries' }, callback)
       .subscribe();
   } catch (error) {
     console.error('SubscribeToInquiries error:', error);
-    return {
-      unsubscribe: () => {}
-    };
+    return { unsubscribe: () => {} };
   }
 }
 
@@ -1327,21 +1222,10 @@ export function subscribeToErrors(agentId, callback) {
   try {
     return supabase
       .channel('errors')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'errors',
-          filter: `employee_id=eq.${agentId}`
-        },
-        callback
-      )
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'errors', filter: `employee_id=eq.${agentId}` }, callback)
       .subscribe();
   } catch (error) {
     console.error('SubscribeToErrors error:', error);
-    return {
-      unsubscribe: () => {}
-    };
+    return { unsubscribe: () => {} };
   }
 }
