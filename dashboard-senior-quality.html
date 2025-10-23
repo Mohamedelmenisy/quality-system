@@ -1436,35 +1436,34 @@
 
 
         // Modal Handlers
-        function openFinalDecisionModal(errorId) {
-            const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-            if (!error) { console.error("Could not find appealed error with ID:", errorId); return; }
-            
-            document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
-            document.getElementById('decision-modal-content').innerHTML = `
-                <div class="escalation-details">
-                    <div class="detail-item"><strong>Agent</strong><span>${error.employee_username || 'Unknown'}</span></div>
-                    <div class="detail-item"><strong>Error Type</strong><span>${error.error_details || 'Unknown'}</span></div>
-                </div>
-                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
-                    <strong>Agent's Appeal Reason:</strong>
-                    <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
-                </div>
-                
-                <div class="form-group" style="margin-top: 1.5rem;">
-                    <label for="decision-notes">Your Notes (Optional)</label>
-                    <textarea id="decision-notes" class="form-control" rows="3" placeholder="Provide feedback or justification for your decision..."></textarea>
-                </div>
+     function openFinalDecisionModal(errorId) {
+    const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
+    if (!error) { console.error("Could not find appealed error with ID:", errorId); return; }
+    
+    document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
+    document.getElementById('decision-modal-content').innerHTML = `
+        <div class="escalation-details">
+            <div class="detail-item"><strong>Agent</strong><span>${error.employee_username || 'Unknown'}</span></div>
+            <div class="detail-item"><strong>Error Type</strong><span>${error.error_details || 'Unknown'}</span></div>
+        </div>
+        <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
+            <strong>Agent's Appeal Reason:</strong>
+            <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
+        </div>
+        
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="decision-notes">Your Notes (Optional)</label>
+            <textarea id="decision-notes" class="form-control" rows="3" placeholder="Provide feedback or justification for your decision..."></textarea>
+        </div>
 
-                <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
-                  <!-- FIX: Changed decision values to 'rejected' and 'approved' to match DB constraints -->
-                  <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'rejected')">Uphold (Keep as Error)</button>
-                  <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'approved')">Overturn (Not an Error)</button>
-                </div>`;
-                
-            showModal('final-decision-modal');
-        }
-
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+          <button class="btn btn-danger" onclick="window.handleFinalDecision('${error.error_id}', 'upheld')">Uphold (Keep as Error)</button>
+          <button class="btn btn-success" onclick="window.handleFinalDecision('${error.error_id}', 'overturned')">Overturn (Not an Error)</button>
+        </div>`;
+        
+    showModal('final-decision-modal');
+}
+        
         // FIX: New function to show details of a finalized decision from the log
         function openFinalDecisionDetailsModal(errorId) {
             const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
