@@ -1467,40 +1467,54 @@
         }
         
         // [AI-FIX] Corrected function to show review details in the right modal.
-        function openViewAssignedModal(assignmentId) {
-            const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-            if (!assignment) {
-                showToast('Could not find assignment details.', 'error');
-                return;
-            }
-            
-            const review = assignment.quality_reviews?.[0];
-            const modalTitle = document.getElementById('view-review-title');
-            const modalBody = document.getElementById('view-review-body');
+       // dashboard-senior-quality.html
 
-            if (modalTitle) {
-                modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
-            }
-
-            if (modalBody) {
-                if (review) {
-                    const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
-                    modalBody.innerHTML = `
-                        <div class="detail-item"><strong>Reviewed By</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
-                        <div class="detail-item"><strong>Review Outcome</strong><span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">${review.action_correctness || 'N/A'}</span></div>
-                        ${review.action_correctness === 'error' ? `
-                        <div class="detail-item"><strong>Error Reason</strong><span>${review.modified_reason || 'Not specified'}</span></div>
-                        ` : ''}
-                        <div class="detail-item" style="grid-column: span 2;"><strong>Notes from Agent</strong><p style="white-space: pre-wrap;">${review.modification_details || 'No notes provided.'}</p></div>
-                    `;
-                } else {
-                    modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
-                }
-            }
-            
-            showModal('view-review-details-modal');
+async function openViewAssignedModal(assignmentId) {
+    try {
+        const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
+        if (!assignment) {
+            showToast("Could not find assignment details.", "error");
+            return;
         }
 
+        const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
+        const modalBody = document.getElementById('view-review-body');
+
+        modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
+
+        // الخطوة 1: ابحث عن المراجعة في قاعدة البيانات بشكل صريح
+        const { data: review, error } = await supabase
+            .from('quality_reviews')
+            .select('*')
+            .eq('assignment_id', assignmentId)
+            .single(); // نتوقع مراجعة واحدة فقط
+
+        if (error || !review) {
+            // إذا لم تجد المراجعة، اعرض الرسالة الصحيحة
+            modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
+        } else {
+            // إذا وجدت المراجعة، اعرض تفاصيلها
+            const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+            modalBody.innerHTML = `
+                <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
+                <div class="detail-item"><strong>Review Outcome:</strong><span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">${review.action_correctness}</span></div>
+                ${review.action_correctness === 'error' ? `
+                <div class="detail-item"><strong>Error Reason:</strong><span>${review.modified_reason || 'Not specified'}</span></div>
+                ` : ''}
+                <div class="detail-item" style="grid-column: span 2;">
+                    <strong>Notes from Agent:</strong>
+                    <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details || 'No notes provided.'}</p>
+                </div>
+            `;
+        }
+
+        showModal('view-review-details-modal'); // نستخدم النافذة الصحيحة
+
+    } catch (err) {
+        console.error("Error in openViewAssignedModal:", err);
+        showToast("An error occurred while fetching review details.", "error");
+    }
+}
 
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
