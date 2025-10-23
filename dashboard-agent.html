@@ -948,40 +948,36 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // استهداف مربعات البحث وإزالة أي قيمة مخزنة
-  const searchInputs = document.querySelectorAll('input[type="search"]');
-  
-  searchInputs.forEach(input => {
-    // إزالة أي قيمة حالية
-    input.value = "";
+  // الانتظار قليلاً لضمان تحميل الصفحة بالكامل
+  setTimeout(function() {
+    const searchInputs = document.querySelectorAll('input[type="search"]');
     
-    // تغيير السمات لمنع الـ autofill
-    input.setAttribute("autocomplete", "off");
-    input.setAttribute("autocorrect", "off");
-    input.setAttribute("autocapitalize", "off");
-    input.setAttribute("spellcheck", "false");
-    
-    // تغيير اسم الحقل لمنع التعرف عليه
-    input.name = "search-" + Math.random().toString(36).substring(2, 9);
-    
-    // حل إضافي: مراقبة أي تغيير وإزالة البريد الإلكتروني إذا ظهر
-    let lastValue = "";
-    input.addEventListener("input", function() {
-      if (this.value.includes("@")) {
-        this.value = lastValue;
-      } else {
-        lastValue = this.value;
-      }
+    searchInputs.forEach(input => {
+      // إعادة تعيين كاملة للحقل
+      input.type = "text";
+      input.value = "";
+      input.autocomplete = "new-password";
+      input.name = "search-field";
+      
+      // تغيير النوع مرة أخرى إلى search بعد فترة
+      setTimeout(() => {
+        input.type = "search";
+      }, 100);
+      
+      // مراقبة مستمرة لمنع ظهور البريد الإلكتروني
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'value') {
+            if (input.value.includes("@")) {
+              input.value = "";
+            }
+          }
+        });
+      });
+      
+      observer.observe(input, { attributes: true, attributeFilter: ['value'] });
     });
-    
-    // التأكد من إزالة البريد الإلكتروني عند التركيز على الحقل
-    input.addEventListener("focus", function() {
-      if (this.value.includes("@")) {
-        this.value = "";
-        lastValue = "";
-      }
-    });
-  });
+  }, 500);
 });
 </script>
 </body>
