@@ -948,30 +948,34 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // حل نهائي - إعادة تعيين كاملة لمربعات البحث
-  setTimeout(() => {
-    document.querySelectorAll('input[type="search"]').forEach(input => {
-      const originalPlaceholder = input.placeholder;
-      
-      // إنشاء حقل جديد بديل
-      const newInput = document.createElement("input");
-      newInput.type = "search";
-      newInput.className = input.className;
-      newInput.id = input.id;
-      newInput.placeholder = originalPlaceholder;
-      newInput.style.cssText = input.style.cssText;
-      
-      // منع الـ autofill تماماً
-      newInput.autocomplete = "new-password";
-      newInput.autocorrect = "off";
-      newInput.autocapitalize = "off";
-      newInput.spellcheck = false;
-      newInput.name = "search-input";
-      
-      // استبدال الحقل القديم بالجديد
-      input.parentNode.replaceChild(newInput, input);
+  function clearEmailFromSearch() {
+    const searchInputs = document.querySelectorAll('input[type="search"]');
+    
+    searchInputs.forEach(input => {
+      // حل جذري - إخفاء الحقل وإعادة إنشائه
+      if (input.value.includes("@")) {
+        const parent = input.parentNode;
+        const newInput = input.cloneNode(true);
+        
+        // إعدادات منع الـ autofill
+        newInput.value = "";
+        newInput.autocomplete = "off";
+        newInput.autocorrect = "off";
+        newInput.autocapitalize = "off";
+        newInput.spellcheck = false;
+        newInput.name = "search-no-email";
+        
+        parent.replaceChild(newInput, input);
+      }
     });
-  }, 300);
+  }
+  
+  // تشغيل الدالة عدة مرات للتأكد
+  clearEmailFromSearch();
+  setTimeout(clearEmailFromSearch, 100);
+  setTimeout(clearEmailFromSearch, 500);
+  setTimeout(clearEmailFromSearch, 1000);
+  setTimeout(clearEmailFromSearch, 2000);
 });
 </script>
 </body>
