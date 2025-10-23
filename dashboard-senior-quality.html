@@ -1653,53 +1653,35 @@
         });
 
         // *** UPDATED/REPLACED FUNCTION ***
-        window.handleFinalDecision = async (errorId, decision) => {
-           try {
-               const { error } = await window.supabase
-                   .from('errors')
-                   .update({ status: decision }) // 'overturned' or 'closed'
-                   .eq('id', errorId);
-               
-               if (error) throw error;
-               
-               const user = await getCurrentUser();
-               await window.supabase.from('final_decisions').insert({
-                   error_id: errorId,
-                   decided_by_id: user.id,
-                   decision: decision,
-                   notes: 'Decision made via Senior Dashboard.'
-               });
-               
-               // --- NEW: Send notification to agent ---
-                const { data: errorData, error: fetchError } = await window.supabase
-                    .from('errors')
-                    .select('employee_id, quality_reviews(order_assignments(orders(order_id)))')
-                    .eq('id', errorId)
-                    .single();
+       window.handleFinalDecision = async (errorId, decision) => {
+   try {
+       const user = await getCurrentUser();
+       if (!user) throw new Error("User not found");
 
-                if (fetchError) throw fetchError;
-                
-                if (errorData) {
-                    const employeeId = errorData.employee_id;
-                    const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
-                    const notificationMessage = `Your appeal for order ${orderId} has been reviewed. The decision was: ${decision}.`;
-                    
-                    await createNotification(employeeId, notificationMessage, 'info');
-                }
-               
-               showToast(`Decision recorded successfully.`, 'success');
-               hideModal('final-decision-modal');
+       const { error } = await window.supabase
+           .from('errors')
+           .update({ 
+               status: decision, // 'overturned' or 'closed'
+               decided_by_id: user.id,
+               finalized_at: new Date().toISOString() // <-- نسجل الوقت الحالي
+           })
+           .eq('id', errorId);
+       
+       if (error) throw error;
+       
+       showToast(`Decision recorded successfully.`, 'success');
+       hideModal('final-decision-modal');
 
-               await Promise.all([
-                   loadAppealedErrors(),
-                   loadFinalizedDecisions()
-               ]);
-               
-           } catch (error) {
-                console.error("Error in handleFinalDecision:", error);
-               showToast('Failed to record final decision.', 'error');
-           }
-       }
+       await Promise.all([
+           loadAppealedErrors(),
+           loadFinalizedDecisions()
+       ]);
+       
+   } catch (error) {
+        console.error("Error in handleFinalDecision:", error);
+       showToast('Failed to record final decision.', 'error');
+   }
+}
 
        window.handleOldFinalDecision = handleOldFinalDecision;
 
