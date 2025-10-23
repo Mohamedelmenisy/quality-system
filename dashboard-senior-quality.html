@@ -36,7 +36,8 @@
             getEscalations,
             resolveEscalation,
             getTeamPerformance,
-            reassignOrder
+            reassignOrder,
+            subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
 
         // Make functions globally available for inline event handlers if needed
@@ -171,6 +172,7 @@
         .status-pending { background-color: var(--info-color); }
         .status-completed { background-color: var(--success-color); }
         .status-late { background-color: var(--warning-color); color: black; }
+        .status-in-progress { background-color: var(--warning-color); color: black; }
         .status-reviewed { background-color: var(--primary-color-darker); }
         .status-responded { background-color: var(--info-color); }
         .status-finalized { background-color: var(--success-color); }
@@ -1068,6 +1070,8 @@
                     loadFinalizedDecisions()
                 ]);
 
+                initRealtimeSubscriptions(); // <--- أضف هذا السطر هنا
+
                 showToast('Senior Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1265,7 +1269,7 @@
                     <tr>
                         <td>${a.orders?.order_id || 'N/A'}</td>
                         <td>${a.users?.name || 'Unknown'}</td>
-                        <td><span class="status-badge status-${a.status}">${a.status}</span></td>
+                        <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
                         <td>${formatDateTime(a.assigned_at)}</td>
                         <td>${reviewTime}</td>
                         <td>${slaStatus}</td>
@@ -1705,6 +1709,23 @@ async function openViewAssignedModal(assignmentId) {
                     document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
                 }
             }
+        }
+        
+        function initRealtimeSubscriptions() {
+            subscribeToAssignmentUpdates((payload) => {
+                console.log('Assignment updated:', payload.new);
+                const updatedAssignment = payload.new;
+                
+                // ابحث عن الطلب في القائمة المحلية وقم بتحديثه
+                const index = assignedOrders.findIndex(a => a.id === updatedAssignment.id);
+                if (index !== -1) {
+                    // دمج البيانات القديمة مع الجديدة للحفاظ على تفاصيل الطلب
+                    assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
+                    // إعادة عرض الجدول بالبيانات المحدثة
+                    applyAssignedOrdersFilters(); // استخدمنا هذه الدالة لأنها تعيد العرض
+                    showToast(`Order ${assignedOrders[index].orders.order_id} is now ${updatedAssignment.status}`, 'info');
+                }
+            });
         }
 
         // Event Listeners Setup
