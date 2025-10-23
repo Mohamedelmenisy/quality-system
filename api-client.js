@@ -601,11 +601,12 @@ export async function getPendingErrors() {
     throw error;
   }
 }
-
 export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
   try {
-    // الخطوة 1: أدخل القرار النهائي
-    const { data, error: decisionError } = await supabase
+    console.log(`[1/3] Attempting to insert final decision for error: ${errorId}`);
+    
+    // Step 1: Insert the final decision
+    const { data: decisionData, error: decisionError } = await supabase
       .from('final_decisions')
       .insert({
         error_id: errorId,
@@ -618,33 +619,43 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
       .single();
 
     if (decisionError) {
-      console.error('❌ Error inserting final decision:', decisionError);
+      console.error('❌ [FAIL] Error inserting final decision:', decisionError);
       throw decisionError;
     }
     
-    console.log('✅ Final decision inserted successfully.');
+    console.log('✅ [SUCCESS 1/3] Final decision inserted successfully.');
 
-    // الخطوة 2: قم بتحديث حالة الخطأ إلى "finalized"
-    const { error: updateError } = await supabase
+    // Step 2: Update the error status to 'finalized'
+    console.log(`[2/3] Attempting to update error status to 'finalized' for error: ${errorId}`);
+    
+    const { data: updateData, error: updateError } = await supabase
       .from('errors')
-      .update({ status: 'finalized' }) // <-- تحديث الحالة هنا
-      .eq('id', errorId);
+      .update({ status: 'finalized' })
+      .eq('id', errorId)
+      .select(); // Use select() to see what was updated
 
     if (updateError) {
-      console.error('❌ Error updating error status to finalized:', updateError);
-      // لا نلقي خطأ هنا، لأن القرار تم حفظه بالفعل، ولكن نسجل المشكلة
-      console.warn('⚠️ Warning: Final decision was saved, but the error status could not be updated.');
-    } else {
-      console.log('✅ Error status updated to finalized.');
+      console.error('❌ [FAIL] Error updating error status:', updateError);
+      // This is a critical warning, not a full stop. The decision is saved.
+      console.warn('⚠️ Decision was saved, but the error status could not be updated in the database.');
+      // We will still return the decision data so the UI can partially update
+      return decisionData;
     }
 
-    return data;
+    if (updateData && updateData.length > 0) {
+      console.log('✅ [SUCCESS 2/3] Error status updated to finalized.');
+    } else {
+      console.warn('⚠️ [WARN 2/3] Update command ran without error, but no rows were updated. Check if RLS policy is blocking the update.');
+    }
+    
+    console.log('[3/3] SubmitFinalDecision process completed.');
+    return decisionData;
+    
   } catch (error) {
-    console.error('💥 SubmitFinalDecision error:', error);
+    console.error('💥 [CRITICAL] An error occurred in the submitFinalDecision function:', error);
     throw error;
   }
 }
-
 
 export async function getFinalizedDecisions() {
   try {
