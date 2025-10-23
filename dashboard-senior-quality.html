@@ -1134,20 +1134,14 @@
                 return;
             }
             tableBody.innerHTML = finalizedDecisions.map(decision => `
-                <tr style="opacity: 0.8;">
-                    <td>${decision.order_id || 'N/A'}</td>
-                    <td>${decision.employee_username || 'Unknown'}</td>
-                    <td class="wrap-text">${decision.error_details || 'N/A'}</td>
-                    <td>
-                        <span class="status-badge status-${decision.status}">
-                            ${decision.status}
-                        </span>
-                    </td>
-                    <td>${formatDateTime(decision.finalized_at)}</td>
-                    <td>
-                        <button class="btn btn-secondary btn-sm view-final-decision-btn" data-error-id="${decision.error_id}">View</button>
-                    </td>
-                </tr>
+                <tr>
+            <td>${decision.order_id}</td>
+            <td>${decision.employee_username}</td>
+            <td class="wrap-text">${decision.error_details}</td>
+            <td><span class="status-badge status-${decision.your_decision}">${decision.your_decision}</span></td>
+            <td>${formatDateTime(decision.finalized_at)}</td>
+            <td><button class="btn btn-secondary btn-sm">View</button></td>
+        </tr>
             `).join('');
         }
 
