@@ -2371,13 +2371,11 @@ document.addEventListener('click', function(e){
                 if(modalId) hideModal(modalId);
             }));
 
+            // =================================================================
+            // START: MODIFIED CODE BLOCK
+            // =================================================================
             document.getElementById('submit-review-btn').addEventListener('click', async () => {
-                const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
-                const action = document.getElementById('review-action').value;
-                if (!action) { showToast('Please select an action', 'warning'); return; }
                 try {
-                    console.log("1. 'Submit Review' button clicked.");
-    
                     const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
                     const action = document.getElementById('review-action').value;
                     const department = document.getElementById('review-department').value;
@@ -2389,19 +2387,33 @@ document.addEventListener('click', function(e){
                         return;
                     }
 
+                    // --- التعديل يبدأ هنا ---
+
+                    // 1. ابحث عن الطلب الحالي للحصول على اسم الموظف
+                    const currentAssignment = assignedOrders.find(o => o.id.toString() === assignmentId.toString());
+                    if (!currentAssignment) {
+                        throw new Error("Could not find the assignment details to get employee name.");
+                    }
+                    const employeeName = currentAssignment.orders?.employee_name;
+
+                    // 2. قم بإنشاء كائن البيانات مع إضافة اسم الموظف
                     const reviewData = {
                         action_correctness: action,
                         department: department,
                         modified_reason: modifiedReason,
-                        notes: notes
+                        notes: notes,
+                        employee_raw_name: employeeName // <-- تمت إضافة اسم الموظف هنا
                     };
                     
+                    // --- التعديل ينتهي هنا ---
+
                     showToast('Submitting your review...', 'info');
                     await submitReview(assignmentId, reviewData);
                     
                     showToast('Review submitted successfully!', 'success');
                     hideModal('review-order-modal');
                     
+                    // أعد تحميل البيانات لتحديث الواجهة
                     await loadAssignedOrders();
                     await loadPerformanceMetrics();
 
@@ -2410,6 +2422,9 @@ document.addEventListener('click', function(e){
                     showToast(`Failed to submit review: ${error.message}`, 'error');
                 }
             });
+            // =================================================================
+            // END: MODIFIED CODE BLOCK
+            // =================================================================
 
             document.getElementById('review-action').addEventListener('change', function() {
                 const submitBtn = document.getElementById('submit-review-btn');
