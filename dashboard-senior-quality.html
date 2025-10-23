@@ -68,7 +68,7 @@
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
-        window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
+     window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
     <style>
         :root {
@@ -181,6 +181,8 @@
         .status-under_review { background-color: var(--warning-color); color: black; }
         .status-closed { background-color: var(--danger-color); }
         .status-overturned { background-color: var(--success-color); }
+        .status-approved { background-color: var(--success-color); } /* FIX: Added for DB value */
+        .status-rejected { background-color: var(--danger-color); } /* FIX: Added for DB value */
         .form-group { margin-bottom: 1.5rem; }
         .form-group label { display: block; font-weight: 500; margin-bottom: 0.5rem; }
         .form-group input, .form-group select, .form-group textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; }
@@ -538,6 +540,10 @@
                         <h3>Assigned Orders Status</h3>
                         <div class="filter-panel">
                              <input type="search" id="assigned-search" placeholder="Search assigned orders..." style="flex-grow: 1;">
+                             <!-- FIX: Added agent filter dropdown -->
+                             <select id="assigned-agent-filter">
+                                <option value="all">All Agents</option>
+                             </select>
                              <select id="assigned-status-filter">
                                 <option value="all">All Statuses</option>
                                 <option value="pending">Pending</option>
@@ -545,6 +551,8 @@
                              </select>
                              <input type="date" id="assigned-date-filter" style="color-scheme: dark;">
                              <button id="clear-assigned-filters-btn" class="btn btn-secondary">Clear Filters</button>
+                             <!-- FIX: Added CSV export button -->
+                             <button id="export-assigned-csv-btn" class="btn btn-success">Export to CSV</button>
                         </div>
                         <div class="results-table-container">
                             <table class="results-table">
@@ -1042,7 +1050,7 @@
             try {
                 showToast('Loading Senior Dashboard...', 'info');
 
-                // [AI-FIX] Restore active tab on page load
+                // FIX: Restore active tab on page load
                 applyStoredTab();
 
                 const user = await getCurrentUser();
@@ -1137,7 +1145,7 @@
         const loadPendingErrors = () => loadData(getPendingErrors, renderEscalationsTable, 'pending-responses-count', pendingErrors);
         const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
         const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), applyAssignedOrdersFilters, null, assignedOrders);
-        const loadTeamMembers = () => loadData(() => getTeamMembers(['quality', 'helper', 'senior', 'admin']), () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
+        const loadTeamMembers = () => loadData(() => getTeamMembers(['quality', 'helper', 'senior', 'admin']), () => { renderTeamMembers(); populateAgentSelect(); populateAssignedAgentFilter(); renderTeamSchedule(); }, null, teamMembers);
         const loadCompanyEmployees = () => loadData(getCompanyEmployees, renderCompanyEmployeesTable, null, companyEmployees);
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
@@ -1209,13 +1217,14 @@
             }
             tableBody.innerHTML = finalizedDecisions.map(decision => `
                 <tr>
-            <td>${decision.order_id}</td>
-            <td>${decision.employee_username}</td>
-            <td class="wrap-text">${decision.error_details}</td>
-            <td><span class="status-badge status-${decision.your_decision}">${decision.your_decision}</span></td>
-            <td>${formatDateTime(decision.finalized_at)}</td>
-            <td><button class="btn btn-secondary btn-sm">View</button></td>
-        </tr>
+                    <td>${decision.order_id}</td>
+                    <td>${decision.employee_username}</td>
+                    <td class="wrap-text">${decision.error_details}</td>
+                    <td><span class="status-badge status-${decision.your_decision}">${decision.your_decision}</span></td>
+                    <td>${formatDateTime(decision.finalized_at)}</td>
+                    <!-- FIX: Added data-error-id and a specific class to the view button -->
+                    <td><button class="btn btn-secondary btn-sm view-final-decision-btn" data-error-id="${decision.error_id}">View</button></td>
+                </tr>
             `).join('');
         }
 
@@ -1413,17 +1422,23 @@
             }
             select.innerHTML = assignableMembers.map(a => `<option value="${a.id}">${a.name} (${a.role})</option>`).join('');
         };
+        
+        // FIX: New function to populate the agent filter in the "Assigned Orders" tab
+        const populateAssignedAgentFilter = () => {
+            const select = document.getElementById('assigned-agent-filter');
+            const assignableRoles = ['quality', 'helper'];
+            const assignableMembers = teamMembers.filter(m => assignableRoles.includes(m.role));
+             if (assignableMembers.length === 0) {
+                select.innerHTML = '<option value="all">All Agents</option>'; return;
+            }
+            select.innerHTML = '<option value="all">All Agents</option>' + assignableMembers.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+        };
 
 
         // Modal Handlers
-        // [FINAL FIX] This function now uses the correct values ('closed' and 'overturned') based on evidence from the agent dashboard file.
         function openFinalDecisionModal(errorId) {
             const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-            if (!error) { 
-                console.error("Could not find appealed error with ID:", errorId); 
-                showToast('Error details not found.', 'error');
-                return; 
-            }
+            if (!error) { console.error("Could not find appealed error with ID:", errorId); return; }
             
             document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
             document.getElementById('decision-modal-content').innerHTML = `
@@ -1436,19 +1451,45 @@
                     <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
                 </div>
                 
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label for="decision-notes">Your Notes (Required)</label>
+                <div class="form-group" style="margin-top: 1.5rem;">
+                    <label for="decision-notes">Your Notes (Optional)</label>
                     <textarea id="decision-notes" class="form-control" rows="3" placeholder="Provide feedback or justification for your decision..."></textarea>
                 </div>
 
                 <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
-                  <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'closed')">Uphold (Keep as Error)</button>
-                  <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturned')">Overturn (Not an Error)</button>
+                  <!-- FIX: Changed decision values to 'rejected' and 'approved' to match DB constraints -->
+                  <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'rejected')">Uphold (Keep as Error)</button>
+                  <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'approved')">Overturn (Not an Error)</button>
                 </div>`;
                 
             showModal('final-decision-modal');
         }
 
+        // FIX: New function to show details of a finalized decision from the log
+        function openFinalDecisionDetailsModal(errorId) {
+            const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
+            if (!decision) {
+                showToast("Could not find decision details.", "error");
+                return;
+            }
+
+            const modalTitle = document.querySelector('#view-escalation-modal .modal-title');
+            const modalBody = document.getElementById('view-escalation-body');
+
+            modalTitle.textContent = `Decision Details: ${decision.order_id}`;
+            modalBody.innerHTML = `
+                <div class="detail-item"><strong>Order ID:</strong><span>${decision.order_id}</span></div>
+                <div class="detail-item"><strong>Agent:</strong><span>${decision.employee_username}</span></div>
+                <div class="detail-item"><strong>Error Details:</strong><span>${decision.error_details}</span></div>
+                <div class="detail-item"><strong>Final Decision:</strong><span class="status-badge status-${decision.your_decision}" style="font-size: 1rem;">${decision.your_decision}</span></div>
+                <div class="detail-item" style="grid-column: span 2;">
+                    <strong>Your Notes:</strong>
+                    <p style="white-space: pre-wrap; margin-top: 5px;">${decision.senior_notes || 'No notes were provided for this decision.'}</p>
+                </div>
+            `;
+            showModal('view-escalation-modal');
+        }
+        
         async function openViewAssignedModal(assignmentId) {
             try {
                 const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
@@ -1462,18 +1503,15 @@
 
                 modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-                // الخطوة 1: ابحث عن المراجعة في قاعدة البيانات بشكل صريح
                 const { data: review, error } = await supabase
                     .from('quality_reviews')
                     .select('*')
                     .eq('assignment_id', assignmentId)
-                    .single(); // نتوقع مراجعة واحدة فقط
+                    .single();
 
                 if (error || !review) {
-                    // إذا لم تجد المراجعة، اعرض الرسالة الصحيحة
                     modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
                 } else {
-                    // إذا وجدت المراجعة، اعرض تفاصيلها
                     const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
                     modalBody.innerHTML = `
                         <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
@@ -1488,7 +1526,7 @@
                     `;
                 }
 
-                showModal('view-review-details-modal'); // نستخدم النافذة الصحيحة
+                showModal('view-review-details-modal');
 
             } catch (err) {
                 console.error("Error in openViewAssignedModal:", err);
@@ -1640,42 +1678,43 @@
             }
         }
 
-        // [AI-FIX] New function for filtering assigned orders
+        // FIX: Updated filtering function to include agent filter
         function applyAssignedOrdersFilters() {
             const searchTerm = document.getElementById('assigned-search').value.toLowerCase();
             const statusFilter = document.getElementById('assigned-status-filter').value;
             const dateFilter = document.getElementById('assigned-date-filter').value;
+            const agentFilter = document.getElementById('assigned-agent-filter').value;
 
             filteredAssignedOrders = assignedOrders.filter(a => {
                 const searchCorpus = `${a.orders?.order_id || ''} ${a.users?.name || ''}`.toLowerCase();
                 const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
                 const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
                 const matchesDate = !dateFilter || (a.assigned_at && a.assigned_at.startsWith(dateFilter));
-                return matchesSearch && matchesStatus && matchesDate;
+                const matchesAgent = agentFilter === 'all' || a.quality_agent_id === agentFilter;
+                return matchesSearch && matchesStatus && matchesDate && matchesAgent;
             });
 
             assignedOrdersCurrentPage = 1; // Reset to first page after filtering
             renderAssignedOrdersTable();
         }
 
-        // [AI-FIX] New function to handle tab state persistence
+        // FIX: New function to handle tab state persistence
         function applyStoredTab() {
             const lastTab = localStorage.getItem('seniorActiveTab');
-            if (lastTab) {
-                document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-                document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            const tabToActivate = lastTab || 'dashboard'; // Default to dashboard if nothing is stored
 
-                const tabLink = document.querySelector(`a[data-tab="${lastTab}"]`);
-                if(tabLink) {
-                    tabLink.parentElement.classList.add('active');
-                    document.getElementById(lastTab)?.classList.add('active');
-                    document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
-                }
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+
+            const tabLink = document.querySelector(`a[data-tab="${tabToActivate}"]`);
+            if(tabLink) {
+                tabLink.parentElement.classList.add('active');
+                document.getElementById(tabToActivate)?.classList.add('active');
+                document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
             }
         }
         
         function initRealtimeSubscriptions() {
-            // استدع الدالة من window
             window.subscribeToAssignmentUpdates((payload) => {
                 console.log('Assignment updated:', payload.new);
                 const updatedAssignment = payload.new;
@@ -1684,12 +1723,53 @@
                 if (index !== -1) {
                     assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
                     applyAssignedOrdersFilters();
-                    // سنعدل الرسالة لتكون أكثر فائدة
                     const orderId = assignedOrders[index].orders?.order_id || 'An order';
                     showToast(`${orderId} is now ${updatedAssignment.status.replace('_', ' ')}`, 'info');
                 }
             });
         }
+        
+        // FIX: New handler for exporting filtered assigned orders to CSV
+        function handleExportAssignedCSV() {
+            if (filteredAssignedOrders.length === 0) {
+                showToast("No data available to export.", "warning");
+                return;
+            }
+
+            const headers = ['Order ID', 'Agent', 'Status', 'Date Assigned', 'Review Time (min)', 'SLA Status'];
+            const rows = filteredAssignedOrders.map(a => {
+                let reviewTime = '';
+                let slaStatus = 'N/A';
+                if (a.status === 'completed' && a.assigned_at && a.completed_at) {
+                    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
+                    reviewTime = diffMinutes;
+                    slaStatus = (diffMinutes > 30) ? 'Delayed' : 'On Time';
+                }
+                
+                return [
+                    a.orders?.order_id || 'N/A',
+                    a.users?.name || 'Unknown',
+                    a.status,
+                    formatDateTime(a.assigned_at),
+                    reviewTime,
+                    slaStatus
+                ];
+            });
+
+            let csvContent = "data:text/csv;charset=utf-8," 
+                + headers.join(",") + "\n" 
+                + rows.map(e => e.join(",")).join("\n");
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "assigned_orders_report.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("Report exported successfully!", "success");
+        }
+
 
         // Event Listeners Setup
         document.addEventListener('DOMContentLoaded', () => {
@@ -1701,7 +1781,7 @@
                     e.preventDefault();
                     if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
-                    localStorage.setItem('seniorActiveTab', tabId); // [AI-FIX] Save tab on click
+                    localStorage.setItem('seniorActiveTab', tabId); // FIX: Save tab on click
                     applyStoredTab();
                 });
             });
@@ -1728,7 +1808,7 @@
                     openViewAssignedModal(assignmentId);
                 } else if (target.classList.contains('reassign-btn')) {
                     openReassignModal(assignmentId);
-                } else if (target.classList.contains('view-final-decision-btn')) {
+                } else if (target.classList.contains('view-final-decision-btn')) { // FIX: Listener for new button
                     openFinalDecisionDetailsModal(errorId);
                 } else if (target.classList.contains('view-escalation-btn')) {
                     // Logic for viewing escalation details...
@@ -1743,16 +1823,21 @@
                  }
             });
 
-            // [AI-FIX] Event listeners for assigned orders filtering
+            // FIX: Event listeners for assigned orders filtering (including new agent filter)
             document.getElementById('assigned-search')?.addEventListener('input', applyAssignedOrdersFilters);
+            document.getElementById('assigned-agent-filter')?.addEventListener('change', applyAssignedOrdersFilters);
             document.getElementById('assigned-status-filter')?.addEventListener('change', applyAssignedOrdersFilters);
             document.getElementById('assigned-date-filter')?.addEventListener('input', applyAssignedOrdersFilters);
             document.getElementById('clear-assigned-filters-btn')?.addEventListener('click', () => {
                 document.getElementById('assigned-search').value = '';
+                document.getElementById('assigned-agent-filter').value = 'all';
                 document.getElementById('assigned-status-filter').value = 'all';
                 document.getElementById('assigned-date-filter').value = '';
                 applyAssignedOrdersFilters();
             });
+            // FIX: Event listener for new CSV export button
+            document.getElementById('export-assigned-csv-btn')?.addEventListener('click', handleExportAssignedCSV);
+
 
             // [AI-FIX] Event listeners for pagination
             document.getElementById('assigned-orders-pagination')?.addEventListener('click', (e) => {
@@ -1766,8 +1851,7 @@
                 }
             });
 
-            // [AI-FIX] Event listener for Reassign confirm button
-          document.getElementById('reassign-confirm-btn')?.addEventListener('click', async (e) => {
+            document.getElementById('reassign-confirm-btn')?.addEventListener('click', async (e) => {
                 const btn = e.target;
                 const assignmentId = btn.dataset.assignmentId;
                 const newAgentId = document.getElementById('reassign-agent-select').value;
@@ -1781,15 +1865,10 @@
                 btn.textContent = 'Reassigning...';
 
                 try {
-                    // استدعاء الدالة من خلال window لضمان الوصول إليها
                     await window.reassignOrder(assignmentId, newAgentId, currentUser.id);
-                    
                     showToast('Order reassigned successfully!', 'success');
                     hideModal('reassign-modal');
-                    
-                    // تحديث الجداول لعرض البيانات الجديدة
                     await loadAssignedOrders();
-
                 } catch (error) {
                     console.error('Failed to reassign order:', error);
                     showToast(`Error: ${error.message}`, 'error');
@@ -1799,7 +1878,6 @@
                 }
             });
 
-          // Other existing event listeners
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const scheduleTable = document.getElementById('schedule-table');
@@ -1837,60 +1915,60 @@
                 hideModal('logout-confirm-modal');
             });
         });
+        
+// FIX: This is the single, corrected function for handling final decisions.
+window.handleFinalDecision = async (errorId, decision) => {
+    try {
+        if (!currentUser || !currentUser.id) {
+            throw new Error("Could not identify the current user. Please refresh and try again.");
+        }
+        // The `decision` parameter will now be 'approved' or 'rejected'.
+        const seniorUserId = currentUser.id;
+        const notes = document.getElementById('decision-notes')?.value || '';
 
-        // [FINAL FIX] This function now uses the correct values ('closed' and 'overturned') and validates the notes field.
-        window.handleFinalDecision = async (errorId, decision) => {
-            try {
-                if (!currentUser || !currentUser.id) {
-                    throw new Error("Could not identify the current user. Please refresh and try again.");
-                }
-                const seniorUserId = currentUser.id;
-                const notes = document.getElementById('decision-notes')?.value || '';
+        // Fetch related data for notification
+        const { data: errorData, error: fetchError } = await window.supabase
+            .from('errors')
+            .select(`
+                employees!inner(user_id),
+                quality_reviews!inner(
+                    order_assignments!inner(
+                        orders!inner(order_id)
+                    )
+                )
+            `)
+            .eq('id', errorId)
+            .single();
 
-                if (!notes.trim()) {
-                    showToast('Please provide your decision notes.', 'warning');
-                    return;
-                }
+        if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
+            console.error("Fetch error or missing critical data:", fetchError, errorData);
+            throw new Error("Could not find the agent's User ID or Order ID to notify.");
+        }
+        
+        const agentUserId = errorData.employees.user_id;
+        const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+        
+        // 1. Submit the final decision with the correct value and notes
+        await submitFinalDecision(errorId, seniorUserId, decision, notes);
+        
+        // 2. Create a notification for the agent
+        const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
+        await createNotification(agentUserId, notificationMessage, 'info');
 
-                const { data: errorData, error: fetchError } = await window.supabase
-                    .from('errors')
-                    .select(`
-                        employees!inner(user_id),
-                        quality_reviews!inner(
-                            order_assignments!inner(
-                                orders!inner(order_id)
-                            )
-                        )
-                    `)
-                    .eq('id', errorId)
-                    .single();
+        showToast(`Decision recorded and notification sent successfully.`, 'success');
+        hideModal('final-decision-modal');
 
-                if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
-                    console.error("Fetch error or missing critical data:", fetchError, errorData);
-                    throw new Error("Could not find the agent's User ID or Order ID to notify.");
-                }
-                
-                const agentUserId = errorData.employees.user_id;
-                const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+        // Refresh the lists
+        await Promise.all([
+            loadAppealedErrors(),
+            loadFinalizedDecisions()
+        ]);
 
-                await submitFinalDecision(errorId, seniorUserId, decision, notes);
-                
-                const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
-                await createNotification(agentUserId, notificationMessage, 'info');
-
-                showToast(`Decision recorded and notification sent successfully.`, 'success');
-                hideModal('final-decision-modal');
-
-                await Promise.all([
-                    loadAppealedErrors(),
-                    loadFinalizedDecisions()
-                ]);
-
-            } catch (error) {
-                console.error("Error in handleFinalDecision:", error);
-                showToast(error.message || 'Failed to record final decision.', 'error');
-            }
-        };
+    } catch (error) {
+        console.error("Error in handleFinalDecision:", error);
+        showToast(error.message || 'Failed to record final decision.', 'error');
+    }
+};
     </script>
 </body>
 </html>
