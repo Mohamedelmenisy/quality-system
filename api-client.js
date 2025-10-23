@@ -938,19 +938,26 @@ export async function respondToInquiry(inquiryId, helperId, response) {
 
 // api-client.js
 
-export async function getTeamMembers() { // <-- قمنا بإزالة 'role'
+// api-client.js
+
+export async function getTeamMembers(roles = []) { // الدالة الآن تقبل مصفوفة من الأدوار
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('users')
       .select('*')
-      .eq('is_active', true) // <-- نحافظ على هذا الفلتر لجلب المستخدمين النشطين فقط
+      .eq('is_active', true)
       .order('name');
       
-    // تم حذف الفلتر الخاص بالـ role بالكامل
+    // إذا تم تحديد أدوار، قم بالفلترة بناءً عليها
+    if (roles.length > 0) {
+      query = query.in('role', roles); // استخدم .in للبحث في قائمة
+    }
 
+    const { data, error } = await query;
     if (error) throw error;
     return data;
-  } catch (error) {
+  } catch (error)
+ {
     console.error('GetTeamMembers error:', error);
     throw error;
   }
