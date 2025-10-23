@@ -1667,7 +1667,7 @@ async function loadCompanyDepartments() {
                 if (order.status === 'completed' && order.assigned_at && order.completed_at) {
                     const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
                     reviewTime = `${diffMinutes} min`;
-                    slaStatus = (diffMinutes > 30) 
+                    slaStatus = (diffMinutes > 5) 
                         ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                         : `<span class="status-badge status-completed">On Time</span>`;
                 }
