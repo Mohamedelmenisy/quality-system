@@ -238,65 +238,73 @@
         renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
     }
     
-    function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
-        const tbody = document.getElementById(tbodyId);
-        const paginationControls = document.getElementById(paginationId);
-        
-        if (!tbody || !paginationControls) return;
+   function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
+    const tbody = document.getElementById(tbodyId);
+    const paginationControls = document.getElementById(paginationId);
+    
+    if (!tbody || !paginationControls) return;
 
-        const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        const endIndex = startIndex + ITEMS_PER_PAGE;
-        const paginatedData = data.slice(startIndex, endIndex);
-        const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    const paginatedData = data.slice(startIndex, endIndex);
+    const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
 
-        if (data.length === 0) {
-            tbody.innerHTML = `
+    if (data.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="5" class="empty-state">
+                    <div class="empty-state-icon">✅</div>
+                    <div>No errors found.</div>
+                    <small>Great job maintaining quality standards!</small>
+                </td>
+            </tr>`;
+        paginationControls.style.display = 'none';
+    } else {
+        tbody.innerHTML = paginatedData.map(error => {
+            const orderId = error.order_id || 'N/A';
+            const orderDate = error.created_at;
+            const errorType = error.error_details || 'Unknown';
+            const status = error.status.replace(/_/g, ' ');
+
+            // --- START: NEW & IMPROVED BUTTON LOGIC ---
+            let actionButtons = '';
+            
+            // Check if a final decision exists
+            if (error.final_decision) {
+                // If decision exists, show only "View Decision" button
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View Decision</button>`;
+            } else if (error.status === 'under_review') {
+                // If under review, show only a "View" button (appeal is already submitted)
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
+            } else if (error.status === 'closed') {
+                // If closed and no decision yet, allow appeal
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
+                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.error_id}">Appeal</button>`;
+                actionButtons = viewButton + appealButton;
+            } else {
+                // Fallback for any other statuses
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.error_id}">👁️ View</button>`;
+            }
+            // --- END: NEW & IMPROVED BUTTON LOGIC ---
+            
+            return `
                 <tr>
-                    <td colspan="5" class="empty-state">
-                        <div class="empty-state-icon">✅</div>
-                        <div>No errors found.</div>
-                        <small>Great job maintaining quality standards!</small>
-                    </td>
-                </tr>`;
-            paginationControls.style.display = 'none';
-        } else {
-            tbody.innerHTML = paginatedData.map(error => {
-                const orderId = error.order_id || 'N/A';
-                const orderDate = error.created_at;
-                const errorType = error.error_details || 'Unknown';
-                const status = error.status.replace(/_/g, ' ');
+                    <td><strong>${orderId}</strong></td>
+                    <td>${formatDate(orderDate)}</td>
+                    <td>${errorType}</td>
+                    <td><span class="status-badge status-${error.status}">${status}</span></td>
+                    <td class="action-buttons">${actionButtons}</td>
+                </tr>
+            `;
+        }).join('');
 
-                let actionButtons = '';
-                const viewButtonText = error.final_decision ? 'View Decision' : 'View';
-                // *** FIXED: Using error.id from old version's data structure ***
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ ${viewButtonText}</button>`;
-                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.id}">Appeal</button>`;
-
-                if (error.status === 'closed' && !error.appeal_reason) {
-                    actionButtons = viewButton + appealButton;
-                } else {
-                    actionButtons = viewButton;
-                }
-                
-                return `
-                    <tr>
-                        <td><strong>${orderId}</strong></td>
-                        <td>${formatDate(orderDate)}</td>
-                        <td>${errorType}</td>
-                        <td><span class="status-badge status-${error.status}">${status}</span></td>
-                        <td class="action-buttons">${actionButtons}</td>
-                    </tr>
-                `;
-            }).join('');
-
-            paginationControls.style.display = 'flex';
-            paginationControls.querySelector('.page-info').textContent = `Page ${currentPage} of ${totalPages}`;
-            paginationControls.querySelector('.prev-btn').disabled = currentPage === 1;
-            paginationControls.querySelector('.next-btn').disabled = currentPage === totalPages;
-        }
+        paginationControls.style.display = 'flex';
+        paginationControls.querySelector('.page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+        paginationControls.querySelector('.prev-btn').disabled = currentPage === 1;
+        paginationControls.querySelector('.next-btn').disabled = currentPage === totalPages;
     }
-
-
+}
+    
     function setupPaginationListeners() {
         document.getElementById('dashboard-pagination').addEventListener('click', e => {
             if (e.target.classList.contains('prev-btn') && dashboardCurrentPage > 1) {
