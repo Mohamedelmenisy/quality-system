@@ -999,6 +999,36 @@
             toast.querySelector('.toast-close').addEventListener('click', removeToast);
         }
 
+        // ===================================================================================
+        // START: الكود الذي أضافه المطور
+        // ===================================================================================
+
+        // 🧠 وظيفة لتحويل الحالة في الـ DB إلى نص واضح للمستخدم
+        function getDisplayStatus(status, decision) {
+          const normalizedStatus = status?.toLowerCase() || '';
+          const normalizedDecision = decision?.toLowerCase() || '';
+
+          if (normalizedStatus === 'closed' && normalizedDecision === 'rejected') {
+            return '<span style="color: red; font-weight: 500;">Appeal Rejected (Error Upheld)</span>';
+          }
+
+          if (normalizedStatus === 'overturned' && normalizedDecision === 'approved') {
+            return '<span style="color: green; font-weight: 500;">Appeal Accepted (Error Overturned)</span>';
+          }
+
+          if (normalizedDecision === 'modified') {
+            return '<span style="color: orange; font-weight: 500;">Decision Modified</span>';
+          }
+          
+          // Fallback for any other status, including just 'closed' without a decision
+          return `<span style="color: gray;">${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}</span>`;
+        }
+
+        // ===================================================================================
+        // END: الكود الذي أضافه المطور
+        // ===================================================================================
+
+
         // Helper Functions
         const getInitials = (name) => (name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '');
         const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-EG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Cairo' }) : 'N/A';
@@ -1207,16 +1237,21 @@
                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No decision history found.</td></tr>`;
                 return;
             }
-            tableBody.innerHTML = finalizedDecisions.map(decision => `
-                <tr>
-            <td>${decision.order_id}</td>
-            <td>${decision.employee_username}</td>
-            <td class="wrap-text">${decision.error_details}</td>
-            <td><span class="status-badge status-${decision.your_decision}">${decision.your_decision}</span></td>
-            <td>${formatDateTime(decision.finalized_at)}</td>
-            <td><button class="btn btn-secondary btn-sm">View</button></td>
-        </tr>
-            `).join('');
+            tableBody.innerHTML = finalizedDecisions.map(decision => {
+                // استنتاج الحالة بناءً على القرار النهائي (كما هو الحال في دالة handleFinalDecision)
+                const statusForDisplay = (decision.your_decision === 'approved') ? 'overturned' : 'closed';
+                
+                return `
+                    <tr>
+                        <td>${decision.order_id}</td>
+                        <td>${decision.employee_username}</td>
+                        <td class="wrap-text">${decision.error_details}</td>
+                        <td>${getDisplayStatus(statusForDisplay, decision.your_decision)}</td>
+                        <td>${formatDateTime(decision.finalized_at)}</td>
+                        <td><button class="btn btn-secondary btn-sm">View</button></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
