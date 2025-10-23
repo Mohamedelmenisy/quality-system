@@ -952,5 +952,58 @@
     </div>
 </div>
 
+<!-- *** FIXED: ADDED AUTOFILL PREVENTION SCRIPT *** -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // حل أقوى - نمنع الـ autofill من مستوى أعلى
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    const inputs = node.querySelectorAll ? node.querySelectorAll('input[type="search"]') : [];
+                    inputs.forEach(disableAutofill);
+                    
+                    // إذا كان الـ node نفسه input
+                    if (node.tagName === 'INPUT' && node.type === 'search') {
+                        disableAutofill(node);
+                    }
+                }
+            });
+        });
+    });
+    
+    function disableAutofill(input) {
+        if (input.value.includes('@')) {
+            input.value = '';
+        }
+        input.autocomplete = 'new-password';
+        input.autocorrect = 'off';
+        input.autocapitalize = 'off';
+        input.spellcheck = false;
+        input.name = 'search-' + Math.random().toString(36).substring(7);
+    }
+    
+    // بدء المراقبة
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // تطبيق على الحقول الموجودة حالياً
+    document.querySelectorAll('input[type="search"]').forEach(disableAutofill);
+    
+    // حل إضافي: إخفاء الحقول مؤقتاً ثم إظهارها
+    setTimeout(() => {
+        document.querySelectorAll('input[type="search"]').forEach(input => {
+            input.style.visibility = 'hidden';
+            setTimeout(() => {
+                input.value = '';
+                input.style.visibility = 'visible';
+            }, 100);
+        });
+    }, 10);
+});
+</script>
+
 </body>
 </html>
