@@ -447,7 +447,7 @@ export async function submitReview(assignmentId, reviewData) {
         // تحديث حالة الطلب وإضافة وقت الإكمال
         await supabase
             .from('order_assignments')
-            .update({ status: 'completed', completed_at: new Date().toISOString() })
+            .update({ status: 'completed', completed_at: 'now()' }) // <-- تم التعديل هنا
             .eq('id', assignmentId);
 
         // --- الجزء الأهم: إنشاء سجل خطأ إذا كانت المراجعة 'error' ---
