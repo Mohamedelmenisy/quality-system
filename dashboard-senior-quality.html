@@ -1436,44 +1436,36 @@
             showModal('final-decision-modal');
         }
 
-        function openFinalDecisionDetailsModal(errorId) {
-            const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
-            if (!decision) {
-                showToast('Could not find decision details.', 'error');
-                return;
-            }
+       function openFinalDecisionModal(errorId) {
+    const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
+    if (!error) { console.error("Could not find appealed error with ID:", errorId); return; }
+    
+    document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
+    document.getElementById('decision-modal-content').innerHTML = `
+        <div class="escalation-details">
+            <div class="detail-item"><strong>Agent</strong><span>${error.employee_username || 'Unknown'}</span></div>
+            <div class="detail-item"><strong>Error Type</strong><span>${error.error_details || 'Unknown'}</span></div>
+        </div>
+        <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
+            <strong>Agent's Appeal Reason:</strong>
+            <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
+        </div>
+        
+        <!-- START: ADDED NOTES TEXTAREA -->
+        <div class="form-group" style="margin-top: 1rem;">
+            <label for="decision-notes">Your Notes (Optional)</label>
+            <textarea id="decision-notes" class="form-control" rows="3" placeholder="Provide feedback or justification for your decision..."></textarea>
+        </div>
+        <!-- END: ADDED NOTES TEXTAREA -->
 
-            const modal = document.getElementById('view-escalation-modal');
-            const titleEl = modal.querySelector('.modal-title');
-            const bodyEl = document.getElementById('view-escalation-body');
-
-            titleEl.textContent = `Decision Details: ${decision.order_id}`;
-
-            const decisionClass = decision.status === 'overturned' ? 'status-overturned' : 'status-closed';
-            const decisionText = decision.status === 'overturned' ? 'Overturned (Not an Error)' : 'Upheld (Error Confirmed)';
-
-            bodyEl.innerHTML = `
-                <div class="escalation-details">
-                    <div class="detail-item"><strong>Order ID</strong><span>${decision.order_id}</span></div>
-                    <div class="detail-item"><strong>Agent</strong><span>${decision.employee_username}</span></div>
-                    <div class="detail-item"><strong>Error Type</strong><span>${decision.error_details || 'N/A'}</span></div>
-                    <div class="detail-item"><strong>Decision Date</strong><span>${formatDateTime(decision.finalized_at)}</span></div>
-                </div>
-                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
-                    <strong>Agent's Appeal Reason:</strong>
-                    <p style="white-space: pre-wrap;">${decision.appeal_reason || 'No appeal reason logged.'}</p>
-                </div>
-                <div class="detail-item" style="background-color: var(--card-bg); border-left: 4px solid var(--${decision.status === 'overturned' ? 'success' : 'danger'}-color); margin-top: 1rem;">
-                    <strong>Your Final Decision:</strong>
-                    <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${decisionText}</span> by ${decision.decided_by_name || 'You'}</p>
-                </div>
-            `;
-
-            showModal('view-escalation-modal');
-        }
-
-        // [AI-FIX] Corrected function to show review details in the right modal.
-       // dashboard-senior-quality.html
+        <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+          <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'closed')">Uphold (Keep as Error)</button>
+          <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturned')">Overturn (Not an Error)</button>
+        </div>`;
+        
+    showModal('final-decision-modal');
+}
+        
 
 async function openViewAssignedModal(assignmentId) {
     try {
@@ -1876,20 +1868,21 @@ async function openViewAssignedModal(assignmentId) {
             });
         });
 
-window.handleFinalDecision = async (errorId, decision, orderId) => {
+window.handleFinalDecision = async (errorId, decision) => {
     try {
-        // --- START: IMPROVEMENT ---
-        // Use the globally stored currentUser object instead of fetching again.
         if (!currentUser || !currentUser.id) {
             throw new Error("Could not identify the current user. Please refresh and try again.");
         }
         const seniorUserId = currentUser.id;
-        // --- END: IMPROVEMENT ---
+        
+        // --- START: READ NOTES FROM TEXTAREA ---
+        const notes = document.getElementById('decision-notes')?.value || '';
+        // --- END: READ NOTES FROM TEXTAREA ---
 
         // Find the agent's user ID to send a notification
         const { data: errorData, error: fetchError } = await window.supabase
             .from('errors')
-            .select('employee_id, employees!inner(user_id)') // Use inner join to ensure employee exists
+            .select('employee_id, employees!inner(user_id), order_assignments!inner(orders!inner(order_id))')
             .eq('id', errorId)
             .single();
 
@@ -1897,9 +1890,11 @@ window.handleFinalDecision = async (errorId, decision, orderId) => {
              console.error("Fetch error or missing agent user_id:", fetchError);
              throw new Error("Could not find the agent's user ID to notify.");
         }
+        
+        const orderId = errorData.order_assignments.orders.order_id;
 
-        // 1. Submit the final decision
-        await submitFinalDecision(errorId, seniorUserId, decision);
+        // 1. Submit the final decision with notes
+        await submitFinalDecision(errorId, seniorUserId, decision, notes);
         
         // 2. Create a notification for the agent
         const agentUserId = errorData.employees.user_id;
@@ -1910,7 +1905,7 @@ window.handleFinalDecision = async (errorId, decision, orderId) => {
         showToast(`Decision recorded and notification sent successfully.`, 'success');
         hideModal('final-decision-modal');
 
-        // Refresh the lists on the senior's page
+        // Refresh the lists
         await Promise.all([
             loadAppealedErrors(),
             loadFinalizedDecisions()
@@ -1921,6 +1916,7 @@ window.handleFinalDecision = async (errorId, decision, orderId) => {
         showToast(error.message || 'Failed to record final decision.', 'error');
     }
 };
+        
 
        window.handleOldFinalDecision = handleOldFinalDecision;
 
