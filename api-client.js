@@ -604,7 +604,8 @@ export async function getPendingErrors() {
 
 export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
   try {
-    const { data, error } = await supabase
+    // الخطوة 1: أدخل القرار النهائي
+    const { data, error: decisionError } = await supabase
       .from('final_decisions')
       .insert({
         error_id: errorId,
@@ -616,30 +617,34 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
       .select()
       .single();
 
-    if (error) throw error;
+    if (decisionError) {
+      console.error('❌ Error inserting final decision:', decisionError);
+      throw decisionError;
+    }
+    
+    console.log('✅ Final decision inserted successfully.');
 
-    await supabase
+    // الخطوة 2: قم بتحديث حالة الخطأ إلى "finalized"
+    const { error: updateError } = await supabase
       .from('errors')
-      .update({ status: 'finalized' })
+      .update({ status: 'finalized' }) // <-- تحديث الحالة هنا
       .eq('id', errorId);
 
+    if (updateError) {
+      console.error('❌ Error updating error status to finalized:', updateError);
+      // لا نلقي خطأ هنا، لأن القرار تم حفظه بالفعل، ولكن نسجل المشكلة
+      console.warn('⚠️ Warning: Final decision was saved, but the error status could not be updated.');
+    } else {
+      console.log('✅ Error status updated to finalized.');
+    }
+
     return data;
   } catch (error) {
-    console.error('SubmitFinalDecision error:', error);
+    console.error('💥 SubmitFinalDecision error:', error);
     throw error;
   }
 }
 
-export async function getAppealedErrors() {
-  try {
-    const { data, error } = await supabase.rpc('get_appealed_errors');
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetAppealedErrors error:', error);
-    throw error;
-  }
-}
 
 export async function getFinalizedDecisions() {
   try {
