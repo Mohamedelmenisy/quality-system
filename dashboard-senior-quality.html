@@ -6,8 +6,7 @@
     <title>Senior Quality Portal - QualityX</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js">
-</script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
         import { 
             supabase, 
@@ -18,7 +17,7 @@
             assignOrders,
             getPendingErrors,
             getAppealedErrors,
-            getFinalizedDecisions, // *** ADDED ***
+            getFinalizedDecisions,
             submitFinalDecision,
             getPerformanceMetrics,
             getTeamMembers,
@@ -26,7 +25,7 @@
             updateTeamSchedule,
             getNotifications,
             markNotificationAsRead,
-            createNotification, // *** ADDED ***
+            createNotification,
             subscribeToNotifications,
             getErrorTrends,
             getDepartmentPerformance,
@@ -46,8 +45,8 @@
         window.getAssignedOrders = getAssignedOrders;
         window.assignOrders = assignOrders;
         window.getPendingErrors = getPendingErrors;
-        window.getAppealedErrors = getAppealedErrors; // *** FIXED ***
-        window.getFinalizedDecisions = getFinalizedDecisions; // *** ADDED ***
+        window.getAppealedErrors = getAppealedErrors;
+        window.getFinalizedDecisions = getFinalizedDecisions;
         window.submitFinalDecision = submitFinalDecision;
         window.getPerformanceMetrics = getPerformanceMetrics;
         window.getTeamMembers = getTeamMembers;
@@ -55,7 +54,7 @@
         window.updateTeamSchedule = updateTeamSchedule;
         window.getNotifications = getNotifications;
         window.markNotificationAsRead = markNotificationAsRead;
-        window.createNotification = createNotification; // *** ADDED ***
+        window.createNotification = createNotification;
         window.getErrorTrends = getErrorTrends;
         window.getDepartmentPerformance = getDepartmentPerformance;
         window.importOrdersFromCSV = importOrdersFromCSV;
@@ -146,11 +145,13 @@
         .btn-secondary { background-color: #333; color: white; }
         .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.875rem; }
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 1050; display: none; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .modal-overlay.show { display: flex; animation: fadeIn 0.3s ease; }
+        .modal-overlay.show, .modal-overlay[style*="display: flex"] { display: flex !important; animation: fadeIn 0.3s ease; }
         .modal-box { background: var(--card-bg); padding: 2.5rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 90%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem; }
         .modal-title { font-size: 1.5rem; font-weight: 700; color: var(--primary-color); }
         .modal-close-btn { background: none; border: none; color: var(--text-muted-color); font-size: 1.5rem; cursor: pointer; }
+        .modal-body { padding: 0; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); }
         .escalation-details { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
         .detail-item { background: #222; padding: 15px; border-radius: 8px; }
         .detail-item strong { display: block; color: var(--text-muted-color); font-size: 0.8rem; margin-bottom: 5px;}
@@ -169,8 +170,8 @@
         .status-reviewed { background-color: var(--primary-color-darker); }
         .status-responded { background-color: var(--info-color); }
         .status-finalized { background-color: var(--success-color); }
-        .status-resolved { background-color: var(--success-color); } /* Added for escalations */
-        .status-under_review { background-color: var(--warning-color); color: black; } /* Added for appealed errors */
+        .status-resolved { background-color: var(--success-color); }
+        .status-under_review { background-color: var(--warning-color); color: black; }
         .status-closed { background-color: var(--danger-color); }
         .status-overturned { background-color: var(--success-color); }
         .form-group { margin-bottom: 1.5rem; }
@@ -797,7 +798,7 @@
             <h3 class="modal-title">Final Decision: Order <span id="decision-order-id" style="color: var(--primary-color);"></span></h3>
             <button class="modal-close-btn" data-modal-id="final-decision-modal">×</button>
         </div>
-        <div id="decision-modal-content"></div>
+        <div class="modal-body" id="decision-modal-content"></div>
       </div>
     </div>
     
@@ -807,7 +808,7 @@
                 <h3 class="modal-title" id="employee-modal-title">Add New Employee</h3>
                 <button class="modal-close-btn" data-modal-id="employee-modal">×</button>
             </div>
-            <form id="employee-form">
+            <form id="employee-form" class="modal-body">
                 <input type="hidden" id="employee-id">
                 <div class="form-group">
                     <label for="employee-name">Full Name</label>
@@ -829,7 +830,7 @@
                     <label for="employee-title">Title</label>
                     <input type="text" id="employee-title">
                 </div>
-                <div class="page-actions">
+                <div class="modal-footer" style="padding: 0; border-top: none; margin-top: 0;">
                     <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="employee-modal">Cancel</button>
                     <button type="submit" class="btn btn-primary">Save Employee</button>
                 </div>
@@ -843,19 +844,21 @@
                 <h3 class="modal-title">Edit Shift</h3>
                 <button class="modal-close-btn" data-modal-id="edit-shift-modal">×</button>
             </div>
-            <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
-            <div class="form-group">
-                <label for="shift-select">Shift Status</label>
-                <select id="shift-select">
-                    <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
-                    <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
-                    <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
-                    <option value="On Leave">On Leave</option>
-                    <option value="Sick Leave">Sick Leave</option>
-                    <option value="Off">Off</option>
-                </select>
+            <div class="modal-body">
+                <p>Select new status for <strong id="shift-modal-member-name"></strong> for <strong id="shift-modal-day-name"></strong>.</p>
+                <div class="form-group">
+                    <label for="shift-select">Shift Status</label>
+                    <select id="shift-select">
+                        <option value="09:00 - 17:00">Shift: 09:00 - 17:00</option>
+                        <option value="11:00 - 19:00">Shift: 11:00 - 19:00</option>
+                        <option value="14:00 - 22:00">Shift: 14:00 - 22:00</option>
+                        <option value="On Leave">On Leave</option>
+                        <option value="Sick Leave">Sick Leave</option>
+                        <option value="Off">Off</option>
+                    </select>
+                </div>
             </div>
-            <div class="page-actions">
+            <div class="modal-footer">
                 <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="edit-shift-modal">Cancel</button>
                 <button type="button" id="save-shift-btn" class="btn btn-primary">Save Change</button>
             </div>
@@ -869,30 +872,46 @@
                 <h3 class="modal-title" style="width: 100%; text-align: center;">Confirm Logout</h3>
                 <button class="modal-close-btn" data-modal-id="logout-confirm-modal" style="position: absolute; top: 10px; right: 10px;">×</button>
             </div>
-            <p style="margin: 1.5rem 0; color: var(--text-muted-color);">Are you sure you want to log out of your account?</p>
-            <div class="page-actions" style="justify-content: center;">
+            <div class="modal-body" style="padding-top: 0;">
+                <p style="margin: 1.5rem 0; color: var(--text-muted-color);">Are you sure you want to log out of your account?</p>
+            </div>
+            <div class="modal-footer" style="justify-content: center; padding-top: 0; border: none;">
                 <button type="button" class="btn btn-secondary modal-close-btn" data-modal-id="logout-confirm-modal">Cancel</button>
                 <button type="button" id="confirm-logout-btn" class="btn btn-danger">Confirm Logout</button>
             </div>
         </div>
     </div>
     
-    <!-- View Escalation Details Modal -->
-    <div id="view-escalation-modal" class="modal-overlay" style="display:none;">
+    <!-- [AI-FIX] This is the new, correct modal for viewing review details -->
+    <div id="view-review-details-modal" class="modal-overlay" style="display:none;">
       <div class="modal-box">
         <div class="modal-header">
-          <h3 class="modal-title">Review Details</h3>
-          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
+          <h3 class="modal-title" id="view-review-title">Review Details</h3>
+          <button class="modal-close-btn" data-modal-id="view-review-details-modal">×</button>
         </div>
-        <div id="view-escalation-body" style="display: flex; flex-direction: column; gap: 1rem;">
+        <div id="view-review-body" class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
           <!-- Content will be populated by JS -->
         </div>
-        <div class="modal-footer" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
+        <div class="modal-footer">
+          <button class="btn btn-primary modal-close-btn" data-modal-id="view-review-details-modal">Close</button>
         </div>
       </div>
     </div>
 
+    <!-- This modal is kept for other functionalities but is no longer used for viewing assigned orders -->
+    <div id="view-escalation-modal" class="modal-overlay" style="display:none;">
+      <div class="modal-box">
+        <div class="modal-header">
+          <h3 class="modal-title">Details</h3>
+          <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
+        </div>
+        <div id="view-escalation-body" class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-primary modal-close-btn" data-modal-id="view-escalation-modal">Close</button>
+        </div>
+      </div>
+    </div>
 
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
@@ -910,7 +929,7 @@
         let notifications = [];
         let directEscalations = [];
         let appealedErrors = [];
-        let finalizedDecisions = []; // *** ADDED ***
+        let finalizedDecisions = [];
         let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
@@ -995,7 +1014,7 @@
                     loadNotifications(),
                     loadDirectEscalations(),
                     loadAppealedErrors(),
-                    loadFinalizedDecisions() // *** ADDED ***
+                    loadFinalizedDecisions()
                 ]);
 
                 showToast('Senior Dashboard loaded successfully', 'success');
@@ -1055,7 +1074,7 @@
             } catch (error) {
                 showToast(`Failed to load ${countElementId || 'data'}`, 'error');
                 console.error(`Error loading data for ${countElementId}:`, error);
-                renderer(); // Render empty state
+                if(renderer) renderer(); // Render empty state
             }
         };
 
@@ -1067,7 +1086,7 @@
         const loadTeamSchedule = () => loadData(getTeamSchedule, renderTeamSchedule, null, teamSchedule);
         const loadNotifications = () => loadData(() => getNotifications(currentUser.id), updateNotificationsUI, null, notifications);
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
-        const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions); // *** ADDED ***
+        const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
         async function loadPerformanceMetrics() {
             try {
@@ -1126,7 +1145,6 @@
             `).join('');
         }
 
-        // *** NEW FUNCTION ***
         function renderFinalizedDecisionsTable() {
             const tableBody = document.getElementById('finalized-errors-table-body');
             if (finalizedDecisions.length === 0) {
@@ -1338,7 +1356,7 @@
                     <strong>Agent's Appeal Reason:</strong>
                     <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
                 </div>
-                <div class="feedback-actions" style="margin-top: 1rem;">
+                <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
                   <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'closed', '${error.order_id}')">Uphold (Keep as Error)</button>
                   <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturned', '${error.order_id}')">Overturn (Not an Error)</button>
                 </div>`;
@@ -1380,25 +1398,43 @@
 
             showModal('view-escalation-modal');
         }
-
+        
+        // [AI-FIX] This function has been corrected to use the right modal and display correct info.
         function openViewAssignedModal(assignmentId) {
             const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-            if (!assignment) return;
-            const review = assignment.quality_reviews?.[0];
-            const body = document.getElementById('view-escalation-body');
-            document.querySelector('#view-escalation-modal .modal-title').textContent = `Review Details: ${assignment.orders?.order_id || ''}`;
-            if (review) {
-                body.innerHTML = `
-                    <div class="detail-item"><strong>Reviewed By</strong><span>${assignment.users?.name || ''}</span></div>
-                    <div class="detail-item"><strong>Action Taken</strong><span>${review.action_correctness || 'N/A'}</span></div>
-                    <div class="detail-item"><strong>Modified Reason</strong><span>${review.modified_reason || 'None'}</span></div>
-                    <div class="detail-item" style="grid-column: span 2;"><strong>Notes</strong><p style="white-space: pre-wrap;">${review.modification_details || 'No notes.'}</p></div>
-                `;
-            } else {
-                body.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
+            if (!assignment) {
+                showToast('Could not find assignment details.', 'error');
+                return;
             }
-            showModal('view-escalation-modal');
+            
+            const review = assignment.quality_reviews?.[0];
+            
+            const modalTitle = document.getElementById('view-review-title');
+            const modalBody = document.getElementById('view-review-body');
+
+            if (modalTitle) {
+                modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
+            }
+
+            if (modalBody) {
+                if (review) {
+                    const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+                    modalBody.innerHTML = `
+                        <div class="detail-item"><strong>Reviewed By</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
+                        <div class="detail-item"><strong>Review Outcome</strong><span style="font-weight: bold; color: ${outcomeClass};">${review.action_correctness || 'N/A'}</span></div>
+                        ${review.action_correctness === 'error' ? `
+                        <div class="detail-item"><strong>Error Reason</strong><span>${review.modified_reason || 'Not specified'}</span></div>
+                        ` : ''}
+                        <div class="detail-item" style="grid-column: span 2;"><strong>Notes from Agent</strong><p style="white-space: pre-wrap;">${review.modification_details || 'No notes provided.'}</p></div>
+                    `;
+                } else {
+                    modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
+                }
+            }
+            
+            showModal('view-review-details-modal');
         }
+
 
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
@@ -1517,14 +1553,24 @@
             Chart.defaults.font.family = "'Poppins', sans-serif";
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
+                if(teamPerformanceChart) teamPerformanceChart.destroy();
                 teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
-            if (trendsCtx) errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
+            if (trendsCtx) {
+                if(errorTrendsChart) errorTrendsChart.destroy();
+                errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
+            }
             const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
-            if (analyticsCtx) analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Orders Reviewed', data: [320, 450, 410, 480], borderColor: '#00bfff', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true }, { label: 'Errors Found', data: [25, 18, 22, 15], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Monthly Performance Report', color: '#e6edf3', font: { size: 16 } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
+            if (analyticsCtx) {
+                if(analyticsChart) analyticsChart.destroy();
+                analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Orders Reviewed', data: [320, 450, 410, 480], borderColor: '#00bfff', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true }, { label: 'Errors Found', data: [25, 18, 22, 15], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Monthly Performance Report', color: '#e6edf3', font: { size: 16 } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
+            }
             const pieCtx = document.getElementById('errorTypesPieChart')?.getContext('2d');
-            if (pieCtx) errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
+            if (pieCtx) {
+                if(errorTypesPieChart) errorTypesPieChart.destroy();
+                errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
+            }
         }
         
         // Event Listeners Setup
@@ -1551,7 +1597,7 @@
             
             document.getElementById('notification-btn')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown')?.classList.toggle('show'); });
             document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown')?.classList.remove('show'); } });
-            document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => { const modal = btn.closest('.modal-overlay'); if (modal) hideModal(modal.id); }); });
+            document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => { const modalId = btn.dataset.modalId; if (modalId) hideModal(modalId); }); });
             
             document.body.addEventListener('click', function(event) {
                 const target = event.target.closest('button');
