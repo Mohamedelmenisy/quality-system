@@ -427,10 +427,9 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
-// api-client.js
-export async function submitReview(assignmentId, reviewData) {
+// api-client.jexport async function submitReview(assignmentId, reviewData) {
   try {
-    // 1. إضافة المراجعة إلى quality_reviews
+    // 1. أضف المراجعة أولاً وانتظر حتى يتم حفظها
     const { data: review, error: reviewError } = await supabase
       .from('quality_reviews')
       .insert({
@@ -442,48 +441,48 @@ export async function submitReview(assignmentId, reviewData) {
         reviewed_at: new Date(),
         employee_raw_name: reviewData.employee_raw_name
       })
-      .select()
+      .select('id, employee_raw_name') // اطلب فقط الـ id والاسم
       .single();
 
     if (reviewError) throw reviewError;
 
-    // 2. تحديث حالة الطلب
+    // 2. إذا كانت المراجعة خطأ، قم بتسجيله الآن بشكل صريح
+    if (reviewData.action_correctness === 'error') {
+      
+      // ابحث عن الموظف في جدول employees
+      const { data: employee, error: employeeError } = await supabase
+        .from('employees')
+        .select('id')
+        .eq('employee_username', review.employee_raw_name.replace(/"/g, '').trim())
+        .single();
+      
+      if (employeeError) throw employeeError;
+      
+      if (employee) {
+        // قم بإضافة الخطأ الآن بعد التأكد من وجود المراجعة والموظف
+        const { error: insertError } = await supabase
+          .from('errors')
+          .insert({
+            review_id: review.id, // الآن review.id موجود ومضمون
+            employee_id: employee.id,
+            status: 'closed',
+            created_at: new Date()
+          });
+
+        if (insertError) throw insertError;
+      }
+    }
+
+    // 3. أخيرًا، قم بتحديث حالة الطلب
     await supabase
       .from('order_assignments')
       .update({ status: 'completed', completed_at: 'now()' })
       .eq('id', assignmentId);
-    
-    // (لا يوجد أي كود آخر هنا، نحن نعتمد على الـ Trigger)
 
     return review;
+
   } catch (error) {
     console.error('SubmitReview error:', error);
-    throw error;
-  }
-}
-
-export async function getQualityReviews(filters = {}) {
-  try {
-    let query = supabase
-      .from('quality_reviews')
-      .select(`
-        *,
-        order_assignments (
-          orders (*),
-          users!order_assignments_quality_agent_id_fkey (name)
-        )
-      `)
-      .order('reviewed_at', { ascending: false });
-
-    if (filters.agent_id) {
-      query = query.eq('order_assignments.quality_agent_id', filters.agent_id);
-    }
-
-    const { data, error } = await query;
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetQualityReviews error:', error);
     throw error;
   }
 }
