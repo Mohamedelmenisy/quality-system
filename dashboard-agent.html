@@ -271,6 +271,7 @@
                 let actionButtons = '';
                 const viewButtonText = error.final_decision ? 'View Decision' : 'View';
                 // *** FIXED: Using error.id from old version's data structure ***
+                    ${(error.status === 'closed' && !error.appeal_reason) ? `
                 const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ ${viewButtonText}</button>`;
                 const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.id}">Appeal</button>`;
 
