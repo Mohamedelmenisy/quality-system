@@ -1878,32 +1878,39 @@ async function openViewAssignedModal(assignmentId) {
 
 window.handleFinalDecision = async (errorId, decision, orderId) => {
     try {
-        const user = await getCurrentUser();
-        if (!user) throw new Error("Senior user not found");
+        // --- START: IMPROVEMENT ---
+        // Use the globally stored currentUser object instead of fetching again.
+        if (!currentUser || !currentUser.id) {
+            throw new Error("Could not identify the current user. Please refresh and try again.");
+        }
+        const seniorUserId = currentUser.id;
+        // --- END: IMPROVEMENT ---
 
+        // Find the agent's user ID to send a notification
         const { data: errorData, error: fetchError } = await window.supabase
             .from('errors')
-            .select('employee_id, employees(user_id)')
+            .select('employee_id, employees!inner(user_id)') // Use inner join to ensure employee exists
             .eq('id', errorId)
             .single();
 
-        if (fetchError) throw fetchError;
-        if (!errorData?.employees?.user_id) throw new Error("Could not find the agent's user ID to notify.");
+        if (fetchError || !errorData?.employees?.user_id) {
+             console.error("Fetch error or missing agent user_id:", fetchError);
+             throw new Error("Could not find the agent's user ID to notify.");
+        }
 
-        const { error: decisionError } = await submitFinalDecision(errorId, user.id, decision);
-        if (decisionError) throw decisionError;
-
+        // 1. Submit the final decision
+        await submitFinalDecision(errorId, seniorUserId, decision);
+        
+        // 2. Create a notification for the agent
         const agentUserId = errorData.employees.user_id;
         const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
-
-        const { error: notificationError } = await createNotification(agentUserId, notificationMessage, 'info');
-        if (notificationError) {
-            console.warn("Decision was saved, but failed to send notification:", notificationError);
-        }
+        
+        await createNotification(agentUserId, notificationMessage, 'info');
 
         showToast(`Decision recorded and notification sent successfully.`, 'success');
         hideModal('final-decision-modal');
 
+        // Refresh the lists on the senior's page
         await Promise.all([
             loadAppealedErrors(),
             loadFinalizedDecisions()
