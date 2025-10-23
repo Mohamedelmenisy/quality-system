@@ -51,7 +51,9 @@ document.addEventListener('click', function(e){
             getHelperInquiries,
             respondToInquiry,
             // New function for company employees
-            getCompanyEmployees
+            getCompanyEmployee,
+            getErrorReasons, 
+            getCompanyDepartments,
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -1323,6 +1325,8 @@ document.addEventListener('click', function(e){
         // Application State
         let currentUser = null;
         let assignedOrders = [];
+        let errorReasons = []; 
+        let companyDepartments = []; 
         let teamMembers = [];
         let teamSchedule = [];
         let performanceMetrics = {};
@@ -1477,6 +1481,8 @@ document.addEventListener('click', function(e){
                 await loadHelperEscalations();
                 await loadHelperInquiries();
                 await loadCompanyEmployees();
+                await loadErrorReasons(), 
+                await loadCompanyDepartments(),
                 
                 // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
@@ -1491,6 +1497,14 @@ document.addEventListener('click', function(e){
             }
         }
 
+        // 4. أضف هاتين الدالتين المساعدتين الجديدتين
+async function loadErrorReasons() {
+    errorReasons = await getErrorReasons();
+}
+async function loadCompanyDepartments() {
+    companyDepartments = await getCompanyDepartments();
+}
+        
         function updateUserInterface() {
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
             document.getElementById('sidebar-username').textContent = currentUser.name;
@@ -2152,6 +2166,15 @@ document.addEventListener('click', function(e){
 
         async function openReviewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+              const errorReasonSelect = document.getElementById('review-error-type'); // تأكد من أن لديك select بهذا الـ id
+    errorReasonSelect.innerHTML = '<option value="">Select error reason...</option>' + 
+        errorReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('');
+
+    // تعبئة قائمة الأقسام
+    const departmentSelect = document.getElementById('review-department');
+    departmentSelect.innerHTML = '<option value="">Select department...</option>' + 
+        companyDepartments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
+            
             if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
             document.getElementById('review-order-id').textContent = order.order_id;
@@ -2379,7 +2402,8 @@ document.addEventListener('click', function(e){
                     const assignmentId = document.getElementById('submit-review-btn').dataset.assignmentId;
                     const action = document.getElementById('review-action').value;
                     const department = document.getElementById('review-department').value;
-                    const modifiedReason = document.getElementById('review-modified-reason').value;
+                    // الكود الجديد
+                    const modifiedReason = document.getElementById('review-error-type').value;
                     const notes = document.getElementById('review-notes').value;
 
                     if (!action) {
