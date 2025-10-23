@@ -427,7 +427,7 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
 
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
-// api-client.jexport async function submitReview(assignmentId, reviewData) {
+export async function submitReview(assignmentId, reviewData) {
   try {
     // 1. أضف المراجعة أولاً وانتظر حتى يتم حفظها
     const { data: review, error: reviewError } = await supabase
