@@ -1339,8 +1339,8 @@
                     <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
                 </div>
                 <div class="feedback-actions" style="margin-top: 1rem;">
-                    <button class="btn btn-danger" onclick="handleFinalDecision('${errorId}', 'closed')">Uphold (Keep as Error)</button>
-                    <button class="btn btn-success" onclick="handleFinalDecision('${errorId}', 'overturned')">Overturn (Not an Error)</button>
+                  <button class="btn btn-danger" onclick="handleFinalDecision('${error.error_id}', 'closed', '${error.order_id}')">Uphold (Keep as Error)</button>
+                  <button class="btn btn-success" onclick="handleFinalDecision('${error.error_id}', 'overturned', '${error.order_id}')">Overturn (Not an Error)</button>
                 </div>`;
             showModal('final-decision-modal');
         }
@@ -1653,35 +1653,51 @@
         });
 
         // *** UPDATED/REPLACED FUNCTION ***
-       window.handleFinalDecision = async (errorId, decision) => {
-   try {
-       const user = await getCurrentUser();
-       if (!user) throw new Error("User not found");
+      // dashboard-senior-quality.html
 
-       const { error } = await window.supabase
-           .from('errors')
-           .update({ 
-               status: decision, // 'overturned' or 'closed'
-               decided_by_id: user.id,
-               finalized_at: new Date().toISOString() // <-- نسجل الوقت الحالي
-           })
-           .eq('id', errorId);
-       
-       if (error) throw error;
-       
-       showToast(`Decision recorded successfully.`, 'success');
-       hideModal('final-decision-modal');
+window.handleFinalDecision = async (errorId, decision, orderId) => {
+    try {
+        const user = await getCurrentUser();
+        if (!user) throw new Error("Senior user not found");
 
-       await Promise.all([
-           loadAppealedErrors(),
-           loadFinalizedDecisions()
-       ]);
-       
-   } catch (error) {
+        // الخطوة 1: ابحث عن الخطأ للحصول على هوية الموظف
+        const { data: errorData, error: fetchError } = await window.supabase
+            .from('errors')
+            .select('employee_id, employees(user_id)') // نحضر الـ UUID الخاص بالموظف
+            .eq('id', errorId)
+            .single();
+
+        if (fetchError) throw fetchError;
+        if (!errorData?.employees?.user_id) throw new Error("Could not find the agent's user ID to notify.");
+
+        // الخطوة 2: تسجيل القرار النهائي
+        const { error: decisionError } = await submitFinalDecision(errorId, user.id, decision);
+        if (decisionError) throw decisionError;
+
+        // الخطوة 3: إرسال الإشعار للموظف
+        const agentUserId = errorData.employees.user_id;
+        const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${decision}.`;
+        
+        const { error: notificationError } = await createNotification(agentUserId, notificationMessage, 'info');
+        if (notificationError) {
+            // لا نوقف العملية إذا فشل الإشعار، فقط نسجل تحذيرًا
+            console.warn("Decision was saved, but failed to send notification:", notificationError);
+        }
+
+        showToast(`Decision recorded and notification sent successfully.`, 'success');
+        hideModal('final-decision-modal');
+
+        // أعد تحميل البيانات لتحديث الواجهة
+        await Promise.all([
+            loadAppealedErrors(),
+            loadFinalizedDecisions()
+        ]);
+
+    } catch (error) {
         console.error("Error in handleFinalDecision:", error);
-       showToast('Failed to record final decision.', 'error');
-   }
-}
+        showToast(error.message || 'Failed to record final decision.', 'error');
+    }
+};
 
        window.handleOldFinalDecision = handleOldFinalDecision;
 
