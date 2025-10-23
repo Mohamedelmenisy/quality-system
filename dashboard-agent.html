@@ -948,18 +948,24 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // Clear any autofilled search inputs and disable browser autofill
-  try {
-    document.querySelectorAll('input[type="search"]').forEach(function(inp){
-      inp.value = '';
-      inp.setAttribute('autocomplete','off');
-      inp.setAttribute('autocorrect','off');
-      inp.setAttribute('autocapitalize','off');
-      inp.setAttribute('spellcheck','false');
+  // استهداف كل مربعات البحث وإلغاء أي محاولة Autofill
+  document.querySelectorAll('input[type="search"]').forEach(inp => {
+    // امسح أي قيمة محفوظة
+    inp.value = "";
+    // غيّر الاسم بحيث Chrome ما يربطوش بالـ Email Autofill
+    inp.name = "no-autofill-" + Math.random().toString(36).substring(2);
+    // خليه نوع جديد متغير مش متعرف كـemail
+    inp.setAttribute("autocomplete", "new-password");
+    inp.setAttribute("autocorrect", "off");
+    inp.setAttribute("autocapitalize", "off");
+    inp.setAttribute("spellcheck", "false");
+
+    // hack إضافي يمنع chrome autofill تمامًا
+    inp.addEventListener("focus", () => {
+      if (inp.value.includes("@")) inp.value = "";
     });
-  } catch (e) { console.warn("Search-clear script error", e); }
+  });
 });
 </script>
-
 </body>
 </html>
