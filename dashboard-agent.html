@@ -948,21 +948,38 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {
-  // استهداف كل مربعات البحث وإلغاء أي محاولة Autofill
-  document.querySelectorAll('input[type="search"]').forEach(inp => {
-    // امسح أي قيمة محفوظة
-    inp.value = "";
-    // غيّر الاسم بحيث Chrome ما يربطوش بالـ Email Autofill
-    inp.name = "no-autofill-" + Math.random().toString(36).substring(2);
-    // خليه نوع جديد متغير مش متعرف كـemail
-    inp.setAttribute("autocomplete", "new-password");
-    inp.setAttribute("autocorrect", "off");
-    inp.setAttribute("autocapitalize", "off");
-    inp.setAttribute("spellcheck", "false");
-
-    // hack إضافي يمنع chrome autofill تمامًا
-    inp.addEventListener("focus", () => {
-      if (inp.value.includes("@")) inp.value = "";
+  // استهداف مربعات البحث وإزالة أي قيمة مخزنة
+  const searchInputs = document.querySelectorAll('input[type="search"]');
+  
+  searchInputs.forEach(input => {
+    // إزالة أي قيمة حالية
+    input.value = "";
+    
+    // تغيير السمات لمنع الـ autofill
+    input.setAttribute("autocomplete", "off");
+    input.setAttribute("autocorrect", "off");
+    input.setAttribute("autocapitalize", "off");
+    input.setAttribute("spellcheck", "false");
+    
+    // تغيير اسم الحقل لمنع التعرف عليه
+    input.name = "search-" + Math.random().toString(36).substring(2, 9);
+    
+    // حل إضافي: مراقبة أي تغيير وإزالة البريد الإلكتروني إذا ظهر
+    let lastValue = "";
+    input.addEventListener("input", function() {
+      if (this.value.includes("@")) {
+        this.value = lastValue;
+      } else {
+        lastValue = this.value;
+      }
+    });
+    
+    // التأكد من إزالة البريد الإلكتروني عند التركيز على الحقل
+    input.addEventListener("focus", function() {
+      if (this.value.includes("@")) {
+        this.value = "";
+        lastValue = "";
+      }
     });
   });
 });
