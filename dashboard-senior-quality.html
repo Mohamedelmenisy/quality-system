@@ -1355,8 +1355,6 @@ async function openFinalDecisionDetailsModal(errorId) {
         console.error("Error in openFinalDecisionDetailsModal:", err);
         showToast("An error occurred while fetching decision details.", "error");
     }
-}
-        
 
         function openFinalDecisionDetailsModal(errorId) {
     const decision = finalizedDecisions.find(d => d.error_id.toString() === errorId);
