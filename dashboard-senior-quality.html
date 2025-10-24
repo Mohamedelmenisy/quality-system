@@ -1646,6 +1646,77 @@ async function openViewAssignedModal(assignmentId) {
         showToast("An error occurred while fetching assignment details.", "error");
     }
 }
+
+async function openEscalationDetailsModal(escalationId) {
+    try {
+        console.log('Opening escalation modal for:', escalationId);
+        
+        const escalation = directEscalations.find(e => e.id.toString() === escalationId);
+        if (!escalation) {
+            showToast("Could not find escalation details.", "error");
+            return;
+        }
+
+        const modalTitle = document.querySelector('#view-escalation-modal .modal-title');
+        const modalBody = document.getElementById('view-escalation-body');
+
+        modalTitle.textContent = `Escalation Details: ${escalation.order_assignments?.orders?.order_id || 'N/A'}`;
+
+        let contentHtml = `
+            <div class="escalation-details">
+                <div class="detail-item">
+                    <strong>Order ID</strong>
+                    <span>${escalation.order_assignments?.orders?.order_id || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Escalated By</strong>
+                    <span>${escalation.escalated_by?.name || 'Unknown'}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Escalated To</strong>
+                    <span>${escalation.escalated_to?.name || 'Unknown'}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Status</strong>
+                    <span class="status-badge status-${escalation.status}">${escalation.status}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Escalated At</strong>
+                    <span>${formatDateTime(escalation.escalated_at)}</span>
+                </div>
+            </div>
+            
+            <div class="detail-item" style="grid-column: span 2;">
+                <strong>Escalation Reason</strong>
+                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted);">
+                    ${escalation.notes || 'No reason provided.'}
+                </p>
+            </div>
+        `;
+
+        // إذا كانت الحالة pending نضيف زر resolve
+        if (escalation.status === 'pending') {
+            contentHtml += `
+                <div class="form-group">
+                    <label for="escalation-feedback">Your Feedback *</label>
+                    <textarea id="escalation-feedback" rows="3" placeholder="Provide your resolution feedback..."></textarea>
+                </div>
+                <div class="modal-footer" style="padding: 0; border: none; margin-top: 1rem;">
+                    <button class="btn btn-success" id="resolve-escalation-confirm-btn" data-escalation-id="${escalation.id}">
+                        Resolve Escalation
+                    </button>
+                </div>
+            `;
+        }
+
+        modalBody.innerHTML = contentHtml;
+        showModal('view-escalation-modal');
+
+    } catch (err) {
+        console.error("Error in openEscalationDetailsModal:", err);
+        showToast("An error occurred while fetching escalation details.", "error");
+    }
+}
                 
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
