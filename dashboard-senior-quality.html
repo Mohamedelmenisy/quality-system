@@ -1240,8 +1240,29 @@ function renderFinalizedDecisionsTable() {
         // أضف هذه الدالة بعد renderFinalizedDecisionsTable
 async function openFinalDecisionDetailsModal(errorId) {
     try {
-        const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
-        if (!decision) {
+        // نجيب البيانات المحدثة من الداتابيز مباشرة
+        const { data: decision, error } = await supabase
+            .from('final_decisions')
+            .select(`
+                *,
+                errors!inner(
+                    id,
+                    status,
+                    employees!inner(
+                        employee_username
+                    ),
+                    quality_reviews!inner(
+                        order_assignments!inner(
+                            orders!inner(order_id)
+                        ),
+                        modified_reason
+                    )
+                )
+            `)
+            .eq('error_id', errorId)
+            .single();
+
+        if (error || !decision) {
             showToast("Could not find decision details.", "error");
             return;
         }
@@ -1249,10 +1270,10 @@ async function openFinalDecisionDetailsModal(errorId) {
         const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
         const modalBody = document.getElementById('view-review-body');
 
-        modalTitle.textContent = `Final Decision: Order ${decision.order_id}`;
+        modalTitle.textContent = `Final Decision: Order ${decision.errors?.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}`;
 
         let decisionStatus, statusColor;
-        const finalDecision = decision.your_decision?.toLowerCase() || '';
+        const finalDecision = decision.decision?.toLowerCase() || '';
 
         if (finalDecision === 'approved') {
             decisionStatus = '✅ Overturned (Appeal Accepted)';
@@ -1264,7 +1285,7 @@ async function openFinalDecisionDetailsModal(errorId) {
             decisionStatus = '⚠️ Modified Decision';
             statusColor = 'var(--warning-color)';
         } else {
-            decisionStatus = decision.your_decision || 'N/A';
+            decisionStatus = decision.decision || 'N/A';
             statusColor = 'var(--text-muted)';
         }
 
@@ -1272,27 +1293,27 @@ async function openFinalDecisionDetailsModal(errorId) {
             <div class="escalation-details">
                 <div class="detail-item">
                     <strong>Order ID</strong>
-                    <span>${decision.order_id}</span>
+                    <span>${decision.errors?.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</span>
                 </div>
                 <div class="detail-item">
                     <strong>Agent</strong>
-                    <span>${decision.employee_username}</span>
+                    <span>${decision.errors?.employees?.employee_username || 'Unknown'}</span>
                 </div>
                 <div class="detail-item">
                     <strong>Error Details</strong>
-                    <span>${decision.error_details}</span>
+                    <span>${decision.errors?.quality_reviews?.modified_reason || 'N/A'}</span>
                 </div>
             </div>
 
             <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
                 <strong>Agent's Appeal Reason</strong>
-                <p style="white-space: pre-wrap; margin-top: 5px;">${decision.appeal_reason || 'No appeal reason provided.'}</p>
+                <p style="white-space: pre-wrap; margin-top: 5px;">${decision.errors?.appeal_reason || 'No appeal reason provided.'}</p>
             </div>
 
             <div class="detail-item" style="background-color: ${statusColor}15; border-left: 4px solid ${statusColor};">
                 <strong>Your Final Decision</strong>
                 <p style="font-size: 1.1rem; font-weight: bold; color: ${statusColor}; margin: 0.5rem 0;">${decisionStatus}</p>
-                <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.finalized_at)}</small>
+                <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.decided_at)}</small>
             </div>
 
             <div class="detail-item">
@@ -1311,6 +1332,7 @@ async function openFinalDecisionDetailsModal(errorId) {
         showToast("An error occurred while fetching decision details.", "error");
     }
 }
+        
         
 
         function openFinalDecisionDetailsModal(errorId) {
