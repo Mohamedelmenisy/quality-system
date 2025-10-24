@@ -343,24 +343,29 @@ function openViewErrorModal(errorId) {
         <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
     `;
 
-    // === THIS IS THE FINAL FIX: Check for 'overturned' status OR a final decision ===
-    if (error.status === 'overturned' || (error.status === 'closed' && error.final_decision)) {
+    // --- FINAL ROBUST LOGIC ---
+    // Show the decision block ONLY IF we have a final_decision field from the merge
+    if (error.final_decision) {
         
-        // Determine the text and color based on the outcome
-        const isApproved = (error.status === 'overturned' || error.final_decision === 'approved');
+        const isApproved = error.final_decision === 'approved';
         const decisionClass = isApproved ? 'status-overturned' : 'status-closed';
         const decisionText = isApproved ? 'Appeal Approved (Error Overturned)' : 'Appeal Rejected (Error Upheld)';
+        
+        // Safely handle potentially missing details for older records
+        const seniorName = error.decided_by_name || 'Senior';
+        const decisionDate = error.decided_at ? formatDateTime(error.decided_at) : 'N/A';
+        const seniorNotes = error.decision_notes || 'No notes were provided for this decision.';
 
         contentHtml += `
             <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
             <div class="detail-item" style="background-color: #222;">
                 <strong>Senior's Final Decision</strong>
-                <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${decisionText}</span> by ${error.decided_by_name || 'Senior'}</p>
-                <small style="color: var(--text-muted);">${formatDateTime(error.decided_at)}</small>
+                <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${decisionText}</span> by ${seniorName}</p>
+                <small style="color: var(--text-muted);">${decisionDate}</small>
             </div>
             <div class="detail-item">
                 <strong>Senior's Notes</strong>
-                <p style="white-space: pre-wrap; color: var(--text-muted);">${error.decision_notes || 'No notes provided.'}</p>
+                <p style="white-space: pre-wrap; color: var(--text-muted);">${seniorNotes}</p>
             </div>
         `;
     } else if (error.status === 'under_review') {
