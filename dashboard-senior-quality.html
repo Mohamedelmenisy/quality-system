@@ -1839,27 +1839,24 @@ async function openViewAssignedModal(assignmentId) {
             document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown')?.classList.remove('show'); } });
             document.querySelectorAll('.modal-close-btn').forEach(btn => { btn.addEventListener('click', () => { const modalId = btn.dataset.modalId; if (modalId) hideModal(modalId); }); });
 
-            // Main event delegation for buttons
-            // امسح الكود القديم بالكامل وضع هذا مكانه
+           // Main event delegation for buttons
 document.body.addEventListener('click', async function(event) {
     const target = event.target.closest('button');
     if (!target) return;
 
     const assignmentId = target.dataset.assignmentId;
     const errorId = target.dataset.errorId;
+    const escalationId = target.dataset.escalationId;
+    
     console.log('Button clicked:', target.className, 'Assignment ID:', assignmentId);
 
     if (target.classList.contains('view-assigned-btn')) {
         console.log('View assigned button clicked for:', assignmentId);
         openViewAssignedModal(assignmentId);
-    const escalationId = target.dataset.escalationId;
-
-    if (target.classList.contains('final-decision-btn')) {
+    } else if (target.classList.contains('final-decision-btn')) {
         openFinalDecisionModal(errorId);
     } else if (target.classList.contains('edit-employee-btn')) {
         openEmployeeModal(target.dataset.employeeId);
-    } else if (target.classList.contains('view-assigned-btn')) {
-        openViewAssignedModal(assignmentId);
     } else if (target.classList.contains('reassign-btn')) {
         openReassignModal(assignmentId);
     } else if (target.classList.contains('view-final-decision-btn')) {
