@@ -2127,10 +2127,12 @@ document.body.addEventListener('click', async function(event) {
                 hideModal('logout-confirm-modal');
             });
         });
-    window.handleFinalDecision = async (errorId, decision) => {
+  // dashboard-senior-quality.html
+
+window.handleFinalDecision = async (errorId, decision) => {
     try {
         if (!currentUser || !currentUser.id) {
-            throw new Error("Could not identify the current user. Please refresh and try again.");
+            throw new Error("Could not identify the current user.");
         }
         const seniorUserId = currentUser.id;
         const notes = document.getElementById('decision-notes')?.value;
@@ -2140,42 +2142,52 @@ document.body.addEventListener('click', async function(event) {
             return;
         }
 
+        // --- NEW: Fetch the original reviewing agent's ID ---
         const { data: errorData, error: fetchError } = await window.supabase
             .from('errors')
-            .select(`id, employees!inner(user_id), quality_reviews!inner(order_assignments!inner(orders!inner(order_id)))`)
+            .select(`
+                employees!inner(user_id),
+                quality_reviews!inner(
+                    order_assignments!inner(
+                        quality_agent_id,
+                        orders!inner(order_id)
+                    )
+                )
+            `)
             .eq('id', errorId)
             .single();
 
-        if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
-            console.error("Fetch error or missing critical data:", fetchError, errorData);
-            throw new Error("Could not find the agent's User ID or Order ID to notify.");
+        if (fetchError || !errorData) {
+            console.error("Fetch error or missing critical data:", fetchError);
+            throw new Error("Could not find the original review data.");
         }
 
         const agentUserId = errorData.employees.user_id;
         const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
-        
-        const normalizedDecision = decision.toLowerCase();
+        const originalReviewingAgentId = errorData.quality_reviews.order_assignments.quality_agent_id; // <-- Got the ID!
 
-        // submitFinalDecision is in api-client.js and we assume it inserts into final_decisions table
-        await submitFinalDecision(errorId, seniorUserId, normalizedDecision, notes);
+        const normalizedDecision = decision.toLowerCase();
         
-        const statusMap = {
-            approved: 'overturned', // Error is overturned
-            rejected: 'closed'      // Error is upheld (remains closed)
-        };
+        // --- UPDATED: Now we add the new ID when submitting the decision ---
+        // This requires updating submitFinalDecision in api-client.js
+        await submitFinalDecision(errorId, seniorUserId, normalizedDecision, notes, originalReviewingAgentId);
+        
+        const statusMap = { approved: 'overturned', rejected: 'closed' };
         const newErrorStatus = statusMap[normalizedDecision] || 'closed';
 
-        const { error: updateError } = await supabase
+        await supabase
             .from('errors')
             .update({ status: newErrorStatus, decided_by_id: seniorUserId, finalized_at: new Date() })
             .eq('id', errorId);
 
-        if (updateError) throw updateError;
+        await createNotification(agentUserId, `Your appeal for order ${orderId} has been reviewed. Final decision: ${normalizedDecision}.`, 'info');
         
-        const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${normalizedDecision}.`;
-        await createNotification(agentUserId, notificationMessage, 'info');
+        // Also notify the original quality agent that their review was overturned
+        if (normalizedDecision === 'approved' && originalReviewingAgentId) {
+             await createNotification(originalReviewingAgentId, `Your review for order ${orderId} was overturned by a senior analyst.`, 'warning');
+        }
 
-        showToast(`Decision recorded and notification sent successfully.`, 'success');
+        showToast(`Decision recorded and notifications sent.`, 'success');
         hideModal('final-decision-modal');
 
         await Promise.all([
@@ -2187,8 +2199,7 @@ document.body.addEventListener('click', async function(event) {
         console.error("Error in handleFinalDecision:", error);
         showToast(error.message || 'Failed to record final decision.', 'error');
     }
-}; // <--- هذا السطر الناقص
-
+};
     </script>
 </body>
 </html>
