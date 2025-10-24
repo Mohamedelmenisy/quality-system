@@ -525,21 +525,62 @@ export async function submitReview(assignmentId, reviewData) {
 
 // ==================== ERROR FUNCTIONS ====================
 
+// api-client.js
+
 export async function getAgentErrors(agentId, filters = {}) {
   try {
-    const { data, error } = await supabase
+    // This assumes your RPC function 'get_errors_for_agent' can be modified
+    // or already joins with final_decisions. If not, we have to do it manually.
+    // Let's assume we need to do it manually for now as it's safer.
+
+    // 1. Get the raw errors
+    const { data: rawErrors, error: rpcError } = await supabase
       .rpc('get_errors_for_agent', { agent_uuid: agentId });
 
-    if (error) {
-        console.error('RPC call error:', error);
-        throw error;
+    if (rpcError) {
+        console.error('RPC call error:', rpcError);
+        throw rpcError;
     }
 
-    let filteredData = data;
+    if (!rawErrors || rawErrors.length === 0) {
+        return [];
+    }
 
+    // 2. Get all final decisions for these errors
+    const errorIds = rawErrors.map(e => e.error_id);
+    const { data: decisions, error: decisionError } = await supabase
+        .from('final_decisions')
+        .select(`
+            error_id,
+            decision,
+            notes,
+            decided_at,
+            decided_by:users ( name )
+        `)
+        .in('error_id', errorIds);
+
+    if (decisionError) {
+        console.warn('Could not fetch final decisions:', decisionError);
+    }
+
+    // 3. Merge decisions into errors
+    const errorsWithDecisions = rawErrors.map(error => {
+        const decision = decisions?.find(d => d.error_id === error.error_id);
+        return {
+            ...error,
+            final_decision: decision?.decision,
+            decision_notes: decision?.notes,
+            decided_at: decision?.decided_at,
+            decided_by_name: decision?.decided_by?.name
+        };
+    });
+    
+    // --- Filtering Logic (kept from original) ---
+    let filteredData = errorsWithDecisions;
     if (filters.status && filters.status !== 'All Statuses') {
         filteredData = filteredData.filter(e => e.status === filters.status);
     }
+    // You can add more filters here if needed
 
     return filteredData;
 
@@ -548,6 +589,7 @@ export async function getAgentErrors(agentId, filters = {}) {
     throw error;
   }
 }
+
 
 export async function submitErrorResponse(errorId, agentId, responseText) {
   try {
