@@ -526,14 +526,8 @@ export async function submitReview(assignmentId, reviewData) {
 // ==================== ERROR FUNCTIONS ====================
 
 // api-client.js
-
 export async function getAgentErrors(agentId, filters = {}) {
   try {
-    // This assumes your RPC function 'get_errors_for_agent' can be modified
-    // or already joins with final_decisions. If not, we have to do it manually.
-    // Let's assume we need to do it manually for now as it's safer.
-
-    // 1. Get the raw errors
     const { data: rawErrors, error: rpcError } = await supabase
       .rpc('get_errors_for_agent', { agent_uuid: agentId });
 
@@ -546,8 +540,9 @@ export async function getAgentErrors(agentId, filters = {}) {
         return [];
     }
 
-    // 2. Get all final decisions for these errors
     const errorIds = rawErrors.map(e => e.error_id);
+    
+    // --- THIS IS THE CORRECTED QUERY ---
     const { data: decisions, error: decisionError } = await supabase
         .from('final_decisions')
         .select(`
@@ -555,15 +550,15 @@ export async function getAgentErrors(agentId, filters = {}) {
             decision,
             notes,
             decided_at,
-            decided_by:users ( name )
+            decided_by:users!final_decisions_decided_by_id_fkey ( name )
         `)
         .in('error_id', errorIds);
 
     if (decisionError) {
-        console.warn('Could not fetch final decisions:', decisionError);
+        // This is not a critical error, just a warning if decisions don't exist yet
+        console.warn('Could not fetch final decisions:', decisionError.message);
     }
 
-    // 3. Merge decisions into errors
     const errorsWithDecisions = rawErrors.map(error => {
         const decision = decisions?.find(d => d.error_id === error.error_id);
         return {
@@ -575,12 +570,10 @@ export async function getAgentErrors(agentId, filters = {}) {
         };
     });
     
-    // --- Filtering Logic (kept from original) ---
     let filteredData = errorsWithDecisions;
     if (filters.status && filters.status !== 'All Statuses') {
         filteredData = filteredData.filter(e => e.status === filters.status);
     }
-    // You can add more filters here if needed
 
     return filteredData;
 
