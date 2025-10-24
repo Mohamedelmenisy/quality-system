@@ -913,7 +913,7 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
         <header>
             <div class="header-left"><h2 class="page-title" id="page-title-header">Dashboard</h2></div>
             <div class="header-actions">
-                <div class="search-input-container"><input type="search" id="global-search" placeholder="Search my errors..."></div>
+                <div class="search-input-container"><input type="search" id="global-search" placeholder="Search my errors..." autocomplete="off" name="search-query" role="search"></div>
                 <div class="notification-bell">
                     <button id="notification-btn" class="notification-btn"><svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="notification-badge" id="notification-badge" style="display: none;">0</span></button>
                     <div id="notification-dropdown" class="notification-dropdown">
