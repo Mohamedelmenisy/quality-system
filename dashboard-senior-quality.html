@@ -1526,8 +1526,11 @@ function openEscalationDetailsModal(escalationId) {
     showModal('final-decision-modal');
 }
         
-        async function openViewAssignedModal(assignmentId) {
+    // استبدال الدالة الحالية بهذه النسخة المحسنة
+async function openViewAssignedModal(assignmentId) {
     try {
+        console.log('Opening view modal for assignment:', assignmentId);
+        
         const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
         if (!assignment) {
             showToast("Could not find assignment details.", "error");
@@ -1537,41 +1540,78 @@ function openEscalationDetailsModal(escalationId) {
         const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
         const modalBody = document.getElementById('view-review-body');
 
-        modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
+        modalTitle.textContent = `Assignment Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        // Step 1: Explicitly search for the review in the database
-        const { data: review, error } = await supabase
-            .from('quality_reviews')
-            .select('*')
-            .eq('assignment_id', assignmentId)
-            .single(); // We expect only one review
+        // بناء محتوى تفاصيل التعيين
+        let contentHtml = `
+            <div class="detail-item">
+                <strong>Order ID</strong>
+                <span>${assignment.orders?.order_id || 'N/A'}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Assigned Agent</strong>
+                <span>${assignment.users?.name || 'Unknown'}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Assignment Status</strong>
+                <span class="status-badge status-${assignment.status}">${assignment.status.replace('_', ' ')}</span>
+            </div>
+            <div class="detail-item">
+                <strong>Assigned At</strong>
+                <span>${formatDateTime(assignment.assigned_at)}</span>
+            </div>
+        `;
 
-        if (error || !review) {
-            // If the review is not found, display the correct message
-            modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
-        } else {
-            // If the review is found, display its details
-            const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
-            modalBody.innerHTML = `
-                <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
-                <div class="detail-item"><strong>Review Outcome:</strong><span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">${review.action_correctness}</span></div>
-                ${review.action_correctness === 'error' ? `
-                <div class="detail-item"><strong>Error Reason:</strong><span>${review.modified_reason || 'Not specified'}</span></div>
-                ` : ''}
-                <div class="detail-item" style="grid-column: span 2;">
-                    <strong>Notes from Agent:</strong>
-                    <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details || 'No notes provided.'}</p>
+        // إضافة معلومات الإكمال إذا كانت متاحة
+        if (assignment.status === 'completed' && assignment.completed_at) {
+            contentHtml += `
+                <div class="detail-item">
+                    <strong>Completed At</strong>
+                    <span>${formatDateTime(assignment.completed_at)}</span>
                 </div>
             `;
         }
 
-        showModal('view-review-details-modal'); // Use the correct modal
+        // إضافة معلومات المراجعة إذا كانت موجودة
+        if (assignment.quality_reviews && assignment.quality_reviews.length > 0) {
+            const review = assignment.quality_reviews[0];
+            const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+            contentHtml += `
+                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
+                    <strong>Review Outcome</strong>
+                    <span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">
+                        ${review.action_correctness}
+                    </span>
+                </div>
+                ${review.action_correctness === 'error' ? `
+                <div class="detail-item">
+                    <strong>Error Reason</strong>
+                    <span>${review.modified_reason || 'Not specified'}</span>
+                </div>
+                ` : ''}
+                <div class="detail-item">
+                    <strong>Review Notes</strong>
+                    <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details || 'No notes provided.'}</p>
+                </div>
+            `;
+        } else {
+            contentHtml += `
+                <div class="detail-item">
+                    <strong>Review Status</strong>
+                    <span style="color: var(--warning-color);">Not yet reviewed</span>
+                </div>
+            `;
+        }
+
+        modalBody.innerHTML = contentHtml;
+        showModal('view-review-details-modal');
 
     } catch (err) {
         console.error("Error in openViewAssignedModal:", err);
-        showToast("An error occurred while fetching review details.", "error");
+        showToast("An error occurred while fetching assignment details.", "error");
     }
 }
+        
         
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
@@ -1807,6 +1847,11 @@ document.body.addEventListener('click', async function(event) {
 
     const assignmentId = target.dataset.assignmentId;
     const errorId = target.dataset.errorId;
+    console.log('Button clicked:', target.className, 'Assignment ID:', assignmentId);
+
+    if (target.classList.contains('view-assigned-btn')) {
+        console.log('View assigned button clicked for:', assignmentId);
+        openViewAssignedModal(assignmentId);
     const escalationId = target.dataset.escalationId;
 
     if (target.classList.contains('final-decision-btn')) {
