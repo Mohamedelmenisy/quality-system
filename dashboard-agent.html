@@ -327,7 +327,6 @@ function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     }
     
    // dashboard-agent.html
-
 function openViewErrorModal(errorId) {
     const error = userErrors.find(e => String(e.error_id) === String(errorId));
     if (!error) {
@@ -344,10 +343,13 @@ function openViewErrorModal(errorId) {
         <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
     `;
 
-    // Check if a final decision exists and display it
-    if (error.final_decision) {
-        const decisionClass = error.final_decision === 'approved' ? 'status-overturned' : 'status-closed';
-        const decisionText = error.final_decision === 'approved' ? 'Appeal Approved (Error Overturned)' : 'Appeal Rejected (Error Upheld)';
+    // === THIS IS THE FINAL FIX: Check for 'overturned' status OR a final decision ===
+    if (error.status === 'overturned' || (error.status === 'closed' && error.final_decision)) {
+        
+        // Determine the text and color based on the outcome
+        const isApproved = (error.status === 'overturned' || error.final_decision === 'approved');
+        const decisionClass = isApproved ? 'status-overturned' : 'status-closed';
+        const decisionText = isApproved ? 'Appeal Approved (Error Overturned)' : 'Appeal Rejected (Error Upheld)';
 
         contentHtml += `
             <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
