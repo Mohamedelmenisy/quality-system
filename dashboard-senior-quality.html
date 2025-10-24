@@ -1212,17 +1212,16 @@ function renderFinalizedDecisionsTable() {
     }
     tableBody.innerHTML = finalizedDecisions.map(decision => {
         let decisionDisplay;
-        const finalDecision = decision.your_decision.toLowerCase();
+        const finalDecision = decision.your_decision?.toLowerCase() || '';
 
         if (finalDecision === 'approved') {
-            // "approved" means the error was overturned
-            decisionDisplay = `<span style="font-weight: 500; color: var(--success-color);">✅ Overturned</span>`;
+            decisionDisplay = `<span class="status-badge" style="background: var(--green-bg); color: var(--success-color); border: 1px solid var(--success-color);">✅ Overturned</span>`;
         } else if (finalDecision === 'rejected') {
-            // "rejected" means the error was upheld
-            decisionDisplay = `<span style="font-weight: 500; color: var(--danger-color);">❌ Uphold (Error Confirmed)</span>`;
+            decisionDisplay = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color); border: 1px solid var(--danger-color);">❌ Uphold</span>`;
+        } else if (finalDecision === 'modified') {
+            decisionDisplay = `<span class="status-badge" style="background: rgba(255, 193, 7, 0.1); color: var(--warning-color); border: 1px solid var(--warning-color);">⚠️ Modified</span>`;
         } else {
-             // Fallback for any other potential value
-            decisionDisplay = `<span>${decision.your_decision}</span>`;
+            decisionDisplay = `<span class="status-badge">${decision.your_decision || 'N/A'}</span>`;
         }
 
         return `
@@ -1237,6 +1236,82 @@ function renderFinalizedDecisionsTable() {
         `;
     }).join('');
 }
+
+        // أضف هذه الدالة بعد renderFinalizedDecisionsTable
+async function openFinalDecisionDetailsModal(errorId) {
+    try {
+        const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
+        if (!decision) {
+            showToast("Could not find decision details.", "error");
+            return;
+        }
+
+        const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
+        const modalBody = document.getElementById('view-review-body');
+
+        modalTitle.textContent = `Final Decision: Order ${decision.order_id}`;
+
+        let decisionStatus, statusColor;
+        const finalDecision = decision.your_decision?.toLowerCase() || '';
+
+        if (finalDecision === 'approved') {
+            decisionStatus = '✅ Overturned (Appeal Accepted)';
+            statusColor = 'var(--success-color)';
+        } else if (finalDecision === 'rejected') {
+            decisionStatus = '❌ Uphold (Appeal Rejected)';
+            statusColor = 'var(--danger-color)';
+        } else if (finalDecision === 'modified') {
+            decisionStatus = '⚠️ Modified Decision';
+            statusColor = 'var(--warning-color)';
+        } else {
+            decisionStatus = decision.your_decision || 'N/A';
+            statusColor = 'var(--text-muted)';
+        }
+
+        const contentHtml = `
+            <div class="escalation-details">
+                <div class="detail-item">
+                    <strong>Order ID</strong>
+                    <span>${decision.order_id}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent</strong>
+                    <span>${decision.employee_username}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Error Details</strong>
+                    <span>${decision.error_details}</span>
+                </div>
+            </div>
+
+            <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
+                <strong>Agent's Appeal Reason</strong>
+                <p style="white-space: pre-wrap; margin-top: 5px;">${decision.appeal_reason || 'No appeal reason provided.'}</p>
+            </div>
+
+            <div class="detail-item" style="background-color: ${statusColor}15; border-left: 4px solid ${statusColor};">
+                <strong>Your Final Decision</strong>
+                <p style="font-size: 1.1rem; font-weight: bold; color: ${statusColor}; margin: 0.5rem 0;">${decisionStatus}</p>
+                <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.finalized_at)}</small>
+            </div>
+
+            <div class="detail-item">
+                <strong>Your Notes & Justification</strong>
+                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted);">
+                    ${decision.notes || 'No notes provided.'}
+                </p>
+            </div>
+        `;
+
+        modalBody.innerHTML = contentHtml;
+        showModal('view-review-details-modal');
+
+    } catch (err) {
+        console.error("Error in openFinalDecisionDetailsModal:", err);
+        showToast("An error occurred while fetching decision details.", "error");
+    }
+}
+        
 
         function openFinalDecisionDetailsModal(errorId) {
     const decision = finalizedDecisions.find(d => d.error_id.toString() === errorId);
