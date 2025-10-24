@@ -343,18 +343,17 @@ function openViewErrorModal(errorId) {
         <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
     `;
 
-    // --- FINAL ROBUST LOGIC ---
-    // Show the decision block ONLY IF we have a final_decision field from the merge
-    if (error.final_decision) {
+    // === THIS IS THE CORRECT AND FINAL LOGIC ===
+    // Show the decision block if the status is 'overturned' OR if it's 'closed' AND has a final_decision record.
+    if (error.status === 'overturned' || (error.status === 'closed' && error.final_decision)) {
         
-        const isApproved = error.final_decision === 'approved';
+        const isApproved = (error.status === 'overturned' || error.final_decision === 'approved');
         const decisionClass = isApproved ? 'status-overturned' : 'status-closed';
         const decisionText = isApproved ? 'Appeal Approved (Error Overturned)' : 'Appeal Rejected (Error Upheld)';
         
-        // Safely handle potentially missing details for older records
         const seniorName = error.decided_by_name || 'Senior';
-        const decisionDate = error.decided_at ? formatDateTime(error.decided_at) : 'N/A';
-        const seniorNotes = error.decision_notes || 'No notes were provided for this decision.';
+        const decisionDate = error.decided_at ? formatDateTime(error.decided_at) : 'N/A'; // Use N/A for old overturned cases
+        const seniorNotes = error.decision_notes || 'No notes were provided.';
 
         contentHtml += `
             <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
