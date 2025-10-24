@@ -1203,74 +1203,50 @@
         }
 
       // dashboard-senior-quality.html
-
-// dashboard-senior-quality.html
-
 function renderFinalizedDecisionsTable() {
     const tableBody = document.getElementById('finalized-errors-table-body');
-    if (!finalizedDecisions || finalizedDecisions.length === 0) {
+    if (finalizedDecisions.length === 0) {
         tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No decision history found.</td></tr>`;
         return;
     }
+    
     tableBody.innerHTML = finalizedDecisions.map(decision => {
+        // نستخدم البيانات المتاحة حالياً
+        const decisionValue = decision.your_decision || decision.decision || 'N/A';
+        const notesValue = decision.notes || decision.decision_notes || 'No notes provided';
+        
         let decisionDisplay;
-        // CORRECTED: Use 'decision.decision' which is likely what the RPC returns
-        const finalDecision = decision.decision?.toLowerCase() || '';
+        const finalDecision = decisionValue.toLowerCase();
 
         if (finalDecision === 'approved') {
-            decisionDisplay = `<span style="font-weight: 500; color: var(--success-color);">✅ Overturned</span>`;
+            decisionDisplay = `<span class="status-badge" style="background: var(--green-bg); color: var(--success-color); border: 1px solid var(--success-color);">✅ Overturned</span>`;
         } else if (finalDecision === 'rejected') {
-            decisionDisplay = `<span style="font-weight: 500; color: var(--danger-color);">❌ Uphold</span>`;
+            decisionDisplay = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color); border: 1px solid var(--danger-color);">❌ Uphold</span>`;
         } else if (finalDecision === 'modified') {
-            decisionDisplay = `<span style="font-weight: 500; color: var(--warning-color);">⚠️ Modified</span>`;
+            decisionDisplay = `<span class="status-badge" style="background: rgba(255, 193, 7, 0.1); color: var(--warning-color); border: 1px solid var(--warning-color);">⚠️ Modified</span>`;
         } else {
-            // Fallback for old data or different values like "Closed"
-            decisionDisplay = `<span>${decision.decision || 'Closed'}</span>`;
+            decisionDisplay = `<span class="status-badge">${decisionValue}</span>`;
         }
-        
-        // As per your screenshot, the RPC returns 'finalized_at'
-        const dateFinalized = decision.finalized_at ? formatDateTime(decision.finalized_at) : 'N/A';
-        
+
         return `
             <tr>
                 <td>${decision.order_id}</td>
                 <td>${decision.employee_username}</td>
                 <td class="wrap-text">${decision.error_details}</td>
                 <td>${decisionDisplay}</td>
-                <td>${dateFinalized}</td>
+                <td>${formatDateTime(decision.finalized_at || decision.decided_at)}</td>
                 <td><button class="btn btn-secondary btn-sm view-final-decision-btn" data-error-id="${decision.error_id}">View</button></td>
             </tr>
         `;
     }).join('');
 }
         
-
+        
         // أضف هذه الدالة بعد renderFinalizedDecisionsTable
 async function openFinalDecisionDetailsModal(errorId) {
     try {
-        // Fetch fresh data directly from the database
-        const { data: decision, error } = await supabase
-            .from('final_decisions')
-            .select(`
-                *,
-                errors!inner(
-                    id,
-                    status,
-                    employees!inner(employee_username),
-                    quality_reviews!inner(
-                        order_assignments!inner(
-                            orders!inner(order_id)
-                        ),
-                        modified_reason
-                    ),
-                    error_responses(response_text) 
-                )
-            `)
-            .eq('error_id', errorId)
-            .single();
-
-        if (error || !decision) {
-            console.error("Error fetching decision details:", error);
+        const decision = finalizedDecisions.find(d => String(d.error_id) === String(errorId));
+        if (!decision) {
             showToast("Could not find decision details.", "error");
             return;
         }
@@ -1278,14 +1254,15 @@ async function openFinalDecisionDetailsModal(errorId) {
         const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
         const modalBody = document.getElementById('view-review-body');
 
-        modalTitle.textContent = `Final Decision: Order ${decision.errors?.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}`;
-        
-        // Find the appeal reason from the responses
-        const appealResponse = decision.errors.error_responses.find(r => r.response_text); // Simple check
-        const appealReason = appealResponse ? appealResponse.response_text : 'No appeal reason provided.';
+        modalTitle.textContent = `Final Decision: Order ${decision.order_id}`;
+
+        // نستخدم البيانات المتاحة
+        const decisionValue = decision.your_decision || decision.decision || 'N/A';
+        const notesValue = decision.notes || decision.decision_notes || 'No notes provided';
+        const appealReason = decision.appeal_reason || 'No appeal reason provided';
 
         let decisionStatus, statusColor;
-        const finalDecision = decision.decision?.toLowerCase() || '';
+        const finalDecision = decisionValue.toLowerCase();
 
         if (finalDecision === 'approved') {
             decisionStatus = '✅ Overturned (Appeal Accepted)';
@@ -1293,11 +1270,58 @@ async function openFinalDecisionDetailsModal(errorId) {
         } else if (finalDecision === 'rejected') {
             decisionStatus = '❌ Uphold (Appeal Rejected)';
             statusColor = 'var(--danger-color)';
+        } else if (finalDecision === 'modified') {
+            decisionStatus = '⚠️ Modified Decision';
+            statusColor = 'var(--warning-color)';
         } else {
-            decisionStatus = decision.decision || 'N/A';
+            decisionStatus = decisionValue;
             statusColor = 'var(--text-muted)';
         }
 
+        const contentHtml = `
+            <div class="escalation-details">
+                <div class="detail-item">
+                    <strong>Order ID</strong>
+                    <span>${decision.order_id}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Agent</strong>
+                    <span>${decision.employee_username}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Error Details</strong>
+                    <span>${decision.error_details}</span>
+                </div>
+            </div>
+
+            <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
+                <strong>Agent's Appeal Reason</strong>
+                <p style="white-space: pre-wrap; margin-top: 5px;">${appealReason}</p>
+            </div>
+
+            <div class="detail-item" style="background-color: ${statusColor}15; border-left: 4px solid ${statusColor};">
+                <strong>Your Final Decision</strong>
+                <p style="font-size: 1.1rem; font-weight: bold; color: ${statusColor}; margin: 0.5rem 0;">${decisionStatus}</p>
+                <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.finalized_at || decision.decided_at)}</small>
+            </div>
+
+            <div class="detail-item">
+                <strong>Your Notes & Justification</strong>
+                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted);">
+                    ${notesValue}
+                </p>
+            </div>
+        `;
+
+        modalBody.innerHTML = contentHtml;
+        showModal('view-review-details-modal');
+
+    } catch (err) {
+        console.error("Error in openFinalDecisionDetailsModal:", err);
+        showToast("An error occurred while fetching decision details.", "error");
+    }
+}
+        
         const contentHtml = `
             <div class="escalation-details">
                 <div class="detail-item"><strong>Order ID</strong><span>${decision.errors?.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</span></div>
