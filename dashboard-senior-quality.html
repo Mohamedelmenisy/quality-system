@@ -1277,51 +1277,7 @@ async function openFinalDecisionDetailsModal(errorId) {
             decisionStatus = decisionValue;
             statusColor = 'var(--text-muted)';
         }
-
-        const contentHtml = `
-            <div class="escalation-details">
-                <div class="detail-item">
-                    <strong>Order ID</strong>
-                    <span>${decision.order_id}</span>
-                </div>
-                <div class="detail-item">
-                    <strong>Agent</strong>
-                    <span>${decision.employee_username}</span>
-                </div>
-                <div class="detail-item">
-                    <strong>Error Details</strong>
-                    <span>${decision.error_details}</span>
-                </div>
-            </div>
-
-            <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
-                <strong>Agent's Appeal Reason</strong>
-                <p style="white-space: pre-wrap; margin-top: 5px;">${appealReason}</p>
-            </div>
-
-            <div class="detail-item" style="background-color: ${statusColor}1A; border-left: 4px solid ${statusColor};">
-                <strong>Your Final Decision</strong>
-                <p style="font-size: 1.1rem; font-weight: bold; color: ${statusColor}; margin: 0.5rem 0;">${decisionStatus}</p>
-                <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.finalized_at || decision.decided_at)}</small>
-            </div>
-
-            <div class="detail-item">
-                <strong>Your Notes & Justification</strong>
-                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted-color);">
-                    ${notesValue}
-                </p>
-            </div>
-        `;
-
-        modalBody.innerHTML = contentHtml;
-        showModal('view-review-details-modal');
-
-    } catch (err) {
-        console.error("Error in openFinalDecisionDetailsModal:", err);
-        showToast("An error occurred while fetching decision details.", "error");
-    }
-}
-        
+      
         const contentHtml = `
             <div class="escalation-details">
                 <div class="detail-item"><strong>Order ID</strong><span>${decision.errors?.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</span></div>
