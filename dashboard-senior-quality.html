@@ -1243,61 +1243,54 @@ function renderFinalizedDecisionsTable() {
         
         
         // أضف هذه الدالة بعد renderFinalizedDecisionsTable
-async function openFinalDecisionDetailsModal(errorId) {
-    try {
-        // Step 1: Get the core decision details and basic info
-        const { data: decision, error: decisionError } = await supabase
-            .from('final_decisions')
-            .select('*, errors!inner(quality_reviews!inner(order_assignments!inner(orders!inner(order_id))), employees!inner(employee_username))')
-            .eq('error_id', errorId)
-            .single();
+function openFinalDecisionDetailsModal(errorId) {
+    if (!errorId || errorId === 'undefined') {
+        showToast("Cannot open details: Missing Error ID.", "error");
+        return;
+    }
 
-        if (decisionError || !decision) {
-            throw new Error("Could not fetch the main decision record.");
-        }
+    // Find the decision object from the data we already have
+    const decision = finalizedDecisions.find(d => d.error_id.toString() === errorId);
 
-        // Step 2: Get the appeal reason separately for robustness
-        const { data: responses, error: responseError } = await supabase
-            .from('error_responses')
-            .select('response_text')
-            .eq('error_id', errorId);
-        
-        // Find the appeal reason from the fetched responses
-        const appealReason = responses && responses.length > 0 ? responses[0].response_text : 'No appeal reason was found.';
+    if (!decision) {
+        showToast("Could not find decision details in the loaded data.", "error");
+        console.error("No decision found in 'finalizedDecisions' array for error_id:", errorId);
+        return;
+    }
 
-        // Now, build the modal content with all the correct data
-        const modalTitle = document.querySelector('#view-escalation-modal .modal-title');
-        const modalBody = document.getElementById('view-escalation-body');
-        
-        modalTitle.textContent = `Decision Details: ${decision.errors.quality_reviews.order_assignments.orders.order_id}`;
-        
-        let decisionStatusText;
-        let decisionColor;
-        if (decision.decision === 'approved') {
-            decisionStatusText = '✅ Overturned';
-            decisionColor = 'var(--success-color)';
-        } else { // Assumes 'rejected'
-            decisionStatusText = '❌ Uphold (Error Confirmed)';
-            decisionColor = 'var(--danger-color)';
-        }
+    const modalTitle = document.querySelector('#view-escalation-modal .modal-title');
+    const modalBody = document.getElementById('view-escalation-body');
+    
+    modalTitle.textContent = `Decision Details: ${decision.order_id}`;
+    
+    let decisionStatusText, decisionColor;
+    const finalDecision = decision.your_decision?.toLowerCase(); // Use the alias from RPC
 
-        modalBody.innerHTML = `
-          <div class="detail-item"><strong>Agent:</strong><span>${decision.errors.employees.employee_username}</span></div>
-          <div class="detail-item">
-              <strong>Agent's Appeal Reason:</strong>
-              <p style="white-space: pre-wrap; margin-top: 5px;">${appealReason}</p>
-          </div>
-          <div class="detail-item" style="background-color: ${decisionColor}20;">
-              <strong>Your Final Decision:</strong>
-              <p style="font-weight: bold; color: ${decisionColor};">${decisionStatusText}</p>
-          </div>
-          <div class="detail-item">
-              <strong>Your Notes:</strong>
-              <p style="white-space: pre-wrap; margin-top: 5px;">${decision.notes || 'No notes were provided.'}</p>
-          </div>
-        `;
-        
-        showModal('view-escalation-modal');
+    if (finalDecision === 'overturned') {
+        decisionStatusText = '✅ Overturned';
+        decisionColor = 'var(--success-color)';
+    } else { // Assumes 'closed' or anything else
+        decisionStatusText = '❌ Uphold (Error Confirmed)';
+        decisionColor = 'var(--danger-color)';
+    }
+
+    modalBody.innerHTML = `
+      <div class="detail-item"><strong>Agent:</strong><span>${decision.employee_username}</span></div>
+      <div class="detail-item">
+          <strong>Agent's Appeal Reason:</strong>
+          <p style="white-space: pre-wrap; margin-top: 5px;">${decision.appeal_reason || 'N/A'}</p>
+      </div>
+      <div class="detail-item" style="background-color: ${decisionColor}20;">
+          <strong>Your Final Decision:</strong>
+          <p style="font-weight: bold; color: ${decisionColor};">${decisionStatusText}</p>
+      </div>
+      <div class="detail-item">
+          <strong>Your Notes:</strong>
+          <p style="white-space: pre-wrap; margin-top: 5px;">${decision.decision_notes || 'No notes were provided.'}</p>
+      </div>
+    `;
+    
+    showModal('view-escalation-modal');
 
     } catch (err) {
         console.error("Error in openFinalDecisionDetailsModal:", err);
