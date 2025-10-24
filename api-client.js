@@ -644,7 +644,8 @@ export async function getPendingErrors() {
   }
 }
 
-export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
+// api-client.js -> NEW version
+export async function submitFinalDecision(errorId, decidedById, decision, notes = '', reviewingAgentId = null) {
   try {
     const { data, error } = await supabase
       .from('final_decisions')
@@ -653,17 +654,22 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
         decided_by_id: decidedById,
         decision: decision,
         notes: notes,
-        decided_at: new Date()
+        decided_at: new Date(),
+        reviewing_agent_id: reviewingAgentId // <-- Add the new field here
       })
       .select()
       .single();
 
     if (error) throw error;
-
+    
+    // The rest of the function remains the same, but for safety let's remove the status update from here
+    // and keep it in the main handleFinalDecision function.
+    /*
     await supabase
       .from('errors')
       .update({ status: 'finalized' })
       .eq('id', errorId);
+    */
 
     return data;
   } catch (error) {
