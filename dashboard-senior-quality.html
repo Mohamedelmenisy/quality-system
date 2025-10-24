@@ -1356,31 +1356,7 @@ async function openFinalDecisionDetailsModal(errorId) {
         showToast("An error occurred while fetching decision details.", "error");
     }
 
-        function openFinalDecisionDetailsModal(errorId) {
-    const decision = finalizedDecisions.find(d => d.error_id.toString() === errorId);
-    if (!decision) {
-        showToast("Could not find decision details.", "error");
-        return;
-    }
-
-    const modalBody = document.getElementById('view-escalation-body'); // Re-using an existing modal body
-    const modalTitle = document.querySelector('#view-escalation-modal .modal-title');
     
-    modalTitle.textContent = `Decision Details: ${decision.order_id}`;
-    
-    modalBody.innerHTML = `
-        <div class="detail-item"><strong>Order ID:</strong><span>${decision.order_id}</span></div>
-        <div class="detail-item"><strong>Agent:</strong><span>${decision.employee_username}</span></div>
-        <div class="detail-item" style="grid-column: span 2;"><strong>Error Details:</strong><p>${decision.error_details}</p></div>
-        <div class="detail-item" style="grid-column: span 2;"><strong>Agent's Appeal:</strong><p>${decision.appeal_reason || 'N/A'}</p></div>
-        <div class="detail-item" style="grid-column: span 2; background-color: #2c2c2c;">
-            <strong>Your Final Decision & Notes:</strong>
-            <p style="font-weight: bold; margin-top: 5px;">${decision.your_decision.toUpperCase()}</p>
-            <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted-color);">${decision.decision_notes || 'No notes provided.'}</p>
-        </div>
-    `;
-    showModal('view-escalation-modal');
-}
          
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
             const tableBody = document.getElementById('unassigned-table-body');
@@ -1403,57 +1379,57 @@ async function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
-        function renderAssignedOrdersTable() {
-            const tableBody = document.getElementById('assigned-table-body');
-            const paginationControls = document.getElementById('assigned-orders-pagination');
+       function renderAssignedOrdersTable() {
+    const tableBody = document.getElementById('assigned-table-body');
+    const paginationControls = document.getElementById('assigned-orders-pagination');
 
-            if (filteredAssignedOrders.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
-                paginationControls.style.display = 'none';
-                return;
-            }
+    if (filteredAssignedOrders.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
+        paginationControls.style.display = 'none';
+        return;
+    }
 
-            paginationControls.style.display = 'flex';
-            const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
-            const startIndex = (assignedOrdersCurrentPage - 1) * ASSIGNED_ITEMS_PER_PAGE;
-            const endIndex = startIndex + ASSIGNED_ITEMS_PER_PAGE;
-            const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
+    paginationControls.style.display = 'flex';
+    const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
+    const startIndex = (assignedOrdersCurrentPage - 1) * ASSIGNED_ITEMS_PER_PAGE;
+    const endIndex = startIndex + ASSIGNED_ITEMS_PER_PAGE;
+    const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
 
-            tableBody.innerHTML = paginatedOrders.map(a => {
-            // في دالة renderAssignedOrdersTable، غير هذا الجزء:
-let reviewTime = 'N/A';
-if (a.status === 'completed' && a.assigned_at && a.completed_at) {
-    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
-    reviewTime = `${diffMinutes} min`;
-    // إزالة شرط الـ SLA temporarily
-    slaStatus = `<span class="status-badge status-completed">Completed</span>`;
-} else if (a.status === 'completed') {
-    reviewTime = 'No time data';
-    slaStatus = `<span class="status-badge status-completed">Completed</span>`;
-}
-                
-                return `
-                    <tr>
-                        <td>${a.orders?.order_id || 'N/A'}</td>
-                        <td>${a.users?.name || 'Unknown'}</td>
-                        <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
-                        <td>${formatDateTime(a.assigned_at)}</td>
-                        <td>${reviewTime}</td>
-                        <td>${slaStatus}</td>
-                        <td>
-                            <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                            ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
-                        </td>
-                    </tr>
-                `;
-            }).join('');
-
-            // Update pagination controls
-            paginationControls.querySelector('.page-info').textContent = `Page ${assignedOrdersCurrentPage} of ${totalPages}`;
-            paginationControls.querySelector('.prev-btn').disabled = assignedOrdersCurrentPage === 1;
-            paginationControls.querySelector('.next-btn').disabled = assignedOrdersCurrentPage === totalPages;
+    tableBody.innerHTML = paginatedOrders.map(a => {
+        let reviewTime = 'N/A';
+        let slaStatus = '';
+        
+        if (a.status === 'completed' && a.assigned_at && a.completed_at) {
+            const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
+            reviewTime = `${diffMinutes} min`;
+            slaStatus = `<span class="status-badge status-completed">Completed</span>`;
+        } else if (a.status === 'completed') {
+            reviewTime = 'No time data';
+            slaStatus = `<span class="status-badge status-completed">Completed</span>`;
         }
 
+        return `
+            <tr>
+                <td>${a.orders?.order_id || 'N/A'}</td>
+                <td>${a.users?.name || 'Unknown'}</td>
+                <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
+                <td>${formatDateTime(a.assigned_at)}</td>
+                <td>${reviewTime}</td>
+                <td>${slaStatus}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
+                    ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+                </td>
+            </tr>
+        `;
+    }).join('');
+
+    // Update pagination controls
+    paginationControls.querySelector('.page-info').textContent = `Page ${assignedOrdersCurrentPage} of ${totalPages}`;
+    paginationControls.querySelector('.prev-btn').disabled = assignedOrdersCurrentPage === 1;
+    paginationControls.querySelector('.next-btn').disabled = assignedOrdersCurrentPage === totalPages;
+}
+    
 
         function renderDirectEscalationsTable() {
     const tableBody = document.getElementById('direct-escalations-table-body');
