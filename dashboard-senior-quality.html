@@ -1302,15 +1302,18 @@ function renderFinalizedDecisionsTable() {
             const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
 
             tableBody.innerHTML = paginatedOrders.map(a => {
-                let reviewTime = 'N/A';
-                let slaStatus = '';
-                if (a.status === 'completed' && a.assigned_at && a.completed_at) {
-                    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
-                    reviewTime = `${diffMinutes} min`;
-                    slaStatus = (diffMinutes > 30)
-                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                        : `<span class="status-badge status-completed">On Time</span>`;
-                }
+            // في دالة renderAssignedOrdersTable، غير هذا الجزء:
+let reviewTime = 'N/A';
+if (a.status === 'completed' && a.assigned_at && a.completed_at) {
+    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
+    reviewTime = `${diffMinutes} min`;
+    // إزالة شرط الـ SLA temporarily
+    slaStatus = `<span class="status-badge status-completed">Completed</span>`;
+} else if (a.status === 'completed') {
+    reviewTime = 'No time data';
+    slaStatus = `<span class="status-badge status-completed">Completed</span>`;
+}
+                
                 return `
                     <tr>
                         <td>${a.orders?.order_id || 'N/A'}</td>
@@ -1558,8 +1561,6 @@ function openEscalationDetailsModal(escalationId) {
     // استبدال الدالة الحالية بهذه النسخة المحسنة
 async function openViewAssignedModal(assignmentId) {
     try {
-        console.log('Opening view modal for assignment:', assignmentId);
-        
         const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
         if (!assignment) {
             showToast("Could not find assignment details.", "error");
@@ -1571,7 +1572,11 @@ async function openViewAssignedModal(assignmentId) {
 
         modalTitle.textContent = `Assignment Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        // بناء محتوى تفاصيل التعيين
+        // التحقق من وجود المراجعات بشكل أفضل
+        const hasReviews = assignment.quality_reviews && 
+                          Array.isArray(assignment.quality_reviews) && 
+                          assignment.quality_reviews.length > 0;
+
         let contentHtml = `
             <div class="detail-item">
                 <strong>Order ID</strong>
@@ -1591,7 +1596,6 @@ async function openViewAssignedModal(assignmentId) {
             </div>
         `;
 
-        // إضافة معلومات الإكمال إذا كانت متاحة
         if (assignment.status === 'completed' && assignment.completed_at) {
             contentHtml += `
                 <div class="detail-item">
@@ -1601,8 +1605,7 @@ async function openViewAssignedModal(assignmentId) {
             `;
         }
 
-        // إضافة معلومات المراجعة إذا كانت موجودة
-        if (assignment.quality_reviews && assignment.quality_reviews.length > 0) {
+        if (hasReviews) {
             const review = assignment.quality_reviews[0];
             const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
             contentHtml += `
@@ -1624,10 +1627,13 @@ async function openViewAssignedModal(assignmentId) {
                 </div>
             `;
         } else {
+            // إذا لا توجد مراجعات ولكن الحالة مكتملة
             contentHtml += `
                 <div class="detail-item">
                     <strong>Review Status</strong>
-                    <span style="color: var(--warning-color);">Not yet reviewed</span>
+                    <span style="color: var(--text-muted);">
+                        ${assignment.status === 'completed' ? 'Marked as completed' : 'Pending review'}
+                    </span>
                 </div>
             `;
         }
@@ -1640,8 +1646,7 @@ async function openViewAssignedModal(assignmentId) {
         showToast("An error occurred while fetching assignment details.", "error");
     }
 }
-        
-        
+                
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
             form.reset();
