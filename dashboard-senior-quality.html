@@ -1292,10 +1292,8 @@ function openFinalDecisionDetailsModal(errorId) {
     
     showModal('view-escalation-modal');
 
-    } catch (err) {
-        console.error("Error in openFinalDecisionDetailsModal:", err);
-        showToast("An error occurred while fetching details.", "error");
-    }
+    // The 'try...catch' block was removed from here as it's not needed 
+    // when we are not making a new network request.
 }
          
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
