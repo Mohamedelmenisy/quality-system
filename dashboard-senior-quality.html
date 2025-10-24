@@ -37,9 +37,7 @@
             resolveEscalation,
             getTeamPerformance,
             reassignOrder,
-            subscribeToAssignmentUpdates,
-            subscribeToEscalations,
-            subscribeToErrors
+            subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
 
         // Make functions globally available for inline event handlers if needed
@@ -69,10 +67,8 @@
         window.getEscalations = getEscalations;
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
-        window.reassignOrder = reassignOrder;
-        window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates;
-        window.subscribeToEscalations = subscribeToEscalations;
-        window.subscribeToErrors = subscribeToErrors;
+        window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
+     window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
     <style>
         :root {
@@ -283,10 +279,6 @@
         .main-footer { margin-top: auto; padding: 2rem; text-align: center; color: var(--text-muted-color); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
         .pagination-controls { display: flex; justify-content: flex-end; align-items: center; gap: 1rem; margin-top: 1.5rem; }
         .pagination-controls .page-info { font-size: 0.9rem; color: var(--text-muted-color); }
-        .pagination-controls .btn { padding: 0.4rem 0.8rem; font-size: 0.875rem; }
-        .connection-indicator { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-left: 5px; }
-        .connection-indicator.online { background-color: var(--success-color); }
-        .connection-indicator.offline { background-color: var(--danger-color); }
 
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
@@ -349,7 +341,7 @@
                     <div class="avatar-initials" id="sidebar-avatar-initials">ME</div>
                     <div>
                         <div class="user-name" id="sidebar-username">Mohamed Elmenisy</div>
-                        <div class="user-role">Senior Quality Analyst <span class="connection-indicator online" id="connection-indicator"></span></div>
+                        <div class="user-role">Senior Quality Analyst</div>
                     </div>
                 </div>
             </div>
@@ -400,18 +392,40 @@
 
                 <!-- Escalations Tab -->
                 <div id="escalations" class="tab-content">
+                    <div class="widget">
+                         <h3>Pending Agent Responses (<span id="pending-responses-count">0</span>)</h3>
+                         <div class="filter-panel">
+                             <input type="search" id="escalation-search" placeholder="Search by Order ID...">
+                             <select id="escalation-status-filter">
+                                 <option value="all">All Statuses</option>
+                                 <option value="pending_response">Pending Response</option>
+                                 <option value="responded">Responded</option>
+                             </select>
+                         </div>
+                        <div class="results-table-container">
+                            <table class="results-table">
+                                <thead>
+                                    <tr>
+                                        <th>Order ID</th>
+                                        <th>Agent</th>
+                                        <th>Error Type</th>
+                                        <th>Response</th>
+                                        <th>Status</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="escalation-table-body">
+                                    <tr><td colspan="6" class="empty-state">Loading pending responses...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                     <!-- Appealed Errors (Under Review) -->
                     <div class="widget">
                         <h3>Appealed Errors (<span id="appealed-errors-count">0</span>)</h3>
                         <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
                             Errors that have been appealed by agents and are waiting for your final decision. This is your inbox.
                         </p>
-                        <div class="filter-panel">
-                            <input type="search" id="appealed-search" placeholder="Search by Order ID or Agent...">
-                            <select id="appealed-status-filter">
-                                <option value="under_review">Under Review</option>
-                            </select>
-                        </div>
                         <div class="results-table-container">
                             <table class="results-table">
                                 <thead>
@@ -428,11 +442,6 @@
                                     <tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="pagination-controls" id="appealed-errors-pagination">
-                            <span class="page-info">Page 1 of 1</span>
-                            <button class="btn btn-secondary prev-btn" disabled>Previous</button>
-                            <button class="btn btn-secondary next-btn" disabled>Next</button>
                         </div>
                     </div>
                     <!-- Direct Escalations -->
@@ -466,11 +475,6 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="pagination-controls" id="direct-escalations-pagination">
-                            <span class="page-info">Page 1 of 1</span>
-                            <button class="btn btn-secondary prev-btn" disabled>Previous</button>
-                            <button class="btn btn-secondary next-btn" disabled>Next</button>
-                        </div>
                     </div>
                     <!-- Final Decisions Log -->
                     <div class="widget">
@@ -478,15 +482,6 @@
                         <p style="color: var(--text-muted-color); margin-top: -1rem; margin-bottom: 1.5rem;">
                             A historical record (archive) of all appealed errors that you have reviewed and finalized.
                         </p>
-                        <div class="filter-panel">
-                            <input type="search" id="final-decisions-search" placeholder="Search by Order ID or Agent...">
-                            <select id="final-decisions-filter">
-                                <option value="all">All Decisions</option>
-                                <option value="approved">Overturned</option>
-                                <option value="rejected">Uphold</option>
-                                <option value="modified">Modified</option>
-                            </select>
-                        </div>
                         <div class="results-table-container">
                             <table class="results-table">
                                 <thead>
@@ -503,11 +498,6 @@
                                     <tr><td colspan="6" class="empty-state">Loading decision history...</td></tr>
                                 </tbody>
                             </table>
-                        </div>
-                        <div class="pagination-controls" id="finalized-errors-pagination">
-                            <span class="page-info">Page 1 of 1</span>
-                            <button class="btn btn-secondary prev-btn" disabled>Previous</button>
-                            <button class="btn btn-secondary next-btn" disabled>Next</button>
                         </div>
                     </div>
                 </div>
@@ -543,23 +533,17 @@
                                 </tbody>
                             </table>
                         </div>
-                        <div class="pagination-controls" id="unassigned-pagination">
-                            <span class="page-info">Page 1 of 1</span>
-                            <button class="btn btn-secondary prev-btn" disabled>Previous</button>
-                            <button class="btn btn-secondary next-btn" disabled>Next</button>
-                        </div>
                     </div>
                     <div class="widget">
                         <h3>Assigned Orders Status</h3>
                         <div class="filter-panel">
-                             <input type="search" id="assigned-search" placeholder="Search by Order ID or Agent Name..." style="flex-grow: 1;">
+                             <input type="search" id="assigned-search" placeholder="Search assigned orders..." style="flex-grow: 1;">
                              <select id="assigned-status-filter">
                                 <option value="all">All Statuses</option>
                                 <option value="pending">Pending</option>
                                 <option value="completed">Completed</option>
                              </select>
                              <input type="date" id="assigned-date-filter" style="color-scheme: dark;">
-                             <button class="btn btn-secondary" id="download-csv-btn">Download CSV</button>
                              <button id="clear-assigned-filters-btn" class="btn btn-secondary">Clear Filters</button>
                         </div>
                         <div class="results-table-container">
@@ -580,6 +564,7 @@
                                 </tbody>
                             </table>
                         </div>
+                        <!-- [AI-FIX] Added pagination controls -->
                         <div class="pagination-controls" id="assigned-orders-pagination">
                             <span class="page-info">Page 1 of 1</span>
                             <button class="btn btn-secondary prev-btn" disabled>Previous</button>
@@ -911,7 +896,7 @@
         </div>
     </div>
 
-    <!-- Reassign Modal -->
+    <!-- [AI-FIX] New modal for Reassign functionality -->
     <div id="reassign-modal" class="modal-overlay">
       <div class="modal-box" style="max-width: 500px;">
         <div class="modal-header">
@@ -932,7 +917,7 @@
       </div>
     </div>
 
-    <!-- View Review Details Modal -->
+    <!-- [AI-FIX] The new, correct modal for viewing review details -->
     <div id="view-review-details-modal" class="modal-overlay">
       <div class="modal-box">
         <div class="modal-header">
@@ -948,11 +933,11 @@
       </div>
     </div>
 
-    <!-- View Escalation Modal -->
+    <!-- This modal is kept for other functionalities but is no longer used for viewing assigned orders -->
     <div id="view-escalation-modal" class="modal-overlay">
       <div class="modal-box">
         <div class="modal-header">
-          <h3 class="modal-title">Escalation Details</h3>
+          <h3 class="modal-title">Details</h3>
           <button class="modal-close-btn" data-modal-id="view-escalation-modal">×</button>
         </div>
         <div id="view-escalation-body" class="modal-body" style="display: flex; flex-direction: column; gap: 1rem;">
@@ -972,7 +957,7 @@
         let pendingErrors = [];
         let unassignedOrders = [];
         let assignedOrders = [];
-        let filteredAssignedOrders = [];
+        let filteredAssignedOrders = []; // [AI-FIX] For filtering and pagination
         let teamMembers = [];
         let companyEmployees = [];
         let teamSchedule = [];
@@ -985,15 +970,10 @@
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
 
-        // Pagination state
-        let currentPage = {
-            appealedErrors: 1,
-            directEscalations: 1,
-            finalizedErrors: 1,
-            unassigned: 1,
-            assigned: 1
-        };
-        const ITEMS_PER_PAGE = 10;
+        // [AI-FIX] Pagination state
+        let assignedOrdersCurrentPage = 1;
+        const ASSIGNED_ITEMS_PER_PAGE = 10;
+
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -1019,6 +999,36 @@
             toast.querySelector('.toast-close').addEventListener('click', removeToast);
         }
 
+        // ===================================================================================
+        // START: الكود الذي أضافه المطور
+        // ===================================================================================
+
+        // 🧠 وظيفة لتحويل الحالة في الـ DB إلى نص واضح للمستخدم
+        function getDisplayStatus(status, decision) {
+          const normalizedStatus = status?.toLowerCase() || '';
+          const normalizedDecision = decision?.toLowerCase() || '';
+
+          if (normalizedStatus === 'closed' && normalizedDecision === 'rejected') {
+            return '<span style="color: red; font-weight: 500;">Appeal Rejected (Error Upheld)</span>';
+          }
+
+          if (normalizedStatus === 'overturned' && normalizedDecision === 'approved') {
+            return '<span style="color: green; font-weight: 500;">Appeal Accepted (Error Overturned)</span>';
+          }
+
+          if (normalizedDecision === 'modified') {
+            return '<span style="color: orange; font-weight: 500;">Decision Modified</span>';
+          }
+          
+          // Fallback for any other status, including just 'closed' without a decision
+          return `<span style="color: gray;">${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}</span>`;
+        }
+
+        // ===================================================================================
+        // END: الكود الذي أضافه المطور
+        // ===================================================================================
+
+
         // Helper Functions
         const getInitials = (name) => (name ? name.split(' ').map(n => n[0]).join('').toUpperCase() : '');
         const formatDate = (dateString) => dateString ? new Date(dateString).toLocaleDateString('en-EG', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Africa/Cairo' }) : 'N/A';
@@ -1043,7 +1053,7 @@
             return color;
         };
 
-        // Format shift time
+        // [AI-FIX] Helper to convert 24h time string to 12h format
         const formatShiftTime = (time24) => {
             if (!time24 || !time24.includes('-')) return time24;
             const parts = time24.split('-');
@@ -1062,7 +1072,7 @@
             try {
                 showToast('Loading Senior Dashboard...', 'info');
 
-                // Restore active tab on page load
+                // [AI-FIX] Restore active tab on page load
                 applyStoredTab();
 
                 const user = await getCurrentUser();
@@ -1077,6 +1087,7 @@
                 initCharts();
 
                 await Promise.all([
+                    loadPendingErrors(),
                     loadUnassignedOrders(),
                     loadAssignedOrders(),
                     loadTeamMembers(),
@@ -1090,7 +1101,7 @@
                     loadFinalizedDecisions()
                 ]);
 
-                initRealtimeSubscriptions();
+                initRealtimeSubscriptions(); // <--- أضف هذا السطر هنا
 
                 showToast('Senior Dashboard loaded successfully', 'success');
             } catch (error) {
@@ -1098,8 +1109,7 @@
                 showToast(`Initialization failed: ${error.message}`, 'error');
             }
         }
-
-        async function loadTeamPerformanceChart() {
+      async function loadTeamPerformanceChart() {
             try {
                 const performanceData = await getTeamPerformance();
                 if (teamPerformanceChart && performanceData.length > 0) {
@@ -1113,7 +1123,6 @@
                 console.error('Error loading team performance chart:', error);
             }
         }
-
         function updateUserInterface() {
             if (!currentUser) return;
             const name = currentUser.name || "User";
@@ -1155,6 +1164,7 @@
             }
         };
 
+        const loadPendingErrors = () => loadData(getPendingErrors, renderEscalationsTable, 'pending-responses-count', pendingErrors);
         const loadUnassignedOrders = () => loadData(getUnassignedOrders, renderUnassignedOrdersTable, 'unassigned-count', unassignedOrders);
         const loadAssignedOrders = (filters = {}) => loadData(() => getAssignedOrders(null, filters), applyAssignedOrdersFilters, null, assignedOrders);
         const loadTeamMembers = () => loadData(() => getTeamMembers(['quality', 'helper', 'senior', 'admin']), () => { renderTeamMembers(); populateAgentSelect(); renderTeamSchedule(); }, null, teamMembers);
@@ -1181,175 +1191,142 @@
         }
 
         // Render Functions
+        function renderEscalationsTable(errorsToRender = pendingErrors) {
+            const tableBody = document.getElementById('escalation-table-body');
+            if (errorsToRender.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">✅ No pending responses.</td></tr>`;
+                return;
+            }
+            tableBody.innerHTML = errorsToRender.map(error => `
+                <tr>
+                    <td>${error.quality_reviews?.order_assignments?.orders?.order_id || 'N/A'}</td>
+                    <td>${error.employee?.employee_username || 'Unknown'}</td>
+                    <td>${error.quality_reviews?.modified_reason || 'Unknown'}</td>
+                    <td class="wrap-text">${(error.error_responses?.[0]?.response_text || 'No response').substring(0, 100)}...</td>
+                    <td><span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span></td>
+                    <td><button class="btn btn-primary btn-sm review-response-btn" data-error-id="${error.id}">Review</button></td>
+                </tr>
+            `).join('');
+        }
+
         function renderAppealedErrorsTable() {
             const tableBody = document.getElementById('appealed-errors-table-body');
-            const searchTerm = document.getElementById('appealed-search').value.toLowerCase();
-            
-            let filteredData = appealedErrors.filter(error => 
-                error.status === 'under_review' &&
-                (!searchTerm || 
-                 (error.order_id && error.order_id.toLowerCase().includes(searchTerm)) ||
-                 (error.employee_username && error.employee_username.toLowerCase().includes(searchTerm)))
-            );
-
-            const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-            const startIndex = (currentPage.appealedErrors - 1) * ITEMS_PER_PAGE;
-            const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            if (paginatedData.length === 0) {
+            if (appealedErrors.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>`;
-            } else {
-                tableBody.innerHTML = paginatedData.map(error => `
-                    <tr>
-                        <td>${error.order_id || 'N/A'}</td>
-                        <td>${error.employee_username || 'Unknown'}</td>
-                        <td class="wrap-text">${error.error_details || 'N/A'}</td>
-                        <td class="wrap-text">${error.appeal_reason || 'No reason provided.'}</td>
-                        <td><span class="status-badge status-under_review">${error.status.replace('_', ' ')}</span></td>
-                        <td>
-                            <button class="btn btn-primary btn-sm final-decision-btn" data-error-id="${error.error_id}">
-                                Decide
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
+                return;
             }
-
-            updatePaginationControls('appealed-errors-pagination', currentPage.appealedErrors, totalPages, 'appealedErrors');
-            document.getElementById('appealed-errors-count').textContent = filteredData.length;
+            tableBody.innerHTML = appealedErrors.map(error => `
+                <tr>
+                    <td>${error.order_id || 'N/A'}</td>
+                    <td>${error.employee_username || 'Unknown'}</td>
+                    <td class="wrap-text">${error.error_details || 'N/A'}</td>
+                    <td class="wrap-text">${error.appeal_reason || 'No reason provided.'}</td>
+                    <td><span class="status-badge status-under_review">${error.status.replace('_', ' ')}</span></td>
+                    <td>
+                        <button class="btn btn-primary btn-sm final-decision-btn" data-error-id="${error.error_id}">
+                            Decide
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
         }
 
         function renderFinalizedDecisionsTable() {
             const tableBody = document.getElementById('finalized-errors-table-body');
-            const searchTerm = document.getElementById('final-decisions-search').value.toLowerCase();
-            const decisionFilter = document.getElementById('final-decisions-filter').value;
-            
-            let filteredData = finalizedDecisions.filter(decision => 
-                (!searchTerm || 
-                 (decision.order_id && decision.order_id.toLowerCase().includes(searchTerm)) ||
-                 (decision.employee_username && decision.employee_username.toLowerCase().includes(searchTerm))) &&
-                (decisionFilter === 'all' || decision.your_decision === decisionFilter)
-            );
-
-            const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-            const startIndex = (currentPage.finalizedErrors - 1) * ITEMS_PER_PAGE;
-            const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            if (paginatedData.length === 0) {
+            if (finalizedDecisions.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No decision history found.</td></tr>`;
-            } else {
-                tableBody.innerHTML = paginatedData.map(decision => {
-                    const statusForDisplay = (decision.your_decision === 'approved') ? 'overturned' : 'closed';
-                    const decisionText = decision.your_decision === 'approved' ? 'Overturned' : 
-                                       decision.your_decision === 'rejected' ? 'Uphold' : 'Modified';
-                    const decisionColor = decision.your_decision === 'approved' ? 'success' : 
-                                        decision.your_decision === 'rejected' ? 'danger' : 'warning';
-                    
-                    return `
-                        <tr>
-                            <td>${decision.order_id}</td>
-                            <td>${decision.employee_username}</td>
-                            <td class="wrap-text">${decision.error_details}</td>
-                            <td><span class="status-badge status-${decisionColor}">${decisionText}</span></td>
-                            <td>${formatDateTime(decision.finalized_at)}</td>
-                            <td><button class="btn btn-secondary btn-sm view-final-decision-btn" data-decision-id="${decision.id}">View</button></td>
-                        </tr>
-                    `;
-                }).join('');
+                return;
             }
-
-            updatePaginationControls('finalized-errors-pagination', currentPage.finalizedErrors, totalPages, 'finalizedErrors');
-            document.getElementById('finalized-errors-count').textContent = filteredData.length;
+            tableBody.innerHTML = finalizedDecisions.map(decision => {
+                // استنتاج الحالة بناءً على القرار النهائي (كما هو الحال في دالة handleFinalDecision)
+                const statusForDisplay = (decision.your_decision === 'approved') ? 'overturned' : 'closed';
+                
+                return `
+                    <tr>
+                        <td>${decision.order_id}</td>
+                        <td>${decision.employee_username}</td>
+                        <td class="wrap-text">${decision.error_details}</td>
+                        <td>${getDisplayStatus(statusForDisplay, decision.your_decision)}</td>
+                        <td>${formatDateTime(decision.finalized_at)}</td>
+                        <td><button class="btn btn-secondary btn-sm">View</button></td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
             const tableBody = document.getElementById('unassigned-table-body');
-            const searchTerm = document.getElementById('unassigned-search').value.toLowerCase();
-            
-            let filteredData = ordersToRender.filter(order => 
-                !searchTerm || 
-                (order.order_id && order.order_id.toLowerCase().includes(searchTerm)) ||
-                (order.employee_name && order.employee_name.toLowerCase().includes(searchTerm))
-            );
-
-            const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-            const startIndex = (currentPage.unassigned - 1) * ITEMS_PER_PAGE;
-            const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            if (paginatedData.length === 0) {
+            if (ordersToRender.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📋 No unassigned orders.</td></tr>`;
-            } else {
-                tableBody.innerHTML = paginatedData.map(order => `
-                    <tr>
-                        <td><input type="checkbox" class="order-checkbox" value="${order.order_id}"></td>
-                        <td>${order.order_id}</td>
-                        <td class="wrap-text">${order.reason}</td>
-                        <td class="wrap-text">${order.employee_name}</td>
-                        <td>${order.chefz || 'N/A'}</td>
-                        <td>${order.order_status}</td>
-                        <td>${formatDate(order.requested_delivery_date)}</td>
-                        <td>${order.payment_type || 'N/A'}</td>
-                    </tr>
-                `).join('');
+                return;
             }
-
-            updatePaginationControls('unassigned-pagination', currentPage.unassigned, totalPages, 'unassigned');
-            document.getElementById('unassigned-count').textContent = filteredData.length;
+            tableBody.innerHTML = ordersToRender.map(order => `
+                <tr>
+                    <td><input type="checkbox" class="order-checkbox" value="${order.order_id}"></td>
+                    <td>${order.order_id}</td>
+                    <td class="wrap-text">${order.reason}</td>
+                    <td class="wrap-text">${order.employee_name}</td>
+                    <td>${order.chefz || 'N/A'}</td>
+                    <td>${order.order_status}</td>
+                    <td>${formatDate(order.requested_delivery_date)}</td>
+                    <td>${order.payment_type || 'N/A'}</td>
+                </tr>
+            `).join('');
         }
 
+        // [AI-FIX] This function now handles pagination and filtering correctly.
         function renderAssignedOrdersTable() {
             const tableBody = document.getElementById('assigned-table-body');
-            const searchTerm = document.getElementById('assigned-search').value.toLowerCase();
-            const statusFilter = document.getElementById('assigned-status-filter').value;
-            const dateFilter = document.getElementById('assigned-date-filter').value;
+            const paginationControls = document.getElementById('assigned-orders-pagination');
 
-            let filteredData = assignedOrders.filter(a => {
-                const searchCorpus = `${a.orders?.order_id || ''} ${a.users?.name || ''}`.toLowerCase();
-                const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
-                const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
-                const matchesDate = !dateFilter || (a.assigned_at && a.assigned_at.startsWith(dateFilter));
-                return matchesSearch && matchesStatus && matchesDate;
-            });
-
-            const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
-            const startIndex = (currentPage.assigned - 1) * ITEMS_PER_PAGE;
-            const paginatedData = filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            if (paginatedData.length === 0) {
+            if (filteredAssignedOrders.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
-            } else {
-                tableBody.innerHTML = paginatedData.map(a => {
-                    let reviewTime = 'N/A';
-                    let slaStatus = '';
-                    if (a.status === 'completed' && a.assigned_at && a.completed_at) {
-                        const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
-                        reviewTime = `${diffMinutes} min`;
-                        slaStatus = (diffMinutes > 30)
-                            ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                            : `<span class="status-badge status-completed">On Time</span>`;
-                    }
-                    return `
-                        <tr>
-                            <td>${a.orders?.order_id || 'N/A'}</td>
-                            <td>${a.users?.name || 'Unknown'}</td>
-                            <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
-                            <td>${formatDateTime(a.assigned_at)}</td>
-                            <td>${reviewTime}</td>
-                            <td>${slaStatus}</td>
-                            <td>
-                                <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                                ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
-                            </td>
-                        </tr>
-                    `;
-                }).join('');
+                paginationControls.style.display = 'none';
+                return;
             }
 
-            updatePaginationControls('assigned-orders-pagination', currentPage.assigned, totalPages, 'assigned');
+            paginationControls.style.display = 'flex';
+            const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
+            const startIndex = (assignedOrdersCurrentPage - 1) * ASSIGNED_ITEMS_PER_PAGE;
+            const endIndex = startIndex + ASSIGNED_ITEMS_PER_PAGE;
+            const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
+
+            tableBody.innerHTML = paginatedOrders.map(a => {
+                let reviewTime = 'N/A';
+                let slaStatus = '';
+                if (a.status === 'completed' && a.assigned_at && a.completed_at) {
+                    const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
+                    reviewTime = `${diffMinutes} min`;
+                    slaStatus = (diffMinutes > 30)
+                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
+                        : `<span class="status-badge status-completed">On Time</span>`;
+                }
+                return `
+                    <tr>
+                        <td>${a.orders?.order_id || 'N/A'}</td>
+                        <td>${a.users?.name || 'Unknown'}</td>
+                        <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
+                        <td>${formatDateTime(a.assigned_at)}</td>
+                        <td>${reviewTime}</td>
+                        <td>${slaStatus}</td>
+                        <td>
+                            <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
+                            ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            // Update pagination controls
+            paginationControls.querySelector('.page-info').textContent = `Page ${assignedOrdersCurrentPage} of ${totalPages}`;
+            paginationControls.querySelector('.prev-btn').disabled = assignedOrdersCurrentPage === 1;
+            paginationControls.querySelector('.next-btn').disabled = assignedOrdersCurrentPage === totalPages;
         }
+
 
         function renderDirectEscalationsTable() {
             const tableBody = document.getElementById('direct-escalations-table-body');
+            if (!tableBody) return;
             const searchTerm = document.getElementById('direct-escalation-search').value.toLowerCase();
             const statusFilter = document.getElementById('direct-escalation-status-filter').value;
 
@@ -1360,43 +1337,37 @@
                 return matchesStatus && matchesSearch;
             });
 
-            const totalPages = Math.ceil(escalationsToRender.length / ITEMS_PER_PAGE);
-            const startIndex = (currentPage.directEscalations - 1) * ITEMS_PER_PAGE;
-            const paginatedData = escalationsToRender.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-
-            if (paginatedData.length === 0) {
+            if (escalationsToRender.length === 0) {
                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations found.</td></tr>`;
-            } else {
-                tableBody.innerHTML = paginatedData.map(escalation => {
-                    const orderId = escalation.order_assignments?.orders?.order_id || 'N/A';
-                    const escalatedBy = escalation.escalated_by?.name || 'Unknown';
-                    const reason = escalation.notes || 'No reason provided.';
-                    const date = formatDateTime(escalation.escalated_at);
-                    let statusBadge, actionContent;
-                    if (escalation.status === 'resolved') {
-                        statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
-                        actionContent = `<button class="btn btn-secondary btn-sm view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
-                    } else { // 'pending'
-                        statusBadge = `<span class="status-badge status-pending">Pending</span>`;
-                        actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
-                    }
-                    const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
-
-                    return `
-                        <tr style="${rowStyle}">
-                            <td>${orderId}</td>
-                            <td>${escalatedBy}</td>
-                            <td class="wrap-text" title="${reason}">${reason.substring(0, 50)}...</td>
-                            <td>${date}</td>
-                            <td>${statusBadge}</td>
-                            <td>${actionContent}</td>
-                        </tr>
-                    `;
-                }).join('');
+                return;
             }
 
-            updatePaginationControls('direct-escalations-pagination', currentPage.directEscalations, totalPages, 'directEscalations');
-            document.getElementById('direct-escalations-count').textContent = escalationsToRender.filter(e => e.status === 'pending').length;
+            tableBody.innerHTML = escalationsToRender.map(escalation => {
+                const orderId = escalation.order_assignments?.orders?.order_id || 'N/A';
+                const escalatedBy = escalation.escalated_by?.name || 'Unknown';
+                const reason = escalation.notes || 'No reason provided.';
+                const date = formatDateTime(escalation.escalated_at);
+                let statusBadge, actionContent;
+                if (escalation.status === 'resolved') {
+                    statusBadge = `<span class="status-badge status-resolved">Resolved</span>`;
+                    actionContent = `<button class="btn btn-secondary btn-sm view-escalation-btn" data-escalation-id="${escalation.id}">View</button>`;
+                } else { // 'pending'
+                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+                    actionContent = `<button class="btn btn-warning btn-sm review-escalation-btn" data-escalation-id="${escalation.id}">Review</button>`;
+                }
+                const rowStyle = escalation.status === 'resolved' ? 'opacity: 0.7;' : '';
+
+                return `
+                    <tr style="${rowStyle}">
+                        <td>${orderId}</td>
+                        <td>${escalatedBy}</td>
+                        <td class="wrap-text" title="${reason}">${reason.substring(0, 50)}...</td>
+                        <td>${date}</td>
+                        <td>${statusBadge}</td>
+                        <td>${actionContent}</td>
+                    </tr>
+                `;
+            }).join('');
         }
 
         function renderTeamMembers() {
@@ -1478,134 +1449,103 @@
             select.innerHTML = assignableMembers.map(a => `<option value="${a.id}">${a.name} (${a.role})</option>`).join('');
         };
 
-        // Pagination Controls
-        function updatePaginationControls(containerId, currentPage, totalPages, pageType) {
-            const container = document.getElementById(containerId);
-            const pageInfo = container.querySelector('.page-info');
-            const prevBtn = container.querySelector('.prev-btn');
-            const nextBtn = container.querySelector('.next-btn');
-            
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages}`;
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
-            
-            // Update event listeners
-            prevBtn.onclick = () => {
-                if (currentPage > 1) {
-                    window.currentPage[pageType] = currentPage - 1;
-                    loadTabData(activeTab);
-                }
-            };
-            
-            nextBtn.onclick = () => {
-                if (currentPage < totalPages) {
-                    window.currentPage[pageType] = currentPage + 1;
-                    loadTabData(activeTab);
-                }
-            };
-        }
 
         // Modal Handlers
-        function openFinalDecisionModal(errorId) {
-            console.log('Opening final decision modal for error:', errorId);
-            const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-            if (!error) {
-                console.error("Could not find appealed error with ID:", errorId);
-                return;
-            }
+    function openFinalDecisionModal(errorId) {
+  const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
+  if (!error) {
+    console.error("Could not find appealed error with ID:", errorId);
+    return;
+  }
 
-            document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
-            document.getElementById('decision-modal-content').innerHTML = `
-                <div class="escalation-details">
-                    <div class="detail-item">
-                        <strong>Agent</strong>
-                        <span>${error.employee_username || 'Unknown'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Error Type</strong>
-                        <span>${error.error_details || 'Unknown'}</span>
-                    </div>
-                </div>
+  document.getElementById('decision-order-id').textContent = error.order_id || 'N/A';
+  document.getElementById('decision-modal-content').innerHTML = `
+    <div class="escalation-details">
+      <div class="detail-item">
+        <strong>Agent</strong>
+        <span>${error.employee_username || 'Unknown'}</span>
+      </div>
+      <div class="detail-item">
+        <strong>Error Type</strong>
+        <span>${error.error_details || 'Unknown'}</span>
+      </div>
+    </div>
 
-                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
-                    <strong>Agent's Appeal Reason:</strong>
-                    <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
-                </div>
+    <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1); margin-top: 1rem;">
+      <strong>Agent's Appeal Reason:</strong>
+      <p style="white-space: pre-wrap;">${error.appeal_reason || 'No reason provided.'}</p>
+    </div>
 
-                <div class="form-group" style="margin-top: 1rem;">
-                    <label for="decision-notes">Your Notes (Optional)</label>
-                    <textarea id="decision-notes" class="form-control" rows="3"
-                        placeholder="Provide feedback or justification for your decision..."></textarea>
-                </div>
+    <div class="form-group" style="margin-top: 1rem;">
+      <label for="decision-notes">Your Notes (Optional)</label>
+      <textarea id="decision-notes" class="form-control" rows="3"
+        placeholder="Provide feedback or justification for your decision..."></textarea>
+    </div>
 
-                <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
-                    <!-- 🔴 Uphold = rejected -->
-                    <button class="btn btn-danger"
-                        onclick="window.handleFinalDecision('${error.error_id}', 'rejected')">
-                        Uphold (Keep as Error)
-                    </button>
+    <div class="modal-footer" style="padding: 0; border: none; margin-top: 1.5rem;">
+      <!-- 🔴 Uphold = rejected -->
+      <button class="btn btn-danger"
+        onclick="window.handleFinalDecision('${error.error_id}', 'rejected')">
+        Uphold (Keep as Error)
+      </button>
 
-                    <!-- 🟢 Overturn = approved -->
-                    <button class="btn btn-success"
-                        onclick="window.handleFinalDecision('${error.error_id}', 'approved')">
-                        Overturn (Not an Error)
-                    </button>
+      <!-- 🟢 Overturn = approved -->
+      <button class="btn btn-success"
+        onclick="window.handleFinalDecision('${error.error_id}', 'approved')">
+        Overturn (Not an Error)
+      </button>
+    </div>
+  `;
 
-                    <!-- 🟠 Modify = modified -->
-                    <button class="btn btn-warning"
-                        onclick="window.handleFinalDecision('${error.error_id}', 'modified')">
-                        Modify Decision
-                    </button>
+  showModal('final-decision-modal');
+}
+        
+async function openViewAssignedModal(assignmentId) {
+    try {
+        const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
+        if (!assignment) {
+            showToast("Could not find assignment details.", "error");
+            return;
+        }
+
+        const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
+        const modalBody = document.getElementById('view-review-body');
+
+        modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
+
+        // الخطوة 1: ابحث عن المراجعة في قاعدة البيانات بشكل صريح
+        const { data: review, error } = await supabase
+            .from('quality_reviews')
+            .select('*')
+            .eq('assignment_id', assignmentId)
+            .single(); // نتوقع مراجعة واحدة فقط
+
+        if (error || !review) {
+            // إذا لم تجد المراجعة، اعرض الرسالة الصحيحة
+            modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
+        } else {
+            // إذا وجدت المراجعة، اعرض تفاصيلها
+            const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
+            modalBody.innerHTML = `
+                <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
+                <div class="detail-item"><strong>Review Outcome:</strong><span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">${review.action_correctness}</span></div>
+                ${review.action_correctness === 'error' ? `
+                <div class="detail-item"><strong>Error Reason:</strong><span>${review.modified_reason || 'Not specified'}</span></div>
+                ` : ''}
+                <div class="detail-item" style="grid-column: span 2;">
+                    <strong>Notes from Agent:</strong>
+                    <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details || 'No notes provided.'}</p>
                 </div>
             `;
-
-            showModal('final-decision-modal');
         }
 
-        async function openViewAssignedModal(assignmentId) {
-            console.log('Opening view assigned modal for assignment:', assignmentId);
-            try {
-                const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
-                if (!assignment) {
-                    showToast("Could not find assignment details.", "error");
-                    return;
-                }
+        showModal('view-review-details-modal'); // نستخدم النافذة الصحيحة
 
-                const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
-                const modalBody = document.getElementById('view-review-body');
-
-                modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
-
-                // Look for review in database
-                const { data: review, error } = await supabase
-                    .from('quality_reviews')
-                    .select('*')
-                    .eq('assignment_id', assignmentId)
-                    .single();
-
-                if (error || !review) {
-                    modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
-                } else {
-                    const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
-                    modalBody.innerHTML = `
-                        <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
-                        <div class="detail-item"><strong>Review Outcome:</strong><span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">${review.action_correctness}</span></div>
-                        ${review.action_correctness === 'error' ? `
-                        <div class="detail-item"><strong>Error Reason:</strong><span>${review.modified_reason || 'Not specified'}</span></div>
-                        ` : ''}
-                        <div class="detail-item" style="grid-column: span 2;">
-                            <strong>Notes from Agent:</strong>
-                            <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details || 'No notes provided.'}</p>
-                        </div>
-                    `;
-                }
-
-                showModal('view-review-details-modal');
-            } catch (err) {
-                console.error("Error in openViewAssignedModal:", err);
-                showToast("An error occurred while fetching review details.", "error");
-            }
-        }
+    } catch (err) {
+        console.error("Error in openViewAssignedModal:", err);
+        showToast("An error occurred while fetching review details.", "error");
+    }
+}
 
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
@@ -1628,8 +1568,8 @@
             showModal('employee-modal');
         }
 
+        // [AI-FIX] New function to open the reassign modal.
         function openReassignModal(assignmentId) {
-            console.log('Opening reassign modal for assignment:', assignmentId);
             const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
             if (!assignment) { showToast('Cannot find assignment.', 'error'); return; }
 
@@ -1646,6 +1586,7 @@
             showModal('reassign-modal');
         }
 
+
         function openShiftModal(dataset) {
             const { userId, day, userName } = dataset;
             const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
@@ -1658,6 +1599,17 @@
         }
 
         // Action Handlers
+        async function handleOldFinalDecision(errorId, decision) {
+            const notes = document.getElementById('decision-notes').value;
+            if (!notes) { showToast('Please provide your decision notes.', 'warning'); return; }
+            try {
+                await submitFinalDecision(errorId, currentUser.id, decision, notes);
+                showToast(`Response ${decision} successfully`, 'success');
+                hideModal('final-decision-modal');
+                await loadPendingErrors();
+            } catch (error) { showToast('Failed to submit decision', 'error'); }
+        }
+
         async function handleEmployeeFormSubmit(event) {
             event.preventDefault();
             const employeeId = document.getElementById('employee-id').value;
@@ -1751,7 +1703,7 @@
             }
         }
 
-        // Filtering for assigned orders
+        // [AI-FIX] New function for filtering assigned orders
         function applyAssignedOrdersFilters() {
             const searchTerm = document.getElementById('assigned-search').value.toLowerCase();
             const statusFilter = document.getElementById('assigned-status-filter').value;
@@ -1765,11 +1717,11 @@
                 return matchesSearch && matchesStatus && matchesDate;
             });
 
-            currentPage.assigned = 1; // Reset to first page after filtering
+            assignedOrdersCurrentPage = 1; // Reset to first page after filtering
             renderAssignedOrdersTable();
         }
 
-        // Tab state persistence
+        // [AI-FIX] New function to handle tab state persistence
         function applyStoredTab() {
             const lastTab = localStorage.getItem('seniorActiveTab');
             if (lastTab) {
@@ -1786,159 +1738,21 @@
         }
         
         function initRealtimeSubscriptions() {
-            console.log("Initializing real-time subscriptions...");
-            
-            // Subscribe to assignment updates
-            if (typeof subscribeToAssignmentUpdates === 'function') {
-                subscribeToAssignmentUpdates((payload) => {
-                    console.log('Assignment updated:', payload.new);
-                    const updatedAssignment = payload.new;
-                    
-                    const index = assignedOrders.findIndex(a => a.id === updatedAssignment.id);
-                    if (index !== -1) {
-                        assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
-                        applyAssignedOrdersFilters();
-                        const orderId = assignedOrders[index].orders?.order_id || 'An order';
-                        showToast(`${orderId} is now ${updatedAssignment.status.replace('_', ' ')}`, 'info');
-                    }
-                });
-            }
-            
-            // Subscribe to escalations
-            if (typeof subscribeToEscalations === 'function') {
-                subscribeToEscalations((payload) => {
-                    console.log('Escalation update received:', payload);
-                    if (activeTab === 'escalations') {
-                        loadDirectEscalations();
-                        loadAppealedErrors();
-                    }
-                    showToast('New escalation received', 'info');
-                });
-            }
-            
-            // Subscribe to errors
-            if (typeof subscribeToErrors === 'function') {
-                subscribeToErrors((payload) => {
-                    console.log('Error update received:', payload);
-                    if (activeTab === 'escalations') {
-                        loadFinalizedDecisions();
-                    }
-                    showToast('Error status updated', 'info');
-                });
-            }
+    // استدع الدالة من window
+    window.subscribeToAssignmentUpdates((payload) => {
+        console.log('Assignment updated:', payload.new);
+        const updatedAssignment = payload.new;
+        
+        const index = assignedOrders.findIndex(a => a.id === updatedAssignment.id);
+        if (index !== -1) {
+            assignedOrders[index] = { ...assignedOrders[index], ...updatedAssignment };
+            applyAssignedOrdersFilters();
+            // سنعدل الرسالة لتكون أكثر فائدة
+            const orderId = assignedOrders[index].orders?.order_id || 'An order';
+            showToast(`${orderId} is now ${updatedAssignment.status.replace('_', ' ')}`, 'info');
         }
-
-        // Download CSV function
-        function downloadAssignedOrdersCSV() {
-            try {
-                const searchTerm = document.getElementById('assigned-search').value.toLowerCase();
-                const statusFilter = document.getElementById('assigned-status-filter').value;
-                const dateFilter = document.getElementById('assigned-date-filter').value;
-
-                let dataToExport = assignedOrders.filter(a => {
-                    const searchCorpus = `${a.orders?.order_id || ''} ${a.users?.name || ''}`.toLowerCase();
-                    const matchesSearch = !searchTerm || searchCorpus.includes(searchTerm);
-                    const matchesStatus = statusFilter === 'all' || a.status === statusFilter;
-                    const matchesDate = !dateFilter || (a.assigned_at && a.assigned_at.startsWith(dateFilter));
-                    return matchesSearch && matchesStatus && matchesDate;
-                });
-
-                if (dataToExport.length === 0) {
-                    showToast('No data to export', 'warning');
-                    return;
-                }
-
-                let csv = 'Order ID,Agent,Status,Date Assigned,Review Time\n';
-                
-                dataToExport.forEach(order => {
-                    let reviewTime = 'N/A';
-                    if (order.status === 'completed' && order.assigned_at && order.completed_at) {
-                        const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
-                        reviewTime = `${diffMinutes} min`;
-                    }
-                    
-                    const rowData = [
-                        order.orders?.order_id || 'N/A',
-                        order.users?.name || 'Unknown',
-                        order.status,
-                        formatDateTime(order.assigned_at),
-                        reviewTime
-                    ];
-                    
-                    csv += rowData.map(cell => `"${cell}"`).join(',') + '\n';
-                });
-
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.setAttribute('hidden', '');
-                a.setAttribute('href', url);
-                a.setAttribute('download', 'assigned_orders.csv');
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                
-                showToast('CSV downloaded successfully', 'success');
-            } catch (error) {
-                console.error('Error downloading CSV:', error);
-                showToast('Error downloading CSV', 'error');
-            }
-        }
-
-        // Final Decision Handler
-        window.handleFinalDecision = async (errorId, decision) => {
-            try {
-                console.log('Handling final decision:', { errorId, decision });
-                
-                if (!currentUser || !currentUser.id) {
-                    throw new Error("Could not identify the current user. Please refresh and try again.");
-                }
-                const seniorUserId = currentUser.id;
-                const notes = document.getElementById('decision-notes')?.value || '';
-
-                // Submit final decision
-                const { error: insertError } = await submitFinalDecision(errorId, seniorUserId, decision, notes);
-                if (insertError) throw insertError;
-
-                // Update error status based on decision
-                const statusMap = {
-                    approved: 'overturned',
-                    rejected: 'closed',
-                    modified: 'closed'
-                };
-                const newErrorStatus = statusMap[decision] || 'closed';
-
-                const { error: updateError } = await supabase
-                    .from('errors')
-                    .update({
-                        status: newErrorStatus,
-                        decided_by_id: seniorUserId,
-                        finalized_at: new Date()
-                    })
-                    .eq('id', errorId);
-
-                if (updateError) throw updateError;
-
-                // Create notification for agent
-                const error = appealedErrors.find(e => String(e.error_id) === String(errorId));
-                if (error) {
-                    const notificationMessage = `Your appeal for order ${error.order_id} has been reviewed. Final decision: ${decision}.`;
-                    await createNotification(error.agent_user_id, notificationMessage, 'info');
-                }
-
-                showToast(`✅ Decision recorded and notification sent successfully.`, 'success');
-                hideModal('final-decision-modal');
-
-                await Promise.all([
-                    loadAppealedErrors(),
-                    loadFinalizedDecisions()
-                ]);
-
-            } catch (error) {
-                console.error("Error in handleFinalDecision:", error);
-                showToast(error.message || '❌ Failed to record final decision.', 'error');
-            }
-        };
+    });
+}
 
         // Event Listeners Setup
         document.addEventListener('DOMContentLoaded', () => {
@@ -1950,7 +1764,7 @@
                     e.preventDefault();
                     if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
-                    localStorage.setItem('seniorActiveTab', tabId);
+                    localStorage.setItem('seniorActiveTab', tabId); // [AI-FIX] Save tab on click
                     applyStoredTab();
                 });
             });
@@ -1966,27 +1780,21 @@
 
                 const assignmentId = target.dataset.assignmentId;
                 const errorId = target.dataset.errorId;
-                const decisionId = target.dataset.decisionId;
-                const escalationId = target.dataset.escalationId;
-
-                console.log('Button clicked:', { target, assignmentId, errorId, decisionId, escalationId });
 
                 if (target.classList.contains('final-decision-btn')) {
                     openFinalDecisionModal(errorId);
+                } else if (target.classList.contains('review-response-btn')) {
+                    // Logic for reviewing agent response...
+                } else if (target.classList.contains('edit-employee-btn')) {
+                    openEmployeeModal(target.dataset.employeeId);
                 } else if (target.classList.contains('view-assigned-btn')) {
                     openViewAssignedModal(assignmentId);
                 } else if (target.classList.contains('reassign-btn')) {
                     openReassignModal(assignmentId);
                 } else if (target.classList.contains('view-final-decision-btn')) {
-                    console.log('View final decision button clicked for:', decisionId);
-                    // Implement view final decision details
-                    showToast('View final decision feature coming soon', 'info');
-                } else if (target.classList.contains('view-escalation-btn') || target.classList.contains('review-escalation-btn')) {
-                    console.log('View escalation button clicked for:', escalationId);
-                    // Implement view escalation details
-                    showToast('View escalation feature coming soon', 'info');
-                } else if (target.classList.contains('edit-employee-btn')) {
-                    openEmployeeModal(target.dataset.employeeId);
+                    openFinalDecisionDetailsModal(errorId);
+                } else if (target.classList.contains('view-escalation-btn')) {
+                    // Logic for viewing escalation details...
                 }
             });
 
@@ -1998,7 +1806,7 @@
                  }
             });
 
-            // Event listeners for filtering
+            // [AI-FIX] Event listeners for assigned orders filtering
             document.getElementById('assigned-search')?.addEventListener('input', applyAssignedOrdersFilters);
             document.getElementById('assigned-status-filter')?.addEventListener('change', applyAssignedOrdersFilters);
             document.getElementById('assigned-date-filter')?.addEventListener('input', applyAssignedOrdersFilters);
@@ -2009,50 +1817,52 @@
                 applyAssignedOrdersFilters();
             });
 
-            // Event listeners for appealed errors filtering
-            document.getElementById('appealed-search')?.addEventListener('input', renderAppealedErrorsTable);
-            document.getElementById('appealed-status-filter')?.addEventListener('change', renderAppealedErrorsTable);
-
-            // Event listeners for final decisions filtering
-            document.getElementById('final-decisions-search')?.addEventListener('input', renderFinalizedDecisionsTable);
-            document.getElementById('final-decisions-filter')?.addEventListener('change', renderFinalizedDecisionsTable);
-
-            // Event listeners for direct escalations filtering
-            document.getElementById('direct-escalation-search')?.addEventListener('input', renderDirectEscalationsTable);
-            document.getElementById('direct-escalation-status-filter')?.addEventListener('change', renderDirectEscalationsTable);
-
-            // Event listener for Reassign confirm button
-            document.getElementById('reassign-confirm-btn')?.addEventListener('click', async (e) => {
-                const btn = e.target;
-                const assignmentId = btn.dataset.assignmentId;
-                const newAgentId = document.getElementById('reassign-agent-select').value;
-                
-                if (!assignmentId || !newAgentId) {
-                    showToast('Please select an agent to reassign to.', 'warning');
-                    return;
-                }
-
-                btn.disabled = true;
-                btn.textContent = 'Reassigning...';
-
-                try {
-                    await window.reassignOrder(assignmentId, newAgentId, currentUser.id);
-                    showToast('Order reassigned successfully!', 'success');
-                    hideModal('reassign-modal');
-                    await loadAssignedOrders();
-                } catch (error) {
-                    console.error('Failed to reassign order:', error);
-                    showToast(`Error: ${error.message}`, 'error');
-                } finally {
-                    btn.disabled = false;
-                    btn.textContent = 'Confirm Reassignment';
+            // [AI-FIX] Event listeners for pagination
+            document.getElementById('assigned-orders-pagination')?.addEventListener('click', (e) => {
+                const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
+                if(e.target.classList.contains('prev-btn') && assignedOrdersCurrentPage > 1) {
+                    assignedOrdersCurrentPage--;
+                    renderAssignedOrdersTable();
+                } else if(e.target.classList.contains('next-btn') && assignedOrdersCurrentPage < totalPages) {
+                    assignedOrdersCurrentPage++;
+                    renderAssignedOrdersTable();
                 }
             });
 
-            // Download CSV button
-            document.getElementById('download-csv-btn')?.addEventListener('click', downloadAssignedOrdersCSV);
+            // [AI-FIX] Event listener for Reassign confirm button
+          document.getElementById('reassign-confirm-btn')?.addEventListener('click', async (e) => {
+    const btn = e.target;
+    const assignmentId = btn.dataset.assignmentId;
+    const newAgentId = document.getElementById('reassign-agent-select').value;
+    
+    if (!assignmentId || !newAgentId) {
+        showToast('Please select an agent to reassign to.', 'warning');
+        return;
+    }
 
-            // Other existing event listeners
+    btn.disabled = true;
+    btn.textContent = 'Reassigning...';
+
+    try {
+        // استدعاء الدالة من خلال window لضمان الوصول إليها
+        await window.reassignOrder(assignmentId, newAgentId, currentUser.id);
+        
+        showToast('Order reassigned successfully!', 'success');
+        hideModal('reassign-modal');
+        
+        // تحديث الجداول لعرض البيانات الجديدة
+        await loadAssignedOrders();
+
+    } catch (error) {
+        console.error('Failed to reassign order:', error);
+        showToast(`Error: ${error.message}`, 'error');
+    } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm Reassignment';
+    }
+});
+
+          // Other existing event listeners
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
             const scheduleTable = document.getElementById('schedule-table');
@@ -2082,52 +1892,96 @@
             });
 
             document.getElementById('select-all-checkbox')?.addEventListener('change', function() { document.querySelectorAll('.order-checkbox').forEach(cb => cb.checked = this.checked); });
+            document.getElementById('direct-escalation-search')?.addEventListener('input', () => renderDirectEscalationsTable());
+            document.getElementById('direct-escalation-status-filter')?.addEventListener('change', () => renderDirectEscalationsTable());
             document.getElementById('logout-btn')?.addEventListener('click', (e) => { e.preventDefault(); showModal('logout-confirm-modal'); });
             document.getElementById('confirm-logout-btn')?.addEventListener('click', async () => {
                 try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); localStorage.removeItem('seniorActiveTab'); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
                 hideModal('logout-confirm-modal');
             });
         });
+window.handleFinalDecision = async (errorId, decision) => {
+  try {
+    // --- 0. تحقق من المستخدم الحالي ---
+    if (!currentUser || !currentUser.id) {
+      throw new Error("Could not identify the current user. Please refresh and try again.");
+    }
+    const seniorUserId = currentUser.id;
+    const notes = document.getElementById('decision-notes')?.value || '';
 
-        // Track active tab
-        let activeTab = 'dashboard';
-        function loadTabData(tabId) {
-            activeTab = tabId;
-            switch(tabId) {
-                case 'dashboard':
-                    loadDashboardData();
-                    break;
-                case 'escalations':
-                    loadDirectEscalations();
-                    loadAppealedErrors();
-                    loadFinalizedDecisions();
-                    break;
-                case 'assignments':
-                    loadUnassignedOrders();
-                    loadAssignedOrders();
-                    break;
-                case 'team-scheduling':
-                    loadTeamSchedule();
-                    break;
-                case 'team-members':
-                    loadTeamMembers();
-                    break;
-                case 'company-employees':
-                    loadCompanyEmployees();
-                    break;
-                case 'kpis':
-                    loadKPIsData();
-                    break;
-            }
-        }
+    // --- 1. تأكيد البيانات المطلوبة (Agent + Order) ---
+    const { data: errorData, error: fetchError } = await window.supabase
+      .from('errors')
+      .select(`
+        id,
+        employees!inner(user_id),
+        quality_reviews!inner(
+          order_assignments!inner(
+            orders!inner(order_id)
+          )
+        )
+      `)
+      .eq('id', errorId)
+      .single();
 
-        async function loadDashboardData() {
-            // Dashboard data loading logic
-        }
+    if (fetchError || !errorData?.employees?.user_id || !errorData?.quality_reviews?.order_assignments?.orders?.order_id) {
+      console.error("Fetch error or missing critical data:", fetchError, errorData);
+      throw new Error("Could not find the agent's User ID or Order ID to notify.");
+    }
 
-        async function loadKPIsData() {
-            // KPIs data loading logic
-        }
+    const agentUserId = errorData.employees.user_id;
+    const orderId = errorData.quality_reviews.order_assignments.orders.order_id;
+
+    // --- 2. تطبيع القرار قبل الإرسال (mapping + lowercase) ---
+    const normalizedDecision = decision.toLowerCase();
+    const allowedDecisions = ['approved', 'rejected', 'modified'];
+    if (!allowedDecisions.includes(normalizedDecision)) {
+      throw new Error(`Invalid decision value: ${decision}`);
+    }
+
+    // --- 3. تسجيل القرار النهائي في final_decisions ---
+    const { error: insertError } = await submitFinalDecision(errorId, seniorUserId, normalizedDecision, notes);
+    if (insertError) throw insertError;
+
+    // --- 4. تحديث حالة الخطأ في جدول errors ---
+    // ✅ التصحيح النهائي حسب منطقك
+    const statusMap = {
+      approved: 'overturned',  // Overturn → الخطأ اتلغى
+      rejected: 'closed',      // Uphold → الخطأ اتأكد
+      modified: 'closed'       // تم تعديل القرار وانتهى
+    };
+    const newErrorStatus = statusMap[normalizedDecision] || 'closed';
+
+    const { error: updateError } = await supabase
+      .from('errors')
+      .update({
+        status: newErrorStatus,
+        decided_by_id: seniorUserId,
+        finalized_at: new Date()
+      })
+      .eq('id', errorId);
+
+    if (updateError) throw updateError;
+
+    // --- 5. إنشاء إشعار للـ Agent ---
+    const notificationMessage = `Your appeal for order ${orderId} has been reviewed. Final decision: ${normalizedDecision}.`;
+    await createNotification(agentUserId, notificationMessage, 'info');
+
+    // --- 6. تحديث الواجهة وإظهار نجاح ---
+    showToast(`✅ Decision recorded and notification sent successfully.`, 'success');
+    hideModal('final-decision-modal');
+
+    await Promise.all([
+      loadAppealedErrors(),
+      loadFinalizedDecisions()
+    ]);
+
+  } catch (error) {
+    console.error("Error in handleFinalDecision:", error);
+    showToast(error.message || '❌ Failed to record final decision.', 'error');
+  }
+};
+
     </script>
 </body>
 </html>
