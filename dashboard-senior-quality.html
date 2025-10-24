@@ -1986,9 +1986,10 @@ window.handleFinalDecision = async (errorId, decision) => {
 
 <!-- START: Appended Fixes Script -->
 <script>
-// =========================
-// Senior Dashboard - Fixes (appended)
-// =========================
+(function(){
+/* Wrapped fixes in IIFE to avoid redeclaring global lets (prevents 'Identifier ... already been declared') */
+'use strict';
+/* Local scope variables */
 let currentUser = null;
 let directEscalations = [];
 let finalizedDecisions = [];
@@ -2010,7 +2011,8 @@ function downloadTableAsCSV(filename, rows) {
             csv.push(r.map(c => `"${String(c ?? '')}"`).join(','));
         }
     }
-    const blob = new Blob([csv.join('\n')], { type: 'text/csv' });
+    const blob = new Blob([csv.join('
+')], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url; a.download = filename || 'export.csv';
@@ -2034,7 +2036,7 @@ function initRealtimeSubscriptions(){
                 const idx = assignedOrders.findIndex(a=>String(a.id)===String(rec.id));
                 if(idx!==-1) assignedOrders[idx] = {...assignedOrders[idx], ...rec};
                 else assignedOrders.unshift(rec);
-                applyAssignedOrdersFilters && applyAssignedOrdersFilters();
+                if(typeof applyAssignedOrdersFilters==='function') applyAssignedOrdersFilters();
             });
         }
     } catch(e){ console.warn('assign subs failed', e); }
@@ -2048,7 +2050,7 @@ function initRealtimeSubscriptions(){
                 const idx = directEscalations.findIndex(x=>String(x.id)===String(rec.id));
                 if(idx!==-1) directEscalations[idx] = {...directEscalations[idx], ...rec};
                 else directEscalations.unshift(rec);
-                renderDirectEscalationsTable && renderDirectEscalationsTable();
+                if(typeof renderDirectEscalationsTable==='function') renderDirectEscalationsTable();
             });
         }
     } catch(e){ console.warn('escalation subs failed', e); }
@@ -2062,7 +2064,7 @@ function initRealtimeSubscriptions(){
                 const idx = finalizedDecisions.findIndex(x=>String(x.id)===String(rec.id));
                 if(idx!==-1) finalizedDecisions[idx] = {...finalizedDecisions[idx], ...rec};
                 else finalizedDecisions.unshift(rec);
-                renderFinalizedDecisionsTable && renderFinalizedDecisionsTable();
+                if(typeof renderFinalizedDecisionsTable==='function') renderFinalizedDecisionsTable();
             });
         }
     } catch(e){ console.warn('finalized subs failed', e); }
@@ -2152,12 +2154,14 @@ window.addEventListener('DOMContentLoaded', ()=>{
     }catch(e){}
 });
 
-// expose functions globally
+// expose essential functions to global scope (but keep local variables inside IIFE)
 window.openViewEscalationModal = openViewEscalationModal;
 window.openReviewEscalationModal = openReviewEscalationModal;
 window.openFinalDecisionDetailsModal = openFinalDecisionDetailsModal;
 window.downloadTableAsCSV = downloadTableAsCSV;
 window.initRealtimeSubscriptions = initRealtimeSubscriptions;
+
+})(); // end IIFE
 </script>
 <!-- END: Appended Fixes Script -->
 
