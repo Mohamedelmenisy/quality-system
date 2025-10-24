@@ -1499,8 +1499,7 @@
 
   showModal('final-decision-modal');
 }
-        
-async function openViewAssignedModal(assignmentId) {
+        async function openViewAssignedModal(assignmentId) {
     try {
         const assignment = assignedOrders.find(a => a.id.toString() === assignmentId);
         if (!assignment) {
@@ -1513,18 +1512,18 @@ async function openViewAssignedModal(assignmentId) {
 
         modalTitle.textContent = `Review Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        // الخطوة 1: ابحث عن المراجعة في قاعدة البيانات بشكل صريح
+        // Step 1: Explicitly search for the review in the database
         const { data: review, error } = await supabase
             .from('quality_reviews')
             .select('*')
             .eq('assignment_id', assignmentId)
-            .single(); // نتوقع مراجعة واحدة فقط
+            .single(); // We expect only one review
 
         if (error || !review) {
-            // إذا لم تجد المراجعة، اعرض الرسالة الصحيحة
+            // If the review is not found, display the correct message
             modalBody.innerHTML = `<div class="empty-state">This order has not been reviewed yet.</div>`;
         } else {
-            // إذا وجدت المراجعة، اعرض تفاصيلها
+            // If the review is found, display its details
             const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
             modalBody.innerHTML = `
                 <div class="detail-item"><strong>Reviewed By:</strong><span>${assignment.users?.name || 'Unknown'}</span></div>
@@ -1539,14 +1538,14 @@ async function openViewAssignedModal(assignmentId) {
             `;
         }
 
-        showModal('view-review-details-modal'); // نستخدم النافذة الصحيحة
+        showModal('view-review-details-modal'); // Use the correct modal
 
     } catch (err) {
         console.error("Error in openViewAssignedModal:", err);
         showToast("An error occurred while fetching review details.", "error");
     }
 }
-
+        
         function openEmployeeModal(employeeId = null) {
             const form = document.getElementById('employee-form');
             form.reset();
