@@ -1213,16 +1213,16 @@ function renderFinalizedDecisionsTable() {
     }
     tableBody.innerHTML = finalizedDecisions.map(decision => {
         let decisionDisplay;
-        // CORRECTED: We will check for the exact text seen in the screenshot
-        const finalStatus = decision.your_decision; // This name comes from the RPC function alias
+        // THE FIX: Normalize the value to lowercase before checking
+        const finalStatus = decision.your_decision?.toLowerCase() || ''; 
 
-        if (finalStatus === 'Overturned') {
+        if (finalStatus === 'overturned') { // Check against lowercase 'overturned'
             decisionDisplay = `<span style="font-weight: 500; color: var(--success-color);">✅ Overturned</span>`;
-        } else if (finalStatus === 'Closed') {
-            // In the context of a finalized appeal, "Closed" means the appeal was rejected.
+        } else if (finalStatus === 'closed') { // Check against lowercase 'closed'
             decisionDisplay = `<span style="font-weight: 500; color: var(--danger-color);">❌ Uphold</span>`;
         } else {
-            decisionDisplay = `<span>${finalStatus}</span>`; // Fallback for any other status
+            // Fallback for any other value
+            decisionDisplay = `<span>${decision.your_decision || 'N/A'}</span>`;
         }
         
         const dateFinalized = decision.finalized_at ? formatDateTime(decision.finalized_at) : 'N/A';
@@ -1239,11 +1239,10 @@ function renderFinalizedDecisionsTable() {
         `;
     }).join('');
 }
+
         
         
         // أضف هذه الدالة بعد renderFinalizedDecisionsTable
-// dashboard-senior-quality.html
-
 async function openFinalDecisionDetailsModal(errorId) {
     try {
         // Step 1: Get the core decision details and basic info
