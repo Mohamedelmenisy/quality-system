@@ -1886,9 +1886,9 @@ document.body.addEventListener('click', async function(event) {
         openFinalDecisionModal(errorId);
     } else if (target.classList.contains('edit-employee-btn')) {
         openEmployeeModal(target.dataset.employeeId);
-    } else if (target.classList.contains('reassign-btn')) {
-        openReassignModal(assignmentId);
-    else if (target.classList.contains('view-final-decision-btn')) {
+   } else if (target.classList.contains('reassign-btn')) {
+    openReassignModal(assignmentId);
+} else if (target.classList.contains('view-final-decision-btn')) { // تم إصلاح الخطأ الآن
     openFinalDecisionDetailsModal(target.dataset.errorId);
     } else if (target.classList.contains('view-escalation-btn') || target.classList.contains('review-escalation-btn')) {
         openEscalationDetailsModal(escalationId);
