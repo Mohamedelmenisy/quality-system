@@ -580,22 +580,30 @@
             });
         });
 
-        document.querySelector('.main-content').addEventListener('click', (e) => {
-            const viewBtn = e.target.closest('.view-error-btn');
-            const appealBtn = e.target.closest('.appeal-error-btn');
+document.querySelector('.main-content').addEventListener('click', (e) => {
+    const viewBtn = e.target.closest('.view-error-btn');
+    const appealBtn = e.target.closest('.appeal-error-btn');
 
-            if (viewBtn) {
-                openViewErrorModal(viewBtn.dataset.errorId);
-            } else if (appealBtn) {
-                const errorId = appealBtn.dataset.errorId;
-                const modal = document.getElementById('appeal-error-modal');
-                if (modal) {
-                    modal.querySelector('#appeal-reason').value = '';
-                    modal.querySelector('#submit-appeal-btn').dataset.errorId = errorId;
-                    showModal('appeal-error-modal');
-                }
-            }
-        });
+    if (viewBtn) {
+        openViewErrorModal(viewBtn.dataset.errorId);
+    } else if (appealBtn) {
+        const errorId = appealBtn.dataset.errorId;
+        const modal = document.getElementById('appeal-error-modal');
+        
+        if (modal && errorId) {
+            // Clear previous values
+            modal.querySelector('#appeal-reason').value = '';
+            
+            // *** THIS IS THE CRITICAL FIX ***
+            // Set the errorId on the submit button inside the modal
+            modal.querySelector('#submit-appeal-btn').dataset.errorId = errorId;
+            
+            showModal('appeal-error-modal');
+        } else {
+            showToast('Could not identify the error to appeal.', 'error');
+        }
+    }
+});
         
         document.getElementById('notification-btn').addEventListener('click', e => { e.stopPropagation(); document.getElementById('notification-dropdown').classList.toggle('show'); });
         
