@@ -1299,7 +1299,7 @@ async function openFinalDecisionDetailsModal(errorId) {
                 <p style="white-space: pre-wrap; margin-top: 5px;">${appealReason}</p>
             </div>
 
-            <div class="detail-item" style="background-color: ${statusColor}15; border-left: 4px solid ${statusColor};">
+            <div class="detail-item" style="background-color: ${statusColor}1A; border-left: 4px solid ${statusColor};">
                 <strong>Your Final Decision</strong>
                 <p style="font-size: 1.1rem; font-weight: bold; color: ${statusColor}; margin: 0.5rem 0;">${decisionStatus}</p>
                 <small style="color: var(--text-muted);">Decided on: ${formatDateTime(decision.finalized_at || decision.decided_at)}</small>
@@ -1307,7 +1307,7 @@ async function openFinalDecisionDetailsModal(errorId) {
 
             <div class="detail-item">
                 <strong>Your Notes & Justification</strong>
-                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted);">
+                <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted-color);">
                     ${notesValue}
                 </p>
             </div>
