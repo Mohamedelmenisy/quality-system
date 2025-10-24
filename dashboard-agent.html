@@ -612,36 +612,56 @@
         
         document.getElementById('submit-response-btn').addEventListener('click', handleResponseSubmission);
         
-        document.getElementById('submit-appeal-btn').addEventListener('click', async function() {
-            const btn = this;
-            const errorId = btn.dataset.errorId;
-            const reason = document.getElementById('appeal-reason').value.trim();
-            if (!reason) { showToast('Please provide a reason for your appeal.', 'warning'); return; }
+       // ابحث عن هذا الجزء داخل setupEventListeners() وقم باستبداله
 
-            btn.disabled = true; btn.textContent = 'Submitting...';
-            try {
-                const { error: responseError } = await supabase.from('error_responses').insert({
-                    error_id: errorId,
-                    response_by_id: currentUser.id,
-                    response_text: reason,
-                    response_type: 'appeal'
-                });
-                if(responseError) throw responseError;
-                
-                const { error } = await supabase.from('errors').update({ status: 'under_review' }).eq('id', errorId);
-                if (error) throw error;
-                
-                showToast('Appeal submitted successfully!', 'success');
-                hideModal('appeal-error-modal');
-                await loadUserErrors();
+document.getElementById('submit-appeal-btn').addEventListener('click', async function() {
+    const btn = this;
+    const errorId = btn.dataset.errorId; // Correctly get the errorId from the button's dataset
+    const reason = document.getElementById('appeal-reason').value.trim();
+    
+    if (!reason) { 
+        showToast('Please provide a reason for your appeal.', 'warning'); 
+        return; 
+    }
 
-            } catch (error) {
-                console.error('Error submitting appeal:', error);
-                showToast('Failed to submit appeal.', 'error');
-            } finally {
-                btn.disabled = false; btn.textContent = 'Submit Appeal';
-            }
+    if (!errorId) {
+        showToast('Could not find the error ID. Please try again.', 'error');
+        return;
+    }
+
+    btn.disabled = true; 
+    btn.textContent = 'Submitting...';
+    
+    try {  
+        const { error: responseError } = await supabase.from('error_responses').insert({
+            error_id: errorId,
+            response_by_id: currentUser.id,
+            response_text: reason,
+            response_type: 'appeal' // Add a type to distinguish it from a normal response
         });
+
+        if(responseError) throw responseError;
+        
+        // 2. Update the error status to 'under_review'
+        const { error } = await supabase
+          .from('errors')
+          .update({ status: 'under_review' })
+          .eq('id', errorId);
+          
+        if (error) throw error;
+        
+        showToast('Appeal submitted successfully! It is now under review.', 'success');
+        hideModal('appeal-error-modal');
+        await loadUserErrors(); // Refresh the table to show the new status
+
+    } catch (error) {
+        console.error('Error submitting appeal:', error);
+        showToast(`Failed to submit appeal: ${error.message || 'Unknown error'}`, 'error');
+    } finally {
+        btn.disabled = false; 
+        btn.textContent = 'Submit Appeal';
+    }
+});
         
         document.getElementById('save-profile-btn').addEventListener('click', async () => {
             const name = document.getElementById('profile-fullname').value.trim();
