@@ -2117,7 +2117,34 @@ window.handleFinalDecision = async (errorId, decision) => {
     showToast(error.message || '❌ Failed to record final decision.', 'error');
   }
 };
+// --- ✅ Temporary fix for missing subscribeToNotifications ---
+async function subscribeToNotifications(userId) {
+  try {
+    console.log("Subscribing to notifications for user:", userId);
 
+    const channel = supabase.channel('notifications')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'notifications',
+          filter: `receiver_id=eq.${userId}`
+        },
+        payload => {
+          console.log("New notification received:", payload.new);
+          // ممكن هنا تضيف alert أو تحدث القائمة مباشرة
+          showToast(`🔔 New notification: ${payload.new.message}`, 'info');
+          loadNotifications(); // لو عندك دالة بتعيد تحميل الإشعارات
+        }
+      )
+      .subscribe();
+
+    console.log("Notification subscription active.");
+  } catch (err) {
+    console.error("Error in subscribeToNotifications:", err);
+  }
+}
     </script>
 </body>
 </html>
