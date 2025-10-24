@@ -238,7 +238,7 @@
         renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
     }
     
-  // امسح دالة renderPaginatedTable الحالية بالكامل وضع هذا الكود مكانها
+// dashboard-agent.html
 
 function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     const tbody = document.getElementById(tbodyId);
@@ -246,63 +246,57 @@ function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     
     if (!tbody || !paginationControls) return;
 
+    // ... (باقي الكود الخاص بالـ pagination يبقى كما هو)
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const paginatedData = data.slice(startIndex, endIndex);
     const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
 
     if (data.length === 0) {
-        tbody.innerHTML = `
-            <tr>
-                <td colspan="5" class="empty-state">
-                    <div class="empty-state-icon">✅</div>
-                    <div>No errors found.</div>
-                    <small>Great job maintaining quality standards!</small>
-                </td>
-            </tr>`;
+        // ... (كود الحالة الفارغة يبقى كما هو)
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">✅</div><div>No errors found.</div></td></tr>`;
         paginationControls.style.display = 'none';
     } else {
         tbody.innerHTML = paginatedData.map(error => {
             const orderId = error.order_id || 'N/A';
-            const orderDate = error.created_at;
-            const errorType = error.error_details || 'Unknown';
-            const status = error.status.replace(/_/g, ' ');
-
-            // *** THE CRITICAL FIX IS HERE: Using error.error_id instead of error.id ***
             const errorId = error.error_id; 
+            let actionContent = '';
 
-            let actionButtons = '';
-            
-            if (error.final_decision) {
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View Decision</button>`;
-            } else if (error.status === 'under_review') {
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
-            } else if (error.status === 'closed') {
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
-                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${errorId}">Appeal</button>`;
-                actionButtons = viewButton + appealButton;
+            // NEW LOGIC to determine what to show in the "Action" column
+            if (error.status === 'under_review') {
+                actionContent = `<span style="color: var(--warning-color);">Pending Senior Review...</span>`;
+            } else if (error.status === 'overturned') {
+                actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">✅ View Decision</button>`;
+            } else if (error.status === 'closed' && error.final_decision) {
+                actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">❌ View Decision</button>`;
+            } else if (error.status === 'closed' && !error.final_decision) {
+                // This is the only case where "Appeal" should be visible
+                actionContent = `
+                    <button class="action-btn view-error-btn" data-error-id="${errorId}">View Details</button>
+                    <button class="action-btn warning appeal-error-btn" data-error-id="${errorId}">Appeal</button>
+                `;
             } else {
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
+                actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">View</button>`;
             }
-            
+
             return `
                 <tr>
                     <td><strong>${orderId}</strong></td>
-                    <td>${formatDate(orderDate)}</td>
-                    <td>${errorType}</td>
-                    <td><span class="status-badge status-${error.status}">${status}</span></td>
-                    <td class="action-buttons">${actionButtons}</td>
+                    <td>${formatDate(error.created_at)}</td>
+                    <td>${error.error_details || 'Unknown'}</td>
+                    <td><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></td>
+                    <td class="action-buttons">${actionContent}</td>
                 </tr>
             `;
         }).join('');
 
         paginationControls.style.display = 'flex';
+        // ... (باقي كود الـ pagination يبقى كما هو)
         paginationControls.querySelector('.page-info').textContent = `Page ${currentPage} of ${totalPages}`;
         paginationControls.querySelector('.prev-btn').disabled = currentPage === 1;
         paginationControls.querySelector('.next-btn').disabled = currentPage === totalPages;
     }
 }
-    
     
     function setupPaginationListeners() {
         document.getElementById('dashboard-pagination').addEventListener('click', e => {
@@ -332,46 +326,49 @@ function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
         });
     }
     
-    function openViewErrorModal(errorId) {
-        // *** FIXED: Finding error by `id` as per old version's data structure ***
-        const error = userErrors.find(e => String(e.id) === String(errorId));
-        if (!error) {
-            console.error("Error not found for ID:", errorId);
-            showToast('Could not find error details.', 'error');
-            return;
-        }
-    
-        document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
-        
-        let contentHtml = `
-            <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
-            <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
-            <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
-            <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
-        `;
+   // dashboard-agent.html
 
-        if (error.final_decision) {
-            const decisionClass = error.final_decision === 'overturned' ? 'status-overturned' : 'status-closed';
-            contentHtml += `
-                <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
-                <div class="detail-item" style="background-color: #222;">
-                    <strong>Senior's Final Decision</strong>
-                    <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${error.final_decision}</span> by ${error.decided_by_name || 'Senior'}</p>
-                    <small style="color: var(--text-muted);">${formatDateTime(error.decided_at)}</small>
-                </div>
-                <div class="detail-item">
-                    <strong>Senior's Notes</strong>
-                    <p style="white-space: pre-wrap; color: var(--text-muted);">${error.decision_notes || 'No notes provided.'}</p>
-                </div>
-            `;
-        } else if (error.status === 'under_review') {
-             contentHtml += `<hr style="border-color: var(--border-color); margin: 1rem 0;"><p style="color: var(--text-muted); padding: 1rem 0;">Your appeal is currently under review by a senior quality analyst.</p>`;
-        }
-        
-        document.getElementById('view-error-body').innerHTML = contentHtml;
-        showModal('view-error-modal');
+function openViewErrorModal(errorId) {
+    const error = userErrors.find(e => String(e.error_id) === String(errorId));
+    if (!error) {
+        showToast('Could not find error details.', 'error');
+        return;
     }
 
+    document.getElementById('view-error-id').textContent = error.order_id || 'N/A';
+    
+    let contentHtml = `
+        <div class="detail-item"><strong>Order ID</strong><p>${error.order_id || 'N/A'}</p></div>
+        <div class="detail-item"><strong>Date Recorded</strong><p>${formatDate(error.created_at)}</p></div>
+        <div class="detail-item"><strong>Error Type</strong><p>${error.error_details || 'Unknown'}</p></div>
+        <div class="detail-item"><strong>Status</strong><p><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></p></div>
+    `;
+
+    // Check if a final decision exists and display it
+    if (error.final_decision) {
+        const decisionClass = error.final_decision === 'approved' ? 'status-overturned' : 'status-closed';
+        const decisionText = error.final_decision === 'approved' ? 'Appeal Approved (Error Overturned)' : 'Appeal Rejected (Error Upheld)';
+
+        contentHtml += `
+            <hr style="border-color: var(--border-color); margin: 1.5rem 0;">
+            <div class="detail-item" style="background-color: #222;">
+                <strong>Senior's Final Decision</strong>
+                <p style="font-size: 1.1rem; margin-top: 0.5rem;"><span class="status-badge ${decisionClass}">${decisionText}</span> by ${error.decided_by_name || 'Senior'}</p>
+                <small style="color: var(--text-muted);">${formatDateTime(error.decided_at)}</small>
+            </div>
+            <div class="detail-item">
+                <strong>Senior's Notes</strong>
+                <p style="white-space: pre-wrap; color: var(--text-muted);">${error.decision_notes || 'No notes provided.'}</p>
+            </div>
+        `;
+    } else if (error.status === 'under_review') {
+         contentHtml += `<hr style="border-color: var(--border-color); margin: 1rem 0;"><p style="color: var(--text-muted); padding: 1rem 0;">Your appeal is currently under review by a senior quality analyst.</p>`;
+    }
+    
+    document.getElementById('view-error-body').innerHTML = contentHtml;
+    showModal('view-error-modal');
+}
+    
     async function handleResponseSubmission() {
         const btn = document.getElementById('submit-response-btn');
         const errorId = btn.dataset.errorId;
