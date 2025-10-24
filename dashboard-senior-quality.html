@@ -2057,6 +2057,7 @@ document.body.addEventListener('click', async function(event) {
             showToast("Escalation resolved successfully.", "success");
             hideModal('view-escalation-modal');
             await loadDirectEscalations();
+            await loadPerformanceMetrics();
         } catch (error) {
             console.error("Error resolving escalation:", error);
             showToast("Failed to resolve escalation.", "error");
