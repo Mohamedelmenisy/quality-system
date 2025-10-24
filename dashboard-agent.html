@@ -238,7 +238,9 @@
         renderPaginatedTable('my-errors-table-body', filteredUserErrors, myErrorsCurrentPage, 'my-errors-pagination');
     }
     
-   function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
+  // امسح دالة renderPaginatedTable الحالية بالكامل وضع هذا الكود مكانها
+
+function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     const tbody = document.getElementById(tbodyId);
     const paginationControls = document.getElementById(paginationId);
     
@@ -266,26 +268,22 @@
             const errorType = error.error_details || 'Unknown';
             const status = error.status.replace(/_/g, ' ');
 
-            // --- START: MODIFIED BUTTON LOGIC ---
+            // *** THE CRITICAL FIX IS HERE: Using error.error_id instead of error.id ***
+            const errorId = error.error_id; 
+
             let actionButtons = '';
             
-            // Check if a final decision exists
             if (error.final_decision) {
-                // If decision exists, show only "View Decision" button
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View Decision</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View Decision</button>`;
             } else if (error.status === 'under_review') {
-                // If under review, show only a "View" button (appeal is already submitted)
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
             } else if (error.status === 'closed') {
-                // If closed and no decision yet, allow appeal
-                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
-                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${error.id}">Appeal</button>`;
+                const viewButton = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
+                const appealButton = `<button class="action-btn warning appeal-error-btn" data-error-id="${errorId}">Appeal</button>`;
                 actionButtons = viewButton + appealButton;
             } else {
-                // Fallback for any other statuses
-                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${error.id}">👁️ View</button>`;
+                actionButtons = `<button class="action-btn view-error-btn" data-error-id="${errorId}">👁️ View</button>`;
             }
-            // --- END: MODIFIED BUTTON LOGIC ---
             
             return `
                 <tr>
@@ -304,6 +302,7 @@
         paginationControls.querySelector('.next-btn').disabled = currentPage === totalPages;
     }
 }
+    
     
     function setupPaginationListeners() {
         document.getElementById('dashboard-pagination').addEventListener('click', e => {
