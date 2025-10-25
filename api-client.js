@@ -281,6 +281,18 @@ export async function getErrorReasons() {
   }
 }
 
+export async function getTeamAccuracyKpi() {
+  try {
+    const { data, error } = await supabase.rpc('get_team_accuracy_kpi');
+    if (error) throw error;
+    return data[0]?.quality_team_accuracy || 100.0;
+  } catch(error) {
+    console.error("Error fetching team accuracy KPI:", error);
+    return 100.0;
+  }
+}
+
+
 export async function getCompanyDepartments() {
   try {
     const { data, error } = await supabase
