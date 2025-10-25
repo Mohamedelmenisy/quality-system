@@ -1346,14 +1346,15 @@ export async function updateKpiTargets(targets) {
 
 // ==================== REAL-TIME SUBSCRIPTIONS ====================
 
-export function subscribeToNotifications(userId, callback) {
+export function subscribeToAssignments(callback) { // REMOVED agentId from parameters
   try {
     return supabase
-      .channel('notifications')
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications', filter: `user_id=eq.${userId}` }, callback)
+      .channel('assignments')
+      // THE FIX: Listen to ALL inserts on the table without a server-side filter
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'order_assignments' }, callback) 
       .subscribe();
   } catch (error) {
-    console.error('SubscribeToNotifications error:', error);
+    console.error('SubscribeToAssignments error:', error);
     return { unsubscribe: () => {} };
   }
 }
