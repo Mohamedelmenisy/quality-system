@@ -1320,7 +1320,7 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
- // dashboard-senior-quality.html
+// dashboard-senior-quality.html
 
 function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
@@ -1334,7 +1334,9 @@ function renderAssignedOrdersTable() {
 
     paginationControls.style.display = 'flex';
     const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
-    const startIndex = (assignedOrdersCurrent- 1) * ASSIGNED_ITEMS_PER_PAGE;
+    // --- THIS IS THE CORRECTED LINE ---
+    const startIndex = (assignedOrdersCurrentPage - 1) * ASSIGNED_ITEMS_PER_PAGE;
+    // ------------------------------------
     const endIndex = startIndex + ASSIGNED_ITEMS_PER_PAGE;
     const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
 
@@ -1343,26 +1345,20 @@ function renderAssignedOrdersTable() {
         let slaStatus = '--'; // Default to '--'
         let reviewResult = 'N/A';
 
-        // --- THIS LOGIC BLOCK IS NOW CORRECTED ---
         if (a.status === 'completed' && a.assigned_at && a.completed_at) {
-            // Logic for completed orders
             const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
             reviewTime = `${diffMinutes} min`;
             
-            const MONITORING_SLA_MINUTES = 30; // Let's assume a 30-minute SLA for completion
+            const MONITORING_SLA_MINUTES = 30;
             if (diffMinutes <= MONITORING_SLA_MINUTES) {
                 slaStatus = `<span class="status-badge" style="background: var(--green-bg); color: var(--success-color);">✅ On Time</span>`;
             } else {
                 slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">❌ Delayed</span>`;
             }
         } else if (a.status === 'pending' || a.status === 'in_progress') {
-            // Logic for ongoing orders
             reviewTime = '(Ongoing)';
-            // SLA status is not applicable yet, so it remains '--'
         }
-        // --- END OF CORRECTED LOGIC BLOCK ---
 
-        // Your detailed reviewResult logic is preserved perfectly
         let review = a.quality_reviews;
         if (a.status === 'completed') {
             if (Array.isArray(review) && review.length > 0) {
@@ -1386,7 +1382,6 @@ function renderAssignedOrdersTable() {
             }
         }
 
-
         return `
             <tr>
                 <td>${a.orders?.order_id || 'N/A'}</td>
@@ -1404,7 +1399,6 @@ function renderAssignedOrdersTable() {
         `;
     }).join('');
 
-    // Update pagination controls
     paginationControls.querySelector('.page-info').textContent = `Page ${assignedOrdersCurrentPage} of ${totalPages}`;
     paginationControls.querySelector('.prev-btn').disabled = assignedOrdersCurrentPage === 1;
     paginationControls.querySelector('.next-btn').disabled = assignedOrdersCurrentPage === totalPages;
