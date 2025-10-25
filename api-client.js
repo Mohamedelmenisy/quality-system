@@ -469,13 +469,25 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     let query = supabase
       .from('order_assignments')
       .select(`
+    id, 
+    order_id, 
+    status, 
+    assigned_at, 
+    completed_at,
+    orders (*),
+    users!order_assignments_quality_agent_id_fkey (name, email),
+    inquiries (
         *,
-        orders (*),
-        users!order_assignments_quality_agent_id_fkey (name, email),
-        inquiries (*),
-        escalations (*),
-        quality_reviews (*)
-      `)
+        raised_by:users!inquiries_raised_by_id_fkey(name),
+        responded_by:users!inquiries_responded_by_id_fkey(name)
+    ),
+    escalations (
+        *,
+        escalated_by:users!escalations_escalated_by_id_fkey(name),
+        escalated_to:users!escalations_escalated_to_id_fkey(name)
+    ),
+    quality_reviews (*)
+`)
       .order('assigned_at', { ascending: false });
 
     if (agentId) query = query.eq('quality_agent_id', agentId);
