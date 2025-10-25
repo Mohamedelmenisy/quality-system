@@ -680,15 +680,17 @@
                 <!-- Departments Content -->
                 <div id="departments" class="tab-content">
                      <div class="card">
-                        <h3>Company Departments</h3>
-                        <div class="table-container">
-                            <table class="user-management-table">
-                                <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-                                <tbody id="departments-table-body"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3>Company Departments</h3>
+        <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
+    </div>
+    <div class="table-container">
+        <table class="user-management-table">
+            <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
+            <tbody id="departments-table-body"></tbody>
+        </table>
+    </div>
+</div>
 
                 <!-- Payments Content -->
                 <div id="payments" class="tab-content">
@@ -806,6 +808,26 @@
         </div>
     </div>
 
+<!-- Add New Department Modal -->
+<div class="modal-overlay" id="add-department-modal">
+    <div class="modal-box" style="max-width: 450px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Add New Department</h3>
+            <button class="modal-close-btn" data-modal-id="add-department-modal">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="form-group">
+                <label for="new-department-name">Department Name *</label>
+                <input type="text" id="new-department-name" placeholder="e.g., Sales" required>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary modal-close-btn" data-modal-id="add-department-modal">Cancel</button>
+            <button class="btn btn-primary" id="save-new-department-btn">Save Department</button>
+        </div>
+    </div>
+</div>
+    
     <!-- Toast Notifications Container -->
     <div class="toast-container" id="toast-container"></div>
     
@@ -1982,6 +2004,26 @@ document.getElementById('save-employee-btn').addEventListener('click', async () 
                     openEditEmployeeModal(event.target.dataset.employeeId);
                 }
             });
+ document.getElementById('add-department-btn').addEventListener('click', () => {
+            document.getElementById('new-department-name').value = '';
+            showModal('add-department-modal');
+        });
+
+        document.getElementById('save-new-department-btn').addEventListener('click', async () => {
+            const name = document.getElementById('new-department-name').value;
+            if (!name) {
+                showToast("Department name is required.", "warning");
+                return;
+            }
+            try {
+                await addDepartment({ department_name: name });
+                showToast("Department added successfully!", "success");
+                hideModal('add-department-modal');
+                await loadDepartments(); // Refresh the list
+            } catch (error) {
+                showToast("Failed to add department.", "error");
+            }
+        });
         });
     </script>
 </body>
