@@ -1317,7 +1317,7 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
-       function renderAssignedOrdersTable() {
+     function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
     const paginationControls = document.getElementById('assigned-orders-pagination');
 
@@ -1340,10 +1340,36 @@ function openFinalDecisionDetailsModal(errorId) {
         if (a.status === 'completed' && a.assigned_at && a.completed_at) {
             const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
             reviewTime = `${diffMinutes} min`;
-            slaStatus = `<span class="status-badge status-completed">Completed</span>`;
+            
+            // SLA للـ Monitoring - 5 دقائق زي الـ Agents
+            const MONITORING_SLA_MINUTES = 5;
+            
+            if (diffMinutes <= MONITORING_SLA_MINUTES) {
+                slaStatus = `<span class="status-badge" style="background: var(--green-bg); color: var(--success-color);">✅ On Time</span>`;
+            } else {
+                slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">❌ Delayed</span>`;
+            }
+            
         } else if (a.status === 'completed') {
             reviewTime = 'No time data';
-            slaStatus = `<span class="status-badge status-completed">Completed</span>`;
+            slaStatus = `<span class="status-badge">Completed</span>`;
+        } else if (a.status === 'pending') {
+            // إذا الطلب لسه under review عند الـ Agent
+            if (a.assigned_at) {
+                const currentTime = new Date();
+                const assignedTime = new Date(a.assigned_at);
+                const elapsedMinutes = Math.round((currentTime - assignedTime) / 60000);
+                
+                reviewTime = `${elapsedMinutes} min (ongoing)`;
+                
+                const MONITORING_SLA_MINUTES = 5;
+                if (elapsedMinutes > MONITORING_SLA_MINUTES) {
+                    slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">⏰ Overdue</span>`;
+                } else {
+                    const remaining = MONITORING_SLA_MINUTES - elapsedMinutes;
+                    slaStatus = `<span class="status-badge" style="background: rgba(0, 191, 255, 0.1); color: var(--primary-color);">⏳ ${remaining}m left</span>`;
+                }
+            }
         }
 
         return `
