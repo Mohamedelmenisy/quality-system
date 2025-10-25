@@ -1974,12 +1974,10 @@ function renderOrdersTable(ordersToRender) {
         });
     });
     
-    // Re-bind all other events
+   // Re-bind all other events
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-    // ... (rest of the event bindings)
-});
-    
-        renderPaginationControls(totalPages, ordersToRender.length);
+
+    renderPaginationControls(totalPages, ordersToRender.length);
         
         // Add event listeners for the new buttons
         addTableActionListeners();
