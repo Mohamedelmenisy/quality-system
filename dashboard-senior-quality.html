@@ -1641,20 +1641,14 @@ async function openViewAssignedModal(assignmentId) {
     try {
         console.log('Fetching assignment details for ID:', assignmentId);
         
-        // استعلام أبسط وأكثر فعالية
+        // استعلام مصحح - بدون errors في العلاقة المباشرة
         const { data: assignment, error } = await supabase
             .from('order_assignments')
             .select(`
                 *,
                 orders (*),
                 users!order_assignments_quality_agent_id_fkey (*),
-                quality_reviews (*),
-                errors (
-                    *,
-                    employees (
-                        employee_username
-                    )
-                )
+                quality_reviews (*)
             `)
             .eq('id', assignmentId)
             .single();
@@ -1672,12 +1666,29 @@ async function openViewAssignedModal(assignmentId) {
 
         console.log('Assignment data:', assignment);
 
+        // إذا كان هناك quality_reviews، نبحث عن الأخطاء المرتبطة بها بشكل منفصل
+        let errorsData = [];
+        if (assignment.quality_reviews && assignment.quality_reviews.length > 0) {
+            const reviewId = assignment.quality_reviews[0].id;
+            const { data: errors, error: errorsError } = await supabase
+                .from('errors')
+                .select(`
+                    *,
+                    employees (employee_username)
+                `)
+                .eq('review_id', reviewId);
+
+            if (!errorsError && errors) {
+                errorsData = errors;
+            }
+        }
+
         const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
         const modalBody = document.getElementById('view-review-body');
 
         modalTitle.textContent = `Assignment Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        // بناء المحتوى بطريقة أكثر أماناً
+        // بناء المحتوى
         let contentHtml = `
             <div class="escalation-details">
                 <div class="detail-item">
@@ -1762,8 +1773,8 @@ async function openViewAssignedModal(assignmentId) {
         }
 
         // قسم الأخطاء إذا وجدت
-        if (assignment.errors && assignment.errors.length > 0) {
-            const error = assignment.errors[0];
+        if (errorsData.length > 0) {
+            const error = errorsData[0];
             contentHtml += `
                 <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
                     <h4 style="color: var(--danger-color); margin-bottom: 1rem;">🚨 Error Log</h4>
