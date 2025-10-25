@@ -1676,54 +1676,29 @@ async function loadCompanyDepartments() {
                 ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                 : `<span class="status-badge status-completed">On Time</span>`;
             
-            // التحقق من وجود quality_reviews
-            let review = order.quality_reviews;
-            let reviewDetails = '';
-            
-            if (review && typeof review === 'object') {
-                // إذا كان Object مباشرة
-                if (review.action_correctness) {
-                    reviewResult = review.action_correctness === 'error' 
-                        ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
-                        : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
-                    
-                    // إضافة التفاصيل إذا كان error
-                    if (review.action_correctness === 'error') {
-                        if (review.modified_reason) {
-                            reviewDetails += `<div><small><strong>Reason:</strong> ${review.modified_reason}</small></div>`;
-                        }
-                        if (review.modification_details) {
-                            reviewDetails += `<div><small><strong>Notes:</strong> ${review.modification_details}</small></div>`;
-                        }
-                    }
-                }
-            } 
-            // إذا كان Array
-            else if (Array.isArray(order.quality_reviews) && order.quality_reviews.length > 0) {
+            // --- START: MODIFIED CODE ---
+            let review;
+            if (order.quality_reviews && typeof order.quality_reviews === 'object' && !Array.isArray(order.quality_reviews)) {
+                review = order.quality_reviews;
+            } else if (Array.isArray(order.quality_reviews) && order.quality_reviews.length > 0) {
                 review = order.quality_reviews[0];
-                reviewResult = review.action_correctness === 'error' 
-                    ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
-                    : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
-                
-                // إضافة التفاصيل إذا كان error
-               if (review.action_correctness === 'error') {
-    reviewResult = `
-        <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
-        ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
-        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
-    `;
-} else {
-    reviewResult = `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
-}
+            }
+
+            if (review && review.action_correctness) {
+                // في جزء الـ review processing
+                if (review.action_correctness === 'error') {
+                    reviewResult = `
+                        <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
+                        ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
+                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                    `;
+                } else {
+                    reviewResult = `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
                 }
             } else {
                 reviewResult = `<span style="color: gray;">No Review Data</span>`;
             }
-            
-            // إذا فيه تفاصيل نضيفها
-            if (reviewDetails) {
-                reviewResult += `<div style="margin-top: 5px;">${reviewDetails}</div>`;
-            }
+            // --- END: MODIFIED CODE ---
         }
         
         let specialStatusBadge = '';
@@ -1766,7 +1741,6 @@ async function loadCompanyDepartments() {
         `;
     }).join('');
     
-    // باقي الكود بدون تغيير...
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
