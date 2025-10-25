@@ -1199,29 +1199,44 @@ export async function createNotification(userId, message, type = 'info') {
   }
 }
 
-// ==================== ANALYTICS & REPORTING FUNCTIONS ====================
-
-// api-client.js
-
-export async function getPerformanceMetrics() {
+// ==================== ANALYTICS & REPORTING FUNCTIONS ===================
+export async function getPerformanceMetrics(agentId = null) {
   try {
-    // This now calls the specific manager RPC function
-    const { data, error } = await supabase.rpc('get_manager_dashboard_kpis');
-    if (error) throw error;
+    let rpcName;
+    let params = {};
 
+    if (agentId) {
+      // If an agentId is provided, call the quality agent's KPI function
+      rpcName = 'get_quality_dashboard_kpis';
+      params = { p_agent_id: agentId };
+    } else {
+      // Otherwise, call the manager's KPI function
+      rpcName = 'get_manager_dashboard_kpis';
+    }
+
+    const { data, error } = await supabase.rpc(rpcName, params);
+    if (error) throw error;
     const metrics = data[0];
 
-    // Return a structured object that the frontend expects
-    return {
-      totalOrders: metrics.total_reviews_today || 0,
-      accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-      qualityTeamAccuracy: metrics.quality_team_accuracy ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 100.0
-    };
+    // Structure the data consistently
+    if (agentId) {
+       return {
+            completedOrders: metrics.todays_reviews || 0,
+            pendingReviews: metrics.open_cases || 0,
+            accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
+            errorRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0,
+        };
+    } else {
+        return {
+          totalOrders: metrics.total_reviews_today || 0,
+          accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+          qualityTeamAccuracy: metrics.quality_team_accuracy ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 100.0
+        };
+    }
 
   } catch (error) {
-    console.error('GetPerformanceMetrics error:', error);
-    // Return default values on error
-    return { totalOrders: 0, accuracyRate: 100.0, qualityTeamAccuracy: 100.0 };
+    console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
+    return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, errorRate: 0 };
   }
 }
 
