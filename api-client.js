@@ -1163,27 +1163,27 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ====================
 
+// api-client.js
+
 export async function getPerformanceMetrics() {
   try {
-    const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
-
-    if (error) {
-      console.error('Error fetching performance metrics:', error);
-      throw error;
-    }
+    // This now calls the specific manager RPC function
+    const { data, error } = await supabase.rpc('get_manager_dashboard_kpis');
+    if (error) throw error;
 
     const metrics = data[0];
 
+    // Return a structured object that the frontend expects
     return {
-      completedOrders: metrics.reviews_today || 0,
-      pendingEscalations: metrics.pending_escalations || 0,
-      avgResolutionTime: metrics.avg_resolution_time_minutes ? Math.round(metrics.avg_resolution_time_minutes) : 0,
-      accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+      totalOrders: metrics.total_reviews_today || 0,
+      accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+      qualityTeamAccuracy: metrics.quality_team_accuracy ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 100.0
     };
 
   } catch (error) {
     console.error('GetPerformanceMetrics error:', error);
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0.0 };
+    // Return default values on error
+    return { totalOrders: 0, accuracyRate: 100.0, qualityTeamAccuracy: 100.0 };
   }
 }
 
