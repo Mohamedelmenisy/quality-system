@@ -424,6 +424,17 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
   }
 }
 
+export async function getDepartmentPerformance() {
+  try {
+    const { data, error } = await supabase.rpc('get_department_performance');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching department performance:', error);
+    return [];
+  }
+}
+
 // أضف هذه الوظيفة الجديدة لتحديث الحالة
 export async function updateAssignmentStatus(assignmentId, newStatus) {
   try {
