@@ -400,16 +400,18 @@
                         </p>
                         <div class="results-table-container">
                             <table class="results-table">
-                                <thead>
-                                    <tr>
-                                        <th>Order ID</th>
-                                        <th>Agent</th>
-                                        <th class="wrap-text">Error Details</th>
-                                        <th class="wrap-text">Agent's Appeal Reason</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
+    <thead>
+        <tr>
+            <th>Order ID</th>
+            <th>Agent</th>
+            <th>Status</th>
+            <th>Date Assigned</th>
+            <th>Review Result</th> <!-- العمود الجديد -->
+            <th>Review Time</th>
+            <th>SLA</th>
+            <th>Action</th>
+        </tr>
+    </thead>
                                 <tbody id="appealed-errors-table-body">
                                     <tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>
                                 </tbody>
@@ -1317,12 +1319,12 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
-     function renderAssignedOrdersTable() {
+    function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
     const paginationControls = document.getElementById('assigned-orders-pagination');
 
     if (filteredAssignedOrders.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
         paginationControls.style.display = 'none';
         return;
     }
@@ -1336,12 +1338,13 @@ function openFinalDecisionDetailsModal(errorId) {
     tableBody.innerHTML = paginatedOrders.map(a => {
         let reviewTime = 'N/A';
         let slaStatus = '';
-        
+        let reviewResult = 'N/A';
+
         if (a.status === 'completed' && a.assigned_at && a.completed_at) {
             const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
             reviewTime = `${diffMinutes} min`;
             
-            // SLA للـ Monitoring - 5 دقائق زي الـ Agents
+            // SLA للـ Monitoring - 5 دقائق
             const MONITORING_SLA_MINUTES = 5;
             
             if (diffMinutes <= MONITORING_SLA_MINUTES) {
@@ -1350,11 +1353,26 @@ function openFinalDecisionDetailsModal(errorId) {
                 slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">❌ Delayed</span>`;
             }
             
-        } else if (a.status === 'completed') {
-            reviewTime = 'No time data';
-            slaStatus = `<span class="status-badge">Completed</span>`;
+            // تحديد نتيجة المراجعة
+            let review = a.quality_reviews;
+            
+            if (review && typeof review === 'object') {
+                if (review.action_correctness) {
+                    reviewResult = review.action_correctness === 'error' 
+                        ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
+                        : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                }
+            } 
+            else if (Array.isArray(a.quality_reviews) && a.quality_reviews.length > 0) {
+                review = a.quality_reviews[0];
+                reviewResult = review.action_correctness === 'error' 
+                    ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
+                    : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+            } else {
+                reviewResult = `<span style="color: gray;">No Review</span>`;
+            }
         } else if (a.status === 'pending') {
-            // إذا الطلب لسه under review عند الـ Agent
+            // إذا الطلب لسه under review
             if (a.assigned_at) {
                 const currentTime = new Date();
                 const assignedTime = new Date(a.assigned_at);
@@ -1378,6 +1396,7 @@ function openFinalDecisionDetailsModal(errorId) {
                 <td>${a.users?.name || 'Unknown'}</td>
                 <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
                 <td>${formatDateTime(a.assigned_at)}</td>
+                <td>${reviewResult}</td>
                 <td>${reviewTime}</td>
                 <td>${slaStatus}</td>
                 <td>
