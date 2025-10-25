@@ -1705,9 +1705,7 @@ async function loadCompanyDepartments() {
                     ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
                     : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
                 
-                // إضافة التفاصيل إذا كان error
-               // في جزء الـ review processing
-if (review.action_correctness === 'error') {
+                if (review.action_correctness === 'error') {
     reviewResult = `
         <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
         ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
@@ -1715,8 +1713,7 @@ if (review.action_correctness === 'error') {
     `;
 } else {
     reviewResult = `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
-}
-            
+          }   
             // إذا فيه تفاصيل نضيفها
             if (reviewDetails) {
                 reviewResult += `<div style="margin-top: 5px;">${reviewDetails}</div>`;
