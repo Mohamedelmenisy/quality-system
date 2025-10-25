@@ -1001,64 +1001,49 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        // استبدال دالة loadPerformanceMetrics بالكامل
-        async function loadPerformanceMetrics() {
-            try {
-                // This assumes getPerformanceMetrics will be updated in api-client.js
-                // to call a real RPC function like 'get_manager_dashboard_kpis'
-                const metrics = await getPerformanceMetrics(); 
-                
-                // It's better to load team members first to avoid race conditions
-                if (teamMembers.length === 0) {
-                    await loadTeamMembers();
-                }
+        // dashboard-manager.html -> inside <script>
 
-                const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
+async function loadPerformanceMetrics() {
+    try {
+        // This function now returns real data from our new RPC
+        const metrics = await getPerformanceMetrics(); 
+        
+        if (teamMembers.length === 0) {
+            await loadTeamMembers();
+        }
+        const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
 
-                // --- Update KPI cards ---
-                document.getElementById('total-orders').textContent = metrics.totalOrders || 0;
-                
-                // Calculate Error Rate from Accuracy Rate
-                const errorRate = metrics.accuracyRate ? (100 - parseFloat(metrics.accuracyRate)).toFixed(1) : 0.0;
-                document.getElementById('error-rate').textContent = `${errorRate}%`;
+        // --- Update KPI cards with REAL data ---
+        document.getElementById('total-orders').textContent = metrics.totalOrders;
+        
+        // Calculate Error Rate from the overall team accuracy
+        const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
+        document.getElementById('error-rate').textContent = `${errorRate}%`;
 
-                document.getElementById('active-agents').textContent = activeAgentsCount;
-
-                // --- Update change indicators (example logic) ---
-                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> New data`;
-                
-                const errorRateChangeEl = document.getElementById('error-rate-change');
-                if (errorRate < 1) {
-                    errorRateChangeEl.innerHTML = `<span>⬇️</span> Excellent`;
-                    errorRateChangeEl.style.color = 'var(--green)';
-                } else {
-                    errorRateChangeEl.innerHTML = `<span>⬆️</span> Needs attention`;
-                    errorRateChangeEl.style.color = 'var(--red)';
-                }
-
-                document.getElementById('agents-change').innerHTML = `<span>👥</span> ${activeAgentsCount} agents online`;
-
-                // Update the NEW KPI card
-                const qualityTeamAccuracy = await window.getTeamAccuracyKpi();
-                const accuracyEl = document.getElementById('quality-team-accuracy');
-                const accuracyChangeEl = document.getElementById('quality-team-accuracy-change');
-                
-                accuracyEl.textContent = `${qualityTeamAccuracy}%`;
-                if (qualityTeamAccuracy < 98) {
-                    accuracyEl.style.color = 'var(--yellow)'; // Assuming a warning color
-                    accuracyChangeEl.innerHTML = `<span>⬇️</span> Below Target`;
-                    accuracyChangeEl.style.color = 'var(--yellow)';
-                } else {
-                    accuracyEl.style.color = 'var(--green)';
-                    accuracyChangeEl.innerHTML = `<span>⬆️</span> Meeting Target`;
-                    accuracyChangeEl.style.color = 'var(--green)';
-                }
-
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
-                showToast('Failed to load dashboard KPIs', 'error');
+        document.getElementById('active-agents').textContent = activeAgentsCount;
+        
+        // Update the "Quality Team Accuracy" card
+        const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
+        if (qualityAccuracyEl) {
+            qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
+            if (metrics.qualityTeamAccuracy < 98) {
+                qualityAccuracyEl.style.color = 'var(--warning-color)';
+            } else {
+                qualityAccuracyEl.style.color = 'var(--green)';
             }
         }
+
+        // --- You can add logic for the change indicators here later ---
+        document.getElementById('orders-change').textContent = `For today`;
+        document.getElementById('error-rate-change').textContent = `Overall team error rate`;
+        document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+
+
+    } catch (error) {
+        console.error('Error loading manager performance metrics:', error);
+        showToast('Failed to load dashboard KPIs', 'error');
+    }
+}
 
 
         // Load error trends
