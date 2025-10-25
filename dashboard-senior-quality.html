@@ -1619,14 +1619,18 @@ function openEscalationDetailsModal(escalationId) {
     // استبدال الدالة الحالية بهذه النسخة المحسنة
 async function openViewAssignedModal(assignmentId) {
     try {
-        // نجيب البيانات المحدثة من الداتابيز
+        // نجيب البيانات الكاملة من الداتابيز
         const { data: assignment, error } = await supabase
             .from('order_assignments')
             .select(`
                 *,
                 orders(*),
                 users!order_assignments_quality_agent_id_fkey(*),
-                quality_reviews(*)
+                quality_reviews(*),
+                errors!inner(
+                    *,
+                    employees!inner(employee_username)
+                )
             `)
             .eq('id', assignmentId)
             .single();
@@ -1641,26 +1645,27 @@ async function openViewAssignedModal(assignmentId) {
 
         modalTitle.textContent = `Assignment Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        // التحقق من وجود المراجعات
         const hasReviews = assignment.quality_reviews && assignment.quality_reviews.length > 0;
+        const hasErrors = assignment.errors && assignment.errors.length > 0;
 
         let contentHtml = `
-            <div class="detail-item">
-                <strong>Order ID</strong>
-                <span>${assignment.orders?.order_id || 'N/A'}</span>
-            </div>
-            <div class="detail-item">
-                <strong>Assigned Agent</strong>
-                <span>${assignment.users?.name || 'Unknown'}</span>
-            </div>
-            <div class="detail-item">
-                <strong>Assignment Status</strong>
-                <span class="status-badge status-${assignment.status}">${assignment.status.replace('_', ' ')}</span>
-            </div>
-            <div class="detail-item">
-                <strong>Assigned At</strong>
-                <span>${formatDateTime(assignment.assigned_at)}</span>
-            </div>
+            <div class="escalation-details">
+                <div class="detail-item">
+                    <strong>Order ID</strong>
+                    <span>${assignment.orders?.order_id || 'N/A'}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Assigned Agent</strong>
+                    <span>${assignment.users?.name || 'Unknown'}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Assignment Status</strong>
+                    <span class="status-badge status-${assignment.status}">${assignment.status.replace('_', ' ')}</span>
+                </div>
+                <div class="detail-item">
+                    <strong>Assigned At</strong>
+                    <span>${formatDateTime(assignment.assigned_at)}</span>
+                </div>
         `;
 
         if (assignment.status === 'completed' && assignment.completed_at) {
@@ -1676,52 +1681,71 @@ async function openViewAssignedModal(assignmentId) {
             `;
         }
 
+        contentHtml += `</div>`; // Close escalation-details
+
+        // قسم المراجعة
         if (hasReviews) {
             const review = assignment.quality_reviews[0];
             const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
             const outcomeText = review.action_correctness === 'error' ? '❌ Error Found' : '✅ Correct Action';
             
             contentHtml += `
-                <div class="detail-item" style="background-color: rgba(0, 191, 255, 0.1);">
-                    <strong>Review Outcome</strong>
-                    <span style="font-weight: bold; color: ${outcomeClass}; text-transform: capitalize;">
-                        ${outcomeText}
-                    </span>
-                </div>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: #222; border-radius: 8px;">
+                    <h4 style="color: var(--primary-color); margin-bottom: 1rem;">📋 Quality Review Details</h4>
+                    <div class="escalation-details">
+                        <div class="detail-item">
+                            <strong>Review Outcome</strong>
+                            <span style="font-weight: bold; color: ${outcomeClass};">
+                                ${outcomeText}
+                            </span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Reviewed At</strong>
+                            <span>${formatDateTime(review.reviewed_at)}</span>
+                        </div>
             `;
 
             if (review.action_correctness === 'error') {
                 contentHtml += `
-                    <div class="detail-item">
-                        <strong>Error Reason</strong>
-                        <span>${review.modified_reason || 'Not specified'}</span>
-                    </div>
+                        <div class="detail-item" style="grid-column: span 2;">
+                            <strong>Error Reason</strong>
+                            <span>${review.modified_reason || 'Not specified'}</span>
+                        </div>
                 `;
             }
+
+            contentHtml += `</div>`; // Close escalation-details
 
             if (review.modification_details) {
                 contentHtml += `
-                    <div class="detail-item">
+                    <div class="detail-item" style="margin-top: 1rem;">
                         <strong>Review Notes</strong>
-                        <p style="white-space: pre-wrap; margin-top: 5px;">${review.modification_details}</p>
+                        <p style="white-space: pre-wrap; margin-top: 5px; color: var(--text-muted);">
+                            ${review.modification_details}
+                        </p>
                     </div>
                 `;
             }
 
-            contentHtml += `
-                <div class="detail-item">
-                    <strong>Reviewed At</strong>
-                    <span>${formatDateTime(review.reviewed_at)}</span>
-                </div>
-            `;
+            contentHtml += `</div>`; // Close review section
+        }
 
-        } else {
+        // قسم الأخطاء إذا وجدت
+        if (hasErrors) {
+            const error = assignment.errors[0];
             contentHtml += `
-                <div class="detail-item">
-                    <strong>Quality Review</strong>
-                    <span style="color: var(--warning-color);">
-                        ${assignment.status === 'completed' ? '✅ Marked as completed' : '⏳ Pending Review'}
-                    </span>
+                <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
+                    <h4 style="color: var(--danger-color); margin-bottom: 1rem;">🚨 Error Log</h4>
+                    <div class="escalation-details">
+                        <div class="detail-item">
+                            <strong>Error Status</strong>
+                            <span class="status-badge status-${error.status}">${error.status.replace('_', ' ')}</span>
+                        </div>
+                        <div class="detail-item">
+                            <strong>Agent</strong>
+                            <span>${error.employees?.employee_username || 'Unknown'}</span>
+                        </div>
+                    </div>
                 </div>
             `;
         }
@@ -1734,7 +1758,7 @@ async function openViewAssignedModal(assignmentId) {
         showToast("An error occurred while fetching assignment details.", "error");
     }
 }
-
+        
 async function openEscalationDetailsModal(escalationId) {
     try {
         console.log('Opening escalation modal for:', escalationId);
