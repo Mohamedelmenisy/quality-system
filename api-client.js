@@ -1228,6 +1228,18 @@ export async function getErrorTrends() {
   }
 }
 
+// ** NEW FUNCTIONS FOR REPORTS & ANALYTICS PAGE **
+export async function getAgentAccuracySummary(period) {
+  try {
+    const { data, error } = await supabase.rpc('get_agent_accuracy_summary', { period_filter: period });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching agent accuracy summary:', error);
+    return []; // Return an empty array on error
+  }
+}
+
 export async function getReviewsVsOverturnedSummary(period) {
   try {
     const { data, error } = await supabase.rpc('get_reviews_vs_overturned_summary', { period_filter: period });
