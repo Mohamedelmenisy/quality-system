@@ -127,6 +127,18 @@ export async function getQualityAgentPerformance(agentId) {
   }
 }
 
+
+export async function getOverturnedReviewsForAgent(agentId) {
+  try {
+    const { data, error } = await supabase.rpc('get_overturned_reviews_for_agent', { p_agent_id: agentId });
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching overturned reviews:', error);
+    return [];
+  }
+}
+
 export async function getCurrentUser() {
   try {
     const { data, error } = await supabase.auth.getUser();
