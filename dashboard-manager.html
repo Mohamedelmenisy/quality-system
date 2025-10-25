@@ -1122,6 +1122,11 @@
                 ]);
 
                 generateAndDisplayReport();
+
+                // --- ADD THIS LINE TO START LISTENING ---
+                initRealtimeSubscriptions();
+                // -----------------------------------------
+
                 showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1184,6 +1189,16 @@
             }
         }
 
+// This is a new helper function
+async function refreshDashboardData() {
+    console.log('🔄 Realtime change detected, refreshing dashboard data...');
+    // We call the main data loading functions again
+    await loadPerformanceMetrics();
+    await updateErrorTrendChart();
+    await updateDepartmentErrorsChart();
+    showToast('Dashboard has been updated automatically.', 'info');
+}
+        
 async function generateAndDisplayReport() {
     const period = document.getElementById('report-period').value;
     showToast(`Generating report for: ${period}`, 'info');
@@ -1267,6 +1282,40 @@ async function generateAndDisplayReport() {
             }
         }
 
+        // This is the main function for realtime updates
+function initRealtimeSubscriptions() {
+    try {
+        console.log('🚀 Initializing realtime subscriptions for Manager Dashboard...');
+
+        // Define what happens when a change is detected
+        const handleDbChange = (payload) => {
+            console.log('Database change received:', payload);
+            refreshDashboardData();
+        };
+
+        // 1. Listen for new reviews being completed
+        supabase
+            .channel('public:quality_reviews')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'quality_reviews' }, handleDbChange)
+            .subscribe();
+
+        // 2. Listen for new errors being logged
+        supabase
+            .channel('public:errors')
+            .on('postgres_changes', { event: '*', schema: 'public', table: 'errors' }, handleDbChange)
+            .subscribe();
+
+        // 3. Listen for new final decisions being made
+        supabase
+            .channel('public:final_decisions')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'final_decisions' }, handleDbChange)
+            .subscribe();
+
+    } catch (error) {
+        console.error('Error setting up realtime subscriptions:', error);
+    }
+}
+        
         // Load team members
         async function loadTeamMembers(filters = {}) {
             try {
