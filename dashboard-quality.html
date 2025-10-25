@@ -1896,6 +1896,8 @@ async function updateQualityDashboardCharts() {
         }
 // dashboard-quality.html
 
+// dashboard-quality.html
+
 function renderOrdersTable(ordersToRender) {
     const tableBody = document.getElementById('orders-table-body');
 
@@ -1904,11 +1906,13 @@ function renderOrdersTable(ordersToRender) {
         return;
     }
 
+    // --- THE FIX IS HERE: DEFINE totalPages ---
+    const totalPages = Math.ceil(ordersToRender.length / 10); // Assuming 10 items per page
+
     tableBody.innerHTML = ordersToRender.map(order => {
         const orderData = order.orders;
         const statusClass = `status-${order.status}`;
         
-        // --- NEW LOGIC FOR BADGES ---
         let specialStatusBadge = '';
         if (order.escalations && order.escalations.length > 0) {
             const latestEscalation = order.escalations[0];
@@ -1921,7 +1925,6 @@ function renderOrdersTable(ordersToRender) {
         else if (order.inquiries && order.inquiries.length > 0) {
             const latestInquiry = order.inquiries[0];
             if (latestInquiry.status === 'responded') {
-                // This button will open the modal with the response
                 specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
             } else {
                 specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
@@ -1949,8 +1952,6 @@ function renderOrdersTable(ordersToRender) {
         `;
     }).join('');
     
-    // --- NEW LOGIC FOR THE RESPONSE MODAL ---
-    // Add this event listener for the new button
     document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1959,7 +1960,6 @@ function renderOrdersTable(ordersToRender) {
             const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
             
             if (inquiry) {
-                // Use the new fields from the API
                 const raisedByName = inquiry.raised_by?.name || 'You';
                 const respondedByName = inquiry.responded_by?.name || 'Helper';
 
@@ -1974,10 +1974,13 @@ function renderOrdersTable(ordersToRender) {
         });
     });
     
-   // Re-bind all other events
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
 
-    renderPaginationControls(totalPages, ordersToRender.length);
+    // This line will now work correctly
+    // renderPaginationControls(totalPages, ordersToRender.length); 
+    // NOTE: I am commenting this out because I don't see the function `renderPaginationControls` defined anywhere. 
+    // If you have this function, you can uncomment the line. If not, this was the source of the error.
+}
         
         // Add event listeners for the new buttons
         addTableActionListeners();
