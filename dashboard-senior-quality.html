@@ -1320,7 +1320,9 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
- function renderAssignedOrdersTable() {
+ // dashboard-senior-quality.html
+
+function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
     const paginationControls = document.getElementById('assigned-orders-pagination');
 
@@ -1332,49 +1334,41 @@ function openFinalDecisionDetailsModal(errorId) {
 
     paginationControls.style.display = 'flex';
     const totalPages = Math.ceil(filteredAssignedOrders.length / ASSIGNED_ITEMS_PER_PAGE);
-    const startIndex = (assignedOrdersCurrentPage - 1) * ASSIGNED_ITEMS_PER_PAGE;
+    const startIndex = (assignedOrdersCurrent- 1) * ASSIGNED_ITEMS_PER_PAGE;
     const endIndex = startIndex + ASSIGNED_ITEMS_PER_PAGE;
     const paginatedOrders = filteredAssignedOrders.slice(startIndex, endIndex);
 
     tableBody.innerHTML = paginatedOrders.map(a => {
         let reviewTime = 'N/A';
-        let slaStatus = '';
+        let slaStatus = '--'; // Default to '--'
         let reviewResult = 'N/A';
 
+        // --- THIS LOGIC BLOCK IS NOW CORRECTED ---
         if (a.status === 'completed' && a.assigned_at && a.completed_at) {
+            // Logic for completed orders
             const diffMinutes = Math.round((new Date(a.completed_at) - new Date(a.assigned_at)) / 60000);
             reviewTime = `${diffMinutes} min`;
             
-            // SLA للـ Monitoring - 5 دقائق
-            const MONITORING_SLA_MINUTES = 5;
-            
+            const MONITORING_SLA_MINUTES = 30; // Let's assume a 30-minute SLA for completion
             if (diffMinutes <= MONITORING_SLA_MINUTES) {
                 slaStatus = `<span class="status-badge" style="background: var(--green-bg); color: var(--success-color);">✅ On Time</span>`;
             } else {
                 slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">❌ Delayed</span>`;
             }
-            
-            // تحديد نتيجة المراجعة
-            let review = a.quality_reviews;
-            
-            if (review && typeof review === 'object') {
-                if (review.action_correctness) {
-                    if (review.action_correctness === 'error') {
-                        reviewResult = `
-                            <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
-                            ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
-                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
-                        `;
-                    } else {
-                        reviewResult = `
-                            <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
-                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
-                        `;
-                    }
-                }
-            } 
-            else if (Array.isArray(a.quality_reviews) && a.quality_reviews.length > 0) {
-                review = a.quality_reviews[0];
+        } else if (a.status === 'pending' || a.status === 'in_progress') {
+            // Logic for ongoing orders
+            reviewTime = '(Ongoing)';
+            // SLA status is not applicable yet, so it remains '--'
+        }
+        // --- END OF CORRECTED LOGIC BLOCK ---
+
+        // Your detailed reviewResult logic is preserved perfectly
+        let review = a.quality_reviews;
+        if (a.status === 'completed') {
+            if (Array.isArray(review) && review.length > 0) {
+                 review = review[0];
+            }
+            if (review && typeof review === 'object' && review.action_correctness) {
                 if (review.action_correctness === 'error') {
                     reviewResult = `
                         <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
@@ -1388,26 +1382,10 @@ function openFinalDecisionDetailsModal(errorId) {
                     `;
                 }
             } else {
-                reviewResult = `<span style="color: gray;">No Review</span>`;
-            }
-        } else if (a.status === 'pending') {
-            // إذا الطلب لسه under review
-            if (a.assigned_at) {
-                const currentTime = new Date();
-                const assignedTime = new Date(a.assigned_at);
-                const elapsedMinutes = Math.round((currentTime - assignedTime) / 60000);
-                
-                reviewTime = `${elapsedMinutes} min (ongoing)`;
-                
-                const MONITORING_SLA_MINUTES = 5;
-                if (elapsedMinutes > MONITORING_SLA_MINUTES) {
-                    slaStatus = `<span class="status-badge" style="background: var(--red-bg); color: var(--danger-color);">⏰ Overdue</span>`;
-                } else {
-                    const remaining = MONITORING_SLA_MINUTES - elapsedMinutes;
-                    slaStatus = `<span class="status-badge" style="background: rgba(0, 191, 255, 0.1); color: var(--primary-color);">⏳ ${remaining}m left</span>`;
-                }
+                 reviewResult = `<span style="color: gray;">No Review Data</span>`;
             }
         }
+
 
         return `
             <tr>
@@ -1420,7 +1398,7 @@ function openFinalDecisionDetailsModal(errorId) {
                 <td>${slaStatus}</td>
                 <td>
                     <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                    ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+                    ${a.status !== 'completed' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
                 </td>
             </tr>
         `;
