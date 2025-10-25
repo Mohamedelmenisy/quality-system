@@ -410,8 +410,25 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
         *,
         orders (*),
         users!order_assignments_quality_agent_id_fkey (name, email),
-        inquiries (*),
-        escalations (*),
+        inquiries!inquiries_order_id_fkey (
+          id,
+          inquiry_text,
+          response_text,
+          status,
+          created_at,
+          responded_at,
+          responded_by:users!inquiries_responded_by_id_fkey (name)
+        ),
+        escalations!escalations_assignment_id_fkey (
+          id,
+          notes,
+          feedback,
+          status,
+          escalated_at,
+          resolved_at,
+          escalated_to:users!escalations_escalated_to_id_fkey (name),
+          escalated_by:users!escalations_escalated_by_id_fkey (name)
+        ),
         quality_reviews (*)
       `)
       .order('assigned_at', { ascending: false });
@@ -431,10 +448,22 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     if (filters.to_date) query = query.lte('assigned_at', `${filters.to_date}T23:59:59`);
 
     const { data, error } = await query;
-    if (error) throw error;
+    
+    if (error) {
+      console.error('❌ GetAssignedOrders error:', error);
+      throw error;
+    }
+    
+    console.log('✅ Assigned orders fetched:', data?.length || 0);
+    console.log('📊 Sample order data:', data && data.length > 0 ? {
+      order_id: data[0].orders?.order_id,
+      escalations: data[0].escalations,
+      inquiries: data[0].inquiries
+    } : 'No data');
+    
     return data;
   } catch (error) {
-    console.error('GetAssignedOrders error:', error);
+    console.error('💥 GetAssignedOrders error:', error);
     throw error;
   }
 }
