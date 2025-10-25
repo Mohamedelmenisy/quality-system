@@ -1639,35 +1639,45 @@ function openEscalationDetailsModal(escalationId) {
     // استبدال الدالة الحالية بهذه النسخة المحسنة
 async function openViewAssignedModal(assignmentId) {
     try {
-        // نجيب البيانات الكاملة من الداتابيز
+        console.log('Fetching assignment details for ID:', assignmentId);
+        
+        // استعلام أبسط وأكثر فعالية
         const { data: assignment, error } = await supabase
             .from('order_assignments')
             .select(`
                 *,
-                orders(*),
-                users!order_assignments_quality_agent_id_fkey(*),
-                quality_reviews(*),
-                errors!inner(
+                orders (*),
+                users!order_assignments_quality_agent_id_fkey (*),
+                quality_reviews (*),
+                errors (
                     *,
-                    employees!inner(employee_username)
+                    employees (
+                        employee_username
+                    )
                 )
             `)
             .eq('id', assignmentId)
             .single();
 
-        if (error || !assignment) {
-            showToast("Could not find assignment details.", "error");
+        if (error) {
+            console.error('Database error:', error);
+            showToast("Could not fetch assignment details from database.", "error");
             return;
         }
+
+        if (!assignment) {
+            showToast("Assignment not found.", "error");
+            return;
+        }
+
+        console.log('Assignment data:', assignment);
 
         const modalTitle = document.querySelector('#view-review-details-modal .modal-title');
         const modalBody = document.getElementById('view-review-body');
 
         modalTitle.textContent = `Assignment Details: ${assignment.orders?.order_id || 'N/A'}`;
 
-        const hasReviews = assignment.quality_reviews && assignment.quality_reviews.length > 0;
-        const hasErrors = assignment.errors && assignment.errors.length > 0;
-
+        // بناء المحتوى بطريقة أكثر أماناً
         let contentHtml = `
             <div class="escalation-details">
                 <div class="detail-item">
@@ -1689,6 +1699,7 @@ async function openViewAssignedModal(assignmentId) {
         `;
 
         if (assignment.status === 'completed' && assignment.completed_at) {
+            const processingTime = Math.round((new Date(assignment.completed_at) - new Date(assignment.assigned_at)) / 60000);
             contentHtml += `
                 <div class="detail-item">
                     <strong>Completed At</strong>
@@ -1696,15 +1707,15 @@ async function openViewAssignedModal(assignmentId) {
                 </div>
                 <div class="detail-item">
                     <strong>Processing Time</strong>
-                    <span>${Math.round((new Date(assignment.completed_at) - new Date(assignment.assigned_at)) / 60000)} minutes</span>
+                    <span>${processingTime} minutes</span>
                 </div>
             `;
         }
 
-        contentHtml += `</div>`; // Close escalation-details
+        contentHtml += `</div>`;
 
         // قسم المراجعة
-        if (hasReviews) {
+        if (assignment.quality_reviews && assignment.quality_reviews.length > 0) {
             const review = assignment.quality_reviews[0];
             const outcomeClass = review.action_correctness === 'error' ? 'var(--danger-color)' : 'var(--success-color)';
             const outcomeText = review.action_correctness === 'error' ? '❌ Error Found' : '✅ Correct Action';
@@ -1734,7 +1745,7 @@ async function openViewAssignedModal(assignmentId) {
                 `;
             }
 
-            contentHtml += `</div>`; // Close escalation-details
+            contentHtml += `</div>`;
 
             if (review.modification_details) {
                 contentHtml += `
@@ -1747,11 +1758,11 @@ async function openViewAssignedModal(assignmentId) {
                 `;
             }
 
-            contentHtml += `</div>`; // Close review section
+            contentHtml += `</div>`;
         }
 
         // قسم الأخطاء إذا وجدت
-        if (hasErrors) {
+        if (assignment.errors && assignment.errors.length > 0) {
             const error = assignment.errors[0];
             contentHtml += `
                 <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(220, 53, 69, 0.1); border-radius: 8px; border-left: 4px solid var(--danger-color);">
@@ -1775,7 +1786,7 @@ async function openViewAssignedModal(assignmentId) {
 
     } catch (err) {
         console.error("Error in openViewAssignedModal:", err);
-        showToast("An error occurred while fetching assignment details.", "error");
+        showToast("An unexpected error occurred while fetching assignment details.", "error");
     }
 }
         
