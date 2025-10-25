@@ -404,87 +404,40 @@ export async function updateAssignmentStatus(assignmentId, newStatus) {
 
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
-    // أولاً: نجيب الـ order assignments الأساسية
     let query = supabase
       .from('order_assignments')
       .select(`
         *,
         orders (*),
         users!order_assignments_quality_agent_id_fkey (name, email),
+        inquiries (*),
+        escalations (*),
         quality_reviews (*)
       `)
       .order('assigned_at', { ascending: false });
 
     if (agentId) query = query.eq('quality_agent_id', agentId);
-    // ... باقي الفلترز
-
-    const { data: assignments, error } = await query;
-    
-    if (error) throw error;
-
-    // DEBUG: نجيب inquiries منفصلة مع كل العلاقات الممكنة
-    const assignmentIds = assignments.map(a => a.id);
-    
-    console.log('🔄 Fetching inquiries for assignment IDs:', assignmentIds);
-    
-    const { data: inquiries, error: inquiriesError } = await supabase
-      .from('inquiries')
-      .select(`
-        *,
-        users!inquiries_raised_by_id_fkey (name, id),
-        users!inquiries_responded_by_id_fkey (name, id)
-      `)
-      .in('order_id', assignmentIds);
-
-    console.log('📊 Raw inquiries data from DB:', inquiries);
-    console.log('❌ Inquiries error:', inquiriesError);
-
-    if (inquiriesError) {
-      console.error('❌ Error fetching inquiries:', inquiriesError);
+    if (filters.status && filters.status !== 'all') {
+      if (filters.status === 'completed_today') {
+        const today = new Date().toISOString().split('T')[0];
+        query = query.eq('status', 'completed')
+                    .gte('assigned_at', `${today}T00:00:00`)
+                    .lte('assigned_at', `${today}T23:59:59`);
+      } else {
+        query = query.eq('status', filters.status);
+      }
     }
+    if (filters.from_date) query = query.gte('assigned_at', filters.from_date);
+    if (filters.to_date) query = query.lte('assigned_at', `${filters.to_date}T23:59:59`);
 
-    // DEBUG: نجيب escalations منفصلة
-    const { data: escalations, error: escalationsError } = await supabase
-      .from('escalations')
-      .select(`
-        *,
-        users!escalations_escalated_by_id_fkey (name, id),
-        users!escalations_escalated_to_id_fkey (name, id)
-      `)
-      .in('assignment_id', assignmentIds);
-
-    console.log('📊 Raw escalations data from DB:', escalations);
-    console.log('❌ Escalations error:', escalationsError);
-
-    // دمج البيانات
-    const assignmentsWithDetails = assignments.map(assignment => {
-      const assignmentInquiries = inquiries?.filter(i => i.order_id === assignment.id) || [];
-      const assignmentEscalations = escalations?.filter(e => e.assignment_id === assignment.id) || [];
-      
-      // DEBUG لكل inquiry
-      assignmentInquiries.forEach(inquiry => {
-        console.log(`🔍 Inquiry ${inquiry.id}:`, {
-          order_id: inquiry.order_id,
-          raised_by_id: inquiry.raised_by_id,
-          responded_by_id: inquiry.responded_by_id,
-          raw_data: inquiry
-        });
-      });
-      
-      return {
-        ...assignment,
-        inquiries: assignmentInquiries,
-        escalations: assignmentEscalations
-      };
-    });
-
-    return assignmentsWithDetails;
+    const { data, error } = await query;
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error('💥 GetAssignedOrders error:', error);
+    console.error('GetAssignedOrders error:', error);
     throw error;
   }
 }
-
 // ==================== QUALITY REVIEW FUNCTIONS ====================
 
 // [AI-FIX] This function has been improved to be more robust.
