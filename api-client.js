@@ -422,40 +422,54 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
     
     if (error) throw error;
 
-    // ثانياً: نجيب الـ inquiries منفصلة علشان نتأكد من العلاقات
+    // DEBUG: نجيب inquiries منفصلة مع كل العلاقات الممكنة
     const assignmentIds = assignments.map(a => a.id);
+    
+    console.log('🔄 Fetching inquiries for assignment IDs:', assignmentIds);
     
     const { data: inquiries, error: inquiriesError } = await supabase
       .from('inquiries')
       .select(`
         *,
-        raised_by:users!inquiries_raised_by_id_fkey (name),
-        responded_by:users!inquiries_responded_by_id_fkey (name)
+        users!inquiries_raised_by_id_fkey (name, id),
+        users!inquiries_responded_by_id_fkey (name, id)
       `)
       .in('order_id', assignmentIds);
+
+    console.log('📊 Raw inquiries data from DB:', inquiries);
+    console.log('❌ Inquiries error:', inquiriesError);
 
     if (inquiriesError) {
       console.error('❌ Error fetching inquiries:', inquiriesError);
     }
 
-    // ثالثاً: نجيب الـ escalations منفصلة
+    // DEBUG: نجيب escalations منفصلة
     const { data: escalations, error: escalationsError } = await supabase
       .from('escalations')
       .select(`
         *,
-        escalated_by:users!escalations_escalated_by_id_fkey (name),
-        escalated_to:users!escalations_escalated_to_id_fkey (name)
+        users!escalations_escalated_by_id_fkey (name, id),
+        users!escalations_escalated_to_id_fkey (name, id)
       `)
       .in('assignment_id', assignmentIds);
 
-    if (escalationsError) {
-      console.error('❌ Error fetching escalations:', escalationsError);
-    }
+    console.log('📊 Raw escalations data from DB:', escalations);
+    console.log('❌ Escalations error:', escalationsError);
 
-    // رابعاً: ندمج البيانات
+    // دمج البيانات
     const assignmentsWithDetails = assignments.map(assignment => {
       const assignmentInquiries = inquiries?.filter(i => i.order_id === assignment.id) || [];
       const assignmentEscalations = escalations?.filter(e => e.assignment_id === assignment.id) || [];
+      
+      // DEBUG لكل inquiry
+      assignmentInquiries.forEach(inquiry => {
+        console.log(`🔍 Inquiry ${inquiry.id}:`, {
+          order_id: inquiry.order_id,
+          raised_by_id: inquiry.raised_by_id,
+          responded_by_id: inquiry.responded_by_id,
+          raw_data: inquiry
+        });
+      });
       
       return {
         ...assignment,
@@ -463,22 +477,6 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
         escalations: assignmentEscalations
       };
     });
-
-    console.log('✅ Final assignments data:', assignmentsWithDetails.map(a => ({
-      order_id: a.orders?.order_id,
-      inquiries: a.inquiries?.map(i => ({
-        id: i.id,
-        inquiry_text: i.inquiry_text,
-        raised_by: i.raised_by?.name,
-        responded_by: i.responded_by?.name
-      })),
-      escalations: a.escalations?.map(e => ({
-        id: e.id,
-        status: e.status,
-        escalated_by: e.escalated_by?.name,
-        escalated_to: e.escalated_to?.name
-      }))
-    })));
 
     return assignmentsWithDetails;
   } catch (error) {
