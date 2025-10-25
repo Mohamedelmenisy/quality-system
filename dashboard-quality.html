@@ -1894,134 +1894,91 @@ async function updateQualityDashboardCharts() {
                 renderInquiriesTable([]);
             }
         }
+// dashboard-quality.html
 
-    function renderOrdersTable(ordersToRender) {
-        const tableBody = document.getElementById('orders-table-body');
-        const paginationContainer = document.getElementById('orders-pagination');
+function renderOrdersTable(ordersToRender) {
+    const tableBody = document.getElementById('orders-table-body');
 
-        if (!ordersToRender || ordersToRender.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`;
-            paginationContainer.innerHTML = ''; // Clear pagination if no orders
-            return;
+    if (!ordersToRender || ordersToRender.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No assigned orders found.</td></tr>`;
+        return;
+    }
+
+    tableBody.innerHTML = ordersToRender.map(order => {
+        const orderData = order.orders;
+        const statusClass = `status-${order.status}`;
+        
+        // --- NEW LOGIC FOR BADGES ---
+        let specialStatusBadge = '';
+        if (order.escalations && order.escalations.length > 0) {
+            const latestEscalation = order.escalations[0];
+            if (latestEscalation.status === 'resolved') {
+                specialStatusBadge = `<span class="inquiry-badge" style="background-color: var(--green-bg); color: var(--green);">Escalation Resolved</span>`;
+            } else {
+                specialStatusBadge = `<span class="inquiry-badge">Escalation Pending</span>`;
+            }
+        } 
+        else if (order.inquiries && order.inquiries.length > 0) {
+            const latestInquiry = order.inquiries[0];
+            if (latestInquiry.status === 'responded') {
+                // This button will open the modal with the response
+                specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
+            } else {
+                specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
+            }
         }
-        
-        // Pagination logic
-        const totalPages = Math.ceil(ordersToRender.length / ordersPerPage);
-        if(currentPage > totalPages) currentPage = totalPages || 1;
-        
-        const startIndex = (currentPage - 1) * ordersPerPage;
-        const endIndex = startIndex + ordersPerPage;
-        const paginatedOrders = ordersToRender.slice(startIndex, endIndex);
 
-        tableBody.innerHTML = paginatedOrders.map(order => {
-            const orderData = order.orders;
-            const statusClass = `status-${order.status}`;
-            
-            let reviewTime = 'N/A';
-            let slaStatus = '';
-            let reviewResult = 'N/A';
-
-            if (order.status === 'completed' && order.assigned_at && order.completed_at) {
-                const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
-                reviewTime = `${diffMinutes} min`;
-                slaStatus = (diffMinutes > 5) 
-                    ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                    : `<span class="status-badge status-completed">On Time</span>`;
-                
-                let review;
-                if (order.quality_reviews && typeof order.quality_reviews === 'object' && !Array.isArray(order.quality_reviews)) {
-                    review = order.quality_reviews;
-                } else if (Array.isArray(order.quality_reviews) && order.quality_reviews.length > 0) {
-                    review = order.quality_reviews[0];
-                }
-
-                if (review && review.action_correctness) {
-                    if (review.action_correctness === 'error') {
-                        reviewResult = `
-                            <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
-                            ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
-                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
-                        `;
-                    } else {
-                        reviewResult = `
-                            <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
-                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
-                        `;
+        return `
+            <tr>
+                <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
+                <td>${orderData?.reason || 'N/A'}</td>
+                <td>${formatDateTime(order.assigned_at)}</td>
+                <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
+                <td>N/A</td> <!-- Review Time Placeholder -->
+                <td>N/A</td> <!-- SLA Placeholder -->
+                <td>
+                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                    ${order.status === 'pending' || order.status === 'in_progress' ? 
+                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                        ''
                     }
-                } else {
-                    reviewResult = `<span style="color: gray;">No Review Data</span>`;
-                }
-            }
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // --- NEW LOGIC FOR THE RESPONSE MODAL ---
+    // Add this event listener for the new button
+    document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const inquiryId = btn.dataset.inquiryId;
+            const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+            const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
             
-            let dynamicStatusBadges = '';
-            if (order.escalations && order.escalations.length > 0) {
-                const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
-                
-                if (latestEscalation.status === 'resolved') {
-                    dynamicStatusBadges += `
-                        <button class="btn btn-sm view-escalation-feedback-btn" 
-                                data-escalation-id="${latestEscalation.id}"
-                                style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
-                            ✅ Escalation Resolved
-                        </button>
-                    `;
-                } else {
-                    dynamicStatusBadges += `
-                        <span class="inquiry-badge" style="background: var(--yellow-bg); color: var(--yellow); margin: 2px;">
-                            🚨 Escalated to ${latestEscalation.escalated_to?.name || 'Helper'}
-                        </span>
-                    `;
-                }
-            }
-            if (order.inquiries && order.inquiries.length > 0) {
-                const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                
-                if (latestInquiry.status === 'responded') {
-                    dynamicStatusBadges += `
-                        <button class="btn btn-sm view-inquiry-feedback-btn" 
-                                data-inquiry-id="${latestInquiry.id}"
-                                style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
-                            💬 Response Received
-                        </button>
-                    `;
-                } else {
-                    dynamicStatusBadges += `
-                        <span class="inquiry-badge" style="background: var(--blue-bg); color: var(--primary-color); margin: 2px;">
-                            ❓ Inquiry Pending
-                        </span>
-                    `;
-                }
-            }
+            if (inquiry) {
+                // Use the new fields from the API
+                const raisedByName = inquiry.raised_by?.name || 'You';
+                const respondedByName = inquiry.responded_by?.name || 'Helper';
 
-            return `
-                <tr>
-                    <td>
-                        <div style="display: flex; flex-direction: column; gap: 5px;">
-                            <strong>${orderData?.order_id || 'N/A'}</strong>
-                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                                ${dynamicStatusBadges}
-                            </div>
-                        </div>
-                    </td>
-                    <td>${orderData?.reason || 'N/A'}</td>
-                    <td>${formatDateTime(order.assigned_at)}</td>
-                    <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
-                    <td style="max-width: 200px;">${reviewResult}</td>
-                    <td>${reviewTime}</td>
-                    <td>${slaStatus}</td>
-                    <td>
-                        <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                        ${order.status === 'pending' || order.status === 'in_progress' ? 
-                            `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                             <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                             <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                            ''
-                        }
-                    </td>
-                </tr>
-            `;
-        }).join('');
-
+                document.getElementById('view-inquiry-order-id').textContent = order.orders?.order_id || 'N/A';
+                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || '...';
+                document.getElementById('view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
+                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || '...';
+                showModal('view-inquiry-modal');
+            } else {
+                showToast('Could not find inquiry details.', 'error');
+            }
+        });
+    });
+    
+    // Re-bind all other events
+    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+    // ... (rest of the event bindings)
+});
+    
         renderPaginationControls(totalPages, ordersToRender.length);
         
         // Add event listeners for the new buttons
