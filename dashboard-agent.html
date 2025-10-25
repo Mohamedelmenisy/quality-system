@@ -247,6 +247,7 @@ async function loadUserPerformance() {
     }
     
 // dashboard-agent.html
+    // dashboard-agent.html
 
 function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     const tbody = document.getElementById(tbodyId);
@@ -254,36 +255,39 @@ function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
     
     if (!tbody || !paginationControls) return;
 
-    // ... (باقي الكود الخاص بالـ pagination يبقى كما هو)
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
     const endIndex = startIndex + ITEMS_PER_PAGE;
     const paginatedData = data.slice(startIndex, endIndex);
     const totalPages = Math.ceil(data.length / ITEMS_PER_PAGE);
 
     if (data.length === 0) {
-        // ... (كود الحالة الفارغة يبقى كما هو)
-        tbody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">✅</div><div>No errors found.</div></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="5" class="empty-state">✅ No errors found. Great job!</td></tr>`;
         paginationControls.style.display = 'none';
     } else {
         tbody.innerHTML = paginatedData.map(error => {
             const orderId = error.order_id || 'N/A';
-            const errorId = error.error_id; 
+            const errorId = error.error_id;
             let actionContent = '';
+            let statusDisplay = '';
 
-            // NEW LOGIC to determine what to show in the "Action" column
+            // --- ENHANCED DISPLAY LOGIC ---
             if (error.status === 'under_review') {
-                actionContent = `<span style="color: var(--warning-color);">Pending Senior Review...</span>`;
+                statusDisplay = `<span class="status-badge status-under_review">Under Review</span>`;
+                actionContent = `<span style="color: var(--text-muted);">Awaiting Senior Decision...</span>`;
             } else if (error.status === 'overturned') {
+                statusDisplay = `<span class="status-badge status-overturned">Overturned</span>`;
                 actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">✅ View Decision</button>`;
             } else if (error.status === 'closed' && error.final_decision) {
+                statusDisplay = `<span class="status-badge status-closed">Upheld</span>`; // More descriptive
                 actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">❌ View Decision</button>`;
             } else if (error.status === 'closed' && !error.final_decision) {
-                // This is the only case where "Appeal" should be visible
+                statusDisplay = `<span class="status-badge status-closed">Closed</span>`;
                 actionContent = `
                     <button class="action-btn view-error-btn" data-error-id="${errorId}">View Details</button>
                     <button class="action-btn warning appeal-error-btn" data-error-id="${errorId}">Appeal</button>
                 `;
             } else {
+                statusDisplay = `<span class="status-badge">${error.status}</span>`;
                 actionContent = `<button class="action-btn view-error-btn" data-error-id="${errorId}">View</button>`;
             }
 
@@ -292,14 +296,13 @@ function renderPaginatedTable(tbodyId, data, currentPage, paginationId) {
                     <td><strong>${orderId}</strong></td>
                     <td>${formatDate(error.created_at)}</td>
                     <td>${error.error_details || 'Unknown'}</td>
-                    <td><span class="status-badge status-${error.status}">${error.status.replace(/_/g, ' ')}</span></td>
+                    <td>${statusDisplay}</td>
                     <td class="action-buttons">${actionContent}</td>
                 </tr>
             `;
         }).join('');
 
         paginationControls.style.display = 'flex';
-        // ... (باقي كود الـ pagination يبقى كما هو)
         paginationControls.querySelector('.page-info').textContent = `Page ${currentPage} of ${totalPages}`;
         paginationControls.querySelector('.prev-btn').disabled = currentPage === 1;
         paginationControls.querySelector('.next-btn').disabled = currentPage === totalPages;
