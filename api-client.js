@@ -1224,35 +1224,7 @@ export async function getErrorTrends(period = '6 months') {
   }
 }
 
-export async function getDepartmentPerformance() {
-  try {
-    const { data, error } = await supabase
-      .from('quality_reviews')
-      .select('department, action_correctness');
-
-    if (error) throw error;
-
-    const departmentData = {};
-    data.forEach(review => {
-      if (!departmentData[review.department]) departmentData[review.department] = { total: 0, errors: 0 };
-      departmentData[review.department].total++;
-      if (review.action_correctness === 'error') departmentData[review.department].errors++;
-    });
-
-    const departments = Object.keys(departmentData);
-    const errorRates = departments.map(dept => {
-      const rate = (departmentData[dept].errors / departmentData[dept].total * 100).toFixed(1);
-      return parseFloat(rate);
-    });
-
-    return { departments, errorRates };
-  } catch (error) {
-    console.error('GetDepartmentPerformance error:', error);
-    throw error;
-  }
-}
-
-export async function getTeamPerformance() {
+ export async function getTeamPerformance() {
   try {
     const { data, error } = await supabase.rpc('get_team_performance');
     if (error) throw error;
