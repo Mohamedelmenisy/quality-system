@@ -783,15 +783,16 @@ export async function getFinalizedDecisions() {
 
 // ==================== ESCALATION FUNCTIONS ====================
 
-export async function submitEscalation(assignmentId, escalatedById, escalatedToId, reason) {
+export async function submitEscalation(assignmentId, escalatedById, escalatedToId, reason, additionalNotes) {
   try {
+        const combinedNotes = `Reason: ${reason}\n\nAdditional Notes: ${additionalNotes}`;
     const { data, error } = await supabase
       .from('escalations')
       .insert({
         assignment_id: assignmentId,
         escalated_by_id: escalatedById,
         escalated_to_id: escalatedToId,
-        notes: reason,
+        notes: combinedNotes,
         status: 'pending',
         escalated_at: new Date()
       })
