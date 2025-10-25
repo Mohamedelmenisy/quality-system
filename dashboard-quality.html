@@ -1653,7 +1653,7 @@ async function loadCompanyDepartments() {
             }
         }
 
-      function renderOrdersTable(ordersToRender) {
+    function renderOrdersTable(ordersToRender) {
     const tableBody = document.getElementById('orders-table-body');
 
     if (!ordersToRender || ordersToRender.length === 0) {
@@ -1669,6 +1669,8 @@ async function loadCompanyDepartments() {
         let slaStatus = '';
         let reviewResult = 'N/A';
 
+        console.log('Order data:', order); // <--- علشان نشوف البيانات
+        
         if (order.status === 'completed' && order.assigned_at && order.completed_at) {
             const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
             reviewTime = `${diffMinutes} min`;
@@ -1676,12 +1678,16 @@ async function loadCompanyDepartments() {
                 ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                 : `<span class="status-badge status-completed">On Time</span>`;
             
-            // تحديد نتيجة المراجعة
+            // نتأكد من وجود quality_reviews
+            console.log('Quality reviews for order:', order.quality_reviews); // <--- علشان نشوف الـ reviews
+            
             if (order.quality_reviews && order.quality_reviews.length > 0) {
                 const review = order.quality_reviews[0];
                 reviewResult = review.action_correctness === 'error' 
                     ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
                     : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+            } else {
+                reviewResult = `<span style="color: gray;">No Review Data</span>`;
             }
         }
         
