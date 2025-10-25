@@ -1769,10 +1769,7 @@ document.getElementById('save-employee-btn').addEventListener('click', async () 
             });
             
             // Generate report (now in the new reports tab)
-            document.getElementById('generate-report-btn').addEventListener('click', () => {
-                const reportType = document.getElementById('report-type').value;
-                const period = document.getElementById('report-period').value;
-                showToast(`Generating ${reportType} report for ${period}...`, 'success');
+            document.getElementById('generate-report-btn').addEventListener('click', generateAndDisplayReport);
             });
             
             // Apply user filters
