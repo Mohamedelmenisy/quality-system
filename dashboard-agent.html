@@ -207,31 +207,39 @@
         }
     }
 
-    async function loadUserPerformance() {
-        try {
-            const totalErrors = userErrors.length;
-            const totalOrders = 20; // This should ideally come from the backend
-    
-            const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
-            
-            document.getElementById('error-rate').textContent = `${errorRate}%`;
-            document.getElementById('error-rate-bar').style.width = `${Math.min(errorRate, 100)}%`;
-            document.getElementById('error-rate-description').textContent = 
-                `Based on ${totalErrors} errors out of ${totalOrders} reviewed orders.`;
-    
-            const errorTypes = {};
-            userErrors.forEach(error => {
-                const type = error.error_details || 'Unknown';
-                errorTypes[type] = (errorTypes[type] || 0) + 1;
-            });
-            userPerformance.errorTypes = errorTypes;
-            
-            updateCharts();
-        } catch (error) {
-            console.error('Error loading user performance:', error);
-            document.getElementById('error-rate').textContent = 'N/A';
-        }
+   // dashboard-agent.html
+
+async function loadUserPerformance() {
+    try {
+        // --- THE FIX IS HERE: Filter for 'closed' errors only ---
+        const actualErrors = userErrors.filter(e => e.status === 'closed');
+        const totalErrors = actualErrors.length;
+        // --------------------------------------------------------
+
+        // This should ideally come from the backend, but we'll keep it for now
+        const totalOrders = parseInt(document.getElementById('error-rate-description').textContent.match(/\d+ reviewed orders/)?.[0]) || 20;
+
+        const errorRate = totalOrders > 0 ? ((totalErrors / totalOrders) * 100).toFixed(1) : 0;
+        
+        document.getElementById('error-rate').textContent = `${errorRate}%`;
+        document.getElementById('error-rate-bar').style.width = `${Math.min(errorRate, 100)}%`;
+        document.getElementById('error-rate-description').textContent = 
+            `Based on ${totalErrors} confirmed errors out of ${totalOrders} reviewed orders.`;
+
+        // The chart of error types should also only show confirmed errors
+        const errorTypes = {};
+        actualErrors.forEach(error => {
+            const type = error.error_details || 'Unknown';
+            errorTypes[type] = (errorTypes[type] || 0) + 1;
+        });
+        userPerformance.errorTypes = errorTypes;
+        
+        updateCharts();
+    } catch (error) {
+        console.error('Error loading user performance:', error);
+        document.getElementById('error-rate').textContent = 'N/A';
     }
+}
 
     function renderErrorTables() {
         renderPaginatedTable('error-table-body', userErrors, dashboardCurrentPage, 'dashboard-pagination');
