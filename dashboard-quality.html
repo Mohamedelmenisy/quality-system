@@ -1898,6 +1898,8 @@ async function updateQualityDashboardCharts() {
 
 // dashboard-quality.html
 
+// dashboard-quality.html
+
 function renderOrdersTable(ordersToRender) {
     const tableBody = document.getElementById('orders-table-body');
 
@@ -1905,9 +1907,6 @@ function renderOrdersTable(ordersToRender) {
         tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No assigned orders found.</td></tr>`;
         return;
     }
-
-    // --- THE FIX IS HERE: DEFINE totalPages ---
-    const totalPages = Math.ceil(ordersToRender.length / 10); // Assuming 10 items per page
 
     tableBody.innerHTML = ordersToRender.map(order => {
         const orderData = order.orders;
@@ -1952,51 +1951,52 @@ function renderOrdersTable(ordersToRender) {
         `;
     }).join('');
     
-   // --- REPLACE THE OLD '.view-inquiry-feedback-btn' LISTENER WITH THIS ---
-document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const inquiryId = btn.dataset.inquiryId;
-        const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
-        const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
-        
-        if (inquiry) {
-            // Get the data from the API response
-            const raisedByName = inquiry.raised_by?.name || 'You';
-            const respondedByName = inquiry.responded_by?.name || 'Helper';
-            const respondedAt = inquiry.responded_at ? formatDateTime(inquiry.responded_at) : 'N/A';
+    // --- THIS IS THE COMPLETE AND CORRECT BLOCK OF EVENT LISTENERS ---
 
-            const modal = document.getElementById('view-inquiry-modal');
-            if (modal) {
-                // Populate all the fields in the modal
-                modal.querySelector('#view-inquiry-order-id').textContent = order.orders?.order_id || 'N/A';
-                modal.querySelector('#view-inquiry-text').textContent = inquiry.inquiry_text || '...';
-                modal.querySelector('#view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
-                modal.querySelector('#view-inquiry-response-text').textContent = inquiry.response_text || '...';
+    // Listener for the "Response Received" button
+    document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const inquiryId = btn.dataset.inquiryId;
+            const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+            const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+            
+            if (inquiry) {
+                const raisedByName = inquiry.raised_by?.name || 'You';
+                const respondedByName = inquiry.responded_by?.name || 'Helper';
+                const respondedAt = inquiry.responded_at ? formatDateTime(inquiry.responded_at) : 'N/A';
                 
-                // --- THIS IS THE FIX: Populate the existing elements ---
-                modal.querySelector('#view-inquiry-responded-by').textContent = `Responded by: ${respondedByName}`;
-                modal.querySelector('#view-inquiry-responded-at').textContent = `At: ${respondedAt}`;
-                // --------------------------------------------------------
-
-                showModal('view-inquiry-modal');
+                const modal = document.getElementById('view-inquiry-modal');
+                if(modal) {
+                    modal.querySelector('#view-inquiry-responded-by').textContent = `Responded by: ${respondedByName}`;
+                    modal.querySelector('#view-inquiry-responded-at').textContent = `At: ${respondedAt}`;
+                    // ... (rest of the modal population logic)
+                     modal.querySelector('#view-inquiry-order-id').textContent = order.orders?.order_id || 'N/A';
+                    modal.querySelector('#view-inquiry-text').textContent = inquiry.inquiry_text || '...';
+                    modal.querySelector('#view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
+                    modal.querySelector('#view-inquiry-response-text').textContent = inquiry.response_text || '...';
+                    showModal('view-inquiry-modal');
+                }
+            } else {
+                showToast('Could not find inquiry details.', 'error');
             }
-        } else {
-            showToast('Could not find inquiry details.', 'error');
-        }
+        });
     });
-});
     
-    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-
-    // This line will now work correctly
-    // renderPaginationControls(totalPages, ordersToRender.length); 
-    // NOTE: I am commenting this out because I don't see the function `renderPaginationControls` defined anywhere. 
-    // If you have this function, you can uncomment the line. If not, this was the source of the error.
+    // Re-bind all other standard action buttons
+    document.querySelectorAll('.view-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.review-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.escalate-order-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId));
+    });
+    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => {
+        btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId));
+    });
 }
-        
-        // Add event listeners for the new buttons
-        addTableActionListeners();
         
     function renderPaginationControls(totalPages, totalItems) {
         const paginationContainer = document.getElementById('orders-pagination');
