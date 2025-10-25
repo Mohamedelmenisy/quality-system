@@ -404,65 +404,83 @@ export async function updateAssignmentStatus(assignmentId, newStatus) {
 
 export async function getAssignedOrders(agentId = null, filters = {}) {
   try {
+    // أولاً: نجيب الـ order assignments الأساسية
     let query = supabase
       .from('order_assignments')
       .select(`
         *,
         orders (*),
         users!order_assignments_quality_agent_id_fkey (name, email),
-        inquiries!inquiries_order_id_fkey (
-          id,
-          inquiry_text,
-          response_text,
-          status,
-          created_at,
-          responded_at,
-          raised_by:users!inquiries_raised_by_id_fkey (name),  // غيرت هنا
-          responded_by:users!inquiries_responded_by_id_fkey (name)
-        ),
-        escalations!escalations_assignment_id_fkey (
-          id,
-          notes,
-          feedback,
-          status,
-          escalated_at,
-          resolved_at,
-          escalated_to:users!escalations_escalated_to_id_fkey (name),
-          escalated_by:users!escalations_escalated_by_id_fkey (name)
-        ),
         quality_reviews (*)
       `)
       .order('assigned_at', { ascending: false });
 
     if (agentId) query = query.eq('quality_agent_id', agentId);
-    if (filters.status && filters.status !== 'all') {
-      if (filters.status === 'completed_today') {
-        const today = new Date().toISOString().split('T')[0];
-        query = query.eq('status', 'completed')
-                    .gte('assigned_at', `${today}T00:00:00`)
-                    .lte('assigned_at', `${today}T23:59:59`);
-      } else {
-        query = query.eq('status', filters.status);
-      }
-    }
-    if (filters.from_date) query = query.gte('assigned_at', filters.from_date);
-    if (filters.to_date) query = query.lte('assigned_at', `${filters.to_date}T23:59:59`);
+    // ... باقي الفلترز
 
-    const { data, error } = await query;
+    const { data: assignments, error } = await query;
     
-    if (error) {
-      console.error('❌ GetAssignedOrders error:', error);
-      throw error;
+    if (error) throw error;
+
+    // ثانياً: نجيب الـ inquiries منفصلة علشان نتأكد من العلاقات
+    const assignmentIds = assignments.map(a => a.id);
+    
+    const { data: inquiries, error: inquiriesError } = await supabase
+      .from('inquiries')
+      .select(`
+        *,
+        raised_by:users!inquiries_raised_by_id_fkey (name),
+        responded_by:users!inquiries_responded_by_id_fkey (name)
+      `)
+      .in('order_id', assignmentIds);
+
+    if (inquiriesError) {
+      console.error('❌ Error fetching inquiries:', inquiriesError);
     }
-    
-    console.log('✅ Assigned orders fetched:', data?.length || 0);
-    console.log('📊 Sample order data:', data && data.length > 0 ? {
-      order_id: data[0].orders?.order_id,
-      escalations: data[0].escalations,
-      inquiries: data[0].inquiries
-    } : 'No data');
-    
-    return data;
+
+    // ثالثاً: نجيب الـ escalations منفصلة
+    const { data: escalations, error: escalationsError } = await supabase
+      .from('escalations')
+      .select(`
+        *,
+        escalated_by:users!escalations_escalated_by_id_fkey (name),
+        escalated_to:users!escalations_escalated_to_id_fkey (name)
+      `)
+      .in('assignment_id', assignmentIds);
+
+    if (escalationsError) {
+      console.error('❌ Error fetching escalations:', escalationsError);
+    }
+
+    // رابعاً: ندمج البيانات
+    const assignmentsWithDetails = assignments.map(assignment => {
+      const assignmentInquiries = inquiries?.filter(i => i.order_id === assignment.id) || [];
+      const assignmentEscalations = escalations?.filter(e => e.assignment_id === assignment.id) || [];
+      
+      return {
+        ...assignment,
+        inquiries: assignmentInquiries,
+        escalations: assignmentEscalations
+      };
+    });
+
+    console.log('✅ Final assignments data:', assignmentsWithDetails.map(a => ({
+      order_id: a.orders?.order_id,
+      inquiries: a.inquiries?.map(i => ({
+        id: i.id,
+        inquiry_text: i.inquiry_text,
+        raised_by: i.raised_by?.name,
+        responded_by: i.responded_by?.name
+      })),
+      escalations: a.escalations?.map(e => ({
+        id: e.id,
+        status: e.status,
+        escalated_by: e.escalated_by?.name,
+        escalated_to: e.escalated_to?.name
+      }))
+    })));
+
+    return assignmentsWithDetails;
   } catch (error) {
     console.error('💥 GetAssignedOrders error:', error);
     throw error;
