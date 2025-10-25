@@ -397,14 +397,6 @@
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label>Team</label>
-                                <select id="filter-team">
-                                    <option value="all">All</option>
-                                    <option value="team_a">Team A</option>
-                                    <option value="team_b">Team B</option>
-                                </select>
-                            </div>
-                            <div class="filter-group">
                                 <label>Employee</label>
                                 <select id="filter-employee">
                                     <option value="all">All</option>
@@ -939,6 +931,8 @@
         let departments = [];
         let teamSchedule = [];
         let isScheduleEditMode = false;
+        let agentAccuracyChart = null;
+        let reviewsVsErrorsChart = null;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -1151,6 +1145,51 @@
             }
         }
 
+async function generateAndDisplayReport() {
+    const period = document.getElementById('report-period').value;
+    showToast(`Generating report for: ${period}`, 'info');
+
+    try {
+        // Data for the first chart
+        const accuracyData = await getAgentAccuracySummary(period);
+        const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
+        
+        if (agentAccuracyChart) agentAccuracyChart.destroy(); // Destroy old chart before creating new one
+        agentAccuracyChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: accuracyData.map(d => d.agent_name),
+                datasets: [{
+                    label: 'Review Accuracy',
+                    data: accuracyData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.6)'
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
+
+        // Data for the second chart
+        const reviewsData = await getReviewsVsOverturnedSummary(period);
+        const ctx2 = document.getElementById('reviewsVsErrorsChart').getContext('2d');
+
+        if (reviewsVsErrorsChart) reviewsVsErrorsChart.destroy();
+        reviewsVsErrorsChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: reviewsData.map(d => d.metric),
+                datasets: [{
+                    data: reviewsData.map(d => d.value),
+                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)']
+                }]
+            }
+        });
+
+    } catch (error) {
+        console.error("Failed to generate report:", error);
+        showToast("Error generating report.", "error");
+    }
+}
+        
         // Load error trends
         async function loadErrorTrends() {
             try {
