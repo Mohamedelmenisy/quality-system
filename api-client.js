@@ -1198,54 +1198,19 @@ export async function getPerformanceMetrics() {
   }
 }
 
-export async function getErrorTrends(period = '6 months') {
+export async function getErrorTrends() {
   try {
-    const { data, error } = await supabase
-      .from('errors')
-      .select('created_at, quality_reviews(modified_reason)')
-      .order('created_at', { ascending: true });
-
+    const { data, error } = await supabase.rpc('get_error_trends_last_30_days');
     if (error) throw error;
-
-    const monthlyData = {};
-    data.forEach(error => {
-      const month = new Date(error.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
-      if (!monthlyData[month]) monthlyData[month] = 0;
-      monthlyData[month]++;
-    });
-
-    return {
-      labels: Object.keys(monthlyData),
-      values: Object.values(monthlyData)
-    };
+    
+    // Format data for Chart.js
+    const labels = data.map(d => new Date(d.error_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
+    const values = data.map(d => d.error_count);
+    
+    return { labels, values };
   } catch (error) {
     console.error('GetErrorTrends error:', error);
-    throw error;
-  }
-}
-
- export async function getTeamPerformance() {
-  try {
-    const { data, error } = await supabase.rpc('get_team_performance');
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('GetTeamPerformance error:', error);
-    return [];
-  }
-}
-
-// ** NEW FUNCTIONS FOR REPORTS & ANALYTICS PAGE **
-export async function getAgentAccuracySummary(period) {
-  try {
-    // 'period' could be 'week', 'month', 'quarter'
-    // The RPC function should handle the date logic based on the period
-    const { data, error } = await supabase.rpc('get_agent_accuracy_summary', { period_filter: period });
-    if (error) throw error;
-    return data;
-  } catch (error) {
-    console.error('Error fetching agent accuracy summary:', error);
-    return []; // Return an empty array on error
+    return { labels: [], values: [] };
   }
 }
 
