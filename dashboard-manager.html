@@ -869,6 +869,42 @@
             </div>
         </div>
     </div>
+<!-- Add/Edit Company Employee Modal -->
+<div class="modal-overlay" id="employee-modal">
+    <div class="modal-box" style="max-width: 500px;">
+        <div class="modal-header">
+            <h3 class="modal-title" id="employee-modal-title">Edit Employee</h3>
+            <button class="modal-close-btn" data-modal-id="employee-modal">×</button>
+        </div>
+        <form id="employee-form" class="modal-body">
+            <input type="hidden" id="employee-id-input">
+            <div class="form-group">
+                <label for="employee-name-input">Full Name *</label>
+                <input type="text" id="employee-name-input" placeholder="Enter full name" required>
+            </div>
+            <div class="form-group">
+                <label for="employee-username-input">Username</label>
+                <input type="text" id="employee-username-input" placeholder="Enter T&D username">
+            </div>
+            <div class="form-group">
+                <label for="employee-admin-id-input">Admin ID</label>
+                <input type="text" id="employee-admin-id-input" placeholder="Enter admin ID">
+            </div>
+            <div class="form-group">
+                <label for="employee-department-input">Department</label>
+                <input type="text" id="employee-department-input" placeholder="e.g., Learning And Development">
+            </div>
+             <div class="form-group">
+                <label for="employee-title-input">Title</label>
+                <input type="text" id="employee-title-input" placeholder="e.g., Agent">
+            </div>
+        </form>
+        <div class="modal-footer">
+            <button class="btn btn-secondary modal-close-btn" data-modal-id="employee-modal">Cancel</button>
+            <button class="btn btn-primary" id="save-employee-btn">Save Changes</button>
+        </div>
+    </div>
+</div>
     
     <!-- Logout Confirmation Modal -->
     <div class="modal-overlay" id="logout-confirmation-modal">
@@ -1533,22 +1569,25 @@
         }
 
         // إضافة دالة جديدة لتعديل موظفي الشركة
-        function openEditEmployeeModal(employeeId) {
-            const employee = companyEmployees.find(e => e.id.toString() === employeeId);
-            if (!employee) {
-                showToast('Employee not found', 'error');
-                return;
-            }
-            
-            // This assumes you will create a modal with the ID 'employee-modal'
-            // We can reuse the senior dashboard's modal structure.
-            
-            // For now, let's log to console to prove it works.
-            // In the final implementation, you will populate a modal here.
-            console.log("Editing employee:", employee);
-            showToast(`Editing employee: ${employee.employee_name}`, 'info');
-            // Example: showModal('employee-modal');
-        }
+       function openEditEmployeeModal(employeeId) {
+    const employee = companyEmployees.find(e => e.id.toString() === employeeId);
+    if (!employee) {
+        showToast('Employee not found', 'error');
+        return;
+    }
+
+    // Populate the modal fields
+    document.getElementById('employee-modal-title').textContent = 'Edit Employee';
+    document.getElementById('employee-id-input').value = employee.id;
+    document.getElementById('employee-name-input').value = employee.employee_name || '';
+    document.getElementById('employee-username-input').value = employee.employee_username || '';
+    document.getElementById('employee-admin-id-input').value = employee.admin_id || '';
+    document.getElementById('employee-department-input').value = employee.department || '';
+    document.getElementById('employee-title-input').value = employee.title || '';
+    
+    // Show the modal
+    showModal('employee-modal');
+}
 
         async function handleUserAction(userId, action) {
             try {
@@ -1597,7 +1636,33 @@
         document.addEventListener('DOMContentLoaded', () => {
             // Initialize the app
             initApp();
-            
+
+            // Add this inside the 'DOMContentLoaded' event listener
+document.getElementById('save-employee-btn').addEventListener('click', async () => {
+    const employeeId = document.getElementById('employee-id-input').value;
+    const updates = {
+        employee_name: document.getElementById('employee-name-input').value,
+        employee_username: document.getElementById('employee-username-input').value,
+        admin_id: document.getElementById('employee-admin-id-input').value,
+        department: document.getElementById('employee-department-input').value,
+        title: document.getElementById('employee-title-input').value,
+    };
+
+    if (!updates.employee_name) {
+        showToast("Employee name is required.", "warning");
+        return;
+    }
+
+    try {
+        // This assumes you have updateCompanyEmployee in your api-client.js
+        await updateCompanyEmployee(employeeId, updates);
+        showToast("Employee updated successfully!", "success");
+        hideModal('employee-modal');
+        await loadCompanyEmployees(); // Refresh the table with new data
+    } catch (error) {
+        showToast(`Failed to update employee: ${error.message}`, "error");
+    }
+});
             // Tab navigation
             document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
                 tab.addEventListener('click', (e) => {
