@@ -953,7 +953,7 @@
         let teamMembers = [];
         let performanceMetrics = {};
         let errorTrends = {};
-        let departmentPerformance = [];
+        let departmentPerformance = {};
         let notifications = [];
         let errorTrendChart = null;
         let departmentErrorsChart = null;
@@ -1113,11 +1113,10 @@
                     loadKpiSettings() // Load KPI settings
                 ]);
 
-                showToast('Manager Dashboard loaded successfully', 'success');
-                
                 // Add this line to auto-load the report on page load
                 generateAndDisplayReport();
 
+                showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
                 showToast('Failed to initialize dashboard', 'error');
@@ -1179,50 +1178,50 @@
             }
         }
 
-        async function generateAndDisplayReport() {
-            const period = document.getElementById('report-period').value;
-            showToast(`Generating report for: ${period}`, 'info');
+async function generateAndDisplayReport() {
+    const period = document.getElementById('report-period').value;
+    showToast(`Generating report for: ${period}`, 'info');
 
-            try {
-                // Data for the first chart
-                const accuracyData = await getAgentAccuracySummary(period);
-                const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
-                
-                if (agentAccuracyChart) agentAccuracyChart.destroy(); // Destroy old chart before creating new one
-                agentAccuracyChart = new Chart(ctx1, {
-                    type: 'bar',
-                    data: {
-                        labels: accuracyData.map(d => d.agent_name),
-                        datasets: [{
-                            label: 'Review Accuracy',
-                            data: accuracyData.map(d => d.accuracy),
-                            backgroundColor: 'rgba(0, 191, 255, 0.6)'
-                        }]
-                    },
-                    options: { scales: { y: { beginAtZero: true, max: 100 } } }
-                });
+    try {
+        // Data for the first chart
+        const accuracyData = await getAgentAccuracySummary(period);
+        const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
+        
+        if (agentAccuracyChart) agentAccuracyChart.destroy(); // Destroy old chart before creating new one
+        agentAccuracyChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: accuracyData.map(d => d.agent_name),
+                datasets: [{
+                    label: 'Review Accuracy',
+                    data: accuracyData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.6)'
+                }]
+            },
+            options: { scales: { y: { beginAtZero: true, max: 100 } } }
+        });
 
-                // Data for the second chart
-                const reviewsData = await getReviewsVsOverturnedSummary(period);
-                const ctx2 = document.getElementById('reviewsVsErrorsChart').getContext('2d');
+        // Data for the second chart
+        const reviewsData = await getReviewsVsOverturnedSummary(period);
+        const ctx2 = document.getElementById('reviewsVsErrorsChart').getContext('2d');
 
-                if (reviewsVsErrorsChart) reviewsVsErrorsChart.destroy();
-                reviewsVsErrorsChart = new Chart(ctx2, {
-                    type: 'doughnut',
-                    data: {
-                        labels: reviewsData.map(d => d.metric),
-                        datasets: [{
-                            data: reviewsData.map(d => d.value),
-                            backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)']
-                        }]
-                    }
-                });
-
-            } catch (error) {
-                console.error("Failed to generate report:", error);
-                showToast("Error generating report.", "error");
+        if (reviewsVsErrorsChart) reviewsVsErrorsChart.destroy();
+        reviewsVsErrorsChart = new Chart(ctx2, {
+            type: 'doughnut',
+            data: {
+                labels: reviewsData.map(d => d.metric),
+                datasets: [{
+                    data: reviewsData.map(d => d.value),
+                    backgroundColor: ['rgba(40, 167, 69, 0.7)', 'rgba(255, 193, 7, 0.7)']
+                }]
             }
-        }
+        });
+
+    } catch (error) {
+        console.error("Failed to generate report:", error);
+        showToast("Error generating report.", "error");
+    }
+}
         
         // Load error trends
         async function loadErrorTrends() {
@@ -1237,7 +1236,7 @@
         async function loadDepartmentPerformance() {
             try {
                 departmentPerformance = await getDepartmentPerformance();
-                await updateDepartmentErrorsChart();
+                updateDepartmentErrorsChart();
                 
                 // Update top team based on department performance
                 updateTopTeamCard();
@@ -1253,8 +1252,8 @@
 
             if (departmentPerformance && departmentPerformance.length > 0) {
                 // Sort departments by error_rate ascending (best is first)
-                const sortedPerformance = [...departmentPerformance].sort((a, b) => a.error_rate - b.error_rate);
-                const bestTeam = sortedPerformance[0];
+                departmentPerformance.sort((a, b) => a.error_rate - b.error_rate);
+                const bestTeam = departmentPerformance[0];
                 topTeamCard.textContent = bestTeam.department;
                 topTeamRateCard.textContent = `${bestTeam.error_rate}% Error Rate`;
             } else {
@@ -1392,7 +1391,7 @@
             }
         }
 
-        // NEW/REPLACED CHART FUNCTIONS
+        // Update charts with data
         async function updateErrorTrendChart() {
             try {
                 // This function now returns { labels: [...], values: [...] }
@@ -1426,11 +1425,11 @@
                     departmentErrorsChart.update();
 
                     // --- (The code to populate the snapshot cards remains the same as before) ---
-                    const sortedDeptData = [...deptData].sort((a, b) => a.error_rate - b.error_rate);
-                    const bestDept = sortedDeptData[0];
-                    const worstDept = sortedDeptData[sortedDeptData.length - 1];
-                    const totalErrorRate = sortedDeptData.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
-                    const avgErrorRate = (totalErrorRate / sortedDeptData.length).toFixed(1);
+                    deptData.sort((a, b) => a.error_rate - b.error_rate);
+                    const bestDept = deptData[0];
+                    const worstDept = deptData[deptData.length - 1];
+                    const totalErrorRate = deptData.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
+                    const avgErrorRate = (totalErrorRate / deptData.length).toFixed(1);
 
                     document.getElementById('best-dept-name').textContent = bestDept.department;
                     document.getElementById('best-dept-rate').textContent = `${bestDept.error_rate}% error rate`;
@@ -1724,31 +1723,31 @@
             initApp();
 
             // Add this inside the 'DOMContentLoaded' event listener
-            document.getElementById('save-employee-btn').addEventListener('click', async () => {
-                const employeeId = document.getElementById('employee-id-input').value;
-                const updates = {
-                    employee_name: document.getElementById('employee-name-input').value,
-                    employee_username: document.getElementById('employee-username-input').value,
-                    admin_id: document.getElementById('employee-admin-id-input').value,
-                    department: document.getElementById('employee-department-input').value,
-                    title: document.getElementById('employee-title-input').value,
-                };
+document.getElementById('save-employee-btn').addEventListener('click', async () => {
+    const employeeId = document.getElementById('employee-id-input').value;
+    const updates = {
+        employee_name: document.getElementById('employee-name-input').value,
+        employee_username: document.getElementById('employee-username-input').value,
+        admin_id: document.getElementById('employee-admin-id-input').value,
+        department: document.getElementById('employee-department-input').value,
+        title: document.getElementById('employee-title-input').value,
+    };
 
-                if (!updates.employee_name) {
-                    showToast("Employee name is required.", "warning");
-                    return;
-                }
+    if (!updates.employee_name) {
+        showToast("Employee name is required.", "warning");
+        return;
+    }
 
-                try {
-                    // This assumes you have updateCompanyEmployee in your api-client.js
-                    await updateCompanyEmployee(employeeId, updates);
-                    showToast("Employee updated successfully!", "success");
-                    hideModal('employee-modal');
-                    await loadCompanyEmployees(); // Refresh the table with new data
-                } catch (error) {
-                    showToast(`Failed to update employee: ${error.message}`, "error");
-                }
-            });
+    try {
+        // This assumes you have updateCompanyEmployee in your api-client.js
+        await updateCompanyEmployee(employeeId, updates);
+        showToast("Employee updated successfully!", "success");
+        hideModal('employee-modal');
+        await loadCompanyEmployees(); // Refresh the table with new data
+    } catch (error) {
+        showToast(`Failed to update employee: ${error.message}`, "error");
+    }
+});
             // Tab navigation
             document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
                 tab.addEventListener('click', (e) => {
