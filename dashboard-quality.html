@@ -1952,27 +1952,40 @@ function renderOrdersTable(ordersToRender) {
         `;
     }).join('');
     
-    document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const inquiryId = btn.dataset.inquiryId;
-            const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
-            const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
-            
-            if (inquiry) {
-                const raisedByName = inquiry.raised_by?.name || 'You';
-                const respondedByName = inquiry.responded_by?.name || 'Helper';
+   // --- REPLACE THE OLD '.view-inquiry-feedback-btn' LISTENER WITH THIS ---
+document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const inquiryId = btn.dataset.inquiryId;
+        const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+        const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+        
+        if (inquiry) {
+            // Get the data from the API response
+            const raisedByName = inquiry.raised_by?.name || 'You';
+            const respondedByName = inquiry.responded_by?.name || 'Helper';
+            const respondedAt = inquiry.responded_at ? formatDateTime(inquiry.responded_at) : 'N/A';
 
-                document.getElementById('view-inquiry-order-id').textContent = order.orders?.order_id || 'N/A';
-                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || '...';
-                document.getElementById('view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
-                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || '...';
+            const modal = document.getElementById('view-inquiry-modal');
+            if (modal) {
+                // Populate all the fields in the modal
+                modal.querySelector('#view-inquiry-order-id').textContent = order.orders?.order_id || 'N/A';
+                modal.querySelector('#view-inquiry-text').textContent = inquiry.inquiry_text || '...';
+                modal.querySelector('#view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
+                modal.querySelector('#view-inquiry-response-text').textContent = inquiry.response_text || '...';
+                
+                // --- THIS IS THE FIX: Populate the existing elements ---
+                modal.querySelector('#view-inquiry-responded-by').textContent = `Responded by: ${respondedByName}`;
+                modal.querySelector('#view-inquiry-responded-at').textContent = `At: ${respondedAt}`;
+                // --------------------------------------------------------
+
                 showModal('view-inquiry-modal');
-            } else {
-                showToast('Could not find inquiry details.', 'error');
             }
-        });
+        } else {
+            showToast('Could not find inquiry details.', 'error');
+        }
     });
+});
     
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
 
