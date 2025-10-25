@@ -1654,117 +1654,127 @@ async function loadCompanyDepartments() {
         }
 
         function renderOrdersTable(ordersToRender) {
-            const tableBody = document.getElementById('orders-table-body');
+    const tableBody = document.getElementById('orders-table-body');
 
-            if (!ordersToRender || ordersToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No assigned orders found.</td></tr>`;
+    if (!ordersToRender || ordersToRender.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`; // غيرت لـ 8
+        return;
+    }
+
+    tableBody.innerHTML = ordersToRender.map(order => {
+        const orderData = order.orders;
+        const statusClass = `status-${order.status}`;
+        
+        let reviewTime = 'N/A';
+        let slaStatus = '';
+        let reviewResult = 'N/A';
+
+        if (order.status === 'completed' && order.assigned_at && order.completed_at) {
+            const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
+            reviewTime = `${diffMinutes} min`;
+            slaStatus = (diffMinutes > 5) 
+                ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
+                : `<span class="status-badge status-completed">On Time</span>`;
+            
+            // تحديد نتيجة المراجعة
+            if (order.quality_reviews && order.quality_reviews.length > 0) {
+                const review = order.quality_reviews[0];
+                reviewResult = review.action_correctness === 'error' 
+                    ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
+                    : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+            }
+        }
+        
+        let specialStatusBadge = '';
+        if (order.escalations && order.escalations.length > 0) {
+            const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
+            if (latestEscalation.status === 'resolved') {
+                specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green);">Resolved</button>`;
+            } else {
+                specialStatusBadge = `<span class="inquiry-badge" title="This order is escalated">Escalation Pending</span>`;
+            }
+        }
+        else if (order.inquiries && order.inquiries.length > 0) {
+            const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            if (latestInquiry.status === 'responded') {
+                specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
+            } else {
+                specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
+            }
+        }
+
+        return `
+            <tr>
+                <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
+                <td>${orderData?.reason || 'N/A'}</td>
+                <td>${formatDateTime(order.assigned_at)}</td>
+                <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
+                <td>${reviewResult}</td>  // <--- الخلية الجديدة
+                <td>${reviewTime}</td>
+                <td>${slaStatus}</td>
+                <td>
+                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                    ${order.status === 'pending' || order.status === 'in_progress' ? 
+                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                        ''
+                    }
+                </td>
+            </tr>
+        `;
+    }).join('');
+    
+    // باقي الكود بدون تغيير...
+    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+
+    // Add new event listeners for the new buttons
+    document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const escalationId = btn.dataset.escalationId;
+            const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
+            const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
+            
+            if (!escalation) {
+                showToast('Could not find escalation details.', 'error');
                 return;
             }
 
-            tableBody.innerHTML = ordersToRender.map(order => {
-                const orderData = order.orders;
-                const statusClass = `status-${order.status}`;
-                
-                let reviewTime = 'N/A';
-                let slaStatus = '';
-
-                if (order.status === 'completed' && order.assigned_at && order.completed_at) {
-                    const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
-                    reviewTime = `${diffMinutes} min`;
-                    slaStatus = (diffMinutes > 5) 
-                        ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                        : `<span class="status-badge status-completed">On Time</span>`;
-                }
-                
-                let specialStatusBadge = '';
-                if (order.escalations && order.escalations.length > 0) {
-                    const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
-                    if (latestEscalation.status === 'resolved') {
-                        specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green);">Resolved</button>`;
-                    } else {
-                        specialStatusBadge = `<span class="inquiry-badge" title="This order is escalated">Escalation Pending</span>`;
-                    }
-                }
-                else if (order.inquiries && order.inquiries.length > 0) {
-                    const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
-                    if (latestInquiry.status === 'responded') {
-                        specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
-                    } else {
-                        specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
-                    }
-                }
-
-                return `
-                    <tr>
-                        <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
-                        <td>${orderData?.reason || 'N/A'}</td>
-                        <td>${formatDateTime(order.assigned_at)}</td>
-                        <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
-                        <td>${reviewTime}</td>
-                        <td>${slaStatus}</td>
-                        <td>
-                            <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                            ${order.status === 'pending' || order.status === 'in_progress' ? 
-                                `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                                 <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                                 <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                                ''
-                            }
-                        </td>
-                    </tr>
+            const body = document.getElementById('view-escalation-body');
+            if (body) {
+                body.innerHTML = `
+                    <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
+                    <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
+                    <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
                 `;
-            }).join('');
+                showModal('view-escalation-modal');
+            }
+        });
+    });
+
+    document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const inquiryId = btn.dataset.inquiryId;
+            const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+            const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
             
-            // Re-bind all events for buttons
-            document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
-            document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
-        
-            // Add new event listeners for the new buttons
-            document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const escalationId = btn.dataset.escalationId;
-                    const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
-                    const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
-                    
-                    if (!escalation) {
-                        showToast('Could not find escalation details.', 'error');
-                        return;
-                    }
-        
-                    const body = document.getElementById('view-escalation-body');
-                    if (body) {
-                        body.innerHTML = `
-                            <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
-                            <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
-                            <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
-                        `;
-                        showModal('view-escalation-modal');
-                    }
-                });
-            });
-        
-            document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
-                btn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const inquiryId = btn.dataset.inquiryId;
-                    const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
-                    const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
-                    
-                    if (inquiry) {
-                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-                        showModal('view-inquiry-modal');
-                    } else {
-                        showToast('Could not find inquiry details.', 'error');
-                    }
-                });
-            });
-        }
+            if (inquiry) {
+                document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                showModal('view-inquiry-modal');
+            } else {
+                showToast('Could not find inquiry details.', 'error');
+            }
+        });
+    });
+}
 
         function renderEscalationsTable(escalationsToRender) {
             const tableBody = document.getElementById('escalations-table-body');
