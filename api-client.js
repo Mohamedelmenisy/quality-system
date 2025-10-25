@@ -632,6 +632,20 @@ export async function getAgentErrors(agentId, filters = {}) {
   }
 }
 
+export async function addDepartment(departmentData) {
+    try {
+        const { data, error } = await supabase
+            .from('departments')
+            .insert(departmentData)
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    } catch (error) {
+        console.error('AddDepartment error:', error);
+        throw error;
+    }
+}
 
 export async function submitErrorResponse(errorId, agentId, responseText) {
   try {
