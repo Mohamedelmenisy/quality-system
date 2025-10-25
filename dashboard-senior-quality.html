@@ -1660,6 +1660,10 @@ async function openViewAssignedModal(assignmentId) {
                     <strong>Completed At</strong>
                     <span>${formatDateTime(assignment.completed_at)}</span>
                 </div>
+                <div class="detail-item">
+                    <strong>Processing Time</strong>
+                    <span>${Math.round((new Date(assignment.completed_at) - new Date(assignment.assigned_at)) / 60000)} minutes</span>
+                </div>
             `;
         }
 
@@ -1685,12 +1689,12 @@ async function openViewAssignedModal(assignmentId) {
                 </div>
             `;
         } else {
-            // إذا لا توجد مراجعات ولكن الحالة مكتملة
+            // إذا لا توجد مراجعات نعرض معلومات مختلفة
             contentHtml += `
                 <div class="detail-item">
-                    <strong>Review Status</strong>
-                    <span style="color: var(--text-muted);">
-                        ${assignment.status === 'completed' ? 'Marked as completed' : 'Pending review'}
+                    <strong>Quality Review</strong>
+                    <span style="color: var(--warning-color);">
+                        ${assignment.status === 'completed' ? '✅ Completed (No detailed review)' : '⏳ Pending Review'}
                     </span>
                 </div>
             `;
