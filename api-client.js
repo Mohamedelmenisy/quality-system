@@ -525,18 +525,52 @@ export async function submitReview(assignmentId, reviewData) {
 
 // ==================== ERROR FUNCTIONS ====================
 
+// api-client.js
 export async function getAgentErrors(agentId, filters = {}) {
   try {
-    const { data, error } = await supabase
+    const { data: rawErrors, error: rpcError } = await supabase
       .rpc('get_errors_for_agent', { agent_uuid: agentId });
 
-    if (error) {
-        console.error('RPC call error:', error);
-        throw error;
+    if (rpcError) {
+        console.error('RPC call error:', rpcError);
+        throw rpcError;
     }
 
-    let filteredData = data;
+    if (!rawErrors || rawErrors.length === 0) {
+        return [];
+    }
 
+    const errorIds = rawErrors.map(e => e.error_id);
+    
+    // --- THIS IS THE CORRECTED QUERY ---
+    const { data: decisions, error: decisionError } = await supabase
+        .from('final_decisions')
+        .select(`
+            error_id,
+            decision,
+            notes,
+            decided_at,
+            decided_by:users!final_decisions_decided_by_id_fkey ( name )
+        `)
+        .in('error_id', errorIds);
+
+    if (decisionError) {
+        // This is not a critical error, just a warning if decisions don't exist yet
+        console.warn('Could not fetch final decisions:', decisionError.message);
+    }
+
+    const errorsWithDecisions = rawErrors.map(error => {
+        const decision = decisions?.find(d => d.error_id === error.error_id);
+        return {
+            ...error,
+            final_decision: decision?.decision,
+            decision_notes: decision?.notes,
+            decided_at: decision?.decided_at,
+            decided_by_name: decision?.decided_by?.name
+        };
+    });
+    
+    let filteredData = errorsWithDecisions;
     if (filters.status && filters.status !== 'All Statuses') {
         filteredData = filteredData.filter(e => e.status === filters.status);
     }
@@ -548,6 +582,7 @@ export async function getAgentErrors(agentId, filters = {}) {
     throw error;
   }
 }
+
 
 export async function submitErrorResponse(errorId, agentId, responseText) {
   try {
@@ -602,7 +637,8 @@ export async function getPendingErrors() {
   }
 }
 
-export async function submitFinalDecision(errorId, decidedById, decision, notes = '') {
+// api-client.js -> NEW version
+export async function submitFinalDecision(errorId, decidedById, decision, notes = '', reviewingAgentId = null) {
   try {
     const { data, error } = await supabase
       .from('final_decisions')
@@ -611,17 +647,22 @@ export async function submitFinalDecision(errorId, decidedById, decision, notes 
         decided_by_id: decidedById,
         decision: decision,
         notes: notes,
-        decided_at: new Date()
+        decided_at: new Date(),
+        reviewing_agent_id: reviewingAgentId // <-- Add the new field here
       })
       .select()
       .single();
 
     if (error) throw error;
-
+    
+    // The rest of the function remains the same, but for safety let's remove the status update from here
+    // and keep it in the main handleFinalDecision function.
+    /*
     await supabase
       .from('errors')
       .update({ status: 'finalized' })
       .eq('id', errorId);
+    */
 
     return data;
   } catch (error) {
