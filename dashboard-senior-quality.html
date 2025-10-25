@@ -406,8 +406,8 @@
             <th>Agent</th>
             <th>Status</th>
             <th>Date Assigned</th>
-           <th>Review Result</th>
             <th>Review Time</th>
+        <th>Review Result</th>    <!-- تم التبديل -->
             <th>SLA</th>
             <th>Action</th>
         </tr>
@@ -1392,13 +1392,13 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         return `
-    <tr>
+     <tr>
         <td>${a.orders?.order_id || 'N/A'}</td>
         <td>${a.users?.name || 'Unknown'}</td>
         <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
         <td>${formatDateTime(a.assigned_at)}</td>
-        <td>${reviewResult}</td>  <!-- هذا عمود Review Result -->
-        <td>${reviewTime}</td>    <!-- هذا عمود Review Time -->
+        <td>${reviewTime}</td>        <!-- تم التبديل: هذا عمود Review Time -->
+        <td>${reviewResult}</td>      <!-- تم التبديل: هذا عمود Review Result -->
         <td>${slaStatus}</td>
         <td>
             <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
