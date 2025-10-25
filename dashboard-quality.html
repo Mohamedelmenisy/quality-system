@@ -2406,35 +2406,27 @@ document.addEventListener('click', function(e){
         }
 
 
-       // dashboard-quality.html
-
-function initRealtimeSubscriptions() {
-    try {
-        if (typeof window.subscribeToNotifications === 'function') {
-            subscribeToNotifications(currentUser.id, (payload) => {
-                console.log('New notification received:', payload);
-                showToast(payload.new.message, 'info', 'New Notification');
-                loadNotifications();
-            });
-        }
-        
-        // --- THIS PART IS UPDATED ---
-        if (typeof window.subscribeToAssignments === 'function') {
-            // We no longer pass currentUser.id here
-            subscribeToAssignments((payload) => {
-                console.log('New assignment created (listening to all):', payload.new);
-                
-                // Manual Filtering: Check if the new assignment is for ME
-                if (payload.new && payload.new.quality_agent_id === currentUser.id) {
-                    showToast('A new order has been assigned to you!', 'info', 'New Assignment');
-                    loadAssignedOrders(); // Refresh the table only if it's for me
+        function initRealtimeSubscriptions() {
+            try {
+                if (typeof window.subscribeToNotifications === 'function') {
+                    window.subscribeToNotifications(currentUser.id, (payload) => {
+                        console.log('New notification received:', payload);
+                        showToast(payload.new.message, 'info', 'New Notification');
+                        loadNotifications();
+                    });
                 }
-            });
+                
+                if (typeof window.subscribeToAssignments === 'function') {
+                    window.subscribeToAssignments(currentUser.id, (payload) => {
+                        console.log('New order assigned:', payload);
+                        showToast('A new order has been assigned to you', 'info', 'New Assignment');
+                        loadAssignedOrders();
+                    });
+                }
+            } catch (error) {
+                console.error('Error initializing real-time subscriptions:', error);
+            }
         }
-    } catch (error) {
-        console.error('Error initializing real-time subscriptions:', error);
-    }
-}
 
         function initCharts() {
             const isLightMode = document.body.classList.contains('light-mode');
