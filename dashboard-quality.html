@@ -56,7 +56,8 @@ document.addEventListener('click', function(e){
             getErrorReasons,
             getCompanyDepartments,
             updateAssignmentStatus, // <--- أضف هذه
-            getQualityAgentPerformance // <<< ADD THIS
+            getQualityAgentPerformance, // <<< ADD THIS
+            getOverturnedReviewsForAgent // <<< ADD THIS
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -87,6 +88,7 @@ document.addEventListener('click', function(e){
         window.getCompanyDepartments = getCompanyDepartments;
         window.updateAssignmentStatus = updateAssignmentStatus;
         window.getQualityAgentPerformance = getQualityAgentPerformance; // <<< ADD THIS
+        window.getOverturnedReviewsForAgent = getOverturnedReviewsForAgent; // <<< ADD THIS
     </script>
     <style>
         :root {
@@ -968,18 +970,55 @@ document.addEventListener('click', function(e){
             <div class="card">
                 <h3>My Review Performance</h3>
                 <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 2rem;">An overview of your review accuracy based on senior analyst decisions.</p>
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-title">Total Reviews Completed</div>
-                        <div class="kpi-value" id="qa-total-reviews">0</div>
+                
+                <!-- dashboard-quality.html -> inside "my-performance" tab -->
+                <div class="dashboard-grid"> <!-- Use the grid system -->
+                    <div class="grid-col-span-8"> <!-- The KPIs will take 2/3 of the width -->
+                        <div class="kpi-grid">
+                            <div class="kpi-card">
+                                <div class="kpi-title">Total Reviews Completed</div>
+                                <div class="kpi-value" id="qa-total-reviews">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title">Reviews Overturned by Senior</div>
+                                <div class="kpi-value" id="qa-overturned-reviews" style="color: var(--warning-color);">0</div>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title">My Review Accuracy</div>
+                                <div class="kpi-value" id="qa-accuracy-score" style="color: var(--success-color);">100%</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-title">Reviews Overturned by Senior</div>
-                        <div class="kpi-value" id="qa-overturned-reviews" style="color: var(--yellow);">0</div>
+                    <div class="grid-col-span-4"> <!-- The chart will take 1/3 of the width -->
+                        <div class="widget">
+                            <h3>Performance Breakdown</h3>
+                            <div class="chart-container" style="height: 200px;">
+                                <canvas id="qaPerformanceChart"></canvas>
+                            </div>
+                        </div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-title">My Review Accuracy</div>
-                        <div class="kpi-value" id="qa-accuracy-score" style="color: var(--green);">100%</div>
+                </div>
+
+                <!-- This goes inside the "my-performance" tab content, after the "kpi-grid" div -->
+                <div class="widget" style="margin-top: 2rem;">
+                    <h3>My Overturned Reviews</h3>
+                    <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
+                        This is a list of reviews where you marked an error, but a senior analyst overturned your decision. Use this as a learning opportunity.
+                    </p>
+                    <div class="table-container">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Order ID</th>
+                                    <th>Error You Marked</th>
+                                    <th class="wrap-text">Senior Analyst's Notes</th>
+                                    <th>Decision Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="overturned-reviews-table-body">
+                                <!-- Data will be populated by JavaScript -->
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -1429,6 +1468,7 @@ document.addEventListener('click', function(e){
         let companyEmployees = [];
         let monthlyPerformanceChart = null;
         let issueTypesChart = null;
+        let qaPerformanceChart = null; // <<< ADD THIS LINE
         
         // New state variables
         let helperEscalations = [];
@@ -1583,7 +1623,8 @@ document.addEventListener('click', function(e){
                     loadCompanyEmployees(),
                     loadErrorReasons(),
                     loadCompanyDepartments(),
-                    loadMyPerformanceMetrics()
+                    loadMyPerformanceMetrics(),
+                    loadOverturnedReviews() // <<< ADD THIS
                 ]);
 
                 // Populate filters after data is loaded
@@ -1602,24 +1643,95 @@ document.addEventListener('click', function(e){
             }
         }
         
+        // dashboard-quality.html -> inside <script>
         async function loadMyPerformanceMetrics() {
             if (!currentUser) return;
             try {
                 const perf = await getQualityAgentPerformance(currentUser.id);
-                document.getElementById('qa-total-reviews').textContent = perf.total_reviews || 0;
-                document.getElementById('qa-overturned-reviews').textContent = perf.overturned_reviews || 0;
-                document.getElementById('qa-accuracy-score').textContent = `${parseFloat(perf.accuracy).toFixed(1)}%`;
+                const totalReviews = perf.total_reviews || 0;
+                const overturnedReviews = perf.overturned_reviews || 0;
+                const accuracy = parseFloat(perf.accuracy).toFixed(1);
+
+                document.getElementById('qa-total-reviews').textContent = totalReviews;
+                document.getElementById('qa-overturned-reviews').textContent = overturnedReviews;
+                document.getElementById('qa-accuracy-score').textContent = `${accuracy}%`;
                 
-                // Change accuracy color based on value
                 const accuracyScoreEl = document.getElementById('qa-accuracy-score');
-                if(perf.accuracy < 95) {
-                    accuracyScoreEl.style.color = 'var(--yellow)';
+                if(accuracy < 95) {
+                    accuracyScoreEl.style.color = 'var(--warning-color)';
                 } else {
-                    accuracyScoreEl.style.color = 'var(--green)';
+                    accuracyScoreEl.style.color = 'var(--success-color)';
+                }
+
+                // --- NEW: Update or create the performance chart ---
+                const ctx = document.getElementById('qaPerformanceChart').getContext('2d');
+                const correctReviews = totalReviews - overturnedReviews;
+
+                if (qaPerformanceChart) {
+                    // If chart exists, just update its data
+                    qaPerformanceChart.data.datasets[0].data = [correctReviews, overturnedReviews];
+                    qaPerformanceChart.update();
+                } else {
+                    // If chart doesn't exist, create it
+                    qaPerformanceChart = new Chart(ctx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Accurate Reviews', 'Overturned Reviews'],
+                            datasets: [{
+                                data: [correctReviews, overturnedReviews],
+                                backgroundColor: [
+                                    'rgba(40, 167, 69, 0.7)',  // Green for accurate
+                                    'rgba(255, 193, 7, 0.7)'   // Yellow for overturned
+                                ],
+                                borderColor: [
+                                    'rgba(40, 167, 69, 1)',
+                                    'rgba(255, 193, 7, 1)'
+                                ],
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: {
+                                    display: false // Hide legend to save space
+                                }
+                            },
+                            cutout: '70%' // Makes the doughnut thinner
+                        }
+                    });
                 }
 
             } catch (error) {
                 console.error("Failed to load QA performance metrics", error);
+            }
+        }
+
+        async function loadOverturnedReviews() {
+            if (!currentUser) return;
+            try {
+                const reviews = await getOverturnedReviewsForAgent(currentUser.id);
+                const tableBody = document.getElementById('overturned-reviews-table-body');
+                
+                if (!reviews || reviews.length === 0) {
+                    tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">🎉 Great work! You have no overturned reviews.</td></tr>`;
+                    return;
+                }
+
+                tableBody.innerHTML = reviews.map(review => `
+                    <tr>
+                        <td>${review.order_id}</td>
+                        <td>${review.error_details || 'N/A'}</td>
+                        <td class="wrap-text">${review.senior_notes || 'No specific notes provided.'}</td>
+                        <td>${formatDateTime(review.decision_date)}</td>
+                    </tr>
+                `).join('');
+
+            } catch (error) {
+                console.error("Failed to load overturned reviews:", error);
+                const tableBody = document.getElementById('overturned-reviews-table-body');
+                tableBody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color: var(--danger-color);">Error loading overturned reviews.</td></tr>`;
             }
         }
 
