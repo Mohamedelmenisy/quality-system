@@ -55,7 +55,8 @@ document.addEventListener('click', function(e){
             getCompanyEmployees,
             getErrorReasons,
             getCompanyDepartments,
-            updateAssignmentStatus // <--- أضف هذه
+            updateAssignmentStatus, // <--- أضف هذه
+            getQualityAgentPerformance // <<< ADD THIS
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -85,6 +86,7 @@ document.addEventListener('click', function(e){
         window.getErrorReasons = getErrorReasons;
         window.getCompanyDepartments = getCompanyDepartments;
         window.updateAssignmentStatus = updateAssignmentStatus;
+        window.getQualityAgentPerformance = getQualityAgentPerformance; // <<< ADD THIS
     </script>
     <style>
         :root {
@@ -314,6 +316,53 @@ document.addEventListener('click', function(e){
         .payment-card:hover { transform: translateY(-5px); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3); }
         .main-footer { margin-top: auto; padding: 20px; text-align: center; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); }
         #help .card { display: flex; align-items: center; justify-content: center; min-height: 400px; text-align: center;}
+        
+        /* START: Pagination Styles */
+        .pagination-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem 0 0.5rem 0;
+            gap: 0.5rem;
+        }
+        .pagination-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-muted);
+            border-radius: 8px;
+            padding: 8px 14px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        .pagination-btn:hover {
+            background-color: var(--primary-color);
+            color: #000;
+            border-color: var(--primary-color);
+        }
+        body.light-mode .pagination-btn:hover {
+            color: white;
+        }
+        .pagination-btn.active {
+            background-color: var(--primary-color);
+            color: #000;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.5);
+        }
+        body.light-mode .pagination-btn.active {
+            color: white;
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .pagination-info {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin: 0 1rem;
+        }
+        /* END: Pagination Styles */
+        
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
             .main-content { margin-left: 220px; width: calc(100% - 220px); }
@@ -567,6 +616,7 @@ document.addEventListener('click', function(e){
                     <ul class="sidebar-nav">
                         <li><a class="active" data-tab="dashboard"><span>📊</span>Dashboard</a></li>
                         <li><a data-tab="my-assigned-orders"><span>📋</span>Assigned Orders</a></li>
+                        <li><a data-tab="my-performance"><span>📈</span>My Performance</a></li> <!-- <<< ADD THIS LINE -->
                         <li><a data-tab="team-scheduling"><span>📅</span>Team Scheduling</a></li>
                         <li><a data-tab="team-members"><span>👥</span>Team Members</a></li>
                         <li><a data-tab="company-employees"><span>🏢</span>Company Employees</a></li>
@@ -720,28 +770,33 @@ document.addEventListener('click', function(e){
             </div>
 
             <div class="card">
-    <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
-    <div class="table-container">
-        <table>
-            <thead>
-                <tr>
-                    <th>Order ID</th>
-                    <th>Issue Type</th>
-                    <th>Date Assigned</th>
-                    <th>Status</th>
-                    <th>Review Result</th> <!-- العمود الجديد -->
-                    <th>Review Time</th>
-                    <th>SLA</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody id="orders-table-body">
-                <tr><td colspan="8" class="empty-state">Loading assigned orders...</td></tr> <!-- غير لـ 8 -->
-            </tbody>
-        </table>
-    </div>
-</div>
-</div> <!--  <- هذا هو الوسم الذي تم إصلاحه -->
+                <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Order ID</th>
+                                <th>Issue Type</th>
+                                <th>Date Assigned</th>
+                                <th>Status</th>
+                                <th>Review Result</th> <!-- العمود الجديد -->
+                                <th>Review Time</th>
+                                <th>SLA</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="orders-table-body">
+                            <tr><td colspan="8" class="empty-state">Loading assigned orders...</td></tr> <!-- غير لـ 8 -->
+                        </tbody>
+                    </table>
+                </div>
+                 <!-- START: Pagination Container -->
+                <div class="pagination-container" id="orders-pagination">
+                    <!-- Pagination buttons will be generated by JavaScript -->
+                </div>
+                <!-- END: Pagination Container -->
+            </div>
+        </div>
         <!-- New Escalations Tab -->
         <div id="escalations" class="tab-content">
             <div class="card">
@@ -775,11 +830,12 @@ document.addEventListener('click', function(e){
                                 <th>Escalated By</th>
                                 <th>Agent's Reason</th>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="escalations-table-body">
-                            <tr><td colspan="5" class="empty-state">Loading escalations...</td></tr>
+                            <tr><td colspan="6" class="empty-state">Loading escalations...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -819,11 +875,12 @@ document.addEventListener('click', function(e){
                                 <th>Agent</th>
                                 <th>Inquiry</th>
                                 <th>Date</th>
+                                <th>Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="inquiries-table-body">
-                            <tr><td colspan="5" class="empty-state">Loading inquiries...</td></tr>
+                            <tr><td colspan="6" class="empty-state">Loading inquiries...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -905,6 +962,29 @@ document.addEventListener('click', function(e){
                 </div>
             </div>
         </div>
+        
+        <!-- START: My Performance Tab Content -->
+        <div id="my-performance" class="tab-content">
+            <div class="card">
+                <h3>My Review Performance</h3>
+                <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 2rem;">An overview of your review accuracy based on senior analyst decisions.</p>
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total Reviews Completed</div>
+                        <div class="kpi-value" id="qa-total-reviews">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">Reviews Overturned by Senior</div>
+                        <div class="kpi-value" id="qa-overturned-reviews" style="color: var(--yellow);">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">My Review Accuracy</div>
+                        <div class="kpi-value" id="qa-accuracy-score" style="color: var(--green);">100%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- END: My Performance Tab Content -->
 
         <div id="profile" class="tab-content">
             <div class="card">
@@ -1339,6 +1419,7 @@ document.addEventListener('click', function(e){
         // Application State
         let currentUser = null;
         let assignedOrders = [];
+        let filteredAssignedOrders = [];
         let errorReasons = []; 
         let companyDepartments = []; 
         let teamMembers = [];
@@ -1353,6 +1434,10 @@ document.addEventListener('click', function(e){
         let helperEscalations = [];
         let helperInquiries = [];
         let isSeniorEscalationMode = false;
+        
+        // Pagination State
+        let currentPage = 1;
+        const ordersPerPage = 15;
 
         // Toast Notification System
         function showToast(message, type = 'info', title = '') {
@@ -1487,16 +1572,22 @@ document.addEventListener('click', function(e){
                 updateUserInterface();
                 
                 // Load user data
-                await loadAssignedOrders();
-                await loadPerformanceMetrics();
-                await loadTeamMembers();
-                await loadTeamSchedule();
-                await loadNotifications();
-                await loadHelperEscalations();
-                await loadHelperInquiries();
-                await loadCompanyEmployees();
-                await loadErrorReasons(); 
-                await loadCompanyDepartments();
+                await Promise.all([
+                    loadAssignedOrders(),
+                    loadPerformanceMetrics(),
+                    loadTeamMembers(),
+                    loadTeamSchedule(),
+                    loadNotifications(),
+                    loadHelperEscalations(),
+                    loadHelperInquiries(),
+                    loadCompanyEmployees(),
+                    loadErrorReasons(),
+                    loadCompanyDepartments(),
+                    loadMyPerformanceMetrics()
+                ]);
+
+                // Populate filters after data is loaded
+                populateIssueTypeFilter();
                 
                 // Initialize real-time subscriptions
                 initRealtimeSubscriptions();
@@ -1510,14 +1601,34 @@ document.addEventListener('click', function(e){
                 showToast('Failed to initialize dashboard', 'error');
             }
         }
+        
+        async function loadMyPerformanceMetrics() {
+            if (!currentUser) return;
+            try {
+                const perf = await getQualityAgentPerformance(currentUser.id);
+                document.getElementById('qa-total-reviews').textContent = perf.total_reviews || 0;
+                document.getElementById('qa-overturned-reviews').textContent = perf.overturned_reviews || 0;
+                document.getElementById('qa-accuracy-score').textContent = `${parseFloat(perf.accuracy).toFixed(1)}%`;
+                
+                // Change accuracy color based on value
+                const accuracyScoreEl = document.getElementById('qa-accuracy-score');
+                if(perf.accuracy < 95) {
+                    accuracyScoreEl.style.color = 'var(--yellow)';
+                } else {
+                    accuracyScoreEl.style.color = 'var(--green)';
+                }
 
-        // 4. أضف هاتين الدالتين المساعدتين الجديدتين
-async function loadErrorReasons() {
-    errorReasons = await getErrorReasons();
-}
-async function loadCompanyDepartments() {
-    companyDepartments = await getCompanyDepartments();
-}
+            } catch (error) {
+                console.error("Failed to load QA performance metrics", error);
+            }
+        }
+
+        async function loadErrorReasons() {
+            errorReasons = await getErrorReasons();
+        }
+        async function loadCompanyDepartments() {
+            companyDepartments = await getCompanyDepartments();
+        }
         
         function updateUserInterface() {
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
@@ -1540,16 +1651,15 @@ async function loadCompanyDepartments() {
         }
 
         // Load assigned orders
-        async function loadAssignedOrders(filters = {}) {
+        async function loadAssignedOrders() {
             try {
-                assignedOrders = await getAssignedOrders(currentUser.id, filters);
-                renderOrdersTable(assignedOrders);
-                document.getElementById('orders-count').textContent = assignedOrders.length;
+                assignedOrders = await getAssignedOrders(currentUser.id, {});
+                applyOrderFiltersAndRender();
             } catch (error) {
                 console.error('Error loading assigned orders:', error);
                 showToast('Failed to load assigned orders', 'error');
                 assignedOrders = [];
-                renderOrdersTable([]);
+                applyOrderFiltersAndRender();
             }
         }
 
@@ -1631,8 +1741,6 @@ async function loadCompanyDepartments() {
                     const escalationsData = await getEscalations(null, {});
                     helperEscalations = escalationsData || [];
                     applyEscalationFilters(); // Apply filters on load
-                    const pendingCount = helperEscalations.filter(e => e.status === 'pending').length;
-                    document.getElementById('escalations-count').textContent = pendingCount;
                 }
             } catch (error) {
                 console.error('❌ Error loading escalations:', error);
@@ -1648,8 +1756,6 @@ async function loadCompanyDepartments() {
                 if (currentUser && (currentUser.role === 'quality' || currentUser.role === 'admin' || currentUser.role === 'helper')) {
                     helperInquiries = await getHelperInquiries(currentUser.id); 
                     applyInquiryFilters(); // Apply filters on load
-                     const pendingCount = helperInquiries.filter(i => i.status === 'pending').length;
-                    document.getElementById('inquiries-count').textContent = pendingCount;
                 }
             } catch (error) {
                 console.error('❌ Error loading helper inquiries:', error);
@@ -1659,199 +1765,243 @@ async function loadCompanyDepartments() {
             }
         }
 
-   function renderOrdersTable(ordersToRender) {
-    const tableBody = document.getElementById('orders-table-body');
+    function renderOrdersTable(ordersToRender) {
+        const tableBody = document.getElementById('orders-table-body');
+        const paginationContainer = document.getElementById('orders-pagination');
 
-    if (!ordersToRender || ordersToRender.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`;
-        return;
-    }
-
-    tableBody.innerHTML = ordersToRender.map(order => {
-        const orderData = order.orders;
-        const statusClass = `status-${order.status}`;
+        if (!ordersToRender || ordersToRender.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`;
+            paginationContainer.innerHTML = ''; // Clear pagination if no orders
+            return;
+        }
         
-        let reviewTime = 'N/A';
-        let slaStatus = '';
-        let reviewResult = 'N/A';
+        // Pagination logic
+        const totalPages = Math.ceil(ordersToRender.length / ordersPerPage);
+        if(currentPage > totalPages) currentPage = totalPages || 1;
+        
+        const startIndex = (currentPage - 1) * ordersPerPage;
+        const endIndex = startIndex + ordersPerPage;
+        const paginatedOrders = ordersToRender.slice(startIndex, endIndex);
 
-        if (order.status === 'completed' && order.assigned_at && order.completed_at) {
-            const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
-            reviewTime = `${diffMinutes} min`;
-            slaStatus = (diffMinutes > 5) 
-                ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
-                : `<span class="status-badge status-completed">On Time</span>`;
+        tableBody.innerHTML = paginatedOrders.map(order => {
+            const orderData = order.orders;
+            const statusClass = `status-${order.status}`;
             
-            // --- START: MODIFIED CODE ---
-            let review;
-            if (order.quality_reviews && typeof order.quality_reviews === 'object' && !Array.isArray(order.quality_reviews)) {
-                review = order.quality_reviews;
-            } else if (Array.isArray(order.quality_reviews) && order.quality_reviews.length > 0) {
-                review = order.quality_reviews[0];
-            }
+            let reviewTime = 'N/A';
+            let slaStatus = '';
+            let reviewResult = 'N/A';
 
-            if (review && review.action_correctness) {
-                if (review.action_correctness === 'error') {
-                    reviewResult = `
-                        <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
-                        ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
-                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+            if (order.status === 'completed' && order.assigned_at && order.completed_at) {
+                const diffMinutes = Math.round((new Date(order.completed_at) - new Date(order.assigned_at)) / 60000);
+                reviewTime = `${diffMinutes} min`;
+                slaStatus = (diffMinutes > 5) 
+                    ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
+                    : `<span class="status-badge status-completed">On Time</span>`;
+                
+                let review;
+                if (order.quality_reviews && typeof order.quality_reviews === 'object' && !Array.isArray(order.quality_reviews)) {
+                    review = order.quality_reviews;
+                } else if (Array.isArray(order.quality_reviews) && order.quality_reviews.length > 0) {
+                    review = order.quality_reviews[0];
+                }
+
+                if (review && review.action_correctness) {
+                    if (review.action_correctness === 'error') {
+                        reviewResult = `
+                            <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
+                            ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
+                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                        `;
+                    } else {
+                        reviewResult = `
+                            <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
+                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                        `;
+                    }
+                } else {
+                    reviewResult = `<span style="color: gray;">No Review Data</span>`;
+                }
+            }
+            
+            let dynamicStatusBadges = '';
+            if (order.escalations && order.escalations.length > 0) {
+                const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
+                
+                if (latestEscalation.status === 'resolved') {
+                    dynamicStatusBadges += `
+                        <button class="btn btn-sm view-escalation-feedback-btn" 
+                                data-escalation-id="${latestEscalation.id}"
+                                style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                            ✅ Escalation Resolved
+                        </button>
                     `;
                 } else {
-                    reviewResult = `
-                        <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
-                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                    dynamicStatusBadges += `
+                        <span class="inquiry-badge" style="background: var(--yellow-bg); color: var(--yellow); margin: 2px;">
+                            🚨 Escalated to ${latestEscalation.escalated_to?.name || 'Helper'}
+                        </span>
                     `;
                 }
-            } else {
-                reviewResult = `<span style="color: gray;">No Review Data</span>`;
             }
-            // --- END: MODIFIED CODE ---
-        }
-        
-        // ========== NEW: Dynamic Status Badges for Escalations & Inquiries ==========
-        let dynamicStatusBadges = '';
-        
-        // Check for escalations
-        if (order.escalations && order.escalations.length > 0) {
-            const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
-            
-            if (latestEscalation.status === 'resolved') {
-                dynamicStatusBadges += `
-                    <button class="btn btn-sm view-escalation-feedback-btn" 
-                            data-escalation-id="${latestEscalation.id}"
-                            style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
-                        ✅ Escalation Resolved
-                    </button>
-                `;
-            } else {
-                dynamicStatusBadges += `
-                    <span class="inquiry-badge" style="background: var(--yellow-bg); color: var(--yellow); margin: 2px;">
-                        🚨 Escalated to ${latestEscalation.escalated_to?.name || 'Helper'}
-                    </span>
-                `;
+            if (order.inquiries && order.inquiries.length > 0) {
+                const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+                
+                if (latestInquiry.status === 'responded') {
+                    dynamicStatusBadges += `
+                        <button class="btn btn-sm view-inquiry-feedback-btn" 
+                                data-inquiry-id="${latestInquiry.id}"
+                                style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                            💬 Response Received
+                        </button>
+                    `;
+                } else {
+                    dynamicStatusBadges += `
+                        <span class="inquiry-badge" style="background: var(--blue-bg); color: var(--primary-color); margin: 2px;">
+                            ❓ Inquiry Pending
+                        </span>
+                    `;
+                }
             }
-        }
-        
-        // Check for inquiries
-        if (order.inquiries && order.inquiries.length > 0) {
-            const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
-            
-            if (latestInquiry.status === 'responded') {
-                dynamicStatusBadges += `
-                    <button class="btn btn-sm view-inquiry-feedback-btn" 
-                            data-inquiry-id="${latestInquiry.id}"
-                            style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
-                        💬 Response Received
-                    </button>
-                `;
-            } else {
-                dynamicStatusBadges += `
-                    <span class="inquiry-badge" style="background: var(--blue-bg); color: var(--primary-color); margin: 2px;">
-                        ❓ Inquiry Pending
-                    </span>
-                `;
-            }
-        }
 
-        return `
-            <tr>
-                <td>
-                    <div style="display: flex; flex-direction: column; gap: 5px;">
-                        <strong>${orderData?.order_id || 'N/A'}</strong>
-                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                            ${dynamicStatusBadges}
+            return `
+                <tr>
+                    <td>
+                        <div style="display: flex; flex-direction: column; gap: 5px;">
+                            <strong>${orderData?.order_id || 'N/A'}</strong>
+                            <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                                ${dynamicStatusBadges}
+                            </div>
                         </div>
-                    </div>
-                </td>
-                <td>${orderData?.reason || 'N/A'}</td>
-                <td>${formatDateTime(order.assigned_at)}</td>
-                <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
-                <td style="max-width: 200px;">${reviewResult}</td>
-                <td>${reviewTime}</td>
-                <td>${slaStatus}</td>
-                <td>
-                    <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
-                    ${order.status === 'pending' || order.status === 'in_progress' ? 
-                        `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
-                         <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
-                         <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
-                        ''
-                    }
-                </td>
-            </tr>
-        `;
-    }).join('');
+                    </td>
+                    <td>${orderData?.reason || 'N/A'}</td>
+                    <td>${formatDateTime(order.assigned_at)}</td>
+                    <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
+                    <td style="max-width: 200px;">${reviewResult}</td>
+                    <td>${reviewTime}</td>
+                    <td>${slaStatus}</td>
+                    <td>
+                        <button class="action-btn view-order-btn" data-order-id="${order.id}">View</button>
+                        ${order.status === 'pending' || order.status === 'in_progress' ? 
+                            `<button class="action-btn primary review-order-btn" data-order-id="${order.id}">Review</button>
+                             <button class="action-btn warning escalate-order-btn" data-order-id="${order.id}">Escalate</button>
+                             <button class="action-btn raise-inquiry-btn" data-order-id="${order.id}">Raise Inquiry</button>` : 
+                            ''
+                        }
+                    </td>
+                </tr>
+            `;
+        }).join('');
+
+        renderPaginationControls(totalPages, ordersToRender.length);
+        
+        // Add event listeners for the new buttons
+        addTableActionListeners();
+    }
     
-    // Add event listeners for the new buttons
-    document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
-    document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+    function renderPaginationControls(totalPages, totalItems) {
+        const paginationContainer = document.getElementById('orders-pagination');
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
 
-    // Add new event listeners for the dynamic status buttons
-    document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const escalationId = btn.dataset.escalationId;
-            const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
-            const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
-            
-            if (!escalation) {
-                showToast('Could not find escalation details.', 'error');
-                return;
+        let buttonsHTML = '';
+
+        // Previous button
+        buttonsHTML += `<button class="pagination-btn" id="prev-page-btn" ${currentPage === 1 ? 'disabled' : ''}>&laquo; Prev</button>`;
+
+        // Page number buttons
+        for (let i = 1; i <= totalPages; i++) {
+             // Logic to show only a few page numbers if there are many
+            if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                buttonsHTML += `<button class="pagination-btn page-number-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+            } else if (i === currentPage - 3 || i === currentPage + 3) {
+                 buttonsHTML += `<span class="pagination-info">...</span>`;
             }
+        }
+        
+        // Next button
+        buttonsHTML += `<button class="pagination-btn" id="next-page-btn" ${currentPage === totalPages ? 'disabled' : ''}>Next &raquo;</button>`;
 
-            const body = document.getElementById('view-escalation-body');
-            if (body) {
-                body.innerHTML = `
-                    <div class="detail-item">
-                        <strong>Order ID</strong>
-                        <span>${order.orders?.order_id || 'N/A'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Your Escalation Reason</strong>
-                        <p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p>
-                    </div>
-                    <div class="detail-item" style="background: var(--green-bg);">
-                        <strong>Feedback Received</strong>
-                        <p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Resolved By</strong>
-                        <span>${escalation.escalated_to?.name || 'Unknown'}</span>
-                    </div>
-                    <div class="detail-item">
-                        <strong>Resolved At</strong>
-                        <span>${formatDateTime(escalation.resolved_at)}</span>
-                    </div>
-                `;
-                showModal('view-escalation-modal');
+        paginationContainer.innerHTML = buttonsHTML;
+
+        // Add event listeners
+        document.getElementById('prev-page-btn')?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                currentPage--;
+                applyOrderFiltersAndRender();
             }
         });
-    });
 
-    document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const inquiryId = btn.dataset.inquiryId;
-            const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
-            const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
-            
-            if (inquiry) {
-                document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-                document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-                document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-                document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-                document.getElementById('view-inquiry-responded-by').textContent = `Responded by: ${inquiry.responded_by?.name || 'Unknown'}`;
-                document.getElementById('view-inquiry-responded-at').textContent = `At: ${formatDateTime(inquiry.responded_at)}`;
-                showModal('view-inquiry-modal');
-            } else {
-                showToast('Could not find inquiry details.', 'error');
+        document.getElementById('next-page-btn')?.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                currentPage++;
+                applyOrderFiltersAndRender();
             }
         });
-    });
-}
+
+        document.querySelectorAll('.page-number-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentPage = parseInt(btn.dataset.page);
+                applyOrderFiltersAndRender();
+            });
+        });
+    }
+
+
+    function addTableActionListeners() {
+        document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
+        document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
+        document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
+        document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
+
+        document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const escalationId = btn.dataset.escalationId;
+                const order = assignedOrders.find(o => o.escalations && o.escalations.some(e => String(e.id) === String(escalationId)));
+                const escalation = order?.escalations.find(e => String(e.id) === String(escalationId));
+                
+                if (!escalation) {
+                    showToast('Could not find escalation details.', 'error');
+                    return;
+                }
+
+                const body = document.getElementById('view-escalation-body');
+                if (body) {
+                    body.innerHTML = `
+                        <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
+                        <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
+                        <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
+                        <div class="detail-item"><strong>Resolved By</strong><span>${escalation.escalated_to?.name || 'Unknown'}</span></div>
+                        <div class="detail-item"><strong>Resolved At</strong><span>${formatDateTime(escalation.resolved_at)}</span></div>
+                    `;
+                    showModal('view-escalation-modal');
+                }
+            });
+        });
+
+        document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const inquiryId = btn.dataset.inquiryId;
+                const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+                const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+                
+                if (inquiry) {
+                    document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
+                    document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
+                    document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                    document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                    document.getElementById('view-inquiry-responded-by').textContent = `Responded by: ${inquiry.responded_by?.name || 'Unknown'}`;
+                    document.getElementById('view-inquiry-responded-at').textContent = `At: ${formatDateTime(inquiry.responded_at)}`;
+                    showModal('view-inquiry-modal');
+                } else {
+                    showToast('Could not find inquiry details.', 'error');
+                }
+            });
+        });
+    }
 
         function renderEscalationsTable(escalationsToRender) {
             const tableBody = document.getElementById('escalations-table-body');
@@ -2111,11 +2261,13 @@ async function loadCompanyDepartments() {
             const notificationList = document.getElementById('notification-list');
             const notificationBadge = document.getElementById('notification-badge');
             
-            if (notifications.length === 0) {
+            const unreadNotifications = notifications.filter(n => !n.is_read);
+            
+            if (unreadNotifications.length === 0) {
                 notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
                 notificationBadge.style.display = 'none';
             } else {
-                notificationList.innerHTML = notifications.map(notification => `
+                notificationList.innerHTML = unreadNotifications.map(notification => `
                     <li class="notification-item">
                         <div class="notification-message">
                             <div>${notification.message}</div>
@@ -2127,7 +2279,7 @@ async function loadCompanyDepartments() {
                     </li>
                 `).join('');
                 
-                notificationBadge.textContent = notifications.length;
+                notificationBadge.textContent = unreadNotifications.length;
                 notificationBadge.style.display = 'flex';
                 
                 document.querySelectorAll('.mark-read-btn').forEach(btn => {
@@ -2140,6 +2292,7 @@ async function loadCompanyDepartments() {
                 });
             }
         }
+
 
         function initRealtimeSubscriptions() {
             try {
@@ -2380,7 +2533,64 @@ async function loadCompanyDepartments() {
             }
         }
         
-        // --- NEW --- Functions for Filtering
+        // --- Functions for Filtering ---
+        function applyOrderFiltersAndRender() {
+            const searchTerm = document.getElementById('orders-search-input').value.toLowerCase();
+            const statusFilter = document.getElementById('filter-status').value;
+            const issueFilter = document.getElementById('filter-issue-type').value;
+            const fromDateFilter = document.getElementById('filter-from-date').value;
+            const toDateFilter = document.getElementById('filter-to-date').value;
+
+            let filtered = [...assignedOrders];
+
+            // Search filter
+            if (searchTerm) {
+                filtered = filtered.filter(order =>
+                    (order.orders?.order_id?.toLowerCase().includes(searchTerm)) ||
+                    (order.orders?.reason?.toLowerCase().includes(searchTerm))
+                );
+            }
+
+            // Status filter
+            if (statusFilter !== 'all') {
+                 if(statusFilter === 'completed_today') {
+                    const today = new Date().toISOString().slice(0, 10);
+                    filtered = filtered.filter(order => order.status === 'completed' && order.completed_at.startsWith(today));
+                } else {
+                    filtered = filtered.filter(order => order.status === statusFilter);
+                }
+            }
+
+            // Issue type filter
+            if (issueFilter !== 'all') {
+                filtered = filtered.filter(order => order.orders?.reason === issueFilter);
+            }
+
+            // Date range filter
+            if (fromDateFilter) {
+                filtered = filtered.filter(order => new Date(order.assigned_at) >= new Date(fromDateFilter));
+            }
+            if (toDateFilter) {
+                const toDate = new Date(toDateFilter);
+                toDate.setHours(23, 59, 59, 999); // Include the whole day
+                filtered = filtered.filter(order => new Date(order.assigned_at) <= toDate);
+            }
+
+            filteredAssignedOrders = filtered;
+            document.getElementById('orders-count').textContent = filtered.length;
+            
+            // Call render with the final filtered list
+            renderOrdersTable(filteredAssignedOrders);
+        }
+
+        function populateIssueTypeFilter() {
+            const issueSelect = document.getElementById('filter-issue-type');
+            if (issueSelect && errorReasons.length > 0) {
+                const uniqueReasons = [...new Set(assignedOrders.map(o => o.orders.reason).filter(Boolean))];
+                issueSelect.innerHTML = '<option value="all">All Types</option>' + uniqueReasons.map(reason => `<option value="${reason}">${reason}</option>`).join('');
+            }
+        }
+
         function applyEscalationFilters() {
             const searchTerm = document.getElementById('escalations-search-input').value.toLowerCase();
             const statusFilter = document.getElementById('filter-escalation-status').value;
@@ -2399,6 +2609,9 @@ async function loadCompanyDepartments() {
                     return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
                 });
             }
+            
+            const pendingCount = filtered.filter(e => e.status === 'pending').length;
+            document.getElementById('escalations-count').textContent = pendingCount;
             renderEscalationsTable(filtered);
         }
 
@@ -2420,10 +2633,13 @@ async function loadCompanyDepartments() {
                     return orderId.toLowerCase().includes(searchTerm) || agentName.toLowerCase().includes(searchTerm);
                 });
             }
+            
+            const pendingCount = filtered.filter(i => i.status === 'pending').length;
+            document.getElementById('inquiries-count').textContent = pendingCount;
             renderInquiriesTable(filtered);
         }
 
-        // --- NEW --- Functions for Tab Persistence and Theme
+        // --- Functions for Tab Persistence and Theme ---
         function applyStoredActiveTab() {
             const lastActiveTab = localStorage.getItem('qualityDashboardActiveTab');
             if (lastActiveTab && lastActiveTab !== 'dashboard') {
@@ -2485,7 +2701,8 @@ async function loadCompanyDepartments() {
             
             document.getElementById('mark-all-read-btn').addEventListener('click', async (e) => {
                 e.stopPropagation();
-                for (const notification of notifications) { await markNotificationAsRead(notification.id); }
+                const unreadIds = notifications.filter(n => !n.is_read).map(n => n.id);
+                for (const notificationId of unreadIds) { await markNotificationAsRead(notificationId); }
                 await loadNotifications();
                 showToast('All notifications marked as read', 'success');
             });
@@ -2530,6 +2747,7 @@ async function loadCompanyDepartments() {
                     
                     await loadAssignedOrders();
                     await loadPerformanceMetrics();
+                    await loadMyPerformanceMetrics();
 
                 } catch (error) {
                     console.error("💥 Error caught in dashboard-quality.html:", error);
@@ -2653,7 +2871,20 @@ async function loadCompanyDepartments() {
                 }
             });
 
-            // --- NEW --- FILTER EVENT LISTENERS ---
+            // --- FILTER EVENT LISTENERS ---
+            const orderFilterInputs = [
+                'orders-search-input', 'filter-status', 'filter-issue-type',
+                'filter-from-date', 'filter-to-date'
+            ];
+            orderFilterInputs.forEach(id => {
+                const el = document.getElementById(id);
+                const eventType = el.tagName === 'SELECT' ? 'change' : 'input';
+                el.addEventListener(eventType, () => {
+                    currentPage = 1; // Reset to first page on any filter change
+                    applyOrderFiltersAndRender();
+                });
+            });
+
             document.getElementById('escalations-search-input').addEventListener('input', applyEscalationFilters);
             document.getElementById('filter-escalation-status').addEventListener('change', applyEscalationFilters);
             document.getElementById('filter-escalation-date').addEventListener('input', applyEscalationFilters);
@@ -2670,7 +2901,7 @@ async function loadCompanyDepartments() {
                 showToast('Inquiries refreshed', 'info');
             });
             
-            // --- NEW --- SETTINGS EVENT LISTENERS ---
+            // --- SETTINGS EVENT LISTENERS ---
             document.getElementById('change-password-btn').addEventListener('click', () => {
                 showToast('This feature is not yet implemented.', 'info', 'Coming Soon');
             });
