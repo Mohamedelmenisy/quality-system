@@ -113,6 +113,20 @@ export async function signOut() {
   }
 }
 
+// api-client.js
+
+export async function getQualityAgentPerformance(agentId) {
+  try {
+    const { data, error } = await supabase.rpc('get_quality_agent_performance', { agent_id: agentId });
+    if (error) throw error;
+    // The RPC function returns an array with one object, so we return that object.
+    return data[0];
+  } catch (error) {
+    console.error('GetQualityAgentPerformance error:', error);
+    return { total_reviews: 0, overturned_reviews: 0, accuracy: 100.0 };
+  }
+}
+
 export async function getCurrentUser() {
   try {
     const { data, error } = await supabase.auth.getUser();
