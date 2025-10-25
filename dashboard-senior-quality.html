@@ -1320,7 +1320,7 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
-    function renderAssignedOrdersTable() {
+ function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
     const paginationControls = document.getElementById('assigned-orders-pagination');
 
@@ -1359,16 +1359,34 @@ function openFinalDecisionDetailsModal(errorId) {
             
             if (review && typeof review === 'object') {
                 if (review.action_correctness) {
-                    reviewResult = review.action_correctness === 'error' 
-                        ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
-                        : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                    if (review.action_correctness === 'error') {
+                        reviewResult = `
+                            <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
+                            ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
+                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                        `;
+                    } else {
+                        reviewResult = `
+                            <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
+                            ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                        `;
+                    }
                 }
             } 
             else if (Array.isArray(a.quality_reviews) && a.quality_reviews.length > 0) {
                 review = a.quality_reviews[0];
-                reviewResult = review.action_correctness === 'error' 
-                    ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
-                    : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                if (review.action_correctness === 'error') {
+                    reviewResult = `
+                        <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
+                        ${review.modified_reason ? `<div style="font-size: 11px; color: #ff6b6b; margin-bottom: 2px;">🗒️ ${review.modified_reason}</div>` : ''}
+                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                    `;
+                } else {
+                    reviewResult = `
+                        <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
+                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                    `;
+                }
             } else {
                 reviewResult = `<span style="color: gray;">No Review</span>`;
             }
@@ -1392,20 +1410,20 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         return `
-     <tr>
-        <td>${a.orders?.order_id || 'N/A'}</td>
-        <td>${a.users?.name || 'Unknown'}</td>
-        <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
-        <td>${formatDateTime(a.assigned_at)}</td>
-        <td>${reviewTime}</td>        <!-- تم التبديل: هذا عمود Review Time -->
-        <td>${reviewResult}</td>      <!-- تم التبديل: هذا عمود Review Result -->
-        <td>${slaStatus}</td>
-        <td>
-            <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-            ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
-        </td>
-    </tr>
-`;
+            <tr>
+                <td>${a.orders?.order_id || 'N/A'}</td>
+                <td>${a.users?.name || 'Unknown'}</td>
+                <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
+                <td>${formatDateTime(a.assigned_at)}</td>
+                <td>${reviewTime}</td>
+                <td style="max-width: 250px;">${reviewResult}</td>
+                <td>${slaStatus}</td>
+                <td>
+                    <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
+                    ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+                </td>
+            </tr>
+        `;
     }).join('');
 
     // Update pagination controls
@@ -1414,8 +1432,7 @@ function openFinalDecisionDetailsModal(errorId) {
     paginationControls.querySelector('.next-btn').disabled = assignedOrdersCurrentPage === totalPages;
 }
     
-
-        function renderDirectEscalationsTable() {
+       function renderDirectEscalationsTable() {
     const tableBody = document.getElementById('direct-escalations-table-body');
     if (!tableBody) return;
     const searchTerm = document.getElementById('direct-escalation-search').value.toLowerCase();
