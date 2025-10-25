@@ -22,7 +22,8 @@
             markNotificationAsRead,
             subscribeToNotifications,
             getCompanyEmployees,
-            getDepartments
+            getDepartments,
+            getTeamAccuracyKpi // <-- 1. استيراد الدالة الجديدة
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -39,6 +40,7 @@
         window.markNotificationAsRead = markNotificationAsRead;
         window.getCompanyEmployees = getCompanyEmployees;
         window.getDepartments = getDepartments;
+        window.getTeamAccuracyKpi = getTeamAccuracyKpi; // <-- 1. إضافة الدالة إلى window
     </script>
     <style>
         :root {
@@ -216,8 +218,8 @@
             transition: all 0.2s ease-in-out; margin-right: 5px; background-color: transparent;
         }
         .action-btn:hover { transform: translateY(-1px); }
-        .action-btn.edit-user-btn { border-color: var(--primary-color); color: var(--primary-color); }
-        .action-btn.edit-user-btn:hover { background-color: var(--primary-color); color: #000; }
+        .action-btn.edit-user-btn, .action-btn.edit-department-btn, .action-btn.edit-employee-btn { border-color: var(--primary-color); color: var(--primary-color); }
+        .action-btn.edit-user-btn:hover, .action-btn.edit-department-btn:hover, .action-btn.edit-employee-btn:hover { background-color: var(--primary-color); color: #000; }
         .action-btn.danger { border-color: var(--red); color: var(--red); }
         .action-btn.danger:hover { background-color: var(--red); color: white; }
         .action-btn.primary { border-color: var(--green); color: var(--green); }
@@ -343,6 +345,12 @@
                             <div class="stat-value" id="top-team">Loading...</div>
                             <div class="stat-change positive" id="top-team-rate">Loading...</div>
                         </div>
+                        <!-- 2. بطاقة KPI جديدة -->
+                        <div class="card stat-card">
+                            <div class="stat-header"><span>Quality Team Accuracy</span><span style="color:var(--yellow)">🎯</span></div>
+                            <div class="stat-value" id="quality-team-accuracy">100%</div>
+                            <div class="stat-change positive" id="quality-team-accuracy-change">Loading...</div>
+                        </div>
                         <div class="card stat-card">
                             <div class="stat-header"><span>Active Agents</span><span style="color:var(--purple)">👤</span></div>
                             <div class="stat-value" id="active-agents">0</div>
@@ -400,17 +408,17 @@
                     </section>
                 </div>
 
+                <!-- استبدال قسم Reports بالكامل -->
                 <div id="reports" class="tab-content">
                     <div class="card">
                         <h3>Advanced Reports & Analytics</h3>
-                        <div class="filter-panel">
+                        <div class="filter-panel" style="margin-bottom: 2rem;">
+                            <!-- Filters remain the same -->
                             <div class="filter-group">
                                 <label>Report Type</label>
                                 <select id="report-type">
-                                    <option value="performance">Performance Report</option>
-                                    <option value="quality">Quality Metrics</option>
-                                    <option value="department">Department Analysis</option>
-                                    <option value="agent">Agent Performance</option>
+                                    <option value="performance">Team Performance</option>
+                                    <option value="errors">Error Analysis</option>
                                 </select>
                             </div>
                             <div class="filter-group">
@@ -419,23 +427,27 @@
                                     <option value="week">Last Week</option>
                                     <option value="month">Last Month</option>
                                     <option value="quarter">Last Quarter</option>
-                                    <option value="year">Last Year</option>
                                 </select>
                             </div>
-                            <div class="filter-group">
-                                <label>Format</label>
-                                <select id="report-format">
-                                    <option value="pdf">PDF</option>
-                                    <option value="excel">Excel</option>
-                                    <option value="csv">CSV</option>
-                                </select>
+                            <button class="btn btn-primary" id="generate-report-btn">Generate & View</button>
+                            <button class="btn btn-secondary" id="export-analytics-csv-btn">Export CSV</button>
+                        </div>
+                        
+                        <!-- This part is new and replaces the placeholder -->
+                        <section class="charts-grid">
+                            <div class="card">
+                                <h3>Quality Agent Accuracy</h3>
+                                <div class="chart-container">
+                                    <canvas id="agentAccuracyChart"></canvas>
+                                </div>
                             </div>
-                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-                        </div>
-                        <div class="placeholder-content">
-                            <h4>Advanced Reporting Dashboard</h4>
-                            <p>Generate detailed reports on team performance, common error types, and escalation trends.</p>
-                        </div>
+                            <div class="card">
+                                <h3>Reviews vs. Overturned Decisions</h3>
+                                <div class="chart-container">
+                                    <canvas id="reviewsVsErrorsChart"></canvas>
+                                </div>
+                            </div>
+                        </section>
                     </div>
                 </div>
 
@@ -653,10 +665,29 @@
                     </div>
                 </div>
 
-                <!-- KPIs Content -->
+                <!-- استبدال قسم KPIs بالكامل -->
                 <div id="kpis" class="tab-content">
                     <div class="card">
-                        <div class="placeholder-content"><h3>KPIs Management</h3><p>This section is under development.</p></div>
+                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
+                        <p style="color: var(--text-muted); margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents and Seniors will be evaluated.</p>
+                        
+                        <div style="max-width: 600px;">
+                            <div class="form-group">
+                                <label for="kpi-accuracy-target">Minimum Review Accuracy Target (%)</label>
+                                <input type="number" id="kpi-accuracy-target" placeholder="e.g., 98" min="0" max="100">
+                                <small style="color: var(--text-muted);">The minimum accuracy for Quality Agents after senior reviews.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kpi-reviews-per-day">Daily Reviews Target (per agent)</label>
+                                <input type="number" id="kpi-reviews-per-day" placeholder="e.g., 25" min="0">
+                                <small style="color: var(--text-muted);">The number of reviews expected from each Quality Agent per day.</small>
+                            </div>
+                            
+                            <div class="page-actions" style="border-top: none; padding-top: 0;">
+                                <button class="btn btn-primary" id="save-kpi-btn">Save KPI Targets</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </main>
@@ -861,11 +892,22 @@
                 `${names[0][0]}`.toUpperCase();
         }
 
-        function formatDate(dateString) {
-            if (!dateString) return 'N/A';
-            const options = { year: 'numeric', month: 'short', day: 'numeric' };
-            return new Date(dateString).toLocaleDateString('en-US', options);
+        // New helper function to show "time ago"
+        function formatTimeAgo(dateString) {
+            if (!dateString) return 'Never';
+            const date = new Date(dateString);
+            const now = new Date();
+            const seconds = Math.round((now - date) / 1000);
+            
+            if (seconds < 60) return `${seconds}s ago`;
+            const minutes = Math.round(seconds / 60);
+            if (minutes < 60) return `${minutes}m ago`;
+            const hours = Math.round(minutes / 60);
+            if (hours < 24) return `${hours}h ago`;
+            const days = Math.round(hours / 24);
+            return `${days}d ago`;
         }
+
 
         function showModal(modalId) {
             document.getElementById(modalId)?.classList.add('show');
@@ -959,25 +1001,65 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        // Load performance metrics
+        // استبدال دالة loadPerformanceMetrics بالكامل
         async function loadPerformanceMetrics() {
             try {
-                performanceMetrics = await getPerformanceMetrics('month');
+                // This assumes getPerformanceMetrics will be updated in api-client.js
+                // to call a real RPC function like 'get_manager_dashboard_kpis'
+                const metrics = await getPerformanceMetrics(); 
                 
-                // Update KPI cards
-                document.getElementById('total-orders').textContent = performanceMetrics.totalOrders || 0;
-                document.getElementById('error-rate').textContent = `${performanceMetrics.accuracyRate || 0}%`; // Using accuracy instead of error
-                document.getElementById('active-agents').textContent = teamMembers.filter(m => m.is_active).length;
+                // It's better to load team members first to avoid race conditions
+                if (teamMembers.length === 0) {
+                    await loadTeamMembers();
+                }
+
+                const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
+
+                // --- Update KPI cards ---
+                document.getElementById('total-orders').textContent = metrics.totalOrders || 0;
                 
-                // Update change indicators
-                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> ${performanceMetrics.totalOrders > 0 ? '5%' : '0%'} vs last month`;
-                document.getElementById('error-rate-change').innerHTML = `<span>⬇️</span> ${performanceMetrics.accuracyRate > 0 ? '0.5%' : '0%'} vs last month`;
-                document.getElementById('agents-change').innerHTML = `<span>➕</span> ${teamMembers.length > 0 ? '2' : '0'} new agents`;
+                // Calculate Error Rate from Accuracy Rate
+                const errorRate = metrics.accuracyRate ? (100 - parseFloat(metrics.accuracyRate)).toFixed(1) : 0.0;
+                document.getElementById('error-rate').textContent = `${errorRate}%`;
+
+                document.getElementById('active-agents').textContent = activeAgentsCount;
+
+                // --- Update change indicators (example logic) ---
+                document.getElementById('orders-change').innerHTML = `<span>⬆️</span> New data`;
                 
+                const errorRateChangeEl = document.getElementById('error-rate-change');
+                if (errorRate < 1) {
+                    errorRateChangeEl.innerHTML = `<span>⬇️</span> Excellent`;
+                    errorRateChangeEl.style.color = 'var(--green)';
+                } else {
+                    errorRateChangeEl.innerHTML = `<span>⬆️</span> Needs attention`;
+                    errorRateChangeEl.style.color = 'var(--red)';
+                }
+
+                document.getElementById('agents-change').innerHTML = `<span>👥</span> ${activeAgentsCount} agents online`;
+
+                // Update the NEW KPI card
+                const qualityTeamAccuracy = await window.getTeamAccuracyKpi();
+                const accuracyEl = document.getElementById('quality-team-accuracy');
+                const accuracyChangeEl = document.getElementById('quality-team-accuracy-change');
+                
+                accuracyEl.textContent = `${qualityTeamAccuracy}%`;
+                if (qualityTeamAccuracy < 98) {
+                    accuracyEl.style.color = 'var(--yellow)'; // Assuming a warning color
+                    accuracyChangeEl.innerHTML = `<span>⬇️</span> Below Target`;
+                    accuracyChangeEl.style.color = 'var(--yellow)';
+                } else {
+                    accuracyEl.style.color = 'var(--green)';
+                    accuracyChangeEl.innerHTML = `<span>⬆️</span> Meeting Target`;
+                    accuracyChangeEl.style.color = 'var(--green)';
+                }
+
             } catch (error) {
                 console.error('Error loading performance metrics:', error);
+                showToast('Failed to load dashboard KPIs', 'error');
             }
         }
+
 
         // Load error trends
         async function loadErrorTrends() {
@@ -1050,7 +1132,7 @@
             }
         }
 
-        // Render users table
+        // استبدال دالة renderUsersTable بالكامل
         function renderUsersTable(users) {
             const tableBody = document.getElementById('users-table-body');
             if (users.length === 0) {
@@ -1068,7 +1150,7 @@
                         <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
                         <td>${user.department || 'N/A'}</td>
                         <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                        <td>${user.last_seen ? formatDate(user.last_seen) : 'N/A'}</td>
+                        <td>${formatTimeAgo(user.last_seen)}</td> <!-- UPDATED HERE -->
                         <td>
                             <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
                             <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
@@ -1076,7 +1158,7 @@
                     </tr>
                 `).join('');
             }
-            // ربط الأحداث بالأزرار الجديدة
+            // Re-bind events to the new buttons
             document.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', () => openEditUserModal(btn.dataset.userId)));
             document.querySelectorAll('.action-btn[data-action]').forEach(btn => btn.addEventListener('click', () => handleUserAction(btn.dataset.userId, btn.dataset.action)));
         }
@@ -1158,31 +1240,52 @@
             } catch (error) { showToast('Failed to load company employees', 'error'); }
         }
 
+        // استبدال دالة renderCompanyEmployeesTable بالكامل
         function renderCompanyEmployeesTable() {
             const tableBody = document.getElementById('company-employees-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = companyEmployees.length === 0
                 ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
-                : companyEmployees.map(emp => `<tr><td>${emp.employee_name}</td><td>${emp.employee_username || 'N/A'}</td><td>${emp.admin_id || 'N/A'}</td><td>${emp.department || 'N/A'}</td><td>${emp.title || 'N/A'}</td><td><button class="action-btn edit-user-btn">Edit</button></td></tr>`).join('');
+                : companyEmployees.map(emp => `
+                    <tr>
+                        <td>${emp.employee_name}</td>
+                        <td>${emp.employee_username || 'N/A'}</td>
+                        <td>${emp.admin_id || 'N/A'}</td>
+                        <td>${emp.department || 'N/A'}</td>
+                        <td>${emp.title || 'N/A'}</td>
+                        <td>
+                            <button class="action-btn edit-employee-btn" data-employee-id="${emp.id}">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
         }
 
         async function loadDepartments() {
             try {
                 departments = await getDepartments();
                 renderDepartmentsTable();
-                populateDepartmentFilter(); // <-- This line is added
+                populateDepartmentFilter();
             } catch (error) { showToast('Failed to load departments', 'error'); }
         }
 
+        // استبدال دالة renderDepartmentsTable بالكامل
         function renderDepartmentsTable() {
             const tableBody = document.getElementById('departments-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = departments.length === 0
                 ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
-                : departments.map(dept => `<tr><td>${dept.department_name}</td><td>${dept.head?.name || 'N/A'}</td><td><button class="action-btn edit-user-btn" data-dept-id="${dept.id}">Edit</button></td></tr>`).join('');
+                : departments.map(dept => `
+                    <tr>
+                        <td>${dept.department_name}</td>
+                        <td>${dept.head?.name || 'N/A'}</td>
+                        <td>
+                            <button class="action-btn edit-department-btn" data-dept-id="${dept.id}">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
             
-            // ربط حدث الزر
-            document.querySelectorAll('#departments-table-body .edit-user-btn').forEach(btn => {
+            // Update the event listener to use the new class
+            document.querySelectorAll('#departments-table-body .edit-department-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     openEditDepartmentModal(btn.dataset.deptId);
                 });
@@ -1328,6 +1431,24 @@
             showModal('edit-user-modal');
         }
 
+        // إضافة دالة جديدة لتعديل موظفي الشركة
+        function openEditEmployeeModal(employeeId) {
+            const employee = companyEmployees.find(e => e.id.toString() === employeeId);
+            if (!employee) {
+                showToast('Employee not found', 'error');
+                return;
+            }
+            
+            // This assumes you will create a modal with the ID 'employee-modal'
+            // We can reuse the senior dashboard's modal structure.
+            
+            // For now, let's log to console to prove it works.
+            // In the final implementation, you will populate a modal here.
+            console.log("Editing employee:", employee);
+            showToast(`Editing employee: ${employee.employee_name}`, 'info');
+            // Example: showModal('employee-modal');
+        }
+
         async function handleUserAction(userId, action) {
             try {
                 const user = teamMembers.find(u => u.id === userId);
@@ -1428,7 +1549,8 @@
             // Apply filters
             document.getElementById('apply-filters-btn').addEventListener('click', () => {
                 showToast('Applying filters and refreshing data...', 'info');
-                loadPerformanceMetrics();
+                // Reload data based on filters
+                loadPerformanceMetrics(); 
                 loadErrorTrends();
                 loadDepartmentPerformance();
             });
@@ -1441,13 +1563,11 @@
                 showToast('Generating overall system report...', 'info');
             });
             
-            // Generate report
+            // Generate report (now in the new reports tab)
             document.getElementById('generate-report-btn').addEventListener('click', () => {
                 const reportType = document.getElementById('report-type').value;
                 const period = document.getElementById('report-period').value;
-                const format = document.getElementById('report-format').value;
-                
-                showToast(`Generating ${reportType} report for ${period} in ${format.toUpperCase()} format...`, 'success');
+                showToast(`Generating ${reportType} report for ${period}...`, 'success');
             });
             
             // Apply user filters
@@ -1631,6 +1751,13 @@
             document.addEventListener('click', (e) => {
                 if (e.target.classList.contains('modal-overlay')) {
                     e.target.classList.remove('show');
+                }
+            });
+
+            // إضافة معالج الأحداث العام للتعامل مع الأزرار الجديدة
+            document.body.addEventListener('click', function(event) {
+                if (event.target.classList.contains('edit-employee-btn')) {
+                    openEditEmployeeModal(event.target.dataset.employeeId);
                 }
             });
         });
