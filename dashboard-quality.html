@@ -1653,7 +1653,7 @@ async function loadCompanyDepartments() {
             }
         }
 
-    function renderOrdersTable(ordersToRender) {
+   function renderOrdersTable(ordersToRender) {
     const tableBody = document.getElementById('orders-table-body');
 
     if (!ordersToRender || ordersToRender.length === 0) {
@@ -1676,8 +1676,9 @@ async function loadCompanyDepartments() {
                 ? `<span class="status-badge" style="background:var(--red-bg); color:var(--red);">Delayed</span>`
                 : `<span class="status-badge status-completed">On Time</span>`;
             
-            // التحقق من وجود quality_reviews (Object أو Array)
+            // التحقق من وجود quality_reviews
             let review = order.quality_reviews;
+            let reviewDetails = '';
             
             if (review && typeof review === 'object') {
                 // إذا كان Object مباشرة
@@ -1685,6 +1686,16 @@ async function loadCompanyDepartments() {
                     reviewResult = review.action_correctness === 'error' 
                         ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
                         : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                    
+                    // إضافة التفاصيل إذا كان error
+                    if (review.action_correctness === 'error') {
+                        if (review.modified_reason) {
+                            reviewDetails += `<div><small><strong>Reason:</strong> ${review.modified_reason}</small></div>`;
+                        }
+                        if (review.modification_details) {
+                            reviewDetails += `<div><small><strong>Notes:</strong> ${review.modification_details}</small></div>`;
+                        }
+                    }
                 }
             } 
             // إذا كان Array
@@ -1693,8 +1704,23 @@ async function loadCompanyDepartments() {
                 reviewResult = review.action_correctness === 'error' 
                     ? `<span style="color: red; font-weight: bold;">❌ Error</span>`
                     : `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                
+                // إضافة التفاصيل إذا كان error
+                if (review.action_correctness === 'error') {
+                    if (review.modified_reason) {
+                        reviewDetails += `<div><small><strong>Reason:</strong> ${review.modified_reason}</small></div>`;
+                    }
+                    if (review.modification_details) {
+                        reviewDetails += `<div><small><strong>Notes:</strong> ${review.modification_details}</small></div>`;
+                    }
+                }
             } else {
                 reviewResult = `<span style="color: gray;">No Review Data</span>`;
+            }
+            
+            // إذا فيه تفاصيل نضيفها
+            if (reviewDetails) {
+                reviewResult += `<div style="margin-top: 5px;">${reviewDetails}</div>`;
             }
         }
         
@@ -1722,7 +1748,7 @@ async function loadCompanyDepartments() {
                 <td>${orderData?.reason || 'N/A'}</td>
                 <td>${formatDateTime(order.assigned_at)}</td>
                 <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
-                <td>${reviewResult}</td>
+                <td style="max-width: 200px;">${reviewResult}</td>
                 <td>${reviewTime}</td>
                 <td>${slaStatus}</td>
                 <td>
@@ -1737,7 +1763,7 @@ async function loadCompanyDepartments() {
             </tr>
         `;
     }).join('');
-   
+    
     // باقي الكود بدون تغيير...
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
