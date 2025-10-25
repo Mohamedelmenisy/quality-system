@@ -719,27 +719,27 @@ document.addEventListener('click', function(e){
             </div>
 
             <div class="card">
-                <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
-                <div class="table-container">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Order ID</th>
-                                <th>Issue Type</th>
-                                <th>Date Assigned</th>
-                                <th>Status</th>
-                                <th>Review Time</th>
-                                <th>SLA</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody id="orders-table-body">
-                            <tr><td colspan="7" class="empty-state">Loading assigned orders...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+    <h3>Orders in Queue (<span id="orders-count">0</span>)</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Issue Type</th>
+                    <th>Date Assigned</th>
+                    <th>Status</th>
+                    <th>Review Result</th> <!-- العمود الجديد -->
+                    <th>Review Time</th>
+                    <th>SLA</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="orders-table-body">
+                <tr><td colspan="8" class="empty-state">Loading assigned orders...</td></tr> <!-- غير لـ 8 -->
+            </tbody>
+        </table>
+    </div>
+</div>
 
         <!-- New Escalations Tab -->
         <div id="escalations" class="tab-content">
