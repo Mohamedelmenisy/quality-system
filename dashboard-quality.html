@@ -1653,11 +1653,11 @@ async function loadCompanyDepartments() {
             }
         }
 
-        function renderOrdersTable(ordersToRender) {
+      function renderOrdersTable(ordersToRender) {
     const tableBody = document.getElementById('orders-table-body');
 
     if (!ordersToRender || ordersToRender.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`; // غيرت لـ 8
+        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`;
         return;
     }
 
@@ -1709,7 +1709,7 @@ async function loadCompanyDepartments() {
                 <td>${orderData?.reason || 'N/A'}</td>
                 <td>${formatDateTime(order.assigned_at)}</td>
                 <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
-                <td>${reviewResult}</td>  // <--- الخلية الجديدة
+                <td>${reviewResult}</td>
                 <td>${reviewTime}</td>
                 <td>${slaStatus}</td>
                 <td>
@@ -1724,6 +1724,9 @@ async function loadCompanyDepartments() {
             </tr>
         `;
     }).join('');
+    
+    // باقي الكود بدون تغيير...
+}
     
     // باقي الكود بدون تغيير...
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
