@@ -406,6 +406,7 @@
             <th>Agent</th>
             <th>Status</th>
             <th>Date Assigned</th>
+              <th>Review Result</th>
             <th>Review Time</th>
             <th>SLA</th>
             <th>Action</th>
@@ -1391,20 +1392,21 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         return `
-            <tr>
-                <td>${a.orders?.order_id || 'N/A'}</td>
-                <td>${a.users?.name || 'Unknown'}</td>
-                <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
-                <td>${formatDateTime(a.assigned_at)}</td>
-                <td>${reviewResult}</td>
-                <td>${reviewTime}</td>
-                <td>${slaStatus}</td>
-                <td>
-                    <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
-                    ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
-                </td>
-            </tr>
-        `;
+           return `
+    <tr>
+        <td>${a.orders?.order_id || 'N/A'}</td>
+        <td>${a.users?.name || 'Unknown'}</td>
+        <td><span class="status-badge status-${a.status.replace('_', '-')}">${a.status.replace('_', ' ')}</span></td>
+        <td>${formatDateTime(a.assigned_at)}</td>
+        <td>${reviewResult}</td>  <!-- هذا عمود Review Result -->
+        <td>${reviewTime}</td>    <!-- هذا عمود Review Time -->
+        <td>${slaStatus}</td>
+        <td>
+            <button class="btn btn-secondary btn-sm view-assigned-btn" data-assignment-id="${a.id}">View</button>
+            ${a.status === 'pending' ? `<button class="btn btn-warning btn-sm reassign-btn" data-assignment-id="${a.id}">Reassign</button>` : ''}
+        </td>
+    </tr>
+`;
     }).join('');
 
     // Update pagination controls
