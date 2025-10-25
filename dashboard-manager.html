@@ -25,8 +25,8 @@
             getCompanyEmployees,
             getDepartments,
             getTeamAccuracyKpi,
-            getKpiTargets, // <-- Required for KPIs
-            updateKpiTargets // <-- Required for KPIs
+            getKpiTargets, // <-- إضافة جديدة
+            updateKpiTargets // <-- إضافة جديدة
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -44,8 +44,8 @@
         window.getCompanyEmployees = getCompanyEmployees;
         window.getDepartments = getDepartments;
         window.getTeamAccuracyKpi = getTeamAccuracyKpi;
-        window.getKpiTargets = getKpiTargets; // <-- Required for KPIs
-        window.updateKpiTargets = updateKpiTargets; // <-- Required for KPIs
+        window.getKpiTargets = getKpiTargets; // <-- إضافة جديدة
+        window.updateKpiTargets = updateKpiTargets; // <-- إضافة جديدة
     </script>
     <style>
         :root {
@@ -184,9 +184,6 @@
         .status-active { background-color: var(--green-bg); color: var(--green); }
         .status-inactive { background-color: var(--red-bg); color: var(--red); }
         .status-pending { background-color: var(--yellow-bg); color: var(--yellow); }
-        .kpi-card { background-color: #222; padding: 1.5rem; border-radius: var(--border-radius-base); }
-        .kpi-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.5rem; }
-        .kpi-value { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.25rem; }
         
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
@@ -233,6 +230,10 @@
         .action-btn.primary { border-color: var(--green); color: var(--green); }
         .action-btn.primary:hover { background-color: var(--green); color: white; }
         
+        .kpi-card { background: #222; padding: 1.5rem; border-radius: var(--border-radius-base); }
+        .kpi-title { font-size: 0.9rem; font-weight: 500; margin-bottom: 0.75rem; }
+        .kpi-value { font-size: 1.75rem; font-weight: 700; color: var(--text-color); }
+        .kpi-card small { font-size: 0.8rem; color: var(--text-muted); }
 
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
@@ -289,7 +290,7 @@
                                 <li><a data-tab="profile">👤 Profile</a></li>
                                 <li><a data-tab="settings">⚙️ Settings</a></li>
                                 <li><a data-tab="help">❓ Get Help</a></li>
-                                <li><a id="logout-btn">🚪 Logout</a></li>
+                                <li><a id="logout-btn" style="cursor: pointer;">🚪 Logout</a></li>
                             </ul>
                         </div>
                     </div>
@@ -406,10 +407,10 @@
                         </div>
                     </section>
 
-                    <!-- NEW: Department Performance Snapshot Section -->
-                    <section class="widget card" style="margin-top: 2rem;">
+                    <!-- قسم لقطة أداء الأقسام الجديد -->
+                    <section class="widget" style="margin-top: 2rem;">
                         <h3 style="margin-bottom: 1.5rem;">Department Performance Snapshot</h3>
-                        <div id="department-performance-snapshot" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; text-align: center;">
+                        <div id="department-performance-snapshot" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; text-align: center;">
                             <div class="kpi-card">
                                 <div class="kpi-title" style="color: var(--green);">Top Department</div>
                                 <div class="kpi-value" id="best-dept-name">Loading...</div>
@@ -428,12 +429,11 @@
                         </div>
                     </section>
                 </div>
-
+                
                 <div id="reports" class="tab-content">
                     <div class="card">
                         <h3>Advanced Reports & Analytics</h3>
                         <div class="filter-panel" style="margin-bottom: 2rem;">
-                            <!-- Filters remain the same -->
                             <div class="filter-group">
                                 <label>Report Type</label>
                                 <select id="report-type">
@@ -713,7 +713,6 @@
     </div>
 
 
-    <!-- Add User Modal -->
     <div class="modal-overlay" id="add-user-modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -759,7 +758,6 @@
         </div>
     </div>
 
-    <!-- Edit User Modal -->
     <div class="modal-overlay" id="edit-user-modal">
         <div class="modal-box">
             <div class="modal-header">
@@ -767,7 +765,6 @@
                 <button class="modal-close-btn" data-modal-id="edit-user-modal">×</button>
             </div>
             <div class="modal-body" id="edit-user-body">
-                <!-- Content will be populated by JavaScript -->
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary modal-close-btn" data-modal-id="edit-user-modal">Cancel</button>
@@ -775,8 +772,9 @@
             </div>
         </div>
     </div>
+
+    <div class="toast-container" id="toast-container"></div>
     
-    <!-- Edit Shift Modal -->
     <div class="modal-overlay" id="edit-shift-modal">
         <div class="modal-box" style="max-width: 400px;">
             <div class="modal-header">
@@ -804,7 +802,6 @@
         </div>
     </div>
     
-    <!-- Edit Department Modal -->
     <div class="modal-overlay" id="edit-department-modal">
         <div class="modal-box" style="max-width: 500px;">
             <div class="modal-header">
@@ -829,26 +826,24 @@
         </div>
     </div>
 
-    <!-- NEW: Logout Confirmation Modal -->
+    <!-- نافذة تأكيد تسجيل الخروج الجديدة -->
     <div class="modal-overlay" id="logout-confirm-modal">
         <div class="modal-box" style="max-width: 450px;">
             <div class="modal-header">
                 <h3 class="modal-title">Confirm Logout</h3>
                 <button class="modal-close-btn" data-modal-id="logout-confirm-modal">×</button>
             </div>
-            <div class="modal-body">
-                <p style="font-size: 1.1rem; color: var(--text-muted);">Are you sure you want to log out of your account?</p>
+            <div class="modal-body" style="text-align: center;">
+                 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-bottom: 1rem;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                <p style="font-size: 1.1rem; color: var(--text-color);">Are you sure you want to log out of your account?</p>
             </div>
             <div class="modal-footer">
-                <button class="btn btn-secondary modal-close-btn" data-modal-id="logout-confirm-modal">Cancel</button>
+                <button class="btn btn-secondary modal-close-btn" data-modal-id="logout-confirm-modal" style="background-color:#555;">Stay</button>
                 <button class="btn btn-danger" id="confirm-logout-btn">Logout</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notifications Container -->
-    <div class="toast-container" id="toast-container"></div>
-    
 
     <script>
         // Application State
@@ -856,7 +851,7 @@
         let teamMembers = [];
         let performanceMetrics = {};
         let errorTrends = {};
-        let departmentPerformance = [];
+        let departmentPerformance = {};
         let notifications = [];
         let errorTrendChart = null;
         let departmentErrorsChart = null;
@@ -936,6 +931,7 @@
             return `${days}d ago`;
         }
 
+
         function showModal(modalId) {
             document.getElementById(modalId)?.classList.add('show');
         }
@@ -994,14 +990,14 @@
 
                 await Promise.all([
                     loadPerformanceMetrics(),
+                    loadErrorTrends(),
+                    loadDepartmentPerformance(),
                     loadTeamMembers(),
                     loadNotifications(),
                     loadCompanyEmployees(),
                     loadDepartments(),
                     loadTeamSchedule(),
-                    loadKpiSettings(), // Load KPI settings
-                    updateErrorTrendChart(), // Update charts with real data
-                    updateDepartmentErrorsChart() // Update charts with real data
+                    loadKpiSettings() // تحميل إعدادات KPI
                 ]);
 
                 showToast('Manager Dashboard loaded successfully', 'success');
@@ -1016,6 +1012,7 @@
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
             document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
+            
             document.getElementById('profile-fullname').value = currentUser.name;
             document.getElementById('profile-email').value = currentUser.email;
             document.getElementById('profile-phone').value = currentUser.phone || '';
@@ -1031,24 +1028,34 @@
                 const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
 
                 document.getElementById('total-orders').textContent = metrics.totalOrders;
+                
                 const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
                 document.getElementById('error-rate').textContent = `${errorRate}%`;
+
                 document.getElementById('active-agents').textContent = activeAgentsCount;
                 
                 const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
                 if (qualityAccuracyEl) {
                     qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
-                    qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
+                    if (metrics.qualityTeamAccuracy < 98) {
+                        qualityAccuracyEl.style.color = 'var(--warning-color)';
+                    } else {
+                        qualityAccuracyEl.style.color = 'var(--green)';
+                    }
                 }
 
-                // --- NEW: Update Top Performing Team Card ---
-                const deptPerformance = await getDepartmentPerformance();
+                document.getElementById('orders-change').textContent = `For today`;
+                document.getElementById('error-rate-change').textContent = `Overall team error rate`;
+                document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+
+                // --- تحديث بطاقة أفضل فريق ---
+                const departmentData = await getDepartmentPerformance();
                 const topTeamCard = document.getElementById('top-team');
                 const topTeamRateCard = document.getElementById('top-team-rate');
 
-                if (deptPerformance && deptPerformance.length > 0) {
-                    deptPerformance.sort((a, b) => a.error_rate - b.error_rate); // Best is first
-                    const bestTeam = deptPerformance[0];
+                if (departmentData && departmentData.length > 0) {
+                    departmentData.sort((a, b) => a.error_rate - b.error_rate);
+                    const bestTeam = departmentData[0];
                     topTeamCard.textContent = bestTeam.department;
                     topTeamRateCard.textContent = `${bestTeam.error_rate}% Error Rate`;
                 } else {
@@ -1056,19 +1063,34 @@
                     topTeamRateCard.textContent = 'No data';
                 }
 
-                document.getElementById('orders-change').textContent = `For today`;
-                document.getElementById('error-rate-change').textContent = `Overall team error rate`;
-                document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
-
             } catch (error) {
                 console.error('Error loading manager performance metrics:', error);
                 showToast('Failed to load dashboard KPIs', 'error');
             }
         }
 
+        async function loadErrorTrends() {
+            try {
+                errorTrends = await getErrorTrends('1 month'); 
+                await updateErrorTrendChart();
+            } catch (error) {
+                console.error('Error loading error trends:', error);
+            }
+        }
+
+        async function loadDepartmentPerformance() {
+            try {
+                departmentPerformance = await getDepartmentPerformance();
+                await updateDepartmentErrorsChart();
+            } catch (error) {
+                console.error('Error loading department performance:', error);
+            }
+        }
+
         async function loadTeamMembers(filters = {}) {
             try {
                 teamMembers = await getTeamMembers();
+                
                 let filteredMembers = teamMembers;
                 if (filters.role && filters.role !== 'all') {
                     filteredMembers = filteredMembers.filter(m => m.role === filters.role);
@@ -1084,11 +1106,14 @@
                         m.email.toLowerCase().includes(searchTerm)
                     );
                 }
+                
                 renderUsersTable(filteredMembers);
                 populateEmployeeFilter();
+                
             } catch (error) {
                 console.error('Error loading team members:', error);
                 showToast('Failed to load team members', 'error');
+                teamMembers = [];
                 renderUsersTable([]);
             }
         }
@@ -1099,44 +1124,36 @@
                 updateNotificationsUI();
             } catch (error) {
                 console.error('Error loading notifications:', error);
-                updateNotificationsUI([]);
-            }
-        }
-        
-        // NEW: Function to load KPI settings
-        async function loadKpiSettings() {
-            try {
-                const targets = await getKpiTargets();
-                if (targets) {
-                    document.getElementById('kpi-accuracy-target').value = targets.accuracy_target;
-                    document.getElementById('kpi-reviews-per-day').value = targets.reviews_per_day;
-                }
-            } catch (error) {
-                showToast("Could not load KPI settings.", "error");
+                notifications = [];
+                updateNotificationsUI();
             }
         }
 
         function renderUsersTable(users) {
             const tableBody = document.getElementById('users-table-body');
-            tableBody.innerHTML = users.length === 0 ? `<tr><td colspan="7" class="empty-state">No users found.</td></tr>` : users.map(user => `
-                <tr>
-                    <td>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div class="avatar-initials" style="width: 36px; height: 36px;">${getInitials(user.name)}</div>
-                            <div><b>${user.name}</b><br><small>${user.admin_id || 'No ID'}</small></div>
-                        </div>
-                    </td>
-                    <td>${user.email}</td>
-                    <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
-                    <td>${user.department || 'N/A'}</td>
-                    <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
-                    <td>${formatTimeAgo(user.last_seen)}</td>
-                    <td>
-                        <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
-                        <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
-                    </td>
-                </tr>
-            `).join('');
+            if (users.length === 0) {
+                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No users found.</td></tr>`;
+            } else {
+                tableBody.innerHTML = users.map(user => `
+                    <tr>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div class="avatar-initials" style="width: 36px; height: 36px;">${getInitials(user.name)}</div>
+                                <div><b>${user.name}</b><br><small>${user.admin_id || 'No ID'}</small></div>
+                            </div>
+                        </td>
+                        <td>${user.email}</td>
+                        <td><span class="role-badge ${getRoleBadgeClass(user.role)}">${getRoleDisplayName(user.role)}</span></td>
+                        <td>${user.department || 'N/A'}</td>
+                        <td><span class="status-badge ${user.is_active ? 'status-active' : 'status-inactive'}">${user.is_active ? 'Active' : 'Inactive'}</span></td>
+                        <td>${formatTimeAgo(user.last_seen)}</td>
+                        <td>
+                            <button class="action-btn edit-user-btn" data-user-id="${user.id}">Edit</button>
+                            <button class="action-btn ${user.is_active ? 'danger' : 'primary'}" data-user-id="${user.id}" data-action="${user.is_active ? 'deactivate' : 'activate'}">${user.is_active ? 'Deactivate' : 'Activate'}</button>
+                        </td>
+                    </tr>
+                `).join('');
+            }
             document.querySelectorAll('.edit-user-btn').forEach(btn => btn.addEventListener('click', () => openEditUserModal(btn.dataset.userId)));
             document.querySelectorAll('.action-btn[data-action]').forEach(btn => btn.addEventListener('click', () => handleUserAction(btn.dataset.userId, btn.dataset.action)));
         }
@@ -1144,37 +1161,50 @@
         function populateEmployeeFilter() {
             const employeeSelect = document.getElementById('filter-employee');
             employeeSelect.innerHTML = '<option value="all">All</option>' + 
-                teamMembers.map(member => `<option value="${member.id}">${member.name}</option>`).join('');
+                teamMembers.map(member => 
+                    `<option value="${member.id}">${member.name}</option>`
+                ).join('');
         }
 
         function updateNotificationsUI() {
             const notificationList = document.getElementById('notification-list');
-            notificationList.innerHTML = notifications.length === 0 ? '<li class="notification-item">No new notifications</li>' : notifications.map(notification => 
-                `<li class="notification-item">${notification.message}</li>`
-            ).join('');
+            
+            if (notifications.length === 0) {
+                notificationList.innerHTML = '<li class="notification-item">No new notifications</li>';
+            } else {
+                notificationList.innerHTML = notifications.map(notification => 
+                    `<li class="notification-item">${notification.message}</li>`
+                ).join('');
+            }
         }
 
         function initCharts() {
-            const chartOptions = {
-                responsive: true, maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
-                plugins: { legend: { labels: { color: '#e6edf3' } } }
-            };
-
             const errorTrendCtx = document.getElementById('errorTrendChart')?.getContext('2d');
             if(errorTrendCtx) {
                 if (errorTrendChart) errorTrendChart.destroy();
-                errorTrendChart = new Chart(errorTrendCtx, { type: 'line', data: { labels: [], datasets: [{ label: 'Error Rate %', data: [], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: chartOptions });
+                errorTrendChart = new Chart(errorTrendCtx, {
+                    type: 'line', data: { labels: [], datasets: [{ label: 'Error Rate %', data: [], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false, 
+                        scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } },
+                        plugins: { legend: { labels: { color: '#e6edf3' } } }
+                    }
+                });
             }
 
             const departmentCtx = document.getElementById('departmentErrorsChart')?.getContext('2d');
             if(departmentCtx) {
                 if(departmentErrorsChart) departmentErrorsChart.destroy();
-                departmentErrorsChart = new Chart(departmentCtx, { type: 'doughnut', data: { labels: [], datasets: [{ label: 'Errors', data: [], backgroundColor: ['#007BFF', '#ffc107', '#28a745', '#dc3545', '#6f42c1'] }] }, options: { ...chartOptions, scales: {} } });
+                departmentErrorsChart = new Chart(departmentCtx, {
+                    type: 'doughnut', data: { labels: [], datasets: [{ label: 'Errors', data: [], backgroundColor: ['#007BFF', '#ffc107', '#28a745', '#dc3545', '#6f42c1'] }] },
+                    options: { 
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top', labels: { color: '#e6edf3' } } }
+                    }
+                });
             }
         }
 
-        // NEW: Function to update error trend chart with data
         async function updateErrorTrendChart() {
             try {
                 const trendData = await getErrorTrends();
@@ -1186,20 +1216,17 @@
             } catch (error) { console.error("Error updating trend chart", error); }
         }
         
-        // NEW & UPDATED: Function to update department chart AND snapshot
         async function updateDepartmentErrorsChart() {
             try {
                 const deptData = await getDepartmentPerformance();
-                if (!deptData) return;
-
-                if (departmentErrorsChart) {
+                if (departmentErrorsChart && deptData) {
                     departmentErrorsChart.data.labels = deptData.map(d => d.department);
                     departmentErrorsChart.data.datasets[0].data = deptData.map(d => d.error_count);
                     departmentErrorsChart.update();
                 }
 
-                if (deptData.length > 0) {
-                    deptData.sort((a, b) => a.error_rate - b.error_rate); // Sort best to worst
+                if (deptData && deptData.length > 0) {
+                    deptData.sort((a, b) => parseFloat(a.error_rate) - parseFloat(b.error_rate));
                     const bestDept = deptData[0];
                     const worstDept = deptData[deptData.length - 1];
                     const totalErrorRate = deptData.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
@@ -1213,6 +1240,7 @@
                 }
             } catch (error) { console.error("Error updating department snapshot", error); }
         }
+
 
         async function loadCompanyEmployees() {
             try {
@@ -1251,18 +1279,22 @@
         function renderDepartmentsTable() {
             const tableBody = document.getElementById('departments-table-body');
             if (!tableBody) return;
-            tableBody.innerHTML = departments.length === 0 ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>` : departments.map(dept => `
-                <tr>
-                    <td>${dept.department_name}</td>
-                    <td>${dept.head?.name || 'N/A'}</td>
-                    <td>
-                        <button class="action-btn edit-department-btn" data-dept-id="${dept.id}">Edit</button>
-                    </td>
-                </tr>
-            `).join('');
+            tableBody.innerHTML = departments.length === 0
+                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
+                : departments.map(dept => `
+                    <tr>
+                        <td>${dept.department_name}</td>
+                        <td>${dept.head?.name || 'N/A'}</td>
+                        <td>
+                            <button class="action-btn edit-department-btn" data-dept-id="${dept.id}">Edit</button>
+                        </td>
+                    </tr>
+                `).join('');
             
             document.querySelectorAll('#departments-table-body .edit-department-btn').forEach(btn => {
-                btn.addEventListener('click', () => openEditDepartmentModal(btn.dataset.deptId));
+                btn.addEventListener('click', () => {
+                    openEditDepartmentModal(btn.dataset.deptId);
+                });
             });
         }
         
@@ -1274,7 +1306,9 @@
 
         async function loadTeamSchedule() {
             try {
-                if (teamMembers.length === 0) await loadTeamMembers();
+                if (teamMembers.length === 0) {
+                   await loadTeamMembers();
+                }
                 teamSchedule = await getTeamSchedule();
                 renderTeamSchedule();
             } catch (error) { showToast('Failed to load team schedule', 'error'); }
@@ -1288,7 +1322,7 @@
             const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
             
             if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members to schedule.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
                 return;
             }
 
@@ -1300,11 +1334,17 @@
             }, {});
 
             tableBody.innerHTML = teamToSchedule.map(member => {
-                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0]; // Mon to Sun
+                const daysOfWeek = [1, 2, 3, 4, 5, 6, 0];
                 const cells = daysOfWeek.map(day => {
                     const shift = scheduleMap[member.id]?.[day] || 'Off';
-                    let className = shift === 'On Leave' ? 'shift-leave' : (shift === 'Sick Leave' ? 'shift-sick' : (shift === 'Off' ? 'shift-off' : 'shift-time'));
-                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${className}">${shift}</span></td>`;
+                    let className, display;
+                    
+                    if (shift === 'On Leave') { className = 'shift-leave'; display = 'On Leave'; } 
+                    else if (shift === 'Sick Leave') { className = 'shift-sick'; display = 'Sick Leave'; }
+                    else if (shift === 'Off') { className = 'shift-off'; display = 'Off'; }
+                    else { className = 'shift-time'; display = shift; }
+
+                    return `<td class="shift-cell" data-user-id="${member.id}" data-user-name="${member.name}" data-day="${day}"><span class="${className}">${display}</span></td>`;
                 }).join('');
                 return `<tr><td class="member-name">${member.name}</td>${cells}</tr>`;
             }).join('');
@@ -1345,33 +1385,69 @@
             } catch (error) { showToast(`Failed to update schedule: ${error.message}`, 'error'); }
         }
 
+        async function loadKpiSettings() {
+            try {
+                const targets = await getKpiTargets();
+                if (targets) {
+                    document.getElementById('kpi-accuracy-target').value = targets.accuracy_target;
+                    document.getElementById('kpi-reviews-per-day').value = targets.reviews_per_day;
+                }
+            } catch (error) {
+                showToast("Could not load KPI settings.", "error");
+            }
+        }
+
         function openEditUserModal(userId) {
             const user = teamMembers.find(u => u.id === userId);
             if (!user) {
                 showToast('User not found', 'error');
                 return;
             }
+
             document.getElementById('edit-user-body').innerHTML = `
-                <div class="form-group"><label for="edit-user-name">Full Name</label><input type="text" id="edit-user-name" value="${user.name}"></div>
-                <div class="form-group"><label for="edit-user-email">Email Address</label><input type="email" id="edit-user-email" value="${user.email}"></div>
-                <div class="form-group"><label for="edit-user-role">Role</label><select id="edit-user-role">
-                    <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agent</option><option value="quality" ${user.role === 'quality' ? 'selected' : ''}>Quality Agent</option>
-                    <option value="senior" ${user.role === 'senior' ? 'selected' : ''}>Senior Quality Analyst</option><option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
-                </select></div>
-                <div class="form-group"><label for="edit-user-department">Department</label><select id="edit-user-department">
-                    <option value="customer_service" ${user.department === 'customer_service' ? 'selected' : ''}>Customer Service</option><option value="logistics" ${user.department === 'logistics' ? 'selected' : ''}>Logistics</option>
-                    <option value="operations" ${user.department === 'operations' ? 'selected' : ''}>Operations</option>
-                </select></div>
-                <div class="form-group"><label for="edit-user-status">Status</label><select id="edit-user-status">
-                    <option value="active" ${user.is_active ? 'selected' : ''}>Active</option><option value="inactive" ${!user.is_active ? 'selected' : ''}>Inactive</option>
-                </select></div>`;
+                <div class="form-group">
+                    <label for="edit-user-name">Full Name</label>
+                    <input type="text" id="edit-user-name" value="${user.name}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-email">Email Address</label>
+                    <input type="email" id="edit-user-email" value="${user.email}">
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-role">Role</label>
+                    <select id="edit-user-role">
+                        <option value="agent" ${user.role === 'agent' ? 'selected' : ''}>Agent</option>
+                        <option value="quality" ${user.role === 'quality' ? 'selected' : ''}>Quality Agent</option>
+                        <option value="senior" ${user.role === 'senior' ? 'selected' : ''}>Senior Quality Analyst</option>
+                        <option value="manager" ${user.role === 'manager' ? 'selected' : ''}>Manager</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-department">Department</label>
+                    <select id="edit-user-department">
+                        <option value="customer_service" ${user.department === 'customer_service' ? 'selected' : ''}>Customer Service</option>
+                        <option value="logistics" ${user.department === 'logistics' ? 'selected' : ''}>Logistics</option>
+                        <option value="operations" ${user.department === 'operations' ? 'selected' : ''}>Operations</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="edit-user-status">Status</label>
+                    <select id="edit-user-status">
+                        <option value="active" ${user.is_active ? 'selected' : ''}>Active</option>
+                        <option value="inactive" ${!user.is_active ? 'selected' : ''}>Inactive</option>
+                    </select>
+                </div>
+            `;
             document.getElementById('save-user-changes-btn').dataset.userId = userId;
             showModal('edit-user-modal');
         }
 
         function openEditEmployeeModal(employeeId) {
             const employee = companyEmployees.find(e => e.id.toString() === employeeId);
-            if (!employee) { showToast('Employee not found', 'error'); return; }
+            if (!employee) {
+                showToast('Employee not found', 'error');
+                return;
+            }
             console.log("Editing employee:", employee);
             showToast(`Editing employee: ${employee.employee_name}`, 'info');
         }
@@ -1379,9 +1455,13 @@
         async function handleUserAction(userId, action) {
             try {
                 const user = teamMembers.find(u => u.id === userId);
-                if (!user) { showToast('User not found', 'error'); return; }
-                await updateUserProfile(userId, { is_active: action === 'activate' });
-                showToast(`User ${action}d successfully`, 'success');
+                if (!user) {
+                    showToast('User not found', 'error');
+                    return;
+                }
+                const updates = { is_active: action === 'activate' };
+                await updateUserProfile(userId, updates);
+                showToast(`User ${action === 'activate' ? 'activated' : 'deactivated'} successfully`, 'success');
                 await loadTeamMembers();
             } catch (error) {
                 console.error('Error updating user:', error);
@@ -1391,13 +1471,19 @@
         
         function openEditDepartmentModal(departmentId) {
             const department = departments.find(d => d.id.toString() === departmentId);
-            if (!department) { showToast('Department not found.', 'error'); return; }
+            if (!department) {
+                showToast('Department not found.', 'error');
+                return;
+            }
+
             document.getElementById('edit-department-id').value = department.id;
             document.getElementById('edit-department-name').value = department.department_name;
+            
             const headSelect = document.getElementById('edit-department-head');
             headSelect.innerHTML = '<option value="">- None -</option>' + teamMembers.map(user => 
                 `<option value="${user.id}" ${user.id === department.head_of_department_id ? 'selected' : ''}>${user.name}</option>`
             ).join('');
+
             showModal('edit-department-modal');
         }
 
@@ -1433,13 +1519,17 @@
             });
             
             document.querySelectorAll('.modal-close-btn').forEach(btn => {
-                btn.addEventListener('click', () => hideModal(btn.dataset.modalId));
+                btn.addEventListener('click', () => {
+                    const modalId = btn.dataset.modalId;
+                    hideModal(modalId);
+                });
             });
             
             document.getElementById('apply-filters-btn').addEventListener('click', () => {
                 showToast('Applying filters and refreshing data...', 'info');
-                updateErrorTrendChart();
-                updateDepartmentErrorsChart();
+                loadPerformanceMetrics(); 
+                loadErrorTrends();
+                loadDepartmentPerformance();
             });
             
             document.getElementById('download-report-btn').addEventListener('click', () => showToast("Generating report for download...", 'info'));
@@ -1459,9 +1549,9 @@
                 showToast('User filters applied', 'success');
             });
             
-            ['add-user-btn', 'add-company-employee-btn', 'add-member-schedule-btn', 'invite-user-btn'].forEach(id => {
-                document.getElementById(id).addEventListener('click', () => showModal('add-user-modal'));
-            });
+            document.getElementById('add-user-btn').addEventListener('click', () => showModal('add-user-modal'));
+            document.getElementById('add-company-employee-btn').addEventListener('click', () => showModal('add-user-modal'));
+            document.getElementById('add-member-schedule-btn').addEventListener('click', () => showModal('add-user-modal'));
 
             document.getElementById('submit-new-user-btn').addEventListener('click', async () => {
                 const name = document.getElementById('new-user-name').value;
@@ -1469,7 +1559,8 @@
                 const role = document.getElementById('new-user-role').value;
                 const password = document.getElementById('new-user-password').value;
                 if (!name || !email || !role || !password) {
-                    showToast('Please fill all required fields', 'warning'); return;
+                    showToast('Please fill all required fields', 'warning');
+                    return;
                 }
                 showToast(`User ${name} would be created with ${role} role`, 'info');
                 hideModal('add-user-modal');
@@ -1490,10 +1581,11 @@
                     hideModal('edit-user-modal');
                     await loadTeamMembers();
                 } catch (error) {
-                    console.error('Error updating user:', error);
                     showToast('Failed to update user', 'error');
                 }
             });
+            
+            document.getElementById('invite-user-btn').addEventListener('click', () => showModal('add-user-modal'));
             
             document.getElementById('save-profile-btn').addEventListener('click', async () => {
                 const updates = {
@@ -1506,38 +1598,18 @@
                     updateUserInterface();
                     showToast('Profile updated successfully', 'success');
                 } catch (error) {
-                    console.error('Error updating profile:', error);
                     showToast('Failed to update profile', 'error');
                 }
             });
             
-            // --- UPDATED: Logout button now shows modal ---
-            document.getElementById('logout-btn').addEventListener('click', () => {
-                showModal('logout-confirm-modal');
-            });
-
-            // --- NEW: Event listener for the final logout confirmation ---
+            document.getElementById('logout-btn').addEventListener('click', () => showModal('logout-confirm-modal'));
+            
             document.getElementById('confirm-logout-btn').addEventListener('click', async () => {
                 try {
                     await supabase.auth.signOut();
                     window.location.href = 'login.html';
                 } catch (error) {
-                    console.error('Error during logout:', error);
                     showToast('Error during logout', 'error');
-                }
-            });
-            
-            // --- NEW: Save KPI Button Event Listener ---
-            document.getElementById('save-kpi-btn').addEventListener('click', async () => {
-                const targets = {
-                    accuracy_target: document.getElementById('kpi-accuracy-target').value,
-                    reviews_per_day: document.getElementById('kpi-reviews-per-day').value
-                };
-                try {
-                    await updateKpiTargets(targets);
-                    showToast("KPI targets saved successfully!", "success");
-                } catch (error) {
-                    showToast("Failed to save KPI targets.", "error");
                 }
             });
 
@@ -1548,20 +1620,27 @@
             const scheduleTable = document.getElementById('schedule-table');
 
             editScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = true; scheduleTable.classList.add('edit-mode');
-                editScheduleBtn.style.display = 'none'; scheduleEditControls.style.display = 'inline-flex';
+                isScheduleEditMode = true;
+                scheduleTable.classList.add('edit-mode');
+                editScheduleBtn.style.display = 'none';
+                scheduleEditControls.style.display = 'inline-flex';
                 showToast('Edit mode enabled. Click on a cell to modify.', 'info');
             });
 
             cancelScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = false; scheduleTable.classList.remove('edit-mode');
-                editScheduleBtn.style.display = 'inline-flex'; scheduleEditControls.style.display = 'none';
-                renderTeamSchedule(); showToast('Edit mode cancelled.', 'warning');
+                isScheduleEditMode = false;
+                scheduleTable.classList.remove('edit-mode');
+                editScheduleBtn.style.display = 'inline-flex';
+                scheduleEditControls.style.display = 'none';
+                renderTeamSchedule();
+                showToast('Edit mode cancelled.', 'warning');
             });
             
             saveScheduleBtn.addEventListener('click', () => {
-                isScheduleEditMode = false; scheduleTable.classList.remove('edit-mode');
-                editScheduleBtn.style.display = 'inline-flex'; scheduleEditControls.style.display = 'none';
+                isScheduleEditMode = false;
+                scheduleTable.classList.remove('edit-mode');
+                editScheduleBtn.style.display = 'inline-flex';
+                scheduleEditControls.style.display = 'none';
                 showToast('Schedule changes saved successfully!', 'success');
             });
             
@@ -1573,12 +1652,24 @@
                 try {
                     const { error } = await supabase.from('departments').update({ head_of_department_id: headId || null }).eq('id', deptId);
                     if (error) throw error;
-                    showToast('Department head updated!', 'success');
+                    showToast('Department head updated successfully!', 'success');
                     hideModal('edit-department-modal');
                     await loadDepartments();
                 } catch (error) {
-                    console.error("Error updating department head:", error);
                     showToast('Failed to update department head', 'error');
+                }
+            });
+
+            document.getElementById('save-kpi-btn').addEventListener('click', async () => {
+                const targets = {
+                    accuracy_target: document.getElementById('kpi-accuracy-target').value,
+                    reviews_per_day: document.getElementById('kpi-reviews-per-day').value
+                };
+                try {
+                    await updateKpiTargets(targets);
+                    showToast("KPI targets saved successfully!", "success");
+                } catch (error) {
+                    showToast("Failed to save KPI targets.", "error");
                 }
             });
 
