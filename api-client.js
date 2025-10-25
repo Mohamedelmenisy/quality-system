@@ -372,6 +372,19 @@ export async function getUnassignedOrders() {
   }
 }
 
+
+export async function getTeamPerformance() {
+  try {
+    // This RPC function should return data like: [{ agent_name, accuracy, total_reviews }]
+    const { data, error } = await supabase.rpc('get_team_performance');
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('GetTeamPerformance error:', error);
+    return [];
+  }
+}
+
 export async function assignOrders(orderIds, agentId, assignedById) {
   try {
     const assignments = orderIds.map(orderId => ({
