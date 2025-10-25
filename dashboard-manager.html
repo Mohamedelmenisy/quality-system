@@ -24,15 +24,9 @@
             subscribeToNotifications,
             getCompanyEmployees,
             getDepartments,
-            getTeamAccuracyKpi,
-            getKpiTargets,
-            updateKpiTargets,
-            // --- FIX START: Import missing functions ---
-            getAgentAccuracySummary,
-            getReviewsVsOverturnedSummary,
-            updateCompanyEmployee,
-            addDepartment
-            // --- FIX END ---
+            getTeamAccuracyKpi, // <-- 1. استيراد الدالة الجديدة
+            getKpiTargets,      // <-- إضافة دالة جديدة لتحميل أهداف KPI
+            updateKpiTargets    // <-- إضافة دالة جديدة لحفظ أهداف KPI
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -49,15 +43,9 @@
         window.markNotificationAsRead = markNotificationAsRead;
         window.getCompanyEmployees = getCompanyEmployees;
         window.getDepartments = getDepartments;
-        window.getTeamAccuracyKpi = getTeamAccuracyKpi;
-        window.getKpiTargets = getKpiTargets;
-        window.updateKpiTargets = updateKpiTargets;
-        // --- FIX START: Add missing functions to window ---
-        window.getAgentAccuracySummary = getAgentAccuracySummary;
-        window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
-        window.updateCompanyEmployee = updateCompanyEmployee;
-        window.addDepartment = addDepartment;
-        // --- FIX END ---
+        window.getTeamAccuracyKpi = getTeamAccuracyKpi; // <-- 1. إضافة الدالة إلى window
+        window.getKpiTargets = getKpiTargets;           // <-- إضافة الدالة إلى window
+        window.updateKpiTargets = updateKpiTargets;     // <-- إضافة الدالة إلى window
     </script>
     <style>
         :root {
@@ -330,12 +318,11 @@
                 </div>
                 <div class="sidebar-footer">
                     <div class="user-profile-widget">
-                        <div class="avatar-initials" id="sidebar-avatar-initials">..</div>
+                        <div class="avatar-initials" id="sidebar-avatar-initials">NO</div>
                         <div>
-                            <!-- FIX: Removed hardcoded name -->
-                            <div class="user-name" id="sidebar-username">Loading...</div>
-                            <div class="user-role" id="sidebar-userrole">...</div>
-                            <div class="user-status" id="sidebar-userstatus">● Connecting</div>
+                            <div class="user-name" id="sidebar-username">Nawaf Al-Otaibi</div>
+                            <div class="user-role" id="sidebar-userrole">Manager</div>
+                            <div class="user-status" id="sidebar-userstatus">● Connected</div>
                         </div>
                     </div>
                 </div>
@@ -570,16 +557,15 @@
                         </div>
                         <div class="form-group">
                             <label for="profile-fullname">Full Name</label>
-                            <!-- FIX: Removed hardcoded value -->
-                            <input type="text" id="profile-fullname" value="">
+                            <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi">
                         </div>
                         <div class="form-group">
                             <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="" readonly style="background-color: var(--border-color); cursor: not-allowed;">
+                            <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" readonly style="background-color: var(--border-color); cursor: not-allowed;">
                         </div>
                         <div class="form-group">
                             <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" value="">
+                            <input type="tel" id="profile-phone" value="+966 55 555 1234">
                         </div>
                         <div class="page-actions">
                             <button class="btn" style="background: #333; color: white;">Cancel</button>
@@ -833,14 +819,6 @@
             <div class="form-group">
                 <label for="new-department-name">Department Name *</label>
                 <input type="text" id="new-department-name" placeholder="e.g., Sales" required>
-            </div>
-            <!-- NEW FIELD ADDED HERE -->
-            <div class="form-group">
-                <label for="new-department-head">Head of Department (Optional)</label>
-                <select id="new-department-head">
-                    <option value="">-- None --</option>
-                    <!-- Options will be populated by JavaScript -->
-                </select>
             </div>
         </div>
         <div class="modal-footer">
@@ -1127,9 +1105,6 @@
                     loadKpiSettings() // Load KPI settings
                 ]);
 
-                // Add this line to auto-load the report on page load
-                await generateAndDisplayReport();
-
                 showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1141,7 +1116,6 @@
             document.getElementById('sidebar-avatar-initials').textContent = getInitials(currentUser.name);
             document.getElementById('sidebar-username').textContent = currentUser.name;
             document.getElementById('sidebar-userrole').textContent = currentUser.role;
-            document.getElementById('sidebar-userstatus').textContent = '● Connected';
             document.getElementById('welcome-user-h2').textContent = `Welcome, ${currentUser.name}!`;
             
             // Profile form
@@ -1241,7 +1215,8 @@ async function generateAndDisplayReport() {
         // Load error trends
         async function loadErrorTrends() {
             try {
-                await updateErrorTrendChart();
+                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
+                updateErrorTrendChart();
             } catch (error) {
                 console.error('Error loading error trends:', error);
             }
@@ -1251,7 +1226,7 @@ async function generateAndDisplayReport() {
         async function loadDepartmentPerformance() {
             try {
                 departmentPerformance = await getDepartmentPerformance();
-                updateDepartmentErrorsChart();
+                updateDepartmentChart();
                 
                 // Update top team based on department performance
                 updateTopTeamCard();
@@ -1407,56 +1382,42 @@ async function generateAndDisplayReport() {
         }
 
         // Update charts with data
-        async function updateErrorTrendChart() {
-            try {
-                // This function now returns { labels: [...], values: [...] }
-                const trendData = await getErrorTrends(); 
-                if (errorTrendChart && trendData.labels.length > 0) {
-                    errorTrendChart.data.labels = trendData.labels;
-                    errorTrendChart.data.datasets[0].data = trendData.values;
-                    errorTrendChart.update();
-                } else {
-                    // Handle case with no data
-                    errorTrendChart.data.labels = ['No data for the last 30 days'];
-                    errorTrendChart.data.datasets[0].data = [0];
-                    errorTrendChart.update();
-                }
-            } catch (error) { 
-                console.error("Error updating trend chart", error); 
-            }
+        function updateErrorTrendChart() {
+            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
+            
+            errorTrendChart.data.labels = errorTrends.labels;
+            errorTrendChart.data.datasets[0].data = errorTrends.values;
+            errorTrendChart.update();
         }
 
-        async function updateDepartmentErrorsChart() {
-            try {
-                // This function now returns an array of objects: [{ department, error_count, ... }]
-                const deptData = await getDepartmentPerformance();
-                
-                if (departmentErrorsChart && deptData && deptData.length > 0) {
-                    departmentErrorsChart.data.labels = deptData.map(d => d.department);
-                    departmentErrorsChart.data.datasets[0].data = deptData.map(d => d.error_count);
-                    departmentErrorsChart.data.datasets[0].backgroundColor = [ // Optional: Add more colors
-                        '#007BFF', '#ffc107', '#28a745', '#dc3545', '#17a2b8', '#6f42c1'
-                    ];
-                    departmentErrorsChart.update();
-
-                    // --- (The code to populate the snapshot cards remains the same as before) ---
-                    deptData.sort((a, b) => a.error_rate - b.error_rate);
-                    const bestDept = deptData[0];
-                    const worstDept = deptData[deptData.length - 1];
-                    const totalErrorRate = deptData.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
-                    const avgErrorRate = (totalErrorRate / deptData.length).toFixed(1);
-
-                    document.getElementById('best-dept-name').textContent = bestDept.department;
-                    document.getElementById('best-dept-rate').textContent = `${bestDept.error_rate}% error rate`;
-                    document.getElementById('worst-dept-name').textContent = worstDept.department;
-                    document.getElementById('worst-dept-rate').textContent = `${worstDept.error_rate}% error rate`;
-                    document.getElementById('avg-dept-rate').textContent = `${avgErrorRate}%`;
-                }
-            } catch (error) { 
-                console.error("Error updating department chart and snapshot", error); 
-            }
+        function updateDepartmentChart() {
+            if (!departmentErrorsChart || !departmentPerformance || departmentPerformance.length === 0) return;
+            
+            departmentErrorsChart.data.labels = departmentPerformance.map(d => d.department);
+            departmentErrorsChart.data.datasets[0].data = departmentPerformance.map(d => d.error_count);
+            departmentErrorsChart.update();
+            
+            // Update department performance snapshot
+            updateDepartmentPerformanceSnapshot();
         }
         
+        // Update department performance snapshot
+        function updateDepartmentPerformanceSnapshot() {
+            if (!departmentPerformance || departmentPerformance.length === 0) return;
+            
+            departmentPerformance.sort((a, b) => a.error_rate - b.error_rate); // Sort best to worst
+            const bestDept = departmentPerformance[0];
+            const worstDept = departmentPerformance[departmentPerformance.length - 1];
+            const totalErrorRate = departmentPerformance.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
+            const avgErrorRate = (totalErrorRate / departmentPerformance.length).toFixed(1);
+
+            document.getElementById('best-dept-name').textContent = bestDept.department;
+            document.getElementById('best-dept-rate').textContent = `${bestDept.error_rate}% error rate`;
+            document.getElementById('worst-dept-name').textContent = worstDept.department;
+            document.getElementById('worst-dept-rate').textContent = `${worstDept.error_rate}% error rate`;
+            document.getElementById('avg-dept-rate').textContent = `${avgErrorRate}%`;
+        }
+
         async function loadCompanyEmployees() {
             try {
                 companyEmployees = await getCompanyEmployees();
@@ -1831,6 +1792,7 @@ document.getElementById('save-employee-btn').addEventListener('click', async () 
             
             // Generate report (now in the new reports tab)
             document.getElementById('generate-report-btn').addEventListener('click', generateAndDisplayReport);
+            });
             
             // Apply user filters
             document.getElementById('apply-user-filters').addEventListener('click', () => {
@@ -2042,44 +2004,26 @@ document.getElementById('save-employee-btn').addEventListener('click', async () 
                     openEditEmployeeModal(event.target.dataset.employeeId);
                 }
             });
-            
-            // Update the 'add-department-btn' event listener
-            document.getElementById('add-department-btn').addEventListener('click', () => {
-                document.getElementById('new-department-name').value = '';
-                const headSelect = document.getElementById('new-department-head');
-                
-                // Filter for managers and seniors who can be heads
-                const potentialHeads = teamMembers.filter(m => m.role === 'manager' || m.role === 'senior');
-                
-                headSelect.innerHTML = '<option value="">-- None --</option>' + 
-                    potentialHeads.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
-                    
-                showModal('add-department-modal');
-            });
+ document.getElementById('add-department-btn').addEventListener('click', () => {
+            document.getElementById('new-department-name').value = '';
+            showModal('add-department-modal');
+        });
 
-            // Update the 'save-new-department-btn' event listener
-            document.getElementById('save-new-department-btn').addEventListener('click', async () => {
-                const name = document.getElementById('new-department-name').value;
-                const headId = document.getElementById('new-department-head').value; // Get the selected ID
-                
-                if (!name) {
-                    showToast("Department name is required.", "warning");
-                    return;
-                }
-                try {
-                    const departmentData = { 
-                        department_name: name,
-                        // Include head_of_department_id only if a value is selected
-                        head_of_department_id: headId ? headId : null 
-                    };
-                    await addDepartment(departmentData);
-                    showToast("Department added successfully!", "success");
-                    hideModal('add-department-modal');
-                    await loadDepartments(); // Refresh the list
-                } catch (error) {
-                    showToast("Failed to add department.", "error");
-                }
-            });
+        document.getElementById('save-new-department-btn').addEventListener('click', async () => {
+            const name = document.getElementById('new-department-name').value;
+            if (!name) {
+                showToast("Department name is required.", "warning");
+                return;
+            }
+            try {
+                await addDepartment({ department_name: name });
+                showToast("Department added successfully!", "success");
+                hideModal('add-department-modal');
+                await loadDepartments(); // Refresh the list
+            } catch (error) {
+                showToast("Failed to add department.", "error");
+            }
+        });
         });
     </script>
 </body>
