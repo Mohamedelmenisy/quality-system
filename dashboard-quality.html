@@ -102,6 +102,7 @@ document.addEventListener('click', function(e){
             --green-bg: rgba(40, 167, 69, 0.1);
             --yellow: #ffc107;
             --yellow-bg: rgba(255, 193, 7, 0.1);
+           --blue-bg: rgba(0, 191, 255, 0.1); /* أضف هذا السطر */
             --border-radius-base: 0.75rem;
         }
         body.light-mode {
@@ -1190,28 +1191,33 @@ document.addEventListener('click', function(e){
     </div>
     
     <!-- View Inquiry/Response Modal (Main) -->
-    <div class="modal-overlay" id="view-inquiry-modal">
-        <div class="modal-box" style="max-width: 550px;">
-            <div class="modal-header">
-                <h3 class="modal-title">Inquiry Details: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
-                <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+   <!-- في الـ view-inquiry-modal عدل المحتوى -->
+<div class="modal-overlay" id="view-inquiry-modal">
+    <div class="modal-box" style="max-width: 550px;">
+        <div class="modal-header">
+            <h3 class="modal-title">Inquiry Response: <span id="view-inquiry-order-id" style="color: var(--primary-color);"></span></h3>
+            <button class="modal-close-btn" data-modal-id="view-inquiry-modal">×</button>
+        </div>
+        <div class="modal-body">
+            <div class="detail-item">
+                <strong>Your Inquiry</strong>
+                <p id="view-inquiry-text">Loading...</p>
+                <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
             </div>
-            <div class="modal-body">
-                <div class="detail-item">
-                    <strong>Agent's Inquiry</strong>
-                    <p id="view-inquiry-text">Loading...</p>
-                    <small style="color: var(--text-muted);" id="view-inquiry-agent-name">By: Loading...</small>
+            <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
+                <strong>Helper's Response</strong>
+                <p id="view-inquiry-response-text">Loading...</p>
+                <div style="margin-top: 10px; font-size: 0.8rem; color: var(--text-muted);">
+                    <div id="view-inquiry-responded-by">Responded by: Loading...</div>
+                    <div id="view-inquiry-responded-at">At: Loading...</div>
                 </div>
-                <div class="detail-item" style="background: var(--green-bg); border-left: 4px solid var(--green);">
-                    <strong>Helper's Response</strong>
-                    <p id="view-inquiry-response-text">Loading...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
             </div>
         </div>
+        <div class="modal-footer">
+            <button class="btn btn-primary modal-close-btn" data-modal-id="view-inquiry-modal">Close</button>
+        </div>
     </div>
+</div>
 
     <!-- Add Team Member Modal -->
     <div class="modal-overlay" id="add-member-modal">
@@ -1685,7 +1691,6 @@ async function loadCompanyDepartments() {
             }
 
             if (review && review.action_correctness) {
-                // في جزء الـ review processing
                 if (review.action_correctness === 'error') {
                     reviewResult = `
                         <div style="color: red; font-weight: bold; margin-bottom: 5px;">❌ Error</div>
@@ -1693,7 +1698,10 @@ async function loadCompanyDepartments() {
                         ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
                     `;
                 } else {
-                    reviewResult = `<span style="color: green; font-weight: bold;">✅ Correct</span>`;
+                    reviewResult = `
+                        <div style="color: green; font-weight: bold; margin-bottom: 5px;">✅ Correct</div>
+                        ${review.modification_details ? `<div style="font-size: 11px; color: #8b949e;">📝 ${review.modification_details}</div>` : ''}
+                    `;
                 }
             } else {
                 reviewResult = `<span style="color: gray;">No Review Data</span>`;
@@ -1701,27 +1709,61 @@ async function loadCompanyDepartments() {
             // --- END: MODIFIED CODE ---
         }
         
-        let specialStatusBadge = '';
+        // ========== NEW: Dynamic Status Badges for Escalations & Inquiries ==========
+        let dynamicStatusBadges = '';
+        
+        // Check for escalations
         if (order.escalations && order.escalations.length > 0) {
             const latestEscalation = order.escalations.sort((a,b) => new Date(b.escalated_at) - new Date(a.escalated_at))[0];
+            
             if (latestEscalation.status === 'resolved') {
-                specialStatusBadge = `<button class="btn btn-sm view-escalation-feedback-btn" data-escalation-id="${latestEscalation.id}" style="background-color: var(--green-bg); color: var(--green);">Resolved</button>`;
+                dynamicStatusBadges += `
+                    <button class="btn btn-sm view-escalation-feedback-btn" 
+                            data-escalation-id="${latestEscalation.id}"
+                            style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                        ✅ Escalation Resolved
+                    </button>
+                `;
             } else {
-                specialStatusBadge = `<span class="inquiry-badge" title="This order is escalated">Escalation Pending</span>`;
+                dynamicStatusBadges += `
+                    <span class="inquiry-badge" style="background: var(--yellow-bg); color: var(--yellow); margin: 2px;">
+                        🚨 Escalated to ${latestEscalation.escalated_to?.name || 'Helper'}
+                    </span>
+                `;
             }
         }
-        else if (order.inquiries && order.inquiries.length > 0) {
+        
+        // Check for inquiries
+        if (order.inquiries && order.inquiries.length > 0) {
             const latestInquiry = order.inquiries.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+            
             if (latestInquiry.status === 'responded') {
-                specialStatusBadge = `<button class="btn btn-sm view-inquiry-feedback-btn" data-inquiry-id="${latestInquiry.id}" style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer;">Response Received</button>`;
+                dynamicStatusBadges += `
+                    <button class="btn btn-sm view-inquiry-feedback-btn" 
+                            data-inquiry-id="${latestInquiry.id}"
+                            style="background-color: var(--green-bg); color: var(--green); border: none; cursor: pointer; margin: 2px; padding: 4px 8px; border-radius: 12px; font-size: 11px;">
+                        💬 Response Received
+                    </button>
+                `;
             } else {
-                specialStatusBadge = `<span class="inquiry-badge">Inquiry Pending</span>`;
+                dynamicStatusBadges += `
+                    <span class="inquiry-badge" style="background: var(--blue-bg); color: var(--primary-color); margin: 2px;">
+                        ❓ Inquiry Pending
+                    </span>
+                `;
             }
         }
 
         return `
             <tr>
-                <td>${orderData?.order_id || 'N/A'} ${specialStatusBadge}</td>
+                <td>
+                    <div style="display: flex; flex-direction: column; gap: 5px;">
+                        <strong>${orderData?.order_id || 'N/A'}</strong>
+                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
+                            ${dynamicStatusBadges}
+                        </div>
+                    </div>
+                </td>
                 <td>${orderData?.reason || 'N/A'}</td>
                 <td>${formatDateTime(order.assigned_at)}</td>
                 <td><span class="status-badge ${statusClass}">${order.status.replace('_', ' ')}</span></td>
@@ -1741,12 +1783,13 @@ async function loadCompanyDepartments() {
         `;
     }).join('');
     
+    // Add event listeners for the new buttons
     document.querySelectorAll('.view-order-btn').forEach(btn => btn.addEventListener('click', () => openViewOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.review-order-btn').forEach(btn => btn.addEventListener('click', () => openReviewOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.escalate-order-btn').forEach(btn => btn.addEventListener('click', () => openEscalateOrderModal(btn.dataset.orderId)));
     document.querySelectorAll('.raise-inquiry-btn').forEach(btn => btn.addEventListener('click', () => openRaiseInquiryModal(btn.dataset.orderId)));
 
-    // Add new event listeners for the new buttons
+    // Add new event listeners for the dynamic status buttons
     document.querySelectorAll('.view-escalation-feedback-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             e.stopPropagation();
@@ -1762,9 +1805,26 @@ async function loadCompanyDepartments() {
             const body = document.getElementById('view-escalation-body');
             if (body) {
                 body.innerHTML = `
-                    <div class="detail-item"><strong>Order ID</strong><span>${order.orders?.order_id || 'N/A'}</span></div>
-                    <div class="detail-item"><strong>Your Escalation Reason</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p></div>
-                    <div class="detail-item" style="background: var(--green-bg);"><strong>Feedback Received</strong><p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p></div>
+                    <div class="detail-item">
+                        <strong>Order ID</strong>
+                        <span>${order.orders?.order_id || 'N/A'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Your Escalation Reason</strong>
+                        <p style="white-space: pre-wrap; margin-top: 5px;">${escalation.notes || 'No reason provided.'}</p>
+                    </div>
+                    <div class="detail-item" style="background: var(--green-bg);">
+                        <strong>Feedback Received</strong>
+                        <p style="white-space: pre-wrap; margin-top: 5px;">${escalation.feedback || 'No feedback provided.'}</p>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Resolved By</strong>
+                        <span>${escalation.escalated_to?.name || 'Unknown'}</span>
+                    </div>
+                    <div class="detail-item">
+                        <strong>Resolved At</strong>
+                        <span>${formatDateTime(escalation.resolved_at)}</span>
+                    </div>
                 `;
                 showModal('view-escalation-modal');
             }
@@ -1783,6 +1843,8 @@ async function loadCompanyDepartments() {
                 document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
                 document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
                 document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
+                document.getElementById('view-inquiry-responded-by').textContent = `Responded by: ${inquiry.responded_by?.name || 'Unknown'}`;
+                document.getElementById('view-inquiry-responded-at').textContent = `At: ${formatDateTime(inquiry.responded_at)}`;
                 showModal('view-inquiry-modal');
             } else {
                 showToast('Could not find inquiry details.', 'error');
