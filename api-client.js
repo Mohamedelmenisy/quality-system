@@ -1240,6 +1240,31 @@ export async function getTeamPerformance() {
   }
 }
 
+// ** NEW FUNCTIONS FOR REPORTS & ANALYTICS PAGE **
+export async function getAgentAccuracySummary(period) {
+  try {
+    // 'period' could be 'week', 'month', 'quarter'
+    // The RPC function should handle the date logic based on the period
+    const { data, error } = await supabase.rpc('get_agent_accuracy_summary', { period_filter: period });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching agent accuracy summary:', error);
+    return []; // Return an empty array on error
+  }
+}
+
+export async function getReviewsVsOverturnedSummary(period) {
+  try {
+    const { data, error } = await supabase.rpc('get_reviews_vs_overturned_summary', { period_filter: period });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching reviews vs overturned summary:', error);
+    return []; // Return an empty array on error
+  }
+}
+
 // ==================== DATA IMPORT FUNCTIONS ====================
 
 export async function importOrdersFromCSV(csvData) {
@@ -1277,6 +1302,45 @@ export async function importOrdersFromCSV(csvData) {
     return data;
   } catch (error) {
     console.error('ImportOrdersFromCSV error:', error);
+    throw error;
+  }
+}
+
+// ==================== KPI & SETTINGS FUNCTIONS ====================
+
+export async function getKpiTargets() {
+  try {
+    const { data, error } = await supabase
+      .from('kpi_targets') // This table name is a suggestion
+      .select('*')
+      .limit(1)
+      .single(); // We assume there is only one row for KPI settings
+
+    if (error && error.code !== 'PGRST116') { // PGRST116 = "The result contains 0 rows"
+      throw error;
+    }
+    return data;
+  } catch (error) {
+    console.error('Error fetching KPI targets:', error);
+    // Return default values if no settings are found
+    return { accuracy_target: 98, reviews_per_day: 25 };
+  }
+}
+
+export async function updateKpiTargets(targets) {
+  try {
+    // 'id: 1' is a common practice for a single-row settings table
+    const { data, error } = await supabase
+      .from('kpi_targets')
+      .update(targets)
+      .eq('id', 1) // Assuming the settings row has an id of 1
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error updating KPI targets:', error);
     throw error;
   }
 }
