@@ -417,6 +417,7 @@ export async function getAssignedOrders(agentId = null, filters = {}) {
           status,
           created_at,
           responded_at,
+          raised_by:users!inquiries_raised_by_id_fkey (name),  // غيرت هنا
           responded_by:users!inquiries_responded_by_id_fkey (name)
         ),
         escalations!escalations_assignment_id_fkey (
