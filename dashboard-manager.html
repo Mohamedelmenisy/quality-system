@@ -26,7 +26,11 @@
             getDepartments,
             getTeamAccuracyKpi, // <-- 1. استيراد الدالة الجديدة
             getKpiTargets,      // <-- إضافة دالة جديدة لتحميل أهداف KPI
-            updateKpiTargets    // <-- إضافة دالة جديدة لحفظ أهداف KPI
+            updateKpiTargets,    // <-- إضافة دالة جديدة لحفظ أهداف KPI
+            // --- ADD THESE TWO LINES ---
+            getAgentAccuracySummary,
+            getReviewsVsOverturnedSummary
+            // -------------------------
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -46,6 +50,10 @@
         window.getTeamAccuracyKpi = getTeamAccuracyKpi; // <-- 1. إضافة الدالة إلى window
         window.getKpiTargets = getKpiTargets;           // <-- إضافة الدالة إلى window
         window.updateKpiTargets = updateKpiTargets;     // <-- إضافة الدالة إلى window
+        // --- ADD THESE TWO LINES ---
+        window.getAgentAccuracySummary = getAgentAccuracySummary;
+        window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
+        // -------------------------
     </script>
     <style>
         :root {
@@ -820,6 +828,14 @@
                 <label for="new-department-name">Department Name *</label>
                 <input type="text" id="new-department-name" placeholder="e.g., Sales" required>
             </div>
+            <!-- NEW FIELD ADDED HERE -->
+            <div class="form-group">
+                <label for="new-department-head">Head of Department (Optional)</label>
+                <select id="new-department-head">
+                    <option value="">-- None --</option>
+                    <!-- Options will be populated by JavaScript -->
+                </select>
+            </div>
         </div>
         <div class="modal-footer">
             <button class="btn btn-secondary modal-close-btn" data-modal-id="add-department-modal">Cancel</button>
@@ -945,7 +961,7 @@
         let teamMembers = [];
         let performanceMetrics = {};
         let errorTrends = {};
-        let departmentPerformance = {};
+        let departmentPerformance = [];
         let notifications = [];
         let errorTrendChart = null;
         let departmentErrorsChart = null;
@@ -1105,6 +1121,7 @@
                     loadKpiSettings() // Load KPI settings
                 ]);
 
+                generateAndDisplayReport();
                 showToast('Manager Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1215,8 +1232,7 @@ async function generateAndDisplayReport() {
         // Load error trends
         async function loadErrorTrends() {
             try {
-                errorTrends = await getErrorTrends('1 month'); // Adjust period as needed
-                updateErrorTrendChart();
+                await updateErrorTrendChart();
             } catch (error) {
                 console.error('Error loading error trends:', error);
             }
@@ -1225,8 +1241,7 @@ async function generateAndDisplayReport() {
         // Load department performance
         async function loadDepartmentPerformance() {
             try {
-                departmentPerformance = await getDepartmentPerformance();
-                updateDepartmentChart();
+                await updateDepartmentErrorsChart();
                 
                 // Update top team based on department performance
                 updateTopTeamCard();
@@ -1242,8 +1257,8 @@ async function generateAndDisplayReport() {
 
             if (departmentPerformance && departmentPerformance.length > 0) {
                 // Sort departments by error_rate ascending (best is first)
-                departmentPerformance.sort((a, b) => a.error_rate - b.error_rate);
-                const bestTeam = departmentPerformance[0];
+                const sortedPerformance = [...departmentPerformance].sort((a, b) => a.error_rate - b.error_rate);
+                const bestTeam = sortedPerformance[0];
                 topTeamCard.textContent = bestTeam.department;
                 topTeamRateCard.textContent = `${bestTeam.error_rate}% Error Rate`;
             } else {
@@ -1381,41 +1396,58 @@ async function generateAndDisplayReport() {
             }
         }
 
-        // Update charts with data
-        function updateErrorTrendChart() {
-            if (!errorTrendChart || !errorTrends.labels || errorTrends.labels.length === 0) return;
-            
-            errorTrendChart.data.labels = errorTrends.labels;
-            errorTrendChart.data.datasets[0].data = errorTrends.values;
-            errorTrendChart.update();
+        // REPLACED FUNCTION
+        async function updateErrorTrendChart() {
+            try {
+                // This function now returns { labels: [...], values: [...] }
+                const trendData = await getErrorTrends(); 
+                if (errorTrendChart && trendData.labels.length > 0) {
+                    errorTrendChart.data.labels = trendData.labels;
+                    errorTrendChart.data.datasets[0].data = trendData.values;
+                    errorTrendChart.update();
+                } else {
+                    // Handle case with no data
+                    errorTrendChart.data.labels = ['No data for the last 30 days'];
+                    errorTrendChart.data.datasets[0].data = [0];
+                    errorTrendChart.update();
+                }
+            } catch (error) { 
+                console.error("Error updating trend chart", error); 
+            }
         }
 
-        function updateDepartmentChart() {
-            if (!departmentErrorsChart || !departmentPerformance || departmentPerformance.length === 0) return;
-            
-            departmentErrorsChart.data.labels = departmentPerformance.map(d => d.department);
-            departmentErrorsChart.data.datasets[0].data = departmentPerformance.map(d => d.error_count);
-            departmentErrorsChart.update();
-            
-            // Update department performance snapshot
-            updateDepartmentPerformanceSnapshot();
-        }
-        
-        // Update department performance snapshot
-        function updateDepartmentPerformanceSnapshot() {
-            if (!departmentPerformance || departmentPerformance.length === 0) return;
-            
-            departmentPerformance.sort((a, b) => a.error_rate - b.error_rate); // Sort best to worst
-            const bestDept = departmentPerformance[0];
-            const worstDept = departmentPerformance[departmentPerformance.length - 1];
-            const totalErrorRate = departmentPerformance.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
-            const avgErrorRate = (totalErrorRate / departmentPerformance.length).toFixed(1);
+        // REPLACED FUNCTION
+        async function updateDepartmentErrorsChart() {
+            try {
+                // This function now returns an array of objects: [{ department, error_count, ... }]
+                const deptData = await getDepartmentPerformance();
+                departmentPerformance = deptData; // Update global state
+                
+                if (departmentErrorsChart && deptData && deptData.length > 0) {
+                    departmentErrorsChart.data.labels = deptData.map(d => d.department);
+                    departmentErrorsChart.data.datasets[0].data = deptData.map(d => d.error_count);
+                    departmentErrorsChart.data.datasets[0].backgroundColor = [ // Optional: Add more colors
+                        '#007BFF', '#ffc107', '#28a745', '#dc3545', '#17a2b8', '#6f42c1'
+                    ];
+                    departmentErrorsChart.update();
 
-            document.getElementById('best-dept-name').textContent = bestDept.department;
-            document.getElementById('best-dept-rate').textContent = `${bestDept.error_rate}% error rate`;
-            document.getElementById('worst-dept-name').textContent = worstDept.department;
-            document.getElementById('worst-dept-rate').textContent = `${worstDept.error_rate}% error rate`;
-            document.getElementById('avg-dept-rate').textContent = `${avgErrorRate}%`;
+                    // --- (The code to populate the snapshot cards remains the same as before) ---
+                    const sortedData = [...deptData].sort((a, b) => a.error_rate - b.error_rate);
+                    const bestDept = sortedData[0];
+                    const worstDept = sortedData[sortedData.length - 1];
+                    const totalErrorRate = deptData.reduce((sum, dept) => sum + parseFloat(dept.error_rate), 0);
+                    const avgErrorRate = (totalErrorRate / deptData.length).toFixed(1);
+
+                    document.getElementById('best-dept-name').textContent = bestDept.department;
+                    document.getElementById('best-dept-rate').textContent = `${bestDept.error_rate}% error rate`;
+                    document.getElementById('worst-dept-name').textContent = worstDept.department;
+                    document.getElementById('worst-dept-rate').textContent = `${worstDept.error_rate}% error rate`;
+                    document.getElementById('avg-dept-rate').textContent = `${avgErrorRate}%`;
+
+                }
+            } catch (error) { 
+                console.error("Error updating department chart and snapshot", error); 
+            }
         }
 
         async function loadCompanyEmployees() {
@@ -2003,26 +2035,44 @@ document.getElementById('save-employee-btn').addEventListener('click', async () 
                     openEditEmployeeModal(event.target.dataset.employeeId);
                 }
             });
- document.getElementById('add-department-btn').addEventListener('click', () => {
-            document.getElementById('new-department-name').value = '';
-            showModal('add-department-modal');
-        });
 
-        document.getElementById('save-new-department-btn').addEventListener('click', async () => {
-            const name = document.getElementById('new-department-name').value;
-            if (!name) {
-                showToast("Department name is required.", "warning");
-                return;
-            }
-            try {
-                await addDepartment({ department_name: name });
-                showToast("Department added successfully!", "success");
-                hideModal('add-department-modal');
-                await loadDepartments(); // Refresh the list
-            } catch (error) {
-                showToast("Failed to add department.", "error");
-            }
-        });
+            // REPLACED 'add-department-btn' listener
+            document.getElementById('add-department-btn').addEventListener('click', () => {
+                document.getElementById('new-department-name').value = '';
+                const headSelect = document.getElementById('new-department-head');
+                
+                // Filter for managers and seniors who can be heads
+                const potentialHeads = teamMembers.filter(m => m.role === 'manager' || m.role === 'senior');
+                
+                headSelect.innerHTML = '<option value="">-- None --</option>' + 
+                    potentialHeads.map(user => `<option value="${user.id}">${user.name}</option>`).join('');
+                    
+                showModal('add-department-modal');
+            });
+
+            // REPLACED 'save-new-department-btn' listener
+            document.getElementById('save-new-department-btn').addEventListener('click', async () => {
+                const name = document.getElementById('new-department-name').value;
+                const headId = document.getElementById('new-department-head').value; // Get the selected ID
+                
+                if (!name) {
+                    showToast("Department name is required.", "warning");
+                    return;
+                }
+                try {
+                    const departmentData = { 
+                        department_name: name,
+                        // Include head_of_department_id only if a value is selected
+                        head_of_department_id: headId ? headId : null 
+                    };
+                    await addDepartment(departmentData);
+                    showToast("Department added successfully!", "success");
+                    hideModal('add-department-modal');
+                    await loadDepartments(); // Refresh the list
+                } catch (error) {
+                    showToast("Failed to add department.", "error");
+                }
+            });
         });
     </script>
 </body>
