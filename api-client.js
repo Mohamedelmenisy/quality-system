@@ -1248,42 +1248,47 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
+// api-client.js
 
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
+    let isSeniorOrManager = false;
 
     if (agentId) {
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      rpcName = 'get_manager_dashboard_kpis';
+      // This will be called by Senior or Manager
+      rpcName = 'get_senior_dashboard_kpis'; // Using the Senior's dedicated RPC
+      isSeniorOrManager = true;
     }
 
     const { data, error } = await supabase.rpc(rpcName, params);
     if (error) throw error;
     const metrics = data[0];
 
-    if (agentId) {
+    if (isSeniorOrManager) {
+       // Return the full object for Senior/Manager
+       return {
+          completedOrders: metrics.reviews_today || 0,
+          pendingEscalations: metrics.pending_escalations || 0,
+          avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+          accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+        };
+    } else { // This is for the Quality Agent
        return {
             completedOrders: metrics.todays_reviews || 0,
             pendingReviews: metrics.open_cases || 0,
             accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
-            // --- THE FIX IS HERE: Renamed 'errorRate' to 'escalationRate' for clarity ---
             escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
-        };
-    } else {
-        return {
-          totalOrders: metrics.total_reviews_today || 0,
-          accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-          qualityTeamAccuracy: metrics.quality_team_accuracy ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 100.0
         };
     }
 
   } catch (error) {
     console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, escalationRate: 0 }; // Updated here as well
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
   }
 }
 
