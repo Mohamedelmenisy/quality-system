@@ -101,8 +101,9 @@
             overflow-x: hidden;
         }
 
-        /* تحسين الشريط الجانبي */
+        /* تم إخفاء الشريط الجانبي */
         .sidebar {
+            display: none;
             width: 280px;
             background: linear-gradient(to bottom, var(--sidebar-bg), #1f1f1f);
             height: 100vh;
@@ -254,10 +255,10 @@
             margin-top: 2px;
         }
 
-        /* تحسين المحتوى الرئيسي */
+        /* تم تعديل المحتوى الرئيسي ليملأ الشاشة بالكامل */
         .main-content {
-            margin-left: 280px;
-            width: calc(100% - 280px);
+            margin-left: 0;
+            width: 100%;
             padding: 30px;
             display: flex;
             flex-direction: column;
@@ -335,7 +336,6 @@
             font-size: 1.05rem;
         }
 
-        /* تحسين البطاقات والإحصائيات */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -486,7 +486,6 @@
             box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2);
         }
 
-        /* تحسين الأزرار */
         .btn {
             padding: 13px 24px;
             border: none;
@@ -544,7 +543,6 @@
             transform: translateY(-2px);
         }
 
-        /* تحسين مربعات البحث */
         .search-input-container {
             position: relative;
         }
@@ -575,7 +573,6 @@
             box-shadow: 0 0 0 3px rgba(0, 191, 255, 0.2);
         }
 
-        /* تحسين الإشعارات */
         .notification-bell {
             position: relative;
         }
@@ -714,7 +711,6 @@
             background-color: rgba(0, 191, 255, 0.1);
         }
 
-        /* تحسين النماذج */
         .form-group {
             margin-bottom: 1.8rem;
         }
@@ -757,7 +753,6 @@
             padding-top: 1.8rem;
         }
 
-        /* تحسين الإعدادات */
         .settings-layout {
             display: flex;
             gap: 2.5rem;
@@ -873,7 +868,6 @@
             transform: translateX(22px);
         }
 
-        /* تحسين الإشعارات العابرة */
         .toast-container {
             position: fixed;
             top: 20px;
@@ -988,7 +982,6 @@
             padding: 40px;
         }
 
-        /* تحسين الجداول */
         .table-container {
             background: linear-gradient(135deg, var(--card-bg), #232323);
             padding: 25px;
@@ -1032,7 +1025,6 @@
             background-color: rgba(44, 44, 44, 0.5);
         }
 
-        /* تحسين شارات الحالة */
         .role-badge {
             padding: 6px 12px;
             border-radius: 20px;
@@ -1089,7 +1081,6 @@
             border: 1px solid rgba(255, 212, 59, 0.3);
         }
 
-        /* تحسين أزرار الإجراءات */
         .action-btn {
             padding: 8px 14px;
             border-radius: var(--border-radius-sm);
@@ -1137,7 +1128,6 @@
             color: white;
         }
 
-        /* تحسين النوافذ المنبثقة */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -1232,7 +1222,6 @@
             border-top: 1px solid var(--border-light);
         }
 
-        /* New styles for department performance snapshot */
         .kpi-card {
             background: var(--card-bg);
             padding: 1.5rem;
@@ -1295,21 +1284,14 @@
             margin-top: 30px;
         }
 
-        /* تحسين الاستجابة للشاشات المختلفة */
         @media (max-width: 1024px) {
-            .sidebar {
-                width: 240px;
-            }
-            
             .main-content {
-                margin-left: 240px;
-                width: calc(100% - 240px);
+                width: 100%;
+                margin-left: 0;
             }
-            
             .stats-grid {
                 grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             }
-            
             .charts-grid {
                 grid-template-columns: 1fr;
             }
@@ -1319,56 +1301,38 @@
             body {
                 flex-direction: column;
             }
-            
-            .sidebar {
-                width: 100%;
-                height: auto;
-                position: relative;
-                border-right: none;
-                border-bottom: 1px solid var(--border-color);
-            }
-            
             .main-content {
                 margin-left: 0;
                 width: 100%;
                 padding: 20px;
             }
-            
             .stats-grid {
                 grid-template-columns: 1fr;
             }
-            
             .filter-panel {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
             .filter-group {
                 min-width: auto;
             }
-            
             .search-input-container input {
                 width: 100%;
             }
-            
             .header-actions {
                 flex-wrap: wrap;
                 justify-content: flex-end;
             }
-            
             .settings-layout {
                 flex-direction: column;
             }
-            
             .settings-nav {
                 flex: 0 0 auto;
             }
-            
             .notification-dropdown {
                 width: 90vw;
                 right: -10px;
             }
-            
             .modal-box {
                 width: 95%;
                 padding: 1.5rem;
@@ -1379,20 +1343,16 @@
             .main-content {
                 padding: 15px;
             }
-            
             .card {
                 padding: 20px;
             }
-            
             .table-container {
                 padding: 15px;
             }
-            
             .action-buttons {
                 flex-direction: column;
                 width: 100%;
             }
-            
             .action-btn {
                 width: 100%;
                 text-align: center;
@@ -1801,18 +1761,18 @@
                 <!-- Departments Content -->
                 <div id="departments" class="tab-content">
                      <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-        <h3>Company Departments</h3>
-        <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
-    </div>
-    <div class="table-container">
-        <table class="user-management-table">
-            <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-            <tbody id="departments-table-body"></tbody>
-        </table>
-    </div>
-</div>
-</div>
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Company Departments</h3>
+                            <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
+                                <tbody id="departments-table-body"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
                 <!-- Payments Content -->
                 <div id="payments" class="tab-content">
                     <div class="card">
@@ -1941,12 +1901,10 @@
                 <label for="new-department-name">Department Name *</label>
                 <input type="text" id="new-department-name" placeholder="e.g., Sales" required>
             </div>
-            <!-- NEW FIELD ADDED HERE -->
             <div class="form-group">
                 <label for="new-department-head">Head of Department (Optional)</label>
                 <select id="new-department-head">
                     <option value="">-- None --</option>
-                    <!-- Options will be populated by JavaScript -->
                 </select>
             </div>
         </div>
