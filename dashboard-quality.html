@@ -57,7 +57,10 @@ document.addEventListener('click', function(e){
             getCompanyDepartments,
             updateAssignmentStatus, // <--- أضف هذه
             getQualityAgentPerformance, // <<< ADD THIS
-            getOverturnedReviewsForAgent // <<< ADD THIS
+            getOverturnedReviewsForAgent, // <<< ADD THIS
+            getAgentMonthlyPerformance, // <<< ADD THIS
+            getAgentIssueTypes        // <<< ADD THIS
+
         } from './api-client.js';
         
         window.supabase = supabase;
@@ -89,6 +92,8 @@ document.addEventListener('click', function(e){
         window.updateAssignmentStatus = updateAssignmentStatus;
         window.getQualityAgentPerformance = getQualityAgentPerformance; // <<< ADD THIS
         window.getOverturnedReviewsForAgent = getOverturnedReviewsForAgent; // <<< ADD THIS
+        window.getAgentMonthlyPerformance = getAgentMonthlyPerformance;
+       window.getAgentIssueTypes = getAgentIssueTypes;
     </script>
     <style>
         :root {
@@ -1815,13 +1820,37 @@ async function loadPerformanceMetrics() {
             }
         }
 
-// dashboard-quality.html
-
 async function updateQualityDashboardCharts() {
-    // This function will be expanded later to fetch real chart data.
-    // For now, it keeps the existing static data.
-    // We will create new RPCs for these charts in the next step.
-    console.log("Chart update function called. Real data integration is the next step.");
+    if (!currentUser) return;
+    try {
+        // --- Update Monthly Performance Chart ---
+        const monthlyData = await getAgentMonthlyPerformance(currentUser.id);
+        if (monthlyPerformanceChart && monthlyData.length > 0) {
+            monthlyPerformanceChart.data.labels = monthlyData.map(d => new Date(d.month_start).toLocaleDateString('en-US', { month: 'short' }));
+            monthlyPerformanceChart.data.datasets[0].data = monthlyData.map(d => d.correct_reviews);
+            monthlyPerformanceChart.data.datasets[1].data = monthlyData.map(d => d.errors_found);
+            monthlyPerformanceChart.update();
+        }
+
+        // --- Update Issue Types Chart ---
+        const issueData = await getAgentIssueTypes(currentUser.id);
+        if (issueTypesChart && issueData.length > 0) {
+            issueTypesChart.data.labels = issueData.map(d => d.issue_type);
+            issueTypesChart.data.datasets[0].data = issueData.map(d => d.count);
+             // Optional: Add more colors if needed
+            issueTypesChart.data.datasets[0].backgroundColor = ['#00bfff', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#20c997'];
+            issueTypesCh-art.update();
+        } else if (issueTypesChart) {
+            // Handle case where there are no errors in the last 30 days
+            issueTypesChart.data.labels = ['No errors recorded in last 30 days'];
+            issueTypesChart.data.datasets[0].data = [1];
+            issueTypesChart.data.datasets[0].backgroundColor = ['#333'];
+            issueTypesChart.update();
+        }
+
+    } catch (error) {
+        console.error("Error updating dashboard charts:", error);
+    }
 }
         
         // Load company employees
