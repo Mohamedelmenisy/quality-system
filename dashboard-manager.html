@@ -12,7 +12,7 @@
             supabase, 
             getCurrentUser,
             getUserById,
-            getPerformanceMetrics,
+          getManagerPerformanceMetrics, // <-- Use the new manager function
             getErrorTrends,
             getDepartmentPerformance,
             getTeamMembers,
@@ -29,7 +29,6 @@
             updateKpiTargets,    // <-- إضافة دالة جديدة لحفظ أهداف KPI
             // --- ADD THESE TWO LINES ---
             getAgentAccuracySummary,
-                getManagerPerformanceMetrics, // <-- Use the new manager function
             getReviewsVsOverturnedSummary
             // -------------------------
         } from './api-client.js';
@@ -37,7 +36,6 @@
         window.supabase = supabase;
         window.getCurrentUser = getCurrentUser;
         window.getUserById = getUserById;
-        window.getPerformanceMetrics = getPerformanceMetrics;
         window.getErrorTrends = getErrorTrends;
         window.getDepartmentPerformance = getDepartmentPerformance;
         window.getTeamMembers = getTeamMembers;
