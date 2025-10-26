@@ -1247,67 +1247,55 @@ export async function createNotification(userId, message, type = 'info') {
   }
 }
 
-// ==================== ANALYTICS & REPORTING FUNCTIONS ===================
-// api-client.js
-
+// ==================== ANALYTICS & REPORTING FUNCTIONS ==================
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let isSeniorOrManager = false; // سنستخدم هذا المتغير لاحقاً
+    let userRole = 'agent'; // Default role
 
     if (agentId) {
-      // Logic for Quality Agent remains the same
+      // This is for a Quality Agent's own dashboard
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // This is for either a Senior or a Manager
-      isSeniorOrManager = true;
-      // We will determine the RPC name based on the user's role
-    }
-
-    // --- START OF THE FIX ---
-    if (isSeniorOrManager) {
-      // Get the current user to check their role
+      // This is for a Manager or a Senior, let's find out who
       const { data: { user } } = await supabase.auth.getUser();
-      const userRole = user?.user_metadata?.role || 'senior'; // Default to senior if role not found
+      // We get the role from the user's metadata stored during login
+      userRole = user?.user_metadata?.role || 'senior'; 
 
       if (userRole === 'manager') {
         rpcName = 'get_manager_dashboard_kpis';
         console.log('Fetching KPIs for Manager');
-      } else {
-        // Assume senior for any other role in this context
+      } else { // Assume 'senior' for any other case
         rpcName = 'get_senior_dashboard_kpis';
         console.log('Fetching KPIs for Senior');
       }
     }
-    // --- END OF THE FIX ---
 
     const { data, error } = await supabase.rpc(rpcName, params);
     if (error) throw error;
     
     const metrics = data[0];
     if (!metrics) {
-        // If no data is returned, provide a default structure
-        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
+        // Return a default structure if no data comes back
+        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
     }
 
-    if (isSeniorOrManager) {
-        // Now, return the correct object based on the RPC that was called
-        if (rpcName === 'get_manager_dashboard_kpis') {
-            return {
-                totalOrders: metrics.total_reviews_today || 0,
-                accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-                qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
-            };
-        } else { // This must be a Senior
-            return {
-                completedOrders: metrics.reviews_today || 0,
-                pendingEscalations: metrics.pending_escalations || 0,
-                avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-                accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
-            };
-        }
+    // Now, return the correct object based on the user's role
+    if (userRole === 'manager') {
+        return {
+            totalOrders: metrics.total_reviews_today || 0,
+            accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+            qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
+        };
+    } else if (userRole === 'senior') {
+        return {
+            completedOrders: metrics.reviews_today || 0,
+            pendingEscalations: metrics.pending_escalations || 0,
+            avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+            accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+        };
     } else { // This is for the Quality Agent
        return {
             completedOrders: metrics.todays_reviews || 0,
@@ -1318,11 +1306,12 @@ export async function getPerformanceMetrics(agentId = null) {
     }
 
   } catch (error) {
-    console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    // Return a default structure that covers all dashboards to prevent crashes
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
+    console.error(`Error in getPerformanceMetrics:`, error);
+    // Return a safe default object that won't crash any dashboard
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A', pendingReviews: 0, escalationRate: 0 };
   }
 }
+
 
 export async function getErrorTrends() {
   try {
