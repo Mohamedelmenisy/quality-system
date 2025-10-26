@@ -1783,13 +1783,12 @@ document.addEventListener('click', function(e){
 async function loadPerformanceMetrics() {
     if (!currentUser) return;
     try {
-        const metrics = await getQualityAgentPerformanceMetrics(currentUser.id); // <-- Call the new function
+        // --- THE FIX IS HERE: Call the new, correct function ---
+        const metrics = await getQualityAgentPerformanceMetrics(currentUser.id); 
         
         document.getElementById('todays-reviews').textContent = metrics.completedOrders;
         document.getElementById('open-cases').textContent = metrics.pendingReviews;
         document.getElementById('quality-score').textContent = `${metrics.accuracyRate}%`;
-        
-        // --- THE FIX IS HERE: Read 'metrics.escalationRate' instead of 'metrics.errorRate' ---
         document.getElementById('escalation-rate').textContent = `${metrics.escalationRate}%`;
         
         const qualityScoreEl = document.getElementById('quality-score');
