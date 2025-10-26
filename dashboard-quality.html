@@ -2543,20 +2543,27 @@ function renderOrdersTable(ordersToRender) {
             showModal('view-order-modal');
         }
 
-       async function openReviewOrderModal(orderAssignmentId) {
-            // --- ADD THIS BLOCK AT THE TOP OF THE FUNCTION ---
-            try {
-                // Update the status to 'in_progress' as soon as the review starts
-                await updateAssignmentStatus(orderAssignmentId, 'in_progress');
-                // Refresh the table in the background to show the status change
-                loadAssignedOrders(); 
-            } catch (error) {
-                console.warn("Could not update status to 'in_progress'", error);
-            }
-            // ----------------------------------------------------
-
-            // ... (rest of the existing function code remains the same)
+              async function openReviewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
+
+            if (!orderAssignment) { 
+                showToast('Order not found', 'error'); 
+                return; 
+            }
+
+            orderAssignment.status = 'in_progress';
+            applyOrderFiltersAndRender();
+
+            try {
+                await updateAssignmentStatus(orderAssignmentId, 'in_progress');
+            } catch (error) {
+                console.warn("Could not update status to 'in_progress' in the database", error);
+                orderAssignment.status = 'pending';
+                applyOrderFiltersAndRender();
+                showToast('Failed to update status. Please try again.', 'error');
+                return;
+            }
+
             const errorReasonSelect = document.getElementById('review-error-type');
             if(errorReasonSelect){
                 errorReasonSelect.innerHTML = '<option value="">Select error reason...</option>' + 
@@ -2568,7 +2575,6 @@ function renderOrdersTable(ordersToRender) {
                     companyDepartments.map(dept => `<option value="${dept}">${dept}</option>`).join('');
             }
             
-            if (!orderAssignment) { showToast('Order not found', 'error'); return; }
             const order = orderAssignment.orders;
             document.getElementById('review-order-id').textContent = order.order_id;
             document.getElementById('review-order-details').textContent = order.reason;
@@ -2585,6 +2591,7 @@ function renderOrdersTable(ordersToRender) {
             document.querySelector('label[for="review-notes"]').textContent = 'Additional Notes';
             showModal('review-order-modal');
         }
+
 
         async function openEscalateOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
