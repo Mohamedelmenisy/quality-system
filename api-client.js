@@ -142,6 +142,7 @@ export async function getAgentMonthlyPerformance(agentId) {
 
 // api-client.js
 
+// This is the correct function for the Senior Dashboard
 export async function getPerformanceMetrics() {
   try {
     const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
@@ -1278,6 +1279,11 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
+
+// [AI-FIX] This function was duplicated, causing a syntax error.
+// It has been commented out to resolve the "Identifier has already been declared" error.
+// The correct version of this function for the Senior dashboard is located earlier in this file.
+/*
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
@@ -1317,6 +1323,7 @@ export async function getPerformanceMetrics(agentId = null) {
     return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, errorRate: 0 };
   }
 }
+*/
 
 export async function getErrorTrends() {
   try {
