@@ -1280,21 +1280,17 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
 
-// [AI-FIX] This function was duplicated, causing a syntax error.
-// It has been commented out to resolve the "Identifier has already been declared" error.
-// The correct version of this function for the Senior dashboard is located earlier in this file.
-/*
+// api-client.js
+
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
 
     if (agentId) {
-      // If an agentId is provided, call the quality agent's KPI function
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // Otherwise, call the manager's KPI function
       rpcName = 'get_manager_dashboard_kpis';
     }
 
@@ -1302,13 +1298,13 @@ export async function getPerformanceMetrics(agentId = null) {
     if (error) throw error;
     const metrics = data[0];
 
-    // Structure the data consistently
     if (agentId) {
        return {
             completedOrders: metrics.todays_reviews || 0,
             pendingReviews: metrics.open_cases || 0,
             accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
-            errorRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0,
+            // --- THE FIX IS HERE: Renamed 'errorRate' to 'escalationRate' for clarity ---
+            escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
         };
     } else {
         return {
@@ -1320,10 +1316,9 @@ export async function getPerformanceMetrics(agentId = null) {
 
   } catch (error) {
     console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, errorRate: 0 };
+    return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, escalationRate: 0 }; // Updated here as well
   }
 }
-*/
 
 export async function getErrorTrends() {
   try {
