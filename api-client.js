@@ -1248,8 +1248,6 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
-// api-client.js
-
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
@@ -1260,8 +1258,8 @@ export async function getPerformanceMetrics(agentId = null) {
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // This will be called by Senior or Manager
-      rpcName = 'get_senior_dashboard_kpis'; // Using the Senior's dedicated RPC
+      // THIS IS THE FIX: Call the correct RPC function for the manager
+      rpcName = 'get_manager_dashboard_kpis';
       isSeniorOrManager = true;
     }
 
@@ -1270,12 +1268,11 @@ export async function getPerformanceMetrics(agentId = null) {
     const metrics = data[0];
 
     if (isSeniorOrManager) {
-       // Return the full object for Senior/Manager
+       // THIS IS THE FIX: Return the correct properties matching the RPC and the UI
        return {
-          completedOrders: metrics.reviews_today || 0,
-          pendingEscalations: metrics.pending_escalations || 0,
-          avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-          accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+          totalOrders: metrics.total_reviews_today || 0,
+          accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+          qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
         };
     } else { // This is for the Quality Agent
        return {
@@ -1288,7 +1285,8 @@ export async function getPerformanceMetrics(agentId = null) {
 
   } catch (error) {
     console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
+    // Return a default structure that includes the necessary properties
+    return { completedOrders: 0, accuracyRate: 100, qualityTeamAccuracy: 'N/A', pendingReviews: 0, escalationRate: 0 };
   }
 }
 
