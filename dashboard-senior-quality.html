@@ -40,6 +40,7 @@
     getReviewsVsOverturnedSummary,
              getErrorTypesSummary,
             reassignOrder,
+                getSeniorPerformanceMetrics, // <-- Use the new senior function
             subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
 
@@ -73,6 +74,7 @@
         window.getAgentAccuracySummary = getAgentAccuracySummary;
 window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
+        window.getSeniorPerformanceMetrics = getSeniorPerformanceMetrics;
      window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
     <style>
@@ -1248,7 +1250,7 @@ async function updateSeniorDashboardCharts() {
 
 async function loadPerformanceMetrics() {
     try {
-        performanceMetrics = await getPerformanceMetrics(); // This now returns the correct object
+        const metrics = await getSeniorPerformanceMetrics(); // <-- Call the new function
         
         document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders;
         document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations;
