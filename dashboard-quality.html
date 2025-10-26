@@ -2112,27 +2112,47 @@ function renderOrdersTable(ordersToRender) {
             });
         });
 
-        document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const inquiryId = btn.dataset.inquiryId;
-                const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
-                const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+document.querySelectorAll('.view-inquiry-feedback-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const inquiryId = btn.dataset.inquiryId;
+        const order = assignedOrders.find(o => o.inquiries && o.inquiries.some(i => String(i.id) === String(inquiryId)));
+        const inquiry = order?.inquiries.find(i => String(i.id) === String(inquiryId));
+        
+        // For debugging, let's see what data we have
+        console.log("Found inquiry object:", inquiry);
+
+        if (inquiry) {
+            // Correctly access the aliased data from the API response
+            const raisedByName = inquiry.raised_by?.name || 'Unknown';
+            const respondedByName = inquiry.responded_by?.name || 'Unknown';
+            const respondedAt = inquiry.responded_at ? formatDateTime(inquiry.responded_at) : 'N/A';
+            const orderId = order.orders?.order_id || 'N/A';
+
+            const modal = document.getElementById('view-inquiry-modal');
+            if (modal) {
+                // Populate all the fields in the modal correctly
+                const modalTitle = modal.querySelector('.modal-title'); // Find title element
+                if(modalTitle) modalTitle.innerHTML = `Inquiry Response: <span style="color: var(--primary-color);">${orderId}</span>`;
+
+                modal.querySelector('#view-inquiry-text').textContent = inquiry.inquiry_text || '...';
+                modal.querySelector('#view-inquiry-agent-name').textContent = `By: ${raisedByName}`;
+                modal.querySelector('#view-inquiry-response-text').textContent = inquiry.response_text || '...';
                 
-                if (inquiry) {
-                    document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-                    document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-                    document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-                    document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-                    document.getElementById('view-inquiry-responded-by').textContent = `Responded by: ${inquiry.responded_by?.name || 'Unknown'}`;
-                    document.getElementById('view-inquiry-responded-at').textContent = `At: ${formatDateTime(inquiry.responded_at)}`;
-                    showModal('view-inquiry-modal');
-                } else {
-                    showToast('Could not find inquiry details.', 'error');
-                }
-            });
-        });
-    }
+                // Populate the responder details
+                const respondedByEl = modal.querySelector('#view-inquiry-responded-by');
+                if(respondedByEl) respondedByEl.textContent = `Responded by: ${respondedByName}`;
+                
+                const respondedAtEl = modal.querySelector('#view-inquiry-responded-at');
+                if(respondedAtEl) respondedAtEl.textContent = `At: ${respondedAt}`;
+
+                showModal('view-inquiry-modal');
+            }
+        } else {
+            showToast('Could not find inquiry details.', 'error');
+        }
+    });
+});
 
         function renderEscalationsTable(escalationsToRender) {
             const tableBody = document.getElementById('escalations-table-body');
