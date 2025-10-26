@@ -966,64 +966,61 @@ document.addEventListener('click', function(e){
         </div>
         
         <!-- START: My Performance Tab Content -->
-        <div id="my-performance" class="tab-content">
-            <div class="card">
-                <h3>My Review Performance</h3>
-                <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 2rem;">An overview of your review accuracy based on senior analyst decisions.</p>
-                
-                <!-- dashboard-quality.html -> inside "my-performance" tab -->
-                <div class="dashboard-grid"> <!-- Use the grid system -->
-                    <div class="grid-col-span-8"> <!-- The KPIs will take 2/3 of the width -->
-                        <div class="kpi-grid">
-                            <div class="kpi-card">
-                                <div class="kpi-title">Total Reviews Completed</div>
-                                <div class="kpi-value" id="qa-total-reviews">0</div>
-                            </div>
-                            <div class="kpi-card">
-                                <div class="kpi-title">Reviews Overturned by Senior</div>
-                                <div class="kpi-value" id="qa-overturned-reviews" style="color: var(--warning-color);">0</div>
-                            </div>
-                            <div class="kpi-card">
-                                <div class="kpi-title">My Review Accuracy</div>
-                                <div class="kpi-value" id="qa-accuracy-score" style="color: var(--success-color);">100%</div>
-                            </div>
-                        </div>
+<div id="my-performance" class="tab-content">
+    <div class="card">
+        
+        <div class="dashboard-grid"> <!-- Use the grid system -->
+            <div class="grid-col-span-8"> <!-- The KPIs will take 2/3 of the width -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-title">Total Reviews Completed</div>
+                        <div class="kpi-value" id="qa-total-reviews">0</div>
                     </div>
-                    <div class="grid-col-span-4"> <!-- The chart will take 1/3 of the width -->
-                        <div class="widget">
-                            <h3>Performance Breakdown</h3>
-                            <div class="chart-container" style="height: 200px;">
-                                <canvas id="qaPerformanceChart"></canvas>
-                            </div>
-                        </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">Reviews Overturned by Senior</div>
+                        <div class="kpi-value" id="qa-overturned-reviews" style="color: var(--warning-color);">0</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-title">My Review Accuracy</div>
+                        <div class="kpi-value" id="qa-accuracy-score" style="color: var(--success-color);">100%</div>
                     </div>
                 </div>
-
-                <!-- This goes inside the "my-performance" tab content, after the "kpi-grid" div -->
-                <div class="widget" style="margin-top: 2rem;">
-                    <h3>My Overturned Reviews</h3>
-                    <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
-                        This is a list of reviews where you marked an error, but a senior analyst overturned your decision. Use this as a learning opportunity.
-                    </p>
-                    <div class="table-container">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Order ID</th>
-                                    <th>Error You Marked</th>
-                                    <th class="wrap-text">Senior Analyst's Notes</th>
-                                    <th>Decision Date</th>
-                                </tr>
-                            </thead>
-                            <tbody id="overturned-reviews-table-body">
-                                <!-- Data will be populated by JavaScript -->
-                            </tbody>
-                        </table>
+            </div>
+            <div class="grid-col-span-4"> <!-- The chart will take 1/3 of the width -->
+                <div class="widget">
+                    <h3>Performance Breakdown</h3>
+                    <div class="chart-container" style="height: 200px;">
+                        <canvas id="qaPerformanceChart"></canvas>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- END: My Performance Tab Content -->
+
+        <!-- This goes inside the "my-performance" tab content, after the "kpi-grid" div -->
+        <div class="widget" style="margin-top: 2rem;">
+            <h3>My Overturned Reviews</h3>
+            <p style="color: var(--text-muted); margin-top: -1rem; margin-bottom: 1.5rem;">
+                This is a list of reviews where you marked an error, but a senior analyst overturned your decision. Use this as a learning opportunity.
+            </p>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Error You Marked</th>
+                            <th class="wrap-text">Senior Analyst's Notes</th>
+                            <th>Decision Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="overturned-reviews-table-body">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- END: My Performance Tab Content -->
 
         <div id="profile" class="tab-content">
             <div class="card">
