@@ -226,6 +226,18 @@ export async function getUserById(userId) {
   }
 }
 
+// api-client.js
+export async function getErrorTypesSummary(period) {
+  try {
+    const { data, error } = await supabase.rpc('get_error_types_summary', { period_filter: period });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching error types summary:', error);
+    return [];
+  }
+}
+
 export async function updateUserProfile(userId, updates) {
   try {
     const { data, error } = await supabase
