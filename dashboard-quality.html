@@ -1781,20 +1781,18 @@ document.addEventListener('click', function(e){
         }
 
         // Load performance metrics
-        // dashboard-quality.html
-
 async function loadPerformanceMetrics() {
     if (!currentUser) return;
     try {
-        // Now we pass the current user's ID to get their specific KPIs
         const metrics = await getPerformanceMetrics(currentUser.id);
         
         document.getElementById('todays-reviews').textContent = metrics.completedOrders;
         document.getElementById('open-cases').textContent = metrics.pendingReviews;
         document.getElementById('quality-score').textContent = `${metrics.accuracyRate}%`;
-        document.getElementById('escalation-rate').textContent = `${metrics.errorRate}%`;
         
-        // Adjust color of quality score
+        // --- THE FIX IS HERE: Read 'metrics.escalationRate' instead of 'metrics.errorRate' ---
+        document.getElementById('escalation-rate').textContent = `${metrics.escalationRate}%`;
+        
         const qualityScoreEl = document.getElementById('quality-score');
         if (metrics.accuracyRate < 95) {
             qualityScoreEl.style.color = 'var(--warning-color)';
