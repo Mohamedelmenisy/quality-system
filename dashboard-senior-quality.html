@@ -1380,45 +1380,52 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     // dashboard-senior-quality.html
+    // dashboard-senior-quality.html
 
 async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report...`, 'info');
+    showToast(`Generating ${reportType} report for: ${periodText}`, 'info');
 
-    // Hide both charts initially
+    // Hide both charts initially to clear the view
     document.getElementById('analyticsChart').style.display = 'none';
     document.getElementById('errorTypesPieChart').style.display = 'none';
 
     try {
         if (reportType === 'performance') {
             document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getTeamPerformance();
+            const performanceData = await getAgentAccuracySummary(period); // Using REAL data
             const ctx = document.getElementById('analyticsChart').getContext('2d');
             
             if (analyticsChart) analyticsChart.destroy();
             analyticsChart = new Chart(ctx, {
-                type: 'bar',
+                type: 'bar', // Bar chart is better for comparing agents
                 data: {
                     labels: performanceData.map(d => d.agent_name),
                     datasets: [{
-                        label: 'Team Accuracy',
+                        label: 'Review Accuracy',
                         data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                        borderRadius: 4
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                    plugins: { 
+                        title: { display: true, text: `Quality Agent Accuracy (${periodText})`, color: 'var(--text-color)' },
+                        legend: { display: false }
+                    },
+                    scales: { 
+                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
+                    }
                 }
             });
 
         } else if (reportType === 'errors') {
             document.getElementById('errorTypesPieChart').style.display = 'block';
-            const errorData = await getErrorTypesSummary(period);
+            const errorData = await getErrorTypesSummary(period); // Using REAL data
             const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
 
             if (errorTypesPieChart) errorTypesPieChart.destroy();
@@ -1428,7 +1435,7 @@ async function generateSeniorReport() {
                     labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
                     datasets: [{
                         data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14']
                     }]
                 },
                 options: { 
@@ -1445,11 +1452,12 @@ async function generateSeniorReport() {
         showToast("Error generating report.", "error");
     }
 }
+        
+       // dashboard-senior-quality.html
 
-        // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- Update Team Performance Chart ---
+        // --- 1. Update Team Performance Chart (Bar Chart) ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
             teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
@@ -1457,11 +1465,16 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- Update Error Trends Chart ---
-        const trendData = await getErrorTrends();
+        // --- 2. Update Error Trends Chart (Line Chart) ---
+        const trendData = await getErrorTrends(); // This gets data for the last 30 days
         if (errorTrendsChart && trendData.labels.length > 0) {
             errorTrendsChart.data.labels = trendData.labels;
             errorTrendsChart.data.datasets[0].data = trendData.values;
+            errorTrendsChart.update();
+        } else if (errorTrendsChart) {
+            // Display a message if there's no data
+            errorTrendsChart.data.labels = ['No error data in the last 30 days'];
+            errorTrendsChart.data.datasets[0].data = [0];
             errorTrendsChart.update();
         }
     } catch (error) {
