@@ -36,6 +36,8 @@
             getEscalations,
             resolveEscalation,
             getTeamPerformance,
+            getAgentAccuracySummary,
+    getReviewsVsOverturnedSummary,
             reassignOrder,
             subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
@@ -67,6 +69,8 @@
         window.getEscalations = getEscalations;
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
+        window.getAgentAccuracySummary = getAgentAccuracySummary;
+window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
      window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
@@ -1098,6 +1102,53 @@
                 console.error('Error loading team performance chart:', error);
             }
         }
+
+        async function generateSeniorReport() {
+    const period = document.getElementById('report-period').value;
+    const reportType = document.getElementById('report-type').value;
+    showToast(`Generating ${reportType} report...`, 'info');
+
+    try {
+        if (reportType === 'performance') {
+            // Logic for Monthly Performance Report
+            const performanceData = await getReviewsVsOverturnedSummary(period); // Re-use this function
+            const ctx = document.getElementById('analyticsChart').getContext('d');
+            
+            if (analyticsChart) analyticsChart.destroy();
+            analyticsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], // Example labels, should be dynamic
+                    datasets: [
+                        { label: 'Orders Reviewed', data: [/* Some data */], borderColor: '#00bfff' },
+                        { label: 'Errors Found', data: [/* Some data */], borderColor: '#dc3545' }
+                    ]
+                }
+            });
+
+        } else if (reportType === 'errors') {
+            // Logic for Error Types Analysis
+            const errorData = await getTeamPerformance(); // Example, you might need a new RPC here
+            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+
+            if (errorTypesPieChart) errorTypesPieChart.destroy();
+            errorTypesPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: errorData.map(d => d.agent_name),
+                    datasets: [{
+                        data: errorData.map(d => 100 - d.accuracy) // Example: show error percentage
+                    }]
+                }
+            });
+        }
+        // Add more 'else if' for other report types like 'Department Report'
+
+    } catch (error) {
+        console.error("Failed to generate senior report:", error);
+        showToast("Error generating report.", "error");
+    }
+}
 
 async function updateSeniorDashboardCharts() {
     try {
@@ -2263,8 +2314,8 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); localStorage.removeItem('seniorActiveTab'); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
                 hideModal('logout-confirm-modal');
             });
+            document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
         });
-  // dashboard-senior-quality.html
 
 window.handleFinalDecision = async (errorId, decision) => {
     try {
