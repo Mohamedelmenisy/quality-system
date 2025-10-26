@@ -29,6 +29,7 @@
             updateKpiTargets,    // <-- إضافة دالة جديدة لحفظ أهداف KPI
             // --- ADD THESE TWO LINES ---
             getAgentAccuracySummary,
+                getManagerPerformanceMetrics, // <-- Use the new manager function
             getReviewsVsOverturnedSummary
             // -------------------------
         } from './api-client.js';
@@ -52,6 +53,7 @@
         window.updateKpiTargets = updateKpiTargets;     // <-- إضافة الدالة إلى window
         // --- ADD THESE TWO LINES ---
         window.getAgentAccuracySummary = getAgentAccuracySummary;
+        window.getManagerPerformanceMetrics = getManagerPerformanceMetrics;
         window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         // -------------------------
     </script>
@@ -1150,7 +1152,7 @@
         async function loadPerformanceMetrics() {
             try {
                 // This function now returns real data from our new RPC
-                const metrics = await getPerformanceMetrics(); 
+        const metrics = await getManagerPerformanceMetrics(); // <-- Call the new function
                 
                 if (teamMembers.length === 0) {
                     await loadTeamMembers();
