@@ -127,6 +127,31 @@ export async function getQualityAgentPerformance(agentId) {
   }
 }
 
+// api-client.js
+
+export async function getAgentMonthlyPerformance(agentId) {
+  try {
+    const { data, error } = await supabase.rpc('get_agent_monthly_performance', { p_agent_id: agentId });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching agent monthly performance:', error);
+    return [];
+  }
+}
+
+// api-client.js
+
+export async function getAgentIssueTypes(agentId) {
+  try {
+    const { data, error } = await supabase.rpc('get_agent_issue_types', { p_agent_id: agentId });
+    if (error) throw error;
+    return data;
+  } catch (error) {
+    console.error('Error fetching agent issue types:', error);
+    return [];
+  }
+}
 
 export async function getOverturnedReviewsForAgent(agentId) {
   try {
