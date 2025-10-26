@@ -1104,22 +1104,24 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     // dashboard-senior-quality.html
+
+// dashboard-senior-quality.html
 
 async function generateSeniorReport() {
+    // قراءة الفلاتر الحالية من الصفحة
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report...`, 'info');
+    showToast(`Generating ${reportType} report for: ${periodText}`, 'info');
 
-    // Hide both charts initially
+    // إخفاء كلا الرسمين البيانيين قبل عرض الجديد
     document.getElementById('analyticsChart').style.display = 'none';
     document.getElementById('errorTypesPieChart').style.display = 'none';
 
     try {
         if (reportType === 'performance') {
             document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getTeamPerformance();
+            const performanceData = await getAgentAccuracySummary(period); // استخدام بيانات حقيقية
             const ctx = document.getElementById('analyticsChart').getContext('2d');
             
             if (analyticsChart) analyticsChart.destroy();
@@ -1128,21 +1130,28 @@ async function generateSeniorReport() {
                 data: {
                     labels: performanceData.map(d => d.agent_name),
                     datasets: [{
-                        label: 'Team Accuracy',
+                        label: 'Review Accuracy',
                         data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                        borderRadius: 4
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                    plugins: { 
+                        title: { display: true, text: `Quality Agent Accuracy (${periodText})`, color: 'var(--text-color)' },
+                        legend: { display: false }
+                    },
+                    scales: { 
+                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
+                    }
                 }
             });
 
         } else if (reportType === 'errors') {
             document.getElementById('errorTypesPieChart').style.display = 'block';
-            const errorData = await getErrorTypesSummary(period);
+            const errorData = await getErrorTypesSummary(period); // استخدام بيانات حقيقية
             const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
 
             if (errorTypesPieChart) errorTypesPieChart.destroy();
@@ -1152,7 +1161,7 @@ async function generateSeniorReport() {
                     labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
                     datasets: [{
                         data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14']
                     }]
                 },
                 options: { 
@@ -1173,7 +1182,7 @@ async function generateSeniorReport() {
         // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- Update Team Performance Chart ---
+        // --- 1. تحديث الرسم البياني العمودي: أداء الفريق (يبقى كما هو) ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
             teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
@@ -1181,18 +1190,27 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- Update Error Trends Chart ---
-        const trendData = await getErrorTrends();
+        // --- 2. تحديث الرسم البياني الخطي: عدد الأخطاء اليومي (هذا هو التعديل) ---
+        const trendData = await getErrorTrends(); // هذه الدالة تجلب عدد الأخطاء اليومي لآخر 30 يوم
         if (errorTrendsChart && trendData.labels.length > 0) {
             errorTrendsChart.data.labels = trendData.labels;
             errorTrendsChart.data.datasets[0].data = trendData.values;
+            // تحديث عناوين الرسم البياني لتعكس المحتوى الجديد
+            errorTrendsChart.options.plugins.title.text = 'Daily Error Count (Last 30 Days)';
+            errorTrendsChart.data.datasets[0].label = 'Errors';
+            errorTrendsChart.update();
+        } else if (errorTrendsChart) {
+            // في حالة عدم وجود بيانات، يتم عرض رسالة واضحة
+            errorTrendsChart.data.labels = ['No error data in the last 30 days'];
+            errorTrendsChart.data.datasets[0].data = [0];
             errorTrendsChart.update();
         }
     } catch (error) {
         console.error("Error updating senior dashboard charts:", error);
+        showToast("Failed to update dashboard charts.", "error");
     }
 }
-        
+            
         function updateUserInterface() {
             if (!currentUser) return;
             const name = currentUser.name || "User";
@@ -2176,6 +2194,9 @@ async function openEscalationDetailsModal(escalationId) {
                     e.preventDefault();
                     if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
+                            if (tabId === 'reports-analytics') {
+                               generateSeniorReport();
+                                }
                     localStorage.setItem('seniorActiveTab', tabId); // [AI-FIX] Save tab on click
                     applyStoredTab();
                 });
