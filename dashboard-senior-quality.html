@@ -1119,14 +1119,39 @@ async function generateSeniorReport() {
         const performanceData = await getAgentAccuracySummary(period);
         const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
         if (agentAccuracyChart) agentAccuracyChart.destroy();
+        
+        // --- THIS IS THE FIX ---
         agentAccuracyChart = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: performanceData.map(d => d.agent_name),
-                datasets: [{ label: 'Accuracy', data: performanceData.map(d => d.accuracy), backgroundColor: 'rgba(0, 191, 255, 0.7)' }]
+                // If there is data, map it. Otherwise, show a 'No Data' label.
+                labels: performanceData.length > 0 ? performanceData.map(d => d.agent_name) : ['No Data'],
+                datasets: [{ 
+                    label: 'Accuracy', 
+                    // If there is data, map it. Otherwise, show a single bar at 0.
+                    data: performanceData.length > 0 ? performanceData.map(d => d.accuracy) : [0], 
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)' 
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: `Agent Accuracy (${periodText})`, color: 'var(--text-color)' } }, scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' } }, x: { ticks: { color: 'var(--text-color)' } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false }, 
+                    title: { display: true, text: `Agent Accuracy (${periodText})`, color: 'var(--text-color)' } 
+                }, 
+                scales: { 
+                    y: { 
+                        // Set min to 0 if there is no data, otherwise 80
+                        min: performanceData.length > 0 ? 80 : 0, 
+                        max: 100, 
+                        ticks: { color: 'var(--text-color)' } 
+                    }, 
+                    x: { ticks: { color: 'var(--text-color)' } } 
+                } 
+            }
         });
+        // --- END OF THE FIX ---
 
         // --- Chart 2: Error Types (Pie Chart) ---
         const errorData = await getErrorTypesSummary(period);
@@ -1136,9 +1161,19 @@ async function generateSeniorReport() {
             type: 'pie',
             data: {
                 labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Data'],
-                datasets: [{ data: errorData.length > 0 ? errorData.map(d => d.count) : [1], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1'] }]
+                datasets: [{ 
+                    data: errorData.length > 0 ? errorData.map(d => d.count) : [1], 
+                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1'] 
+                }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Error Analysis (${periodText})`, color: 'var(--text-color)' }, legend: { position: 'bottom', labels: { color: 'var(--text-color)' } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    title: { display: true, text: `Error Analysis (${periodText})`, color: 'var(--text-color)' }, 
+                    legend: { position: 'bottom', labels: { color: 'var(--text-color)' } } 
+                } 
+            }
         });
 
     } catch (error) {
