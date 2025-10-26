@@ -1244,21 +1244,28 @@ async function updateSeniorDashboardCharts() {
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
         const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
-        async function loadPerformanceMetrics() {
-            try {
-                performanceMetrics = await getPerformanceMetrics();
-                document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-                document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
-                document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-                document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime || 0} mins`;
-            } catch (error) {
-                console.error('Error loading performance metrics:', error);
-                document.getElementById('reviews-today').textContent = 'N/A';
-                document.getElementById('pending-escalations').textContent = 'N/A';
-                document.getElementById('team-accuracy').textContent = 'N/A';
-                document.getElementById('avg-resolution-time').textContent = 'N/A';
-            }
-        }
+        // dashboard-senior-quality.html
+
+async function loadPerformanceMetrics() {
+    try {
+        performanceMetrics = await getPerformanceMetrics(); // This now returns the correct object
+        
+        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders;
+        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations;
+        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate}%`;
+        
+        // THE FIX: Display the value received from the API client
+        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime} mins`;
+
+    } catch (error) {
+        console.error('Error loading performance metrics into dashboard:', error);
+        // Set all to N/A on failure
+        document.getElementById('reviews-today').textContent = 'N/A';
+        document.getElementById('pending-escalations').textContent = 'N/A';
+        document.getElementById('team-accuracy').textContent = 'N/A';
+        document.getElementById('avg-resolution-time').textContent = 'N/A';
+    }
+}
 
         // Render Functions
         function renderEscalationsTable(errorsToRender = pendingErrors) {
