@@ -1248,81 +1248,60 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
-// api-client.js
 
-export async function getPerformanceMetrics(agentId = null) {
+// --- NEW FUNCTION SPECIFICALLY FOR THE MANAGER DASHBOARD ---
+export async function getManagerPerformanceMetrics() {
   try {
-    let rpcName;
-    let params = {};
-    let isSeniorOrManager = false; // سنستخدم هذا المتغير لاحقاً
-
-    if (agentId) {
-      // Logic for Quality Agent remains the same
-      rpcName = 'get_quality_dashboard_kpis';
-      params = { p_agent_id: agentId };
-    } else {
-      // This is for either a Senior or a Manager
-      isSeniorOrManager = true;
-      // We will determine the RPC name based on the user's role
-    }
-
-    // --- START OF THE FIX ---
-    if (isSeniorOrManager) {
-      // Get the current user to check their role
-      const { data: { user } } = await supabase.auth.getUser();
-      const userRole = user?.user_metadata?.role || 'senior'; // Default to senior if role not found
-
-      if (userRole === 'manager') {
-        rpcName = 'get_manager_dashboard_kpis';
-        console.log('Fetching KPIs for Manager');
-      } else {
-        // Assume senior for any other role in this context
-        rpcName = 'get_senior_dashboard_kpis';
-        console.log('Fetching KPIs for Senior');
-      }
-    }
-    // --- END OF THE FIX ---
-
-    const { data, error } = await supabase.rpc(rpcName, params);
+    const { data, error } = await supabase.rpc('get_manager_dashboard_kpis');
     if (error) throw error;
-    
     const metrics = data[0];
-    if (!metrics) {
-        // If no data is returned, provide a default structure
-        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
-    }
+    return {
+      totalOrders: metrics.total_reviews_today || 0,
+      accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+      qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
+    };
+  } catch (error) {
+    console.error('Error fetching Manager KPIs:', error);
+    return { totalOrders: 0, accuracyRate: 0, qualityTeamAccuracy: 'N/A' };
+  }
+}
 
-    if (isSeniorOrManager) {
-        // Now, return the correct object based on the RPC that was called
-        if (rpcName === 'get_manager_dashboard_kpis') {
-            return {
-                totalOrders: metrics.total_reviews_today || 0,
-                accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-                qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
-            };
-        } else { // This must be a Senior
-            return {
-                completedOrders: metrics.reviews_today || 0,
-                pendingEscalations: metrics.pending_escalations || 0,
-                avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-                accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
-            };
-        }
-    } else { // This is for the Quality Agent
-       return {
+// --- NEW FUNCTION SPECIFICALLY FOR THE SENIOR DASHBOARD ---
+export async function getSeniorPerformanceMetrics() {
+    try {
+        const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
+        if (error) throw error;
+        const metrics = data[0];
+        return {
+            completedOrders: metrics.reviews_today || 0,
+            pendingEscalations: metrics.pending_escalations || 0,
+            avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+            accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+        };
+    } catch (error) {
+        console.error('Error fetching Senior KPIs:', error);
+        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0 };
+    }
+}
+
+// --- NEW FUNCTION SPECIFICALLY FOR THE QUALITY AGENT DASHBOARD ---
+export async function getQualityAgentPerformanceMetrics(agentId) {
+   try {
+        const { data, error } = await supabase.rpc('get_quality_dashboard_kpis', { p_agent_id: agentId });
+        if (error) throw error;
+        const metrics = data[0];
+        return {
             completedOrders: metrics.todays_reviews || 0,
             pendingReviews: metrics.open_cases || 0,
             accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
             escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
         };
-    }
-
-  } catch (error) {
-    console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    // Return a default structure that covers all dashboards to prevent crashes
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
-  }
+   } catch (error) {
+        console.error(`Error in getQualityAgentPerformanceMetrics:`, error);
+        return { completedOrders: 0, pendingReviews: 0, accuracyRate: 0, escalationRate: 0 };
+   }
 }
+
 
 export async function getErrorTrends() {
   try {
