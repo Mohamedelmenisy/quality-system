@@ -1103,49 +1103,51 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-      async function generateSeniorReport() {
+     async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
-    showToast(`Generating ${reportType} report...`, 'info');
+    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
+    showToast(`Generating report for: ${periodText}`, 'info');
 
     try {
-        // --- First Chart: Monthly Performance (Re-using this canvas) ---
-        const performanceData = await getTeamPerformance(); // We can reuse this
+        // --- First Chart: Team Accuracy ---
+        const accuracyData = await getAgentAccuracySummary(period); // Using the correct function
         const ctx1 = document.getElementById('analyticsChart').getContext('2d');
         
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(ctx1, {
             type: 'bar',
             data: {
-                labels: performanceData.map(d => d.agent_name),
+                labels: accuracyData.map(d => d.agent_name),
                 datasets: [{
-                    label: 'Team Accuracy',
-                    data: performanceData.map(d => d.accuracy),
+                    label: 'Agent Accuracy',
+                    data: accuracyData.map(d => d.accuracy),
                     backgroundColor: 'rgba(0, 191, 255, 0.7)'
                 }]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Team Accuracy by Agent', color: 'var(--text-color)' } }
+                plugins: { title: { display: true, text: `Team Accuracy (${periodText})`, color: 'var(--text-color)' } },
+                scales: { y: { beginAtZero: true, max: 100 } }
             }
         });
 
-        // --- Second Chart: Error Types Analysis ---
-        const trendData = await getErrorTrends(); // Re-use this function
+        // --- Second Chart: Error Types Analysis (Needs a dedicated RPC) ---
+        const errorData = await getErrorTrends(); 
         const ctx2 = document.getElementById('errorTypesPieChart').getContext('2d');
 
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(ctx2, {
             type: 'pie',
             data: {
-                labels: trendData.labels, // These should be error types, so we need a new function.
+                labels: errorData.labels,
                 datasets: [{
-                    data: trendData.values
+                    data: errorData.values
                 }]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false,
-                plugins: { title: { display: true, text: 'Error Trends', color: 'var(--text-color)' } }
+                plugins: { title: { display: true, text: `Error Types (${periodText})`, color: 'var(--text-color)' } }
             }
         });
 
@@ -1154,28 +1156,25 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         showToast("Error generating report.", "error");
     }
 }
-// dashboard-senior-quality.html
+
+        // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- Update Team Performance Chart (This part is working) ---
+        // --- Update Team Performance Chart ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
-            // ... (existing code for teamPerformanceChart)
+            teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
+            teamPerformanceChart.data.datasets[0].data = performanceData.map(p => parseFloat(p.accuracy));
+            teamPerformanceChart.update();
         }
 
-        // --- THIS IS THE PART TO ADD/CONFIRM ---
-        // Update Error Trends Chart
-        const trendData = await getErrorTrends(); // Assumes this function is in api-client.js
+        // --- Update Error Trends Chart ---
+        const trendData = await getErrorTrends();
         if (errorTrendsChart && trendData.labels.length > 0) {
             errorTrendsChart.data.labels = trendData.labels;
             errorTrendsChart.data.datasets[0].data = trendData.values;
-            // Optional: Adjust styling
-            errorTrendsChart.data.datasets[0].borderColor = 'var(--primary-color)';
-            errorTrendsChart.data.datasets[0].backgroundColor = 'rgba(0, 191, 255, 0.1)';
             errorTrendsChart.update();
         }
-        // -----------------------------------------
-
     } catch (error) {
         console.error("Error updating senior dashboard charts:", error);
     }
@@ -2279,12 +2278,9 @@ document.body.addEventListener('click', async function(event) {
     }
 });
             
-// Inside 'DOMContentLoaded'
 document.getElementById('add-schedule-member-btn')?.addEventListener('click', () => {
-    // This is a placeholder. Ideally, this should open a dedicated modal 
-    // for adding or inviting a new team member to the system.
-    showToast("This feature should open a modal to add a new user.", "info");
-    // For example: showModal('add-user-modal');
+    // Re-use the openEmployeeModal function without an ID to add a new employee
+    openEmployeeModal(); 
 });
           // Other existing event listeners
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
