@@ -38,6 +38,7 @@
             getTeamPerformance,
             getAgentAccuracySummary,
     getReviewsVsOverturnedSummary,
+             getErrorTypesSummary,
             reassignOrder,
             subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
@@ -1103,54 +1104,66 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     async function generateSeniorReport() {
+     // dashboard-senior-quality.html
+
+async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating report for: ${periodText}`, 'info');
+    showToast(`Generating ${reportType} report...`, 'info');
+
+    // Hide both charts initially
+    document.getElementById('analyticsChart').style.display = 'none';
+    document.getElementById('errorTypesPieChart').style.display = 'none';
 
     try {
-        // --- First Chart: Team Accuracy ---
-        const accuracyData = await getAgentAccuracySummary(period); // Using the correct function
-        const ctx1 = document.getElementById('analyticsChart').getContext('2d');
-        
-        if (analyticsChart) analyticsChart.destroy();
-        analyticsChart = new Chart(ctx1, {
-            type: 'bar',
-            data: {
-                labels: accuracyData.map(d => d.agent_name),
-                datasets: [{
-                    label: 'Agent Accuracy',
-                    data: accuracyData.map(d => d.accuracy),
-                    backgroundColor: 'rgba(0, 191, 255, 0.7)'
-                }]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false,
-                plugins: { title: { display: true, text: `Team Accuracy (${periodText})`, color: 'var(--text-color)' } },
-                scales: { y: { beginAtZero: true, max: 100 } }
-            }
-        });
+        if (reportType === 'performance') {
+            document.getElementById('analyticsChart').style.display = 'block';
+            const performanceData = await getTeamPerformance();
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            if (analyticsChart) analyticsChart.destroy();
+            analyticsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: performanceData.map(d => d.agent_name),
+                    datasets: [{
+                        label: 'Team Accuracy',
+                        data: performanceData.map(d => d.accuracy),
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
+                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                }
+            });
 
-        // --- Second Chart: Error Types Analysis (Needs a dedicated RPC) ---
-        const errorData = await getErrorTrends(); 
-        const ctx2 = document.getElementById('errorTypesPieChart').getContext('2d');
+        } else if (reportType === 'errors') {
+            document.getElementById('errorTypesPieChart').style.display = 'block';
+            const errorData = await getErrorTypesSummary(period);
+            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
 
-        if (errorTypesPieChart) errorTypesPieChart.destroy();
-        errorTypesPieChart = new Chart(ctx2, {
-            type: 'pie',
-            data: {
-                labels: errorData.labels,
-                datasets: [{
-                    data: errorData.values
-                }]
-            },
-            options: { 
-                responsive: true, maintainAspectRatio: false,
-                plugins: { title: { display: true, text: `Error Types (${periodText})`, color: 'var(--text-color)' } }
-            }
-        });
-
+            if (errorTypesPieChart) errorTypesPieChart.destroy();
+            errorTypesPieChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
+                    datasets: [{
+                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { 
+                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
+                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
+                    }
+                }
+            });
+        }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
         showToast("Error generating report.", "error");
