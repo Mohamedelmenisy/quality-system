@@ -674,36 +674,38 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
                     </div>
                 </div>
 
-                <!-- Reports & Analytics Tab -->
-                <div id="reports-analytics" class="tab-content">
-                     <div class="widget">
-                        <h3>Advanced Reports & Analytics</h3>
-                        <div class="filter-panel">
-                            <select id="report-period">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30" selected>Last 30 Days</option>
-                                <option value="90">Last 90 Days</option>
-                                <option value="365">Last Year</option>
-                            </select>
-                            <select id="report-type">
-                                <option value="performance">Performance Report</option>
-                                <option value="errors">Error Analysis</option>
-                                <option value="department">Department Report</option>
-                            </select>
-                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-                            <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
-                        </div>
-                        <div class="charts-grid">
-                            <div class="chart-container">
-                                <canvas id="analyticsChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="errorTypesPieChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+               <!-- Reports & Analytics Tab -->
+<div id="reports-analytics" class="tab-content">
+     <div class="widget">
+        <h3>Advanced Reports & Analytics</h3>
+        <!-- New, simplified filter panel -->
+        <div class="filter-panel">
+            <label for="report-period-filter">Select Time Period</label>
+            <select id="report-period-filter">
+                <option value="week">Last 7 Days</option>
+                <option value="month" selected>Last 30 Days</option>
+                <option value="quarter">Last Quarter</option>
+            </select>
+            <button class="btn btn-secondary" id="export-analytics-csv-btn">Export to CSV</button>
+        </div>
 
+        <!-- New grid for side-by-side charts -->
+        <div class="charts-grid">
+            <div class="widget">
+                <h3>Quality Agent Accuracy</h3>
+                <div class="chart-container">
+                    <canvas id="agentAccuracyChart"></canvas>
+                </div>
+            </div>
+            <div class="widget">
+                <h3>Error Types Analysis</h3>
+                <div class="chart-container">
+                    <canvas id="errorTypesPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
                 <!-- Profile Tab -->
                 <div id="profile" class="tab-content">
                     <div class="widget">
@@ -1105,75 +1107,50 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         }
 
      // dashboard-senior-quality.html
+// dashboard-senior-quality.html -> <script>
 
 async function generateSeniorReport() {
-    const period = document.getElementById('report-period').value;
-    const reportType = document.getElementById('report-type').value;
-    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report...`, 'info');
-
-    // Hide both charts initially
-    document.getElementById('analyticsChart').style.display = 'none';
-    document.getElementById('errorTypesPieChart').style.display = 'none';
+    const period = document.getElementById('report-period-filter').value;
+    const periodText = document.getElementById('report-period-filter').options[document.getElementById('report-period-filter').selectedIndex].text;
+    showToast(`Generating reports for: ${periodText}`, 'info');
 
     try {
-        if (reportType === 'performance') {
-            document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getTeamPerformance();
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            
-            if (analyticsChart) analyticsChart.destroy();
-            analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: performanceData.map(d => d.agent_name),
-                    datasets: [{
-                        label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
-                }
-            });
+        // --- Chart 1: Agent Accuracy (Bar Chart) ---
+        const performanceData = await getAgentAccuracySummary(period);
+        const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
+        if (agentAccuracyChart) agentAccuracyChart.destroy();
+        agentAccuracyChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name),
+                datasets: [{ label: 'Accuracy', data: performanceData.map(d => d.accuracy), backgroundColor: 'rgba(0, 191, 255, 0.7)' }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: true, text: `Agent Accuracy (${periodText})`, color: 'var(--text-color)' } }, scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' } }, x: { ticks: { color: 'var(--text-color)' } } } }
+        });
 
-        } else if (reportType === 'errors') {
-            document.getElementById('errorTypesPieChart').style.display = 'block';
-            const errorData = await getErrorTypesSummary(period);
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+        // --- Chart 2: Error Types (Pie Chart) ---
+        const errorData = await getErrorTypesSummary(period);
+        const ctx2 = document.getElementById('errorTypesPieChart').getContext('2d');
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Data'],
+                datasets: [{ data: errorData.length > 0 ? errorData.map(d => d.count) : [1], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1'] }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: true, text: `Error Analysis (${periodText})`, color: 'var(--text-color)' }, legend: { position: 'bottom', labels: { color: 'var(--text-color)' } } } }
+        });
 
-            if (errorTypesPieChart) errorTypesPieChart.destroy();
-            errorTypesPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
-                    datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
-                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
-                    }
-                }
-            });
-        }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
-        showToast("Error generating report.", "error");
+        showToast("Error generating reports.", "error");
     }
 }
 
         // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- Update Team Performance Chart ---
+        // --- 1. Update Team Performance Chart (Bar Chart) ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
             teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
@@ -1181,11 +1158,16 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- Update Error Trends Chart ---
+        // --- 2. Update Daily Error Count Chart (Line Chart) ---
         const trendData = await getErrorTrends();
         if (errorTrendsChart && trendData.labels.length > 0) {
             errorTrendsChart.data.labels = trendData.labels;
-            errorTrendsChart.data.datasets[0].data = trendData.values;
+            errorTrendsChart.data.datasets[0].data = trendData.values; // Using the error counts
+            // Make it more obvious it's about errors
+            errorTrendsChart.data.datasets[0].label = 'Daily Errors';
+            errorTrendsChart.data.datasets[0].borderColor = 'rgba(220, 53, 69, 1)'; // Red color
+            errorTrendsChart.data.datasets[0].backgroundColor = 'rgba(220, 53, 69, 0.1)';
+            errorTrendsChart.options.plugins.title.text = 'Daily Error Count (Last 30 Days)';
             errorTrendsChart.update();
         }
     } catch (error) {
@@ -2339,7 +2321,7 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); localStorage.removeItem('seniorActiveTab'); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
                 hideModal('logout-confirm-modal');
             });
-            document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
+document.getElementById('report-period-filter')?.addEventListener('change', generateSeniorReport);
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
