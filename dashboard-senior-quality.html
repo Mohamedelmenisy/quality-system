@@ -1076,7 +1076,8 @@
                 ]);
 
                 initRealtimeSubscriptions(); // <--- أضف هذا السطر هنا
-
+                 updateSeniorDashboardCharts();
+                
                 showToast('Senior Dashboard loaded successfully', 'success');
             } catch (error) {
                 console.error('Error initializing app:', error);
@@ -1097,6 +1098,29 @@
                 console.error('Error loading team performance chart:', error);
             }
         }
+
+async function updateSeniorDashboardCharts() {
+    try {
+        // Update Team Performance Chart
+        const performanceData = await getTeamPerformance();
+        if (teamPerformanceChart && performanceData.length > 0) {
+            teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
+            teamPerformanceChart.data.datasets[0].data = performanceData.map(p => parseFloat(p.accuracy));
+            teamPerformanceChart.update();
+        }
+
+        // Update Error Trends Chart
+        const trendData = await getErrorTrends();
+        if (errorTrendsChart && trendData.labels.length > 0) {
+            errorTrendsChart.data.labels = trendData.labels;
+            errorTrendsChart.data.datasets[0].data = trendData.values;
+            errorTrendsChart.update();
+        }
+    } catch (error) {
+        console.error("Error updating senior dashboard charts:", error);
+    }
+}
+        
         function updateUserInterface() {
             if (!currentUser) return;
             const name = currentUser.name || "User";
@@ -1204,9 +1228,6 @@
                 </tr>
             `).join('');
         }
-
-      // dashboard-senior-quality.html
-// dashboard-senior-quality.html
 
 function renderFinalizedDecisionsTable() {
     const tableBody = document.getElementById('finalized-errors-table-body');
@@ -1320,8 +1341,6 @@ function openFinalDecisionDetailsModal(errorId) {
         }
 
         // [AI-FIX] This function now handles pagination and filtering correctly.
-// dashboard-senior-quality.html
-
 function renderAssignedOrdersTable() {
     const tableBody = document.getElementById('assigned-table-body');
     const paginationControls = document.getElementById('assigned-orders-pagination');
@@ -2199,7 +2218,14 @@ document.body.addEventListener('click', async function(event) {
         btn.textContent = 'Confirm Reassignment';
     }
 });
-
+            
+// Inside 'DOMContentLoaded'
+document.getElementById('add-schedule-member-btn')?.addEventListener('click', () => {
+    // This is a placeholder. Ideally, this should open a dedicated modal 
+    // for adding or inviting a new team member to the system.
+    showToast("This feature should open a modal to add a new user.", "info");
+    // For example: showModal('add-user-modal');
+});
           // Other existing event listeners
             const editScheduleBtn = document.getElementById('edit-schedule-btn');
             const scheduleEditControls = document.getElementById('schedule-edit-controls');
