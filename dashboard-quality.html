@@ -1826,22 +1826,21 @@ async function updateQualityDashboardCharts() {
         // --- Update Monthly Performance Chart ---
         const monthlyData = await getAgentMonthlyPerformance(currentUser.id);
         if (monthlyPerformanceChart && monthlyData.length > 0) {
-            monthlyPerformanceChart.data.labels = monthlyData.map(d => new Date(d.month_start).toLocaleDateString('en-US', { month: 'short' }));
+            // The RPC now returns the month name directly
+            monthlyPerformanceChart.data.labels = monthlyData.map(d => d.month_name);
             monthlyPerformanceChart.data.datasets[0].data = monthlyData.map(d => d.correct_reviews);
             monthlyPerformanceChart.data.datasets[1].data = monthlyData.map(d => d.errors_found);
             monthlyPerformanceChart.update();
         }
 
-        // --- Update Issue Types Chart ---
+        // --- Update Issue Types Chart (code remains the same as it's working) ---
         const issueData = await getAgentIssueTypes(currentUser.id);
         if (issueTypesChart && issueData.length > 0) {
             issueTypesChart.data.labels = issueData.map(d => d.issue_type);
             issueTypesChart.data.datasets[0].data = issueData.map(d => d.count);
-             // Optional: Add more colors if needed
             issueTypesChart.data.datasets[0].backgroundColor = ['#00bfff', '#dc3545', '#ffc107', '#17a2b8', '#6f42c1', '#20c997'];
-            issueTypesCh-art.update();
+            issueTypesChart.update();
         } else if (issueTypesChart) {
-            // Handle case where there are no errors in the last 30 days
             issueTypesChart.data.labels = ['No errors recorded in last 30 days'];
             issueTypesChart.data.datasets[0].data = [1];
             issueTypesChart.data.datasets[0].backgroundColor = ['#333'];
