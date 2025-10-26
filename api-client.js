@@ -255,7 +255,6 @@ export async function getUserById(userId) {
   }
 }
 
-// api-client.js
 export async function getErrorTypesSummary(period) {
   try {
     const { data, error } = await supabase.rpc('get_error_types_summary', { period_filter: period });
