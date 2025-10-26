@@ -2238,61 +2238,70 @@ function renderOrdersTable(ordersToRender) {
             });
         }
 
-        function renderInquiriesTable(inquiriesToRender) {
-            const tableBody = document.getElementById('inquiries-table-body');
-            
-            if (!inquiriesToRender || inquiriesToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries match the current filters.</div></td></tr>`;
-                return;
-            }
 
-            tableBody.innerHTML = inquiriesToRender.map(inquiry => {
-                const orderData = inquiry.order_assignments?.orders;
-                const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
-                const inquiryDate = formatDateTime(inquiry.created_at);
-                const inquiryPreview = inquiry.inquiry_text ? (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 'No inquiry text';
-                
-                let statusBadge, actionContent;
+function renderInquiriesTable(inquiriesToRender) {
+    const tableBody = document.getElementById('inquiries-table-body');
+    
+    if (!inquiriesToRender || inquiriesToRender.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries match the current filters.</div></td></tr>`;
+        return;
+    }
 
-                if (inquiry.status === 'responded') {
-                    statusBadge = `<span class="status-badge status-completed">Responded</span>`;
-                    actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
-                } else { // status is 'pending'
-                    statusBadge = `<span class="status-badge status-pending">Pending</span>`;
-                    actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
-                }
-                
-                const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.7; background-color: var(--card-bg);' : '';
+    tableBody.innerHTML = inquiriesToRender.map(inquiry => {
+        const orderData = inquiry.order_assignments?.orders;
+        const agentName = inquiry.order_assignments?.users?.name || 'Unknown Agent';
+        const inquiryDate = formatDateTime(inquiry.created_at);
+        const inquiryPreview = inquiry.inquiry_text ? (inquiry.inquiry_text.length > 50 ? inquiry.inquiry_text.substring(0, 50) + '...' : inquiry.inquiry_text) : 'No inquiry text';
+        
+        let statusBadge, actionContent;
 
-                return `
-                    <tr style="${rowStyle}">
-                        <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
-                        <td>${agentName}</td>
-                        <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
-                        <td>${inquiryDate}</td>
-                        <td>${statusBadge}</td>
-                        <td>${actionContent}</td>
-                    </tr>
-                `;
-            }).join('');
-            
-            document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
-                btn.addEventListener('click', function() { openRespondInquiryModal(this.dataset.inquiryId); });
-            });
-
-           document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const inquiry = helperInquiries.find(i => String(i.id) === String(this.dataset.inquiryId));
-                    if (inquiry) {
-                        document.getElementById('view-inquiry-order-id').textContent = inquiry.order_assignments?.orders?.order_id || 'N/A';
-                        document.getElementById('view-inquiry-text').textContent = inquiry.inquiry_text || 'No inquiry text.';
-                        document.getElementById('view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
-                        document.getElementById('view-inquiry-response-text').textContent = inquiry.response_text || 'No response yet.';
-                        showModal('view-inquiry-modal');
-                    }
-                });
-            });
+        if (inquiry.status === 'responded') {
+            statusBadge = `<span class="status-badge status-completed">Responded</span>`;
+            actionContent = `<button class="action-btn view-inquiry-response-btn" data-inquiry-id="${inquiry.id}">View Response</button>`;
+        } else { // status is 'pending'
+            statusBadge = `<span class="status-badge status-pending">Pending</span>`;
+            actionContent = `<button class="action-btn primary respond-inquiry-btn" data-inquiry-id="${inquiry.id}">Respond</button>`;
         }
+        
+        const rowStyle = inquiry.status === 'responded' ? 'opacity: 0.7; background-color: var(--card-bg);' : '';
+
+        return `
+            <tr style="${rowStyle}">
+                <td><strong>${orderData?.order_id || 'N/A'}</strong></td>
+                <td>${agentName}</td>
+                <td title="${inquiry.inquiry_text || ''}">${inquiryPreview}</td>
+                <td>${inquiryDate}</td>
+                <td>${statusBadge}</td>
+                <td>${actionContent}</td>
+            </tr>
+        `;
+    }).join('');
+    
+    // --- THIS PART HANDLES THE BUTTON CLICKS ---
+    document.querySelectorAll('.view-inquiry-response-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const inquiryId = this.dataset.inquiryId;
+            const inquiry = helperInquiries.find(i => String(i.id) === String(inquiryId));
+            if (inquiry) {
+                const modal = document.getElementById('view-inquiry-modal');
+                const order = inquiry.order_assignments?.orders;
+                
+                modal.querySelector('#view-inquiry-order-id').textContent = order?.order_id || 'N/A';
+                modal.querySelector('#view-inquiry-text').textContent = inquiry.inquiry_text || '...';
+                modal.querySelector('#view-inquiry-agent-name').textContent = `By: ${inquiry.order_assignments?.users?.name || 'Unknown'}`;
+                modal.querySelector('#view-inquiry-response-text').textContent = inquiry.response_text || '...';
+                modal.querySelector('#view-inquiry-responded-by').textContent = `Responded by: ${inquiry.responded_by?.name || 'Helper'}`;
+                modal.querySelector('#view-inquiry-responded-at').textContent = `At: ${formatDateTime(inquiry.responded_at)}`;
+                
+                showModal('view-inquiry-modal');
+            }
+        });
+    });
+    
+    document.querySelectorAll('.respond-inquiry-btn').forEach(btn => {
+        btn.addEventListener('click', function() { openRespondInquiryModal(this.dataset.inquiryId); });
+    });
+}
 
         function renderCompanyEmployeesTable() {
             const tableBody = document.getElementById('employees-table-body');
@@ -2493,55 +2502,70 @@ function renderOrdersTable(ordersToRender) {
             }
         }
 
-        function initCharts() {
-            const isLightMode = document.body.classList.contains('light-mode');
-            const textColor = isLightMode ? '#2c3e50' : '#e6edf3';
-            const gridColor = isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+       function initCharts() {
+    const isLightMode = document.body.classList.contains('light-mode');
+    const textColor = isLightMode ? '#2c3e50' : '#e6edf3';
+    const gridColor = isLightMode ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-            if (monthlyPerformanceChart) monthlyPerformanceChart.destroy();
-            const monthlyCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
-            monthlyPerformanceChart = new Chart(monthlyCtx, {
-                type: 'line',
-                data: {
-                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-                    datasets: [
-                        {
-                            label: 'Correct Reviews',
-                            data: [45, 52, 48, 55, 58, 62],
-                            borderColor: '#28a745',
-                            backgroundColor: 'rgba(40, 167, 69, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        },
-                        {
-                            label: 'Errors Found',
-                            data: [8, 6, 10, 7, 5, 4],
-                            borderColor: '#dc3545',
-                            backgroundColor: 'rgba(220, 53, 69, 0.1)',
-                            fill: true,
-                            tension: 0.4
-                        }
-                    ]
+    // --- Monthly Performance Chart ---
+    const monthlyCtx = document.getElementById('monthlyPerformanceChart').getContext('2d');
+    if (monthlyPerformanceChart) monthlyPerformanceChart.destroy();
+    monthlyPerformanceChart = new Chart(monthlyCtx, {
+        type: 'line',
+        data: {
+            labels: ['Loading...'], // Start with a loading message
+            datasets: [
+                {
+                    label: 'Correct Reviews',
+                    data: [], // Start with empty data
+                    borderColor: '#28a745',
+                    backgroundColor: 'rgba(40, 167, 69, 0.1)',
+                    fill: true,
+                    tension: 0.4
                 },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { labels: { color: textColor } } },
-                    scales: { x: { grid: { color: gridColor }, ticks: { color: textColor } }, y: { grid: { color: gridColor }, ticks: { color: textColor } } } }
-            });
-            
-            if (issueTypesChart) issueTypesChart.destroy();
-            const issueCtx = document.getElementById('issueTypesChart').getContext('2d');
-            issueTypesChart = new Chart(issueCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Missing Item', 'Wrong Item', 'Spillage', 'Driver Behavior'],
-                    datasets: [{
-                        data: [45, 25, 18, 12],
-                        backgroundColor: ['#00bfff', '#dc3545', '#ffc107', '#17a2b8'],
-                        borderWidth: 0
-                    }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: textColor } } } }
-            });
+                {
+                    label: 'Errors Found',
+                    data: [], // Start with empty data
+                    borderColor: '#dc3545',
+                    backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                    fill: true,
+                    tension: 0.4
+                }
+            ]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { legend: { labels: { color: textColor } } },
+            scales: { 
+                x: { grid: { color: gridColor }, ticks: { color: textColor } }, 
+                y: { grid: { color: gridColor }, ticks: { color: textColor } } 
+            } 
         }
+    });
+    
+    // --- Issue Types Chart ---
+    const issueCtx = document.getElementById('issueTypesChart').getContext('2d');
+    if (issueTypesChart) issueTypesChart.destroy();
+    issueTypesChart = new Chart(issueCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Loading...'], // Start with a loading message
+            datasets: [{
+                data: [1], // Give it a single dummy value to render the circle
+                backgroundColor: ['#333'],
+                borderWidth: 0
+            }]
+        },
+        options: { 
+            responsive: true, 
+            maintainAspectRatio: false, 
+            plugins: { 
+                legend: { position: 'bottom', labels: { color: textColor } } 
+            } 
+        }
+    });
+}
 
         function updateCharts() { /* Placeholder for future implementation */ }
 
