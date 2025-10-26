@@ -1248,29 +1248,25 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ==================
-export async function getPerformanceMetrics(agentId = null) {
+// api-client.js -> FINAL VERSION
+
+export async function getPerformanceMetrics(agentId = null, role = null) {
   try {
     let rpcName;
     let params = {};
-    let userRole = 'agent'; // Default role
 
     if (agentId) {
       // This is for a Quality Agent's own dashboard
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
+    } else if (role === 'manager') {
+      // The Manager page is asking for its data
+      rpcName = 'get_manager_dashboard_kpis';
+      console.log('Fetching KPIs specifically for Manager Dashboard');
     } else {
-      // This is for a Manager or a Senior, let's find out who
-      const { data: { user } } = await supabase.auth.getUser();
-      // We get the role from the user's metadata stored during login
-      userRole = user?.user_metadata?.role || 'senior'; 
-
-      if (userRole === 'manager') {
-        rpcName = 'get_manager_dashboard_kpis';
-        console.log('Fetching KPIs for Manager');
-      } else { // Assume 'senior' for any other case
-        rpcName = 'get_senior_dashboard_kpis';
-        console.log('Fetching KPIs for Senior');
-      }
+      // Default to Senior if no agentId or specific role is passed
+      rpcName = 'get_senior_dashboard_kpis';
+      console.log('Fetching KPIs specifically for Senior Dashboard');
     }
 
     const { data, error } = await supabase.rpc(rpcName, params);
@@ -1282,32 +1278,26 @@ export async function getPerformanceMetrics(agentId = null) {
         return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
     }
 
-    // Now, return the correct object based on the user's role
-    if (userRole === 'manager') {
-        return {
-            totalOrders: metrics.total_reviews_today || 0,
-            accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-            qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
-        };
-    } else if (userRole === 'senior') {
-        return {
-            completedOrders: metrics.reviews_today || 0,
-            pendingEscalations: metrics.pending_escalations || 0,
-            avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-            accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
-        };
-    } else { // This is for the Quality Agent
-       return {
-            completedOrders: metrics.todays_reviews || 0,
-            pendingReviews: metrics.open_cases || 0,
-            accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
-            escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
-        };
-    }
+    // Now, return the full object, and let the calling page pick what it needs.
+    // This is more robust.
+    return {
+        // Senior Metrics
+        completedOrders: metrics.reviews_today || 0,
+        pendingEscalations: metrics.pending_escalations || 0,
+        avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+        
+        // Manager Metrics
+        totalOrders: metrics.total_reviews_today || metrics.reviews_today || 0,
+        accuracyRate: metrics.overall_team_accuracy || metrics.team_accuracy || 0.0,
+        qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A',
+
+        // Agent Metrics
+        pendingReviews: metrics.open_cases || 0,
+        escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
+    };
 
   } catch (error) {
     console.error(`Error in getPerformanceMetrics:`, error);
-    // Return a safe default object that won't crash any dashboard
     return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A', pendingReviews: 0, escalationRate: 0 };
   }
 }
