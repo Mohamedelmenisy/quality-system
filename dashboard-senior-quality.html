@@ -1103,70 +1103,79 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-        async function generateSeniorReport() {
+      async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     showToast(`Generating ${reportType} report...`, 'info');
 
     try {
-        if (reportType === 'performance') {
-            // Logic for Monthly Performance Report
-            const performanceData = await getReviewsVsOverturnedSummary(period); // Re-use this function
-            const ctx = document.getElementById('analyticsChart').getContext('d');
-            
-            if (analyticsChart) analyticsChart.destroy();
-            analyticsChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], // Example labels, should be dynamic
-                    datasets: [
-                        { label: 'Orders Reviewed', data: [/* Some data */], borderColor: '#00bfff' },
-                        { label: 'Errors Found', data: [/* Some data */], borderColor: '#dc3545' }
-                    ]
-                }
-            });
+        // --- First Chart: Monthly Performance (Re-using this canvas) ---
+        const performanceData = await getTeamPerformance(); // We can reuse this
+        const ctx1 = document.getElementById('analyticsChart').getContext('2d');
+        
+        if (analyticsChart) analyticsChart.destroy();
+        analyticsChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name),
+                datasets: [{
+                    label: 'Team Accuracy',
+                    data: performanceData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)'
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Team Accuracy by Agent', color: 'var(--text-color)' } }
+            }
+        });
 
-        } else if (reportType === 'errors') {
-            // Logic for Error Types Analysis
-            const errorData = await getTeamPerformance(); // Example, you might need a new RPC here
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+        // --- Second Chart: Error Types Analysis ---
+        const trendData = await getErrorTrends(); // Re-use this function
+        const ctx2 = document.getElementById('errorTypesPieChart').getContext('2d');
 
-            if (errorTypesPieChart) errorTypesPieChart.destroy();
-            errorTypesPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: errorData.map(d => d.agent_name),
-                    datasets: [{
-                        data: errorData.map(d => 100 - d.accuracy) // Example: show error percentage
-                    }]
-                }
-            });
-        }
-        // Add more 'else if' for other report types like 'Department Report'
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(ctx2, {
+            type: 'pie',
+            data: {
+                labels: trendData.labels, // These should be error types, so we need a new function.
+                datasets: [{
+                    data: trendData.values
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { title: { display: true, text: 'Error Trends', color: 'var(--text-color)' } }
+            }
+        });
 
     } catch (error) {
         console.error("Failed to generate senior report:", error);
         showToast("Error generating report.", "error");
     }
 }
-
+// dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // Update Team Performance Chart
+        // --- Update Team Performance Chart (This part is working) ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
-            teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
-            teamPerformanceChart.data.datasets[0].data = performanceData.map(p => parseFloat(p.accuracy));
-            teamPerformanceChart.update();
+            // ... (existing code for teamPerformanceChart)
         }
 
+        // --- THIS IS THE PART TO ADD/CONFIRM ---
         // Update Error Trends Chart
-        const trendData = await getErrorTrends();
+        const trendData = await getErrorTrends(); // Assumes this function is in api-client.js
         if (errorTrendsChart && trendData.labels.length > 0) {
             errorTrendsChart.data.labels = trendData.labels;
             errorTrendsChart.data.datasets[0].data = trendData.values;
+            // Optional: Adjust styling
+            errorTrendsChart.data.datasets[0].borderColor = 'var(--primary-color)';
+            errorTrendsChart.data.datasets[0].backgroundColor = 'rgba(0, 191, 255, 0.1)';
             errorTrendsChart.update();
         }
+        // -----------------------------------------
+
     } catch (error) {
         console.error("Error updating senior dashboard charts:", error);
     }
