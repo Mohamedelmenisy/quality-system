@@ -949,35 +949,42 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
                     </div>
                 </div>
 
-                <!-- Reports & Analytics Tab -->
-                <div id="reports-analytics" class="tab-content">
-                     <div class="widget">
-                        <h3>Advanced Reports & Analytics</h3>
-                        <div class="filter-panel">
-                            <select id="report-period">
-                                <option value="7">Last 7 Days</option>
-                                <option value="30" selected>Last 30 Days</option>
-                                <option value="90">Last 90 Days</option>
-                                <option value="365">Last Year</option>
-                            </select>
-                            <select id="report-type">
-                                <option value="performance">Performance Report</option>
-                                <option value="errors">Error Analysis</option>
-                                <option value="department">Department Report</option>
-                            </select>
-                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
-                            <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
-                        </div>
-                        <div class="charts-grid">
-                            <div class="chart-container">
-                                <canvas id="analyticsChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="errorTypesPieChart"></canvas>
-                            </div>
-                        </div>
-                    </div>
+               <!-- Reports & Analytics Tab -->
+<div id="reports-analytics" class="tab-content">
+     <div class="widget">
+        <h3>Advanced Reports & Analytics</h3>
+        <!-- START: New Simplified Filter Panel -->
+        <div class="filter-panel">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="report-period-filter">Select Time Period</label>
+                <select id="report-period-filter">
+                    <option value="7">Last 7 Days</option>
+                    <option value="30" selected>Last 30 Days</option>
+                    <option value="90">Last Quarter</option>
+                </select>
+            </div>
+            <button class="btn btn-secondary" id="export-analytics-csv-btn">Export to CSV</button>
+        </div>
+        <!-- END: New Simplified Filter Panel -->
+
+        <!-- START: New Chart Grid -->
+        <div class="charts-grid">
+            <div class="widget">
+                <h3>Quality Agent Accuracy</h3>
+                <div class="chart-container">
+                    <canvas id="agentAccuracyChart"></canvas>
                 </div>
+            </div>
+            <div class="widget">
+                <h3>Error Types Analysis</h3>
+                <div class="chart-container">
+                    <canvas id="errorTypesPieChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <!-- END: New Chart Grid -->
+    </div>
+</div>
 
                 <!-- Profile Tab -->
                 <div id="profile" class="tab-content">
@@ -1380,83 +1387,72 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-    // dashboard-senior-quality.html
-
 async function generateSeniorReport() {
-    const period = document.getElementById('report-period').value;
-    const reportType = document.getElementById('report-type').value;
-    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report for: ${periodText}`, 'info');
-
-    // Hide both charts initially to clear the view
-    document.getElementById('analyticsChart').style.display = 'none';
-    document.getElementById('errorTypesPieChart').style.display = 'none';
+    const period = document.getElementById('report-period-filter').value;
+    const periodText = document.getElementById('report-period-filter').options[document.getElementById('report-period-filter').selectedIndex].text;
+    showToast(`Generating reports for: ${periodText}`, 'info');
 
     try {
-        if (reportType === 'performance') {
-            document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getAgentAccuracySummary(period); // Using REAL data
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            
-            if (analyticsChart) analyticsChart.destroy();
-            analyticsChart = new Chart(ctx, {
-                type: 'bar', // Bar chart is better for comparing agents
-                data: {
-                    labels: performanceData.map(d => d.agent_name),
-                    datasets: [{
-                        label: 'Review Accuracy',
-                        data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                        borderRadius: 4
-                    }]
+        // --- Chart 1: Agent Accuracy (Bar Chart) ---
+        const performanceData = await getAgentAccuracySummary(period);
+        const ctx1 = document.getElementById('agentAccuracyChart').getContext('2d');
+        
+        if (agentAccuracyChart) agentAccuracyChart.destroy();
+        agentAccuracyChart = new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name),
+                datasets: [{
+                    label: 'Review Accuracy',
+                    data: performanceData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    title: { display: true, text: `Agent Accuracy (${periodText})`, color: 'var(--text-color)' },
+                    legend: { display: false }
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Quality Agent Accuracy (${periodText})`, color: 'var(--text-color)' },
-                        legend: { display: false }
-                    },
-                    scales: { 
-                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
-                    }
+                scales: { 
+                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
                 }
-            });
+            }
+        });
 
-        } else if (reportType === 'errors') {
-            document.getElementById('errorTypesPieChart').style.display = 'block';
-            const errorData = await getErrorTypesSummary(period); // Using REAL data
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+        // --- Chart 2: Error Types (Pie Chart) ---
+        const errorData = await getErrorTypesSummary(period);
+        const ctx2 = document.getElementById('errorTypesPieChart').getContext('2d');
 
-            if (errorTypesPieChart) errorTypesPieChart.destroy();
-            errorTypesPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
-                    datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14']
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
-                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
-                    }
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(ctx2, {
+            type: 'pie', // Using Pie Chart as requested
+            data: {
+                labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
+                datasets: [{
+                    data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
+                    borderColor: 'var(--card-bg)',
+                    borderWidth: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
+                    legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
                 }
-            });
-        }
+            }
+        });
+
     } catch (error) {
         console.error("Failed to generate senior report:", error);
-        showToast("Error generating report.", "error");
+        showToast("Error generating reports.", "error");
     }
 }
         
-       // dashboard-senior-quality.html
-
-// dashboard-senior-quality.html -> <script>
-
 async function updateSeniorDashboardCharts() {
     try {
         // --- 1. Update Team Performance Chart (Bar Chart) ---
@@ -2680,7 +2676,7 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); localStorage.removeItem('seniorActiveTab'); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
                 hideModal('logout-confirm-modal');
             });
-            document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
+           document.getElementById('report-period-filter')?.addEventListener('change', generateSeniorReport);
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
