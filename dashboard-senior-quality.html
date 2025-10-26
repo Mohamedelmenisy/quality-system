@@ -19,7 +19,7 @@
             getAppealedErrors,
             getFinalizedDecisions,
             submitFinalDecision,
-    getSeniorPerformanceMetrics, // <<< THIS IS THE FIX
+            getPerformanceMetrics,
             getTeamMembers,
             getTeamSchedule,
             updateTeamSchedule,
@@ -54,6 +54,7 @@
         window.getAppealedErrors = getAppealedErrors;
         window.getFinalizedDecisions = getFinalizedDecisions;
         window.submitFinalDecision = submitFinalDecision;
+        window.getPerformanceMetrics = getPerformanceMetrics;
         window.getTeamMembers = getTeamMembers;
         window.getTeamSchedule = getTeamSchedule;
         window.updateTeamSchedule = updateTeamSchedule;
@@ -72,7 +73,6 @@
         window.getAgentAccuracySummary = getAgentAccuracySummary;
 window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
-        window.getSeniorPerformanceMetrics = getSeniorPerformanceMetrics;
      window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
     <style>
@@ -1248,7 +1248,7 @@ async function updateSeniorDashboardCharts() {
 
 async function loadPerformanceMetrics() {
     try {
-        const metrics = await getSeniorPerformanceMetrics(); // <-- Call the new function
+        performanceMetrics = await getPerformanceMetrics(); // This now returns the correct object
         
         document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders;
         document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations;
