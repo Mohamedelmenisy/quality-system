@@ -114,6 +114,8 @@
             flex-direction: column;
             z-index: 1000;
             box-shadow: var(--shadow);
+            display: none; /* <--- أضف هذا السطر */
+
         }
 
         .sidebar-header {
@@ -256,8 +258,8 @@
 
         /* تحسين المحتوى الرئيسي */
         .main-content {
-            margin-left: 280px;
-            width: calc(100% - 280px);
+            margin-left: 0;
+            width: 100%;
             padding: 30px;
             display: flex;
             flex-direction: column;
