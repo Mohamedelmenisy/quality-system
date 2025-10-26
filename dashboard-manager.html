@@ -103,6 +103,12 @@
 
         /* تحسين الشريط الجانبي */
         .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    z-index: 1000;
+
             width: 280px;
             background: linear-gradient(to bottom, var(--sidebar-bg), #1f1f1f);
             height: 100vh;
@@ -256,6 +262,12 @@
 
         /* تحسين المحتوى الرئيسي */
         .main-content {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+
             margin-left: 280px;
             width: calc(100% - 280px);
             padding: 30px;
@@ -1298,10 +1310,22 @@
         /* تحسين الاستجابة للشاشات المختلفة */
         @media (max-width: 1024px) {
             .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    z-index: 1000;
+
                 width: 240px;
             }
             
             .main-content {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+
                 margin-left: 240px;
                 width: calc(100% - 240px);
             }
@@ -1321,6 +1345,12 @@
             }
             
             .sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 0;
+    height: 100vh !important;
+    z-index: 1000;
+
                 width: 100%;
                 height: auto;
                 position: relative;
@@ -1329,6 +1359,12 @@
             }
             
             .main-content {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+
                 margin-left: 0;
                 width: 100%;
                 padding: 20px;
@@ -1377,6 +1413,12 @@
 
         @media (max-width: 480px) {
             .main-content {
+    margin-left: 280px !important;
+    width: calc(100% - 280px) !important;
+    box-sizing: border-box;
+    position: relative;
+    z-index: 1;
+
                 padding: 15px;
             }
             
