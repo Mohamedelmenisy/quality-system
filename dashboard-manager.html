@@ -2257,14 +2257,19 @@
 
 async function loadPerformanceMetrics() {
     try {
-        const metrics = await getPerformanceMetrics();
+        // This function call now returns the complete object for the manager
+        const metrics = await getPerformanceMetrics(); 
         
+        // Added for debugging, you can check the console to see the received data
+        console.log("Metrics received from API:", metrics);
+
         if (teamMembers.length === 0) {
             await loadTeamMembers();
         }
         const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
 
-        // --- Update All KPI Cards ---
+        // --- Update All KPI Cards with the correct data keys ---
+        
         document.getElementById('total-orders').textContent = metrics.totalOrders || 0;
         
         const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
@@ -2272,22 +2277,19 @@ async function loadPerformanceMetrics() {
 
         document.getElementById('active-agents').textContent = activeAgentsCount;
         
-        // --- THE FIX IS HERE ---
+        // --- THE FINAL FIX FOR "Quality Team Accuracy" ---
         const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
+        const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
+
         if (qualityAccuracyEl && metrics.qualityTeamAccuracy !== undefined) {
             qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
-            // Optional: Add color coding
-            if (metrics.qualityTeamAccuracy < 95) {
-                qualityAccuracyEl.style.color = 'var(--warning-color)';
-            } else {
-                qualityAccuracyEl.style.color = 'var(--green)';
-            }
+            qualityAccuracyChangeEl.textContent = 'Based on senior reviews'; // Clear "Loading..."
         } else if (qualityAccuracyEl) {
             qualityAccuracyEl.textContent = 'N/A';
+            qualityAccuracyChangeEl.textContent = 'Data unavailable';
         }
-        // -----------------------
+        // ---------------------------------------------------
 
-        // Update change indicators (can be improved later)
         document.getElementById('orders-change').textContent = `For today`;
         document.getElementById('error-rate-change').textContent = `Overall team error rate`;
 
