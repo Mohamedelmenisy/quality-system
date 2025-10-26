@@ -2566,24 +2566,36 @@ function renderOrdersTable(ordersToRender) {
               async function openReviewOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
 
-            if (!orderAssignment) { 
-                showToast('Order not found', 'error'); 
-                return; 
-            }
-
-            orderAssignment.status = 'in_progress';
-            applyOrderFiltersAndRender();
-
-            try {
-                await updateAssignmentStatus(orderAssignmentId, 'in_progress');
-            } catch (error) {
-                console.warn("Could not update status to 'in_progress' in the database", error);
-                orderAssignment.status = 'pending';
-                applyOrderFiltersAndRender();
-                showToast('Failed to update status. Please try again.', 'error');
+            if (!orderAssignment) {
+                showToast('Order not found', 'error');
                 return;
             }
+            
+            // First, try to update the database. Show feedback to the user.
+            showToast('Updating status to "In Progress"...', 'info');
 
+            try {
+                // Attempt to save the new status to the database
+                await updateAssignmentStatus(orderAssignmentId, 'in_progress');
+                
+                // --- SUCCESS ---
+                // If the above line does not throw an error, the database is updated.
+                // Now, update the local data and the UI.
+                orderAssignment.status = 'in_progress';
+                applyOrderFiltersAndRender();
+                showToast('Status updated successfully.', 'success');
+
+            } catch (error) {
+                // --- FAILURE ---
+                // If updateAssignmentStatus fails, this block will run.
+                console.error("Failed to update status to 'in_progress' in the database:", error);
+                // The local state was not changed, so no need to revert it.
+                // Inform the user and stop the process.
+                showToast('Failed to lock the order for review. Please try again.', 'error');
+                return; // Abort and do not open the modal.
+            }
+
+            // If the status update was successful, continue with opening the modal
             const errorReasonSelect = document.getElementById('review-error-type');
             if(errorReasonSelect){
                 errorReasonSelect.innerHTML = '<option value="">Select error reason...</option>' + 
@@ -2611,7 +2623,6 @@ function renderOrdersTable(ordersToRender) {
             document.querySelector('label[for="review-notes"]').textContent = 'Additional Notes';
             showModal('review-order-modal');
         }
-
 
         async function openEscalateOrderModal(orderAssignmentId) {
             const orderAssignment = assignedOrders.find(o => o.id.toString() === orderAssignmentId.toString());
