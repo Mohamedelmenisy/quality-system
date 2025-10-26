@@ -35,7 +35,7 @@ document.addEventListener('click', function(e){
             getEscalations,
             submitReview,
             submitEscalation,
-            getPerformanceMetrics,
+                getQualityAgentPerformanceMetrics, // <-- Use the new quality function
             getTeamMembers,
             getTeamSchedule,
             updateTeamSchedule,
@@ -58,7 +58,6 @@ document.addEventListener('click', function(e){
             updateAssignmentStatus, // <--- أضف هذه
             getOverturnedReviewsForAgent, // <<< ADD THIS
             getAgentMonthlyPerformance, // <<< ADD THIS
-                getQualityAgentPerformanceMetrics, // <-- Use the new quality function
             getAgentIssueTypes        // <<< ADD THIS
 
         } from './api-client.js';
