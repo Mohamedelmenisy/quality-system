@@ -19,7 +19,7 @@
             getAppealedErrors,
             getFinalizedDecisions,
             submitFinalDecision,
-            getPerformanceMetrics,
+    getSeniorPerformanceMetrics, // <<< THIS IS THE FIX
             getTeamMembers,
             getTeamSchedule,
             updateTeamSchedule,
@@ -40,7 +40,6 @@
     getReviewsVsOverturnedSummary,
              getErrorTypesSummary,
             reassignOrder,
-                getSeniorPerformanceMetrics, // <-- Use the new senior function
             subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
 
@@ -55,7 +54,6 @@
         window.getAppealedErrors = getAppealedErrors;
         window.getFinalizedDecisions = getFinalizedDecisions;
         window.submitFinalDecision = submitFinalDecision;
-        window.getPerformanceMetrics = getPerformanceMetrics;
         window.getTeamMembers = getTeamMembers;
         window.getTeamSchedule = getTeamSchedule;
         window.updateTeamSchedule = updateTeamSchedule;
