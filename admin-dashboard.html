@@ -4,17 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - QualityX</title>
-        <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary-color: #00bfff;
             --primary-hover: #00a4d9;
+            --primary-light: rgba(0, 191, 255, 0.1);
             --bg-color: #121212;
-            --card-bg: #1a1a1a;
+            --card-bg: #1e1e1e;
+            --card-hover: #252525;
             --text-color: #ffffff;
             --text-secondary: #b0b0b0;
+            --text-muted: #8b949e;
             --border-color: #333333;
+            --border-light: #3a3a3a;
+            --border-radius-base: 15px;
+            --border-radius-sm: 10px;
+            --shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            --shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.35);
+            --shadow-glow: 0 0 20px rgba(0, 191, 255, 0.3);
+            --transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
         }
         
         * {
@@ -25,11 +35,25 @@
         
         body {
             font-family: 'Poppins', sans-serif;
-            background-color: var(--bg-color);
+            background: linear-gradient(135deg, var(--bg-color) 0%, #1a1a1a 100%);
             color: var(--text-color);
             min-height: 100vh;
             padding: 40px 20px;
             position: relative;
+            overflow-x: hidden;
+        }
+        
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at 20% 80%, rgba(0, 191, 255, 0.1) 0%, transparent 50%),
+                       radial-gradient(circle at 80% 20%, rgba(0, 191, 255, 0.05) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
         }
         
         .logout-btn {
@@ -39,66 +63,97 @@
             background: transparent;
             border: 1px solid var(--primary-color);
             color: var(--primary-color);
-            padding: 10px 20px;
-            border-radius: 10px;
+            padding: 12px 24px;
+            border-radius: var(--border-radius-sm);
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 10;
         }
         
         .logout-btn:hover {
             background: var(--primary-color);
             color: #000;
-            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
         }
         
         .admin-header {
             text-align: center;
-            margin-bottom: 40px;
+            margin-bottom: 50px;
             padding-top: 20px;
+            position: relative;
+        }
+        
+        .admin-header::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
+            border-radius: 2px;
         }
         
         .admin-title {
-            font-size: 2.5rem;
+            font-size: 2.8rem;
             font-weight: 700;
-            color: var(--primary-color);
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, var(--primary-color), #4dabf7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 12px;
+            letter-spacing: 0.5px;
         }
         
         .admin-subtitle {
-            font-size: 1.1rem;
+            font-size: 1.2rem;
             color: var(--text-secondary);
             font-weight: 400;
-            margin-bottom: 15px;
+            margin-bottom: 18px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            line-height: 1.5;
         }
         
         .welcome {
             color: var(--text-secondary);
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             margin-bottom: 25px;
             font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
         }
         
         .dashboard-container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
             margin-bottom: 60px;
         }
         
         .dashboard-card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 15px;
-            padding: 30px 25px;
+            background: linear-gradient(135deg, var(--card-bg), #232323);
+            border: 1px solid var(--border-light);
+            border-radius: var(--border-radius-base);
+            padding: 35px 30px;
             text-align: center;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: var(--transition);
             position: relative;
             overflow: hidden;
+            box-shadow: var(--shadow);
         }
         
         .dashboard-card::before {
@@ -108,64 +163,116 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: var(--primary-color);
+            background: linear-gradient(90deg, var(--primary-color), transparent);
             transform: scaleX(0);
             transition: transform 0.3s ease;
         }
         
+        .dashboard-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(0, 191, 255, 0.05), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
         .dashboard-card:hover {
             border-color: var(--primary-color);
-            transform: translateY(-6px);
-            box-shadow: 0 10px 30px rgba(0, 191, 255, 0.15), 0 0 15px rgba(0, 191, 255, 0.25);
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover), var(--shadow-glow);
         }
         
         .dashboard-card:hover::before {
             transform: scaleX(1);
         }
         
+        .dashboard-card:hover::after {
+            opacity: 1;
+        }
+        
         .card-icon {
-            font-size: 2.8rem;
-            margin-bottom: 20px;
+            font-size: 3.2rem;
+            margin-bottom: 25px;
             color: var(--primary-color);
-            transition: transform 0.3s ease;
+            transition: var(--transition);
+            display: inline-block;
+            filter: drop-shadow(0 4px 8px rgba(0, 191, 255, 0.3));
         }
         
         .dashboard-card:hover .card-icon {
-            transform: scale(1.1);
+            transform: scale(1.15) rotate(5deg);
         }
         
         .card-title {
-            font-size: 1.4rem;
+            font-size: 1.5rem;
             font-weight: 600;
-            margin-bottom: 12px;
+            margin-bottom: 15px;
             color: var(--text-color);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .card-title::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 2px;
+            background: var(--primary-color);
+            border-radius: 1px;
+            opacity: 0.7;
         }
         
         .card-description {
-            font-size: 0.95rem;
+            font-size: 1rem;
             color: var(--text-secondary);
-            line-height: 1.5;
-            margin-bottom: 20px;
+            line-height: 1.6;
+            margin-bottom: 25px;
         }
         
         .card-badge {
             display: inline-block;
-            background: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
             color: #000;
-            padding: 6px 15px;
+            padding: 8px 18px;
             border-radius: 20px;
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
             letter-spacing: 0.5px;
+            box-shadow: 0 4px 12px rgba(0, 191, 255, 0.3);
+            transition: var(--transition);
+        }
+        
+        .dashboard-card:hover .card-badge {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 191, 255, 0.4);
         }
         
         .footer {
             text-align: center;
-            margin-top: 50px;
-            padding: 20px;
+            margin-top: 60px;
+            padding: 25px;
             color: var(--text-secondary);
             font-size: 0.9rem;
-            border-top: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-light);
+            position: relative;
+        }
+        
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 150px;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-color), transparent);
         }
         
         .footer-text {
@@ -179,47 +286,63 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.7);
-            display: none; /* Hidden by default */
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
             justify-content: center;
             align-items: center;
             z-index: 1000;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(8px);
             opacity: 0;
             transition: opacity 0.3s ease;
+            padding: 20px;
         }
 
         .modal-overlay.show {
+            display: flex;
             opacity: 1;
         }
 
         .modal-content {
-            background: var(--card-bg);
-            padding: 30px 40px;
-            border-radius: 15px;
+            background: linear-gradient(135deg, var(--card-bg), #232323);
+            padding: 40px;
+            border-radius: var(--border-radius-base);
             text-align: center;
             width: 90%;
-            max-width: 400px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-            transform: scale(0.9);
+            max-width: 450px;
+            border: 1px solid var(--border-light);
+            box-shadow: var(--shadow-hover), var(--shadow-glow);
+            transform: scale(0.9) translateY(20px);
             transition: transform 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
         
         .modal-overlay.show .modal-content {
-            transform: scale(1);
+            transform: scale(1) translateY(0);
+        }
+        
+        .modal-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), transparent);
         }
 
         .modal-content h2 {
             color: var(--primary-color);
-            margin-bottom: 15px;
-            font-size: 1.5rem;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            font-weight: 600;
         }
 
         .modal-content p {
             color: var(--text-secondary);
-            font-size: 1rem;
-            margin-bottom: 25px;
+            font-size: 1.05rem;
+            margin-bottom: 30px;
+            line-height: 1.5;
         }
 
         .modal-buttons {
@@ -229,41 +352,55 @@
         }
 
         .modal-btn {
-            padding: 10px 25px;
-            border-radius: 10px;
+            padding: 12px 28px;
+            border-radius: var(--border-radius-sm);
             font-weight: 500;
             cursor: pointer;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+            transition: var(--transition);
+            font-size: 0.95rem;
             border: none;
+            min-width: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
         .modal-btn.confirm {
-            background-color: var(--primary-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
             color: #000;
+            box-shadow: 0 4px 12px rgba(0, 191, 255, 0.3);
         }
         
         .modal-btn.confirm:hover {
-            background-color: var(--primary-hover);
-            box-shadow: 0 0 15px rgba(0, 191, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0, 191, 255, 0.4);
         }
 
         .modal-btn.cancel {
-            background-color: #333;
+            background: rgba(51, 51, 51, 0.7);
             color: var(--text-secondary);
+            border: 1px solid var(--border-light);
         }
         
         .modal-btn.cancel:hover {
-            background-color: #444;
+            background: #444;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
         
         @media (max-width: 768px) {
             .dashboard-container {
                 grid-template-columns: 1fr;
+                gap: 20px;
             }
             
             .admin-title {
-                font-size: 2rem;
+                font-size: 2.2rem;
+            }
+            
+            .admin-subtitle {
+                font-size: 1.1rem;
             }
             
             .logout-btn {
@@ -271,17 +408,100 @@
                 top: 0;
                 right: 0;
                 margin-bottom: 20px;
+                width: 100%;
+                justify-content: center;
+            }
+            
+            .admin-header {
+                margin-bottom: 30px;
+            }
+            
+            .dashboard-card {
+                padding: 25px 20px;
+            }
+            
+            .modal-buttons {
+                flex-direction: column;
+            }
+            
+            .modal-btn {
+                width: 100%;
             }
         }
+        
+        @media (max-width: 480px) {
+            body {
+                padding: 30px 15px;
+            }
+            
+            .admin-title {
+                font-size: 1.8rem;
+            }
+            
+            .admin-subtitle {
+                font-size: 1rem;
+            }
+            
+            .welcome {
+                font-size: 1.1rem;
+            }
+            
+            .card-icon {
+                font-size: 2.8rem;
+            }
+            
+            .card-title {
+                font-size: 1.3rem;
+            }
+            
+            .modal-content {
+                padding: 30px 25px;
+            }
+        }
+        
+        /* Animation for page load */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dashboard-card {
+            animation: fadeInUp 0.6s ease forwards;
+            opacity: 0;
+        }
+        
+        .dashboard-card:nth-child(1) { animation-delay: 0.1s; }
+        .dashboard-card:nth-child(2) { animation-delay: 0.2s; }
+        .dashboard-card:nth-child(3) { animation-delay: 0.3s; }
+        .dashboard-card:nth-child(4) { animation-delay: 0.4s; }
     </style>
 </head>
 <body>
-    <button class="logout-btn" onclick="logout()">Logout</button>
+    <button class="logout-btn" onclick="logout()">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+        Logout
+    </button>
     
     <div class="admin-header">
         <h1 class="admin-title">Admin Dashboard</h1>
         <p class="admin-subtitle">Full System Access & Management</p>
-        <h2 class="welcome">Welcome back, Admin 👋</h2>
+        <h2 class="welcome">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Welcome back, Admin 👋
+        </h2>
     </div>
     
     <div class="dashboard-container">
@@ -324,8 +544,21 @@
             <h2>Confirm Logout</h2>
             <p>Are you sure you want to logout?</p>
             <div class="modal-buttons">
-                <button id="cancel-logout-btn" class="modal-btn cancel">Cancel</button>
-                <button id="confirm-logout-btn" class="modal-btn confirm">Logout</button>
+                <button id="cancel-logout-btn" class="modal-btn cancel">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                    Cancel
+                </button>
+                <button id="confirm-logout-btn" class="modal-btn confirm">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                        <polyline points="16 17 21 12 16 7"></polyline>
+                        <line x1="21" y1="12" x2="9" y2="12"></line>
+                    </svg>
+                    Logout
+                </button>
             </div>
         </div>
     </div>
@@ -379,6 +612,13 @@
         // Also close modal if user clicks on the overlay (outside the modal content)
         logoutModal.addEventListener('click', function(event) {
             if (event.target === logoutModal) {
+                cancelLogout();
+            }
+        });
+        
+        // Add keyboard support for Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape' && logoutModal.classList.contains('show')) {
                 cancelLogout();
             }
         });
