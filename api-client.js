@@ -142,6 +142,35 @@ export async function getAgentMonthlyPerformance(agentId) {
 
 // api-client.js
 
+export async function getPerformanceMetrics() {
+  try {
+    const { data, error } = await supabase.rpc('get_senior_dashboard_kpis');
+    if (error) {
+      console.error('Error fetching performance metrics RPC:', error);
+      throw error;
+    }
+
+    const metrics = data[0];
+
+    // This object is the final, structured data we send to the frontend
+    return {
+      completedOrders: metrics.reviews_today || 0,
+      pendingEscalations: metrics.pending_escalations || 0,
+      // THE FIX: Read 'avg_resolution_time_minutes' from the RPC result
+      avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+      accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+    };
+
+  } catch (error) {
+    console.error('GetPerformanceMetrics function error:', error);
+    // Return default zero values on any error
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0.0 };
+  }
+}
+
+
+// api-client.js
+
 export async function getAgentIssueTypes(agentId) {
   try {
     const { data, error } = await supabase.rpc('get_agent_issue_types', { p_agent_id: agentId });
