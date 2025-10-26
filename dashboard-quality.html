@@ -59,6 +59,7 @@ document.addEventListener('click', function(e){
             getQualityAgentPerformance, // <<< ADD THIS
             getOverturnedReviewsForAgent, // <<< ADD THIS
             getAgentMonthlyPerformance, // <<< ADD THIS
+                getQualityAgentPerformanceMetrics, // <-- Use the new quality function
             getAgentIssueTypes        // <<< ADD THIS
 
         } from './api-client.js';
@@ -93,6 +94,7 @@ document.addEventListener('click', function(e){
         window.getQualityAgentPerformance = getQualityAgentPerformance; // <<< ADD THIS
         window.getOverturnedReviewsForAgent = getOverturnedReviewsForAgent; // <<< ADD THIS
         window.getAgentMonthlyPerformance = getAgentMonthlyPerformance;
+        window.getQualityAgentPerformanceMetrics = getQualityAgentPerformanceMetrics;
        window.getAgentIssueTypes = getAgentIssueTypes;
     </script>
     <style>
@@ -1784,7 +1786,7 @@ document.addEventListener('click', function(e){
 async function loadPerformanceMetrics() {
     if (!currentUser) return;
     try {
-        const metrics = await getPerformanceMetrics(currentUser.id);
+        const metrics = await getQualityAgentPerformanceMetrics(currentUser.id); // <-- Call the new function
         
         document.getElementById('todays-reviews').textContent = metrics.completedOrders;
         document.getElementById('open-cases').textContent = metrics.pendingReviews;
