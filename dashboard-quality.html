@@ -35,7 +35,7 @@ document.addEventListener('click', function(e){
             getEscalations,
             submitReview,
             submitEscalation,
-                getQualityAgentPerformanceMetrics, // <-- Use the new quality function
+            getPerformanceMetrics,
             getTeamMembers,
             getTeamSchedule,
             updateTeamSchedule,
@@ -56,6 +56,7 @@ document.addEventListener('click', function(e){
             getErrorReasons,
             getCompanyDepartments,
             updateAssignmentStatus, // <--- أضف هذه
+            getQualityAgentPerformance, // <<< ADD THIS
             getOverturnedReviewsForAgent, // <<< ADD THIS
             getAgentMonthlyPerformance, // <<< ADD THIS
             getAgentIssueTypes        // <<< ADD THIS
@@ -89,9 +90,9 @@ document.addEventListener('click', function(e){
         window.getErrorReasons = getErrorReasons;
         window.getCompanyDepartments = getCompanyDepartments;
         window.updateAssignmentStatus = updateAssignmentStatus;
+        window.getQualityAgentPerformance = getQualityAgentPerformance; // <<< ADD THIS
         window.getOverturnedReviewsForAgent = getOverturnedReviewsForAgent; // <<< ADD THIS
         window.getAgentMonthlyPerformance = getAgentMonthlyPerformance;
-        window.getQualityAgentPerformanceMetrics = getQualityAgentPerformanceMetrics;
        window.getAgentIssueTypes = getAgentIssueTypes;
     </script>
     <style>
@@ -1783,12 +1784,13 @@ document.addEventListener('click', function(e){
 async function loadPerformanceMetrics() {
     if (!currentUser) return;
     try {
-        // --- THE FIX IS HERE: Call the new, correct function ---
-        const metrics = await getQualityAgentPerformanceMetrics(currentUser.id); 
+        const metrics = await getPerformanceMetrics(currentUser.id);
         
         document.getElementById('todays-reviews').textContent = metrics.completedOrders;
         document.getElementById('open-cases').textContent = metrics.pendingReviews;
         document.getElementById('quality-score').textContent = `${metrics.accuracyRate}%`;
+        
+        // --- THE FIX IS HERE: Read 'metrics.escalationRate' instead of 'metrics.errorRate' ---
         document.getElementById('escalation-rate').textContent = `${metrics.escalationRate}%`;
         
         const qualityScoreEl = document.getElementById('quality-score');
