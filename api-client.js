@@ -1250,23 +1250,29 @@ export async function createNotification(userId, message, type = 'info') {
 // ==================== ANALYTICS & REPORTING FUNCTIONS ==================
 // api-client.js -> FINAL VERSION
 
-export async function getPerformanceMetrics(agentId = null, role = null) {
+// api-client.js
+
+export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
+    let isSeniorOrManager = false;
 
     if (agentId) {
-      // This is for a Quality Agent's own dashboard
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
-    } else if (role === 'manager') {
-      // The Manager page is asking for its data
-      rpcName = 'get_manager_dashboard_kpis';
-      console.log('Fetching KPIs specifically for Manager Dashboard');
     } else {
-      // Default to Senior if no agentId or specific role is passed
-      rpcName = 'get_senior_dashboard_kpis';
-      console.log('Fetching KPIs specifically for Senior Dashboard');
+      isSeniorOrManager = true;
+      // We will determine the RPC name based on the user's role in the frontend
+      // For now, let's assume a default. This logic will be improved.
+      const { data: { user } } = await supabase.auth.getUser();
+      const userRole = user?.user_metadata?.role || 'senior'; // A safe default
+
+      if (userRole === 'manager' || userRole === 'admin') {
+        rpcName = 'get_manager_dashboard_kpis';
+      } else { // Assume 'senior'
+        rpcName = 'get_senior_dashboard_kpis';
+      }
     }
 
     const { data, error } = await supabase.rpc(rpcName, params);
@@ -1274,34 +1280,38 @@ export async function getPerformanceMetrics(agentId = null, role = null) {
     
     const metrics = data[0];
     if (!metrics) {
-        // Return a default structure if no data comes back
-        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
+        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
     }
 
-    // Now, return the full object, and let the calling page pick what it needs.
-    // This is more robust.
-    return {
-        // Senior Metrics
-        completedOrders: metrics.reviews_today || 0,
-        pendingEscalations: metrics.pending_escalations || 0,
-        avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-        
-        // Manager Metrics
-        totalOrders: metrics.total_reviews_today || metrics.reviews_today || 0,
-        accuracyRate: metrics.overall_team_accuracy || metrics.team_accuracy || 0.0,
-        qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A',
-
-        // Agent Metrics
-        pendingReviews: metrics.open_cases || 0,
-        escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
-    };
+    if (isSeniorOrManager) {
+        if (rpcName === 'get_manager_dashboard_kpis') {
+            return {
+                totalOrders: metrics.total_reviews_today || 0,
+                accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+                qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
+            };
+        } else { // Senior
+            return {
+                completedOrders: metrics.reviews_today || 0,
+                pendingEscalations: metrics.pending_escalations || 0,
+                avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+                accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+            };
+        }
+    } else { // Quality Agent
+       return {
+            completedOrders: metrics.todays_reviews || 0,
+            pendingReviews: metrics.open_cases || 0,
+            accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
+            escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
+        };
+    }
 
   } catch (error) {
-    console.error(`Error in getPerformanceMetrics:`, error);
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A', pendingReviews: 0, escalationRate: 0 };
+    console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
   }
 }
-
 
 export async function getErrorTrends() {
   try {
