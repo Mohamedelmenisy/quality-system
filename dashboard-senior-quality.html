@@ -1246,29 +1246,29 @@ async function updateSeniorDashboardCharts() {
 
 async function loadPerformanceMetrics() {
     try {
-        const { data, error } = await supabase.rpc('get_senior_dashboard_kpis', {}, { count: 'exact' });
+        const metrics = await getPerformanceMetrics(); 
+        
+        // >> لم نعد نستدعي rpc مباشرة من هنا لتجنب الأخطاء <<
 
-        if (error) {
-            throw error; // Throw the error to be caught by the catch block
+        if (!metrics) {
+            throw new Error("Received no metrics from the API client.");
         }
+
+        // تعبئة الكروت بالبيانات الصحيحة
+        document.getElementById('reviews-today').textContent = metrics.completedOrders || 0;
+        document.getElementById('pending-escalations').textContent = metrics.pendingEscalations || 0;
         
-        // The result is in data, not directly
-        performanceMetrics = data; 
-        
-        document.getElementById('reviews-today').textContent = performanceMetrics.reviews_today || 0;
-        document.getElementById('pending-escalations').textContent = performanceMetrics.pending_escalations || 0;
-        
-        // Round the accuracy in JavaScript as a final confirmation
-        const teamAccuracy = performanceMetrics.team_accuracy ? parseFloat(performanceMetrics.team_accuracy).toFixed(1) : '0.0';
+        // تقريب وعرض دقة الفريق
+        const teamAccuracy = metrics.accuracyRate ? parseFloat(metrics.accuracyRate).toFixed(1) : '0.0';
         document.getElementById('team-accuracy').textContent = `${teamAccuracy}%`;
         
-        // Round the resolution time as well
-        const avgTime = performanceMetrics.avg_resolution_time_minutes ? Math.round(performanceMetrics.avg_resolution_time_minutes) : 0;
+        // تقريب وعرض متوسط وقت الحل
+        const avgTime = metrics.avgResolutionTime ? Math.round(metrics.avgResolutionTime) : 0;
         document.getElementById('avg-resolution-time').textContent = `${avgTime} mins`;
 
     } catch (error) {
-        console.error('Error loading performance metrics into dashboard:', error);
-        // Set all to N/A on failure
+        console.error('CRITICAL Error loading performance metrics:', error);
+        // في حالة الفشل، نعرض N/A ليكون الخطأ واضحاً
         document.getElementById('reviews-today').textContent = 'N/A';
         document.getElementById('pending-escalations').textContent = 'N/A';
         document.getElementById('team-accuracy').textContent = 'N/A';
