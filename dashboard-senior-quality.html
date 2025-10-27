@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -1104,78 +1105,76 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
- // dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي للتشارتات <<<<<<<<<<<<
+     // dashboard-senior-quality.html
 
-async function initAndLoadDashboardCharts() {
+async function generateSeniorReport() {
+    const period = document.getElementById('report-period').value;
+    const reportType = document.getElementById('report-type').value;
+    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
+    showToast(`Generating ${reportType} report...`, 'info');
+
+    // Hide both charts initially
+    document.getElementById('analyticsChart').style.display = 'none';
+    document.getElementById('errorTypesPieChart').style.display = 'none';
+
     try {
-        // --- 1. جلب البيانات من قاعدة البيانات أولاً ---
-        const performanceData = await getTeamPerformance();
-        const trendData = await getErrorTrends();
-
-        // --- 2. الرسم البياني الأول: أداء الفريق (الأعمدة) ---
-        const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
-        if (teamCtx) {
-            // اهدم التشارت القديم لو موجود عشان نبني من جديد
-            if (window.teamPerformanceChart) {
-                window.teamPerformanceChart.destroy();
-            }
-            // ابني التشارت الجديد بالبيانات الحقيقية مباشرة
-            window.teamPerformanceChart = new Chart(teamCtx, {
+        if (reportType === 'performance') {
+            document.getElementById('analyticsChart').style.display = 'block';
+            const performanceData = await getTeamPerformance();
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            if (analyticsChart) analyticsChart.destroy();
+            analyticsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: performanceData.length > 0 ? performanceData.map(p => p.agent_name) : ['No Data'],
+                    labels: performanceData.map(d => d.agent_name),
                     datasets: [{
-                        label: 'Accuracy Rate (%)',
-                        data: performanceData.length > 0 ? performanceData.map(p => parseFloat(p.accuracy)) : [0],
-                        backgroundColor: 'rgba(0, 191, 255, 0.6)',
-                        borderWidth: 0,
-                        borderRadius: 4
+                        label: 'Team Accuracy',
+                        data: performanceData.map(d => d.accuracy),
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
                     }]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, 
-                    scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
+                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
                 }
             });
-        }
 
-        // --- 3. الرسم البياني الثاني: اتجاه الأخطاء (الخطي) ---
-        const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
-        if (trendsCtx) {
-            // اهدم التشارت القديم لو موجود
-            if (window.errorTrendsChart) {
-                window.errorTrendsChart.destroy();
-            }
-            // ابني التشارت الجديد بالبيانات الحقيقية مباشرة
-            window.errorTrendsChart = new Chart(trendsCtx, {
-                type: 'line',
+        } else if (reportType === 'errors') {
+            document.getElementById('errorTypesPieChart').style.display = 'block';
+            const errorData = await getErrorTypesSummary(period);
+            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+
+            if (errorTypesPieChart) errorTypesPieChart.destroy();
+            errorTypesPieChart = new Chart(ctx, {
+                type: 'pie',
                 data: {
-                    labels: trendData.labels.length > 0 ? trendData.labels : ['No Data'],
+                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
                     datasets: [{
-                        label: 'Daily Error Count',
-                        data: trendData.values.length > 0 ? trendData.values : [0],
-                        borderColor: 'rgba(0, 191, 255, 1)',
-                        backgroundColor: 'rgba(0, 191, 255, 0.1)',
-                        fill: true,
-                        tension: 0.4
+                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
                     }]
                 },
-                options: {
+                options: { 
                     responsive: true, maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } }
+                    plugins: { 
+                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
+                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
+                    }
                 }
             });
         }
-
     } catch (error) {
-        console.error("Critical error loading dashboard charts:", error);
-        showToast("Failed to render charts.", "error");
+        console.error("Failed to generate senior report:", error);
+        showToast("Error generating report.", "error");
     }
 }
 
+        // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- تحديث الرسم البياني الأول: أداء الفريق (الأعمدة) ---
+        // --- Update Team Performance Chart ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
             teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
@@ -1183,17 +1182,15 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- الكود الخاص بالرسم البياني الثاني (هنصلحه لاحقاً) ---
-        // const trendData = await getErrorTrends();
-        // if (errorTrendsChart && trendData.labels.length > 0) {
-        //     errorTrendsChart.data.labels = trendData.labels;
-        //     errorTrendsChart.data.datasets[0].data = trendData.values;
-        //     errorTrendsChart.update();
-        // }
-
+        // --- Update Error Trends Chart ---
+        const trendData = await getErrorTrends();
+        if (errorTrendsChart && trendData.labels.length > 0) {
+            errorTrendsChart.data.labels = trendData.labels;
+            errorTrendsChart.data.datasets[0].data = trendData.values;
+            errorTrendsChart.update();
+        }
     } catch (error) {
-        console.error("Error updating dashboard charts:", error);
-        showToast("Failed to load chart data.", "error");
+        console.error("Error updating senior dashboard charts:", error);
     }
 }
         
@@ -1248,36 +1245,34 @@ async function updateSeniorDashboardCharts() {
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
         const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
+        // [AI-FIX] This is the corrected function
 async function loadPerformanceMetrics() {
     try {
-        const metrics = await getPerformanceMetrics(); 
-        
-        // >> لم نعد نستدعي rpc مباشرة من هنا لتجنب الأخطاء <<
+        // 1. Fetch the general KPIs (reviews, escalations, time)
+        const generalMetrics = await getPerformanceMetrics();
+        document.getElementById('reviews-today').textContent = generalMetrics.completedOrders;
+        document.getElementById('pending-escalations').textContent = generalMetrics.pendingEscalations;
+        document.getElementById('avg-resolution-time').textContent = `${generalMetrics.avgResolutionTime} mins`;
 
-        if (!metrics) {
-            throw new Error("Received no metrics from the API client.");
+        // 2. Fetch detailed team performance for an accurate accuracy calculation
+        const teamData = await getTeamPerformance();
+        if (teamData && teamData.length > 0) {
+            // Calculate the average accuracy from individual performance data
+            const totalAccuracy = teamData.reduce((sum, member) => sum + parseFloat(member.accuracy), 0);
+            const avgAccuracy = totalAccuracy / teamData.length;
+            document.getElementById('team-accuracy').textContent = `${avgAccuracy.toFixed(1)}%`;
+        } else {
+            // Fallback if no team data is available
+            document.getElementById('team-accuracy').textContent = 'N/A';
         }
 
-        // تعبئة الكروت بالبيانات الصحيحة
-        document.getElementById('reviews-today').textContent = metrics.completedOrders || 0;
-        document.getElementById('pending-escalations').textContent = metrics.pendingEscalations || 0;
-        
-        // تقريب وعرض دقة الفريق
-        const teamAccuracy = metrics.accuracyRate ? parseFloat(metrics.accuracyRate).toFixed(1) : '0.0';
-        document.getElementById('team-accuracy').textContent = `${teamAccuracy}%`;
-        
-        // تقريب وعرض متوسط وقت الحل
-        const avgTime = metrics.avgResolutionTime ? Math.round(metrics.avgResolutionTime) : 0;
-        document.getElementById('avg-resolution-time').textContent = `${avgTime} mins`;
-
     } catch (error) {
-        console.error('CRITICAL Error loading performance metrics:', error);
-        // في حالة الفشل، نعرض N/A ليكون الخطأ واضحاً
+        console.error('Error loading performance metrics into dashboard:', error);
+        // Set all to N/A on failure
         document.getElementById('reviews-today').textContent = 'N/A';
         document.getElementById('pending-escalations').textContent = 'N/A';
         document.getElementById('team-accuracy').textContent = 'N/A';
         document.getElementById('avg-resolution-time').textContent = 'N/A';
-        showToast(`Failed to load KPIs: ${error.message}`, 'error');
     }
 }
         
