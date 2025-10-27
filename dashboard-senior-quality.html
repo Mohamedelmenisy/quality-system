@@ -1104,7 +1104,7 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-  // dashboard-senior-quality.html
+  // dashboard-senior-quality.html -> النسخة النهائية والمُصححة
 async function updateSeniorDashboardCharts() {
     try {
         // --- تحديث الرسم البياني الأول: أداء الفريق (شغال بالفعل) ---
@@ -1115,11 +1115,19 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- تحديث الرسم البياني الثاني: اتجاه الأخطاء (تم تفعيله الآن) ---
-        const trendData = await getErrorTrends();
-        if (errorTrendsChart && trendData.labels.length > 0) {
-            errorTrendsChart.data.labels = trendData.labels;
-            errorTrendsChart.data.datasets[0].data = trendData.values;
+        // --- تحديث الرسم البياني الثاني: اتجاه الأخطاء (تم إصلاحه هنا) ---
+        const trendData = await getErrorTrends(); // This function is in api-client.js
+        
+        // >>>>>>>>>>>> هذا هو الجزء الذي تم إصلاحه <<<<<<<<<<<<
+        if (errorTrendsChart && trendData.labels && trendData.labels.length > 0) {
+            errorTrendsChart.data.labels = trendData.labels; // Use the formatted labels from api-client
+            errorTrendsChart.data.datasets[0].data = trendData.values; // Use the values
+            errorTrendsChart.data.datasets[0].label = 'Daily Error Count'; // Update label for clarity
+            errorTrendsChart.update();
+        } else if (errorTrendsChart) {
+            // Handle case where there is no error data
+            errorTrendsChart.data.labels = ['No error data for the last 30 days'];
+            errorTrendsChart.data.datasets[0].data = [0];
             errorTrendsChart.update();
         }
 
