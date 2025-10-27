@@ -1154,7 +1154,7 @@
         async function loadPerformanceMetrics() {
             try {
                 // This function now returns real data from our new RPC
-        const metrics = await getManagerPerformanceMetrics(); // <-- Call the new function
+        const metrics = await getPerformanceMetrics(); // <-- تم التصحيح
                 
                 if (teamMembers.length === 0) {
                     await loadTeamMembers();
