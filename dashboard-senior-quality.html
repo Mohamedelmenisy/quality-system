@@ -1255,8 +1255,9 @@ async function loadPerformanceMetrics() {
         document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate}%`;
         
         // THE FIX: Display the value received from the API client
-        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime} mins`;
-
+const avgTime = performanceMetrics.avgResolutionTime || 0;
+document.getElementById('avg-resolution-time').textContent = `${avgTime} mins`;
+        
     } catch (error) {
         console.error('Error loading performance metrics into dashboard:', error);
         // Set all to N/A on failure
