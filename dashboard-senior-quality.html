@@ -1104,69 +1104,28 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     // dashboard-senior-quality.html
-
-async function generateSeniorReport() {
-    const period = document.getElementById('report-period').value;
-    const reportType = document.getElementById('report-type').value;
-    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report...`, 'info');
-
-    // Hide both charts initially
-    document.getElementById('analyticsChart').style.display = 'none';
-    document.getElementById('errorTypesPieChart').style.display = 'none';
-
+  // dashboard-senior-quality.html
+async function updateSeniorDashboardCharts() {
     try {
-        if (reportType === 'performance') {
-            document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getTeamPerformance();
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            
-            if (analyticsChart) analyticsChart.destroy();
-            analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: performanceData.map(d => d.agent_name),
-                    datasets: [{
-                        label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
-                }
-            });
-
-        } else if (reportType === 'errors') {
-            document.getElementById('errorTypesPieChart').style.display = 'block';
-            const errorData = await getErrorTypesSummary(period);
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
-
-            if (errorTypesPieChart) errorTypesPieChart.destroy();
-            errorTypesPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
-                    datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
-                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
-                    }
-                }
-            });
+        // --- تحديث الرسم البياني الأول: أداء الفريق (شغال بالفعل) ---
+        const performanceData = await getTeamPerformance();
+        if (teamPerformanceChart && performanceData.length > 0) {
+            teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
+            teamPerformanceChart.data.datasets[0].data = performanceData.map(p => parseFloat(p.accuracy));
+            teamPerformanceChart.update();
         }
+
+        // --- تحديث الرسم البياني الثاني: اتجاه الأخطاء (تم تفعيله الآن) ---
+        const trendData = await getErrorTrends();
+        if (errorTrendsChart && trendData.labels.length > 0) {
+            errorTrendsChart.data.labels = trendData.labels;
+            errorTrendsChart.data.datasets[0].data = trendData.values;
+            errorTrendsChart.update();
+        }
+
     } catch (error) {
-        console.error("Failed to generate senior report:", error);
-        showToast("Error generating report.", "error");
+        console.error("Error updating dashboard charts:", error);
+        showToast("Failed to load chart data.", "error");
     }
 }
 
