@@ -12,7 +12,7 @@
             supabase, 
             getCurrentUser,
             getUserById,
-          getManagerPerformanceMetrics, // <-- Use the new manager function
+          getPerformanceMetrics, // <-- Use the new manager function
             getErrorTrends,
             getDepartmentPerformance,
             getTeamMembers,
@@ -53,7 +53,7 @@
         window.updateKpiTargets = updateKpiTargets;     // <-- إضافة الدالة إلى window
         // --- ADD THESE TWO LINES ---
         window.getAgentAccuracySummary = getAgentAccuracySummary;
-        window.getManagerPerformanceMetrics = getManagerPerformanceMetrics;
+          window.getPerformanceMetrics = getPerformanceMetrics;
         window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         window.addDepartment = addDepartment;
         window.updateCompanyEmployee = updateCompanyEmployee;
