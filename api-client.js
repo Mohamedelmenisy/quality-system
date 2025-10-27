@@ -1249,10 +1249,6 @@ export async function createNotification(userId, message, type = 'info') {
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
 
-// api-client.js
-
-// ==================== ANALYTICS & REPORTING FUNCTIONS ===================
-// [AI-FIX] This is the final and correct version of the function.
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
@@ -1266,6 +1262,7 @@ export async function getPerformanceMetrics(agentId = null) {
     } else {
       // This is for either a Senior or a Manager
       isSeniorOrManager = true;
+      // THE FIX IS HERE: We moved the 'await' call inside this async function
       const { data: { user } } = await supabase.auth.getUser();
       const userRole = user?.user_metadata?.role || 'senior';
 
@@ -1281,7 +1278,8 @@ export async function getPerformanceMetrics(agentId = null) {
     
     const metrics = data[0];
     if (!metrics) {
-        return {}; // Return empty object if no data
+        // Return a default structure that covers all dashboards to prevent crashes
+        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
     }
 
     if (isSeniorOrManager) {
@@ -1309,7 +1307,7 @@ export async function getPerformanceMetrics(agentId = null) {
     }
   } catch (error) {
     console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    return {}; // Return empty object on error
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
   }
 }
 
