@@ -1244,22 +1244,21 @@ async function updateSeniorDashboardCharts() {
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
         const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
-        // dashboard-senior-quality.html
-
+        // [AI-FIX] This is the corrected function
 async function loadPerformanceMetrics() {
     try {
-        performanceMetrics = await getPerformanceMetrics(); // This now returns the correct object
+        // This function now correctly returns an object like { completedOrders: 5, avgResolutionTime: 10, ... }
+        performanceMetrics = await getPerformanceMetrics(); 
         
+        // Update the dashboard elements with the received data
         document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders;
         document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations;
         document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate}%`;
-        
-        // THE FIX: Display the value received from the API client
         document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime} mins`;
 
     } catch (error) {
         console.error('Error loading performance metrics into dashboard:', error);
-        // Set all to N/A on failure
+        // Set all to 'N/A' on failure to indicate a problem
         document.getElementById('reviews-today').textContent = 'N/A';
         document.getElementById('pending-escalations').textContent = 'N/A';
         document.getElementById('team-accuracy').textContent = 'N/A';
