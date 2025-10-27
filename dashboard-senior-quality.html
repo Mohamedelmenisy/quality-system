@@ -1104,15 +1104,12 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     // dashboard-senior-quality.html
-
-async function generateSeniorReport() {
+    async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
     showToast(`Generating ${reportType} report...`, 'info');
 
-    // Hide both charts initially
     document.getElementById('analyticsChart').style.display = 'none';
     document.getElementById('errorTypesPieChart').style.display = 'none';
 
@@ -1123,20 +1120,66 @@ async function generateSeniorReport() {
             const ctx = document.getElementById('analyticsChart').getContext('2d');
             
             if (analyticsChart) analyticsChart.destroy();
+            
+            // الحل: نضيف فحص للبيانات الفارغة
+            if (!performanceData || performanceData.length === 0) {
+                analyticsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: ['No Data'],
+                        datasets: [{
+                            label: 'Team Accuracy',
+                            data: [0],
+                            backgroundColor: 'rgba(128, 128, 128, 0.7)'
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { 
+                                display: true, 
+                                text: `No performance data available`, 
+                                color: 'var(--text-color)' 
+                            } 
+                        }
+                    }
+                });
+                return;
+            }
+            
             analyticsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: performanceData.map(d => d.agent_name),
+                    labels: performanceData.map(d => d.agent_name || 'Unknown'),
                     datasets: [{
                         label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
+                        data: performanceData.map(d => d.accuracy || 0),
                         backgroundColor: 'rgba(0, 191, 255, 0.7)'
                     }]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                    responsive: true, 
+                    maintainAspectRatio: false,
+                    plugins: { 
+                        title: { 
+                            display: true, 
+                            text: `Team Accuracy by Agent`, 
+                            color: 'var(--text-color)' 
+                        } 
+                    },
+                    scales: { 
+                        y: { 
+                            min: 0, 
+                            max: 100,
+                            ticks: { color: 'var(--text-color)' }, 
+                            grid: { color: 'rgba(255,255,255,0.1)' } 
+                        }, 
+                        x: { 
+                            ticks: { color: 'var(--text-color)' }, 
+                            grid: { display: false } 
+                        } 
+                    }
                 }
             });
 
@@ -1146,20 +1189,55 @@ async function generateSeniorReport() {
             const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
 
             if (errorTypesPieChart) errorTypesPieChart.destroy();
+            
+            // الحل: نضيف فحص للبيانات الفارغة
+            if (!errorData || errorData.length === 0) {
+                errorTypesPieChart = new Chart(ctx, {
+                    type: 'pie',
+                    data: {
+                        labels: ['No Error Data'],
+                        datasets: [{
+                            data: [1],
+                            backgroundColor: ['#333']
+                        }]
+                    },
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: { 
+                            title: { 
+                                display: true, 
+                                text: `No error data available`, 
+                                color: 'var(--text-color)' 
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
             errorTypesPieChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
+                    labels: errorData.map(d => d.issue_type || 'Unknown'),
                     datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                        data: errorData.map(d => d.count || 0),
                         backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
                     }]
                 },
                 options: { 
-                    responsive: true, maintainAspectRatio: false,
+                    responsive: true, 
+                    maintainAspectRatio: false,
                     plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
-                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
+                        title: { 
+                            display: true, 
+                            text: `Error Types Analysis (${periodText})`, 
+                            color: 'var(--text-color)' 
+                        },
+                        legend: { 
+                            position: 'bottom', 
+                            labels: { color: 'var(--text-color)' } 
+                        }
                     }
                 }
             });
