@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -2107,11 +2106,41 @@ async function openEscalationDetailsModal(escalationId) {
                 if(teamPerformanceChart) teamPerformanceChart.destroy();
                 teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
+            
+            // =========================================================================
+            // START: MODIFIED CODE BLOCK / بداية الكود المعدل
+            // =========================================================================
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
             if (trendsCtx) {
                 if(errorTrendsChart) errorTrendsChart.destroy();
-                errorTrendsChart = new Chart(trendsCtx, { type: 'line', data: { labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'], datasets: [{ label: 'Error Rate %', data: [5.1, 4.8, 4.9, 4.5, 4.3, 4.2], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
+                // Initialize the chart with empty data. It will be populated by updateSeniorDashboardCharts()
+                errorTrendsChart = new Chart(trendsCtx, { 
+                    type: 'line', 
+                    data: { 
+                        labels: [], // Initially empty
+                        datasets: [{ 
+                            label: 'Error Rate %', 
+                            data: [], // Initially empty
+                            borderColor: 'rgba(0, 191, 255, 1)', 
+                            backgroundColor: 'rgba(0, 191, 255, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, 
+                            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } 
+                        } 
+                    } 
+                });
             }
+            // =========================================================================
+            // END: MODIFIED CODE BLOCK / نهاية الكود المعدل
+            // =========================================================================
+
             const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
             if (analyticsCtx) {
                 if(analyticsChart) analyticsChart.destroy();
