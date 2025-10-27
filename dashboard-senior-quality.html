@@ -1104,24 +1104,29 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-// dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي والمؤكد 100% <<<<<<<<<<<<
+// dashboard-senior-quality.html -> >>>>>>>>>>>> الكود النهائي والحاسم <<<<<<<<<<<<
 
 async function initAndLoadDashboardCharts() {
     try {
-        // --- 1. جلب البيانات من قاعدة البيانات أولاً ---
-        const performanceData = await getTeamPerformance();
-        const trendData = await getErrorTrends();
+        // --- 1. جلب البيانات من قاعدة البيانات ---
+        const [performanceData, trendData] = await Promise.all([
+            getTeamPerformance(),
+            getErrorTrends()
+        ]);
 
         // --- 2. الرسم البياني الأول: أداء الفريق (الأعمدة) ---
         const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
         if (teamCtx) {
-            // >>>>>>>>>>>> هذا هو التعديل الحاسم <<<<<<<<<<<<
-            // اسأل الأول: هل فيه تشارت قديم أصلاً متخزن على الـ window؟
-            if (window.teamPerformanceChart instanceof Chart) {
-                window.teamPerformanceChart.destroy();
+            // >>>>>>>>>>>> هذا هو الإصلاح الحقيقي والنهائي <<<<<<<<<<<<
+            // اسأل المكتبة مباشرة: هل فيه تشارت على اللوحة دي؟
+            const existingTeamChart = Chart.getChart('teamPerformanceChart');
+            if (existingTeamChart) {
+                // لو فيه، اهدمه
+                existingTeamChart.destroy();
             }
-            // ابني التشارت الجديد وخزنه مباشرة على الـ window
-            window.teamPerformanceChart = new Chart(teamCtx, {
+            
+            // بعد ما اتأكدنا إن اللوحة فاضية، ابني التشارت الجديد
+            new Chart(teamCtx, {
                 type: 'bar',
                 data: {
                     labels: performanceData.length > 0 ? performanceData.map(p => p.agent_name) : ['No Data'],
@@ -1135,7 +1140,7 @@ async function initAndLoadDashboardCharts() {
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, 
-                    scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } 
+                    scales: { y: { min: 90, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } 
                 }
             });
         }
@@ -1143,13 +1148,13 @@ async function initAndLoadDashboardCharts() {
         // --- 3. الرسم البياني الثاني: اتجاه الأخطاء (الخطي) ---
         const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
         if (trendsCtx) {
-            // >>>>>>>>>>>> وهذا هو التعديل الثاني الحاسم <<<<<<<<<<<<
-            // اسأل هنا برضو: هل فيه تشارت قديم أصلاً متخزن على الـ window؟
-            if (window.errorTrendsChart instanceof Chart) {
-                window.errorTrendsChart.destroy();
+            // >>>>>>>>>>>> نفس الإصلاح هنا <<<<<<<<<<<<
+            const existingErrorChart = Chart.getChart('errorTrendsChart');
+            if (existingErrorChart) {
+                existingErrorChart.destroy();
             }
-            // ابني التشارت الجديد وخزنه مباشرة على الـ window
-            window.errorTrendsChart = new Chart(trendsCtx, {
+            
+            new Chart(trendsCtx, {
                 type: 'line',
                 data: {
                     labels: trendData.labels.length > 0 ? trendData.labels : ['No Data'],
@@ -1171,7 +1176,7 @@ async function initAndLoadDashboardCharts() {
 
     } catch (error) {
         console.error("Critical error loading dashboard charts:", error);
-        showToast("Failed to render charts.", "error");
+        showToast("Failed to render charts. Check console for details.", "error");
     }
 }
         
