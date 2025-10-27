@@ -1248,91 +1248,65 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
-// api-client.js
-
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let isSeniorOrManager = false;
+    let role = 'quality';
 
-    if (agentId) {
+    // Get user role to decide which dashboard data to fetch
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user?.user_metadata?.role) {
+      role = user.user_metadata.role;
+    }
+
+    // Determine which RPC to call
+    if (role === 'manager') {
+      rpcName = 'get_manager_dashboard_kpis';
+    } else if (role === 'senior') {
+      rpcName = 'get_senior_dashboard_kpis';
+    } else {
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
-    } else {
-      isSeniorOrManager = true;
-      // الحل: نجيب الـ user role من جدول users مش من auth
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      if (user) {
-        const { data: userProfile } = await supabase
-          .from('users')
-          .select('role')
-          .eq('id', user.id)
-          .single();
-        
-        if (userProfile?.role === 'manager') {
-          rpcName = 'get_manager_dashboard_kpis';
-          console.log('Fetching KPIs for Manager');
-        } else {
-          rpcName = 'get_senior_dashboard_kpis';
-          console.log('Fetching KPIs for Senior');
-        }
-      } else {
-        rpcName = 'get_senior_dashboard_kpis'; // Default
-      }
     }
 
     const { data, error } = await supabase.rpc(rpcName, params);
     if (error) throw error;
-    
-    const metrics = data[0];
-    if (!metrics) {
-      return { 
-        completedOrders: 0, 
-        pendingEscalations: 0, 
-        avgResolutionTime: 0, 
-        accuracyRate: 0, 
-        pendingReviews: 0, 
-        escalationRate: 0,
-        totalOrders: 0,
-        qualityTeamAccuracy: 0
-      };
-    }
 
-    // الحل: نرجع بيانات موحدة للاتنين
-    if (isSeniorOrManager) {
-      return {
-        completedOrders: metrics.reviews_today || metrics.total_reviews_today || 0,
-        pendingEscalations: metrics.pending_escalations || 0,
-        avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-        accuracyRate: metrics.team_accuracy || metrics.overall_team_accuracy || 0,
-        totalOrders: metrics.total_reviews_today || 0,
-        qualityTeamAccuracy: metrics.quality_team_accuracy || 0
-      };
-    } else {
-      return {
-        completedOrders: metrics.todays_reviews || 0,
-        pendingReviews: metrics.open_cases || 0,
-        accuracyRate: metrics.avg_quality_score || 0,
-        escalationRate: metrics.escalation_rate || 0
-      };
-    }
+    const metrics = data?.[0] || {};
 
+    // Unified response structure
+    return {
+      completedOrders: metrics.reviews_today || metrics.todays_reviews || 0,
+      pendingReviews: metrics.open_cases || 0,
+      pendingEscalations: metrics.pending_escalations || 0,
+      avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+      accuracyRate:
+        parseFloat(metrics.team_accuracy || metrics.avg_quality_score || 0).toFixed(1),
+      escalationRate: parseFloat(metrics.escalation_rate || 0).toFixed(1),
+      totalOrders: metrics.total_reviews_today || metrics.total_orders || 0,
+      qualityTeamAccuracy:
+        parseFloat(metrics.quality_team_accuracy || metrics.overall_team_accuracy || 0).toFixed(1),
+      topTeam: metrics.top_team || "N/A",
+      activeAgents: metrics.active_agents || 0,
+    };
   } catch (error) {
-    console.error(`Error in getPerformanceMetrics:`, error);
-    return { 
-      completedOrders: 0, 
-      pendingEscalations: 0, 
-      avgResolutionTime: 0, 
-      accuracyRate: 0, 
-      pendingReviews: 0, 
+    console.error("💥 getPerformanceMetrics error:", error);
+    return {
+      completedOrders: 0,
+      pendingEscalations: 0,
+      avgResolutionTime: 0,
+      accuracyRate: 0,
+      pendingReviews: 0,
       escalationRate: 0,
       totalOrders: 0,
-      qualityTeamAccuracy: 0
+      qualityTeamAccuracy: 0,
+      topTeam: "N/A",
+      activeAgents: 0,
     };
   }
 }
+
 
 export async function getErrorTrends() {
   try {
