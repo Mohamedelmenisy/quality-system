@@ -1254,29 +1254,60 @@ export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let isSeniorOrManager = false;
+    let isSeniorOrManager = false; // سنستخدم هذا المتغير لاحقاً
 
     if (agentId) {
+      // Logic for Quality Agent remains the same
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // This will be called by Senior or Manager
-      rpcName = 'get_senior_dashboard_kpis'; // Using the Senior's dedicated RPC
+      // This is for either a Senior or a Manager
       isSeniorOrManager = true;
+      // We will determine the RPC name based on the user's role
     }
+
+    // --- START OF THE FIX ---
+    if (isSeniorOrManager) {
+      // Get the current user to check their role
+      const { data: { user } } = await supabase.auth.getUser();
+      const userRole = user?.user_metadata?.role || 'senior'; // Default to senior if role not found
+
+      if (userRole === 'manager') {
+        rpcName = 'get_manager_dashboard_kpis';
+        console.log('Fetching KPIs for Manager');
+      } else {
+        // Assume senior for any other role in this context
+        rpcName = 'get_senior_dashboard_kpis';
+        console.log('Fetching KPIs for Senior');
+      }
+    }
+    // --- END OF THE FIX ---
 
     const { data, error } = await supabase.rpc(rpcName, params);
     if (error) throw error;
+    
     const metrics = data[0];
+    if (!metrics) {
+        // If no data is returned, provide a default structure
+        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
+    }
 
     if (isSeniorOrManager) {
-       // Return the full object for Senior/Manager
-       return {
-          completedOrders: metrics.reviews_today || 0,
-          pendingEscalations: metrics.pending_escalations || 0,
-          avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-          accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
-        };
+        // Now, return the correct object based on the RPC that was called
+        if (rpcName === 'get_manager_dashboard_kpis') {
+            return {
+                totalOrders: metrics.total_reviews_today || 0,
+                accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
+                qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
+            };
+        } else { // This must be a Senior
+            return {
+                completedOrders: metrics.reviews_today || 0,
+                pendingEscalations: metrics.pending_escalations || 0,
+                avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+                accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
+            };
+        }
     } else { // This is for the Quality Agent
        return {
             completedOrders: metrics.todays_reviews || 0,
@@ -1288,7 +1319,8 @@ export async function getPerformanceMetrics(agentId = null) {
 
   } catch (error) {
     console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
+    // Return a default structure that covers all dashboards to prevent crashes
+    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
   }
 }
 
