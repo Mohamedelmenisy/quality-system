@@ -557,30 +557,33 @@
                 </div>
 
                 <div id="profile" class="tab-content">
-                    <div class="card">
-                        <h3>Edit Profile</h3>
-                        <div class="form-group">
-                            <label for="profile-photo">Profile Picture</label>
-                            <input type="file" id="profile-photo" accept="image/*" />
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-fullname">Full Name</label>
-                            <input type="text" id="profile-fullname" value="Nawaf Al-Otaibi">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-email">Email Address</label>
-                            <input type="email" id="profile-email" value="n.alotaibi@qualityx.com" readonly style="background-color: var(--border-color); cursor: not-allowed;">
-                        </div>
-                        <div class="form-group">
-                            <label for="profile-phone">Phone Number</label>
-                            <input type="tel" id="profile-phone" value="+966 55 555 1234">
-                        </div>
-                        <div class="page-actions">
-                            <button class="btn" style="background: #333; color: white;">Cancel</button>
-                            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-                        </div>
-                    </div>
-                </div>
+    <div class="card">
+        <h3>Edit Profile</h3>
+        <div class="form-group">
+            <label for="profile-photo">Profile Picture</label>
+            <input type="file" id="profile-photo" accept="image/*" />
+        </div>
+        <div class="form-group">
+            <label for="profile-fullname">Full Name</label>
+            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
+            <input type="text" id="profile-fullname" placeholder="Loading name...">
+        </div>
+        <div class="form-group">
+            <label for="profile-email">Email Address</label>
+            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
+            <input type="email" id="profile-email" placeholder="Loading email..." readonly style="background-color: var(--border-color); cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+            <label for="profile-phone">Phone Number</label>
+            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
+            <input type="tel" id="profile-phone" placeholder="Enter your phone number...">
+        </div>
+        <div class="page-actions">
+            <button class="btn" style="background: #333; color: white;">Cancel</button>
+            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+        </div>
+    </div>
+</div>
 
                 <div id="settings" class="tab-content">
                     <div class="card">
