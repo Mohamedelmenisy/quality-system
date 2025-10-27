@@ -1150,38 +1150,31 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        // Load performance metrics
-      async function loadPerformanceMetrics() {
+       // dashboard-manager.html
+async function loadPerformanceMetrics() {
     try {
         const metrics = await getPerformanceMetrics(); 
         
-        if (teamMembers.length === 0) {
-            await loadTeamMembers();
-        }
-        const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
+        // إصلاح بطاقة "Total Orders"
+        document.getElementById('total-orders').textContent = metrics.totalOrders || 0;
+        document.getElementById('orders-change').textContent = "For today";
 
-        document.getElementById('total-orders').textContent = metrics.totalOrders;
-        
-        const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
+        // إصلاح بطاقة "Overall Error Rate"
+        const errorRate = (100 - parseFloat(metrics.accuracyRate || 100)).toFixed(1);
         document.getElementById('error-rate').textContent = `${errorRate}%`;
+        document.getElementById('error-rate-change').textContent = "Overall team error rate";
 
-        document.getElementById('active-agents').textContent = activeAgentsCount;
-        
-        // --- هذا هو السطر الذي يصلح مشكلة 'undefined%' ---
+        // إصلاح بطاقة "Quality Team Accuracy"
         const qualityAccuracy = metrics.qualityTeamAccuracy || 'N/A';
         const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
-        if (qualityAccuracyEl) {
-            qualityAccuracyEl.textContent = `${qualityAccuracy}%`;
-            if (parseFloat(qualityAccuracy) < 98) {
-                qualityAccuracyEl.style.color = 'var(--warning-color)';
-            } else {
-                qualityAccuracyEl.style.color = 'var(--green)';
-            }
-        }
+        qualityAccuracyEl.textContent = `${qualityAccuracy}${qualityAccuracy !== 'N/A' ? '%' : ''}`;
+        document.getElementById('quality-team-accuracy-change').textContent = "Based on senior reviews";
 
-        document.getElementById('orders-change').textContent = `For today`;
-        document.getElementById('error-rate-change').textContent = `Overall team error rate`;
-        document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+        // إصلاح بطاقة "Active Agents"
+        const team = await getTeamMembers();
+        const activeAgentsCount = team.filter(m => m.is_active).length;
+        document.getElementById('active-agents').textContent = activeAgentsCount;
+        document.getElementById('agents-change').textContent = `Currently active`;
 
     } catch (error) {
         console.error('Error loading manager performance metrics:', error);
