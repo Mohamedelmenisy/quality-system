@@ -1105,7 +1105,7 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
- // dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي للتشارتات <<<<<<<<<<<<
+ // dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي والمؤكد 100% <<<<<<<<<<<<
 
 async function initAndLoadDashboardCharts() {
     try {
@@ -1116,11 +1116,12 @@ async function initAndLoadDashboardCharts() {
         // --- 2. الرسم البياني الأول: أداء الفريق (الأعمدة) ---
         const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
         if (teamCtx) {
-            // اهدم التشارت القديم لو موجود عشان نبني من جديد
-            if (window.teamPerformanceChart) {
+            // >>>>>>>>>>>> هذا هو السطر الذي تم إصلاحه <<<<<<<<<<<<
+            // اسأل الأول: هل فيه تشارت قديم أصلاً؟
+            if (window.teamPerformanceChart instanceof Chart) {
                 window.teamPerformanceChart.destroy();
             }
-            // ابني التشارت الجديد بالبيانات الحقيقية مباشرة
+            // ابني التشارت الجديد بالبيانات الحقيقية
             window.teamPerformanceChart = new Chart(teamCtx, {
                 type: 'bar',
                 data: {
@@ -1143,11 +1144,12 @@ async function initAndLoadDashboardCharts() {
         // --- 3. الرسم البياني الثاني: اتجاه الأخطاء (الخطي) ---
         const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
         if (trendsCtx) {
-            // اهدم التشارت القديم لو موجود
-            if (window.errorTrendsChart) {
+            // >>>>>>>>>>>> وهذا هو السطر الثاني الذي تم إصلاحه <<<<<<<<<<<<
+            // اسأل هنا برضو: هل فيه تشارت قديم أصلاً؟
+            if (window.errorTrendsChart instanceof Chart) {
                 window.errorTrendsChart.destroy();
             }
-            // ابني التشارت الجديد بالبيانات الحقيقية مباشرة
+            // ابني التشارت الجديد بالبيانات الحقيقية
             window.errorTrendsChart = new Chart(trendsCtx, {
                 type: 'line',
                 data: {
@@ -1173,7 +1175,7 @@ async function initAndLoadDashboardCharts() {
         showToast("Failed to render charts.", "error");
     }
 }
-
+        
 async function updateSeniorDashboardCharts() {
     try {
         // --- تحديث الرسم البياني الأول: أداء الفريق (الأعمدة) ---
