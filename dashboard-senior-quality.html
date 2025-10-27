@@ -946,7 +946,6 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         let directEscalations = [];
         let appealedErrors = [];
         let finalizedDecisions = [];
-        let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
         let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
         let isScheduleEditMode = false;
 
@@ -1105,7 +1104,7 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
- // dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي والمؤكد 100% <<<<<<<<<<<<
+// dashboard-senior-quality.html -> >>>>>>>>>>>> هذا هو الكود النهائي والمؤكد 100% <<<<<<<<<<<<
 
 async function initAndLoadDashboardCharts() {
     try {
@@ -1116,12 +1115,12 @@ async function initAndLoadDashboardCharts() {
         // --- 2. الرسم البياني الأول: أداء الفريق (الأعمدة) ---
         const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
         if (teamCtx) {
-            // >>>>>>>>>>>> هذا هو السطر الذي تم إصلاحه <<<<<<<<<<<<
-            // اسأل الأول: هل فيه تشارت قديم أصلاً؟
+            // >>>>>>>>>>>> هذا هو التعديل الحاسم <<<<<<<<<<<<
+            // اسأل الأول: هل فيه تشارت قديم أصلاً متخزن على الـ window؟
             if (window.teamPerformanceChart instanceof Chart) {
                 window.teamPerformanceChart.destroy();
             }
-            // ابني التشارت الجديد بالبيانات الحقيقية
+            // ابني التشارت الجديد وخزنه مباشرة على الـ window
             window.teamPerformanceChart = new Chart(teamCtx, {
                 type: 'bar',
                 data: {
@@ -1144,12 +1143,12 @@ async function initAndLoadDashboardCharts() {
         // --- 3. الرسم البياني الثاني: اتجاه الأخطاء (الخطي) ---
         const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
         if (trendsCtx) {
-            // >>>>>>>>>>>> وهذا هو السطر الثاني الذي تم إصلاحه <<<<<<<<<<<<
-            // اسأل هنا برضو: هل فيه تشارت قديم أصلاً؟
+            // >>>>>>>>>>>> وهذا هو التعديل الثاني الحاسم <<<<<<<<<<<<
+            // اسأل هنا برضو: هل فيه تشارت قديم أصلاً متخزن على الـ window؟
             if (window.errorTrendsChart instanceof Chart) {
                 window.errorTrendsChart.destroy();
             }
-            // ابني التشارت الجديد بالبيانات الحقيقية
+            // ابني التشارت الجديد وخزنه مباشرة على الـ window
             window.errorTrendsChart = new Chart(trendsCtx, {
                 type: 'line',
                 data: {
