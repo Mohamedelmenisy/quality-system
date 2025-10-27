@@ -1146,44 +1146,37 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        async function loadPerformanceMetrics() {
-    try {
-        const metrics = await getPerformanceMetrics(); 
-        
-        if (teamMembers.length === 0) {
-            await loadTeamMembers();
-        }
-        const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
+       // dashboard-manager.html
 
-        // الحل: نستخدم نفس المفاتيح
-        document.getElementById('total-orders').textContent = metrics.totalOrders || 0;
+async function loadPerformanceMetrics() {
+    try {
+        const metrics = await getManagerPerformanceMetrics();
         
-        const errorRate = (100 - parseFloat(metrics.accuracyRate || 0)).toFixed(1);
+        // Update All KPI Cards with the new data keys from the RPC
+        document.getElementById('total-orders').textContent = metrics.total_reviews_today || 0;
+        
+        // The RPC now returns accuracy, so we calculate error rate from it
+        const errorRate = (100 - parseFloat(metrics.overall_team_accuracy)).toFixed(1);
         document.getElementById('error-rate').textContent = `${errorRate}%`;
 
-        document.getElementById('active-agents').textContent = activeAgentsCount;
+        document.getElementById('active-agents').textContent = metrics.active_agents || 0;
+        document.getElementById('top-team').textContent = metrics.top_team || 'N/A';
         
-        // الحل: نعالج حالة undefined
         const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
-        const qualityAccuracy = metrics.qualityTeamAccuracy || 0;
-        qualityAccuracyEl.textContent = `${qualityAccuracy}%`;
-        
-        if (qualityAccuracy < 98) {
-            qualityAccuracyEl.style.color = 'var(--warning-color)';
-        } else {
-            qualityAccuracyEl.style.color = 'var(--green)';
+        if (qualityAccuracyEl) {
+            qualityAccuracyEl.textContent = `${metrics.quality_team_accuracy}%`;
         }
-
+        
+        // Update dummy change indicators
         document.getElementById('orders-change').textContent = `For today`;
         document.getElementById('error-rate-change').textContent = `Overall team error rate`;
+        document.getElementById('top-team-rate').textContent = `Lowest error rate`;
         document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+        document.getElementById('agents-change').textContent = `Currently online`;
 
     } catch (error) {
         console.error('Error loading manager performance metrics:', error);
-        document.getElementById('total-orders').textContent = '0';
-        document.getElementById('error-rate').textContent = '0%';
-        document.getElementById('active-agents').textContent = '0';
-        document.getElementById('quality-team-accuracy').textContent = '0%';
+        showToast('Failed to load dashboard KPIs', 'error');
     }
 }
         
