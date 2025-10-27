@@ -1322,19 +1322,19 @@ async function updateSeniorDashboardCharts() {
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
         const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
-       // dashboard-senior-quality.html
+      // dashboard-senior-quality.html
 
 async function loadPerformanceMetrics() {
     try {
-        const metrics = await getSeniorPerformanceMetrics(); 
+        const metrics = await getPerformanceMetrics(); // Call without parameters
         
         document.getElementById('reviews-today').textContent = metrics.completedOrders;
         document.getElementById('pending-escalations').textContent = metrics.pendingEscalations;
-        document.getElementById('team-accuracy').textContent = `${metrics.accuracyRate}%`;
         document.getElementById('avg-resolution-time').textContent = `${metrics.avgResolutionTime} mins`;
+        document.getElementById('team-accuracy').textContent = `${metrics.accuracyRate}%`;
 
     } catch (error) {
-        console.error('Error loading performance metrics into dashboard:', error);
+        console.error('Error loading senior performance metrics:', error);
     }
 }
         
