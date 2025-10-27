@@ -1248,11 +1248,13 @@ export async function createNotification(userId, message, type = 'info') {
 }
 
 // ==================== ANALYTICS & REPORTING FUNCTIONS ===================
+
+// --- START: MODIFIED SECTION ---
 export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let role = 'quality';
+    let role = 'quality'; // Default role
 
     // Get user role to decide which dashboard data to fetch
     const { data: { user } } = await supabase.auth.getUser();
@@ -1260,52 +1262,66 @@ export async function getPerformanceMetrics(agentId = null) {
       role = user.user_metadata.role;
     }
 
-    // Determine which RPC to call
+    // Determine which RPC to call based on the user's role
     if (role === 'manager') {
       rpcName = 'get_manager_dashboard_kpis';
+      // Manager RPC does not need parameters
     } else if (role === 'senior') {
       rpcName = 'get_senior_dashboard_kpis';
+      // Senior RPC does not need parameters
     } else {
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     }
 
     const { data, error } = await supabase.rpc(rpcName, params);
-    if (error) throw error;
-
+    if (error) {
+      console.error(`Error fetching KPIs for role ${role}:`, error);
+      throw error;
+    }
+    
     const metrics = data?.[0] || {};
 
-    // Unified response structure
+    // This part unifies the response structure so the dashboard components
+    // can work with a consistent data format regardless of the user role.
     return {
-      completedOrders: metrics.reviews_today || metrics.todays_reviews || 0,
+      // For Quality Agents
+      completedOrders: metrics.reviews_today || 0,
       pendingReviews: metrics.open_cases || 0,
+      
+      // For Seniors
       pendingEscalations: metrics.pending_escalations || 0,
       avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-      accuracyRate:
-        parseFloat(metrics.team_accuracy || metrics.avg_quality_score || 0).toFixed(1),
-      escalationRate: parseFloat(metrics.escalation_rate || 0).toFixed(1),
-      totalOrders: metrics.total_reviews_today || metrics.total_orders || 0,
-      qualityTeamAccuracy:
-        parseFloat(metrics.quality_team_accuracy || metrics.overall_team_accuracy || 0).toFixed(1),
+      accuracyRate: parseFloat(metrics.team_accuracy || 0).toFixed(1),
+
+      // For Managers
+      totalOrders: metrics.total_reviews_today || 0,
+      qualityTeamAccuracy: parseFloat(metrics.quality_team_accuracy || metrics.overall_team_accuracy || 0).toFixed(1),
       topTeam: metrics.top_team || "N/A",
       activeAgents: metrics.active_agents || 0,
+
+      // Common/fallback fields
+      escalationRate: parseFloat(metrics.escalation_rate || 0).toFixed(1),
     };
+
   } catch (error) {
     console.error("💥 getPerformanceMetrics error:", error);
+    // Return a default structure to prevent app crashes
     return {
       completedOrders: 0,
+      pendingReviews: 0,
       pendingEscalations: 0,
       avgResolutionTime: 0,
-      accuracyRate: 0,
-      pendingReviews: 0,
-      escalationRate: 0,
+      accuracyRate: "0.0",
+      escalationRate: "0.0",
       totalOrders: 0,
-      qualityTeamAccuracy: 0,
+      qualityTeamAccuracy: "0.0",
       topTeam: "N/A",
       activeAgents: 0,
     };
   }
 }
+// --- END: MODIFIED SECTION ---
 
 
 export async function getErrorTrends() {
