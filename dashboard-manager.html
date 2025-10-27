@@ -1151,47 +1151,43 @@
         }
 
         // Load performance metrics
-        async function loadPerformanceMetrics() {
-            try {
-                // This function now returns real data from our new RPC
-        const metrics = await getPerformanceMetrics(); // <-- تم التصحيح
-                
-                if (teamMembers.length === 0) {
-                    await loadTeamMembers();
-                }
-                const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
+      async function loadPerformanceMetrics() {
+    try {
+        const metrics = await getPerformanceMetrics(); 
+        
+        if (teamMembers.length === 0) {
+            await loadTeamMembers();
+        }
+        const activeAgentsCount = teamMembers.filter(m => m.is_active).length;
 
-                // --- Update KPI cards with REAL data ---
-                document.getElementById('total-orders').textContent = metrics.totalOrders;
-                
-                // Calculate Error Rate from the overall team accuracy
-                const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
-                document.getElementById('error-rate').textContent = `${errorRate}%`;
+        document.getElementById('total-orders').textContent = metrics.totalOrders;
+        
+        const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
+        document.getElementById('error-rate').textContent = `${errorRate}%`;
 
-                document.getElementById('active-agents').textContent = activeAgentsCount;
-                
-                // Update the "Quality Team Accuracy" card
-                const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
-                if (qualityAccuracyEl) {
-                    qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
-                    if (metrics.qualityTeamAccuracy < 98) {
-                        qualityAccuracyEl.style.color = 'var(--warning-color)';
-                    } else {
-                        qualityAccuracyEl.style.color = 'var(--green)';
-                    }
-                }
-
-                // --- You can add logic for the change indicators here later ---
-                document.getElementById('orders-change').textContent = `For today`;
-                document.getElementById('error-rate-change').textContent = `Overall team error rate`;
-                document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
-
-
-            } catch (error) {
-                console.error('Error loading manager performance metrics:', error);
-                showToast('Failed to load dashboard KPIs', 'error');
+        document.getElementById('active-agents').textContent = activeAgentsCount;
+        
+        // --- هذا هو السطر الذي يصلح مشكلة 'undefined%' ---
+        const qualityAccuracy = metrics.qualityTeamAccuracy || 'N/A';
+        const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
+        if (qualityAccuracyEl) {
+            qualityAccuracyEl.textContent = `${qualityAccuracy}%`;
+            if (parseFloat(qualityAccuracy) < 98) {
+                qualityAccuracyEl.style.color = 'var(--warning-color)';
+            } else {
+                qualityAccuracyEl.style.color = 'var(--green)';
             }
         }
+
+        document.getElementById('orders-change').textContent = `For today`;
+        document.getElementById('error-rate-change').textContent = `Overall team error rate`;
+        document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+
+    } catch (error) {
+        console.error('Error loading manager performance metrics:', error);
+        showToast('Failed to load dashboard KPIs', 'error');
+    }
+}
 
 // This is a new helper function
 async function refreshDashboardData() {
