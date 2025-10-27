@@ -1254,20 +1254,19 @@ export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let userRole = 'agent'; // Default role
+    let userRoleForMetrics = 'agent'; // Default role
 
     if (agentId) {
-      // Logic for a specific Quality Agent
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // Logic for the current user (Senior or Manager)
       const { data: { user } } = await supabase.auth.getUser();
-      userRole = user?.user_metadata?.role || 'senior'; // Assign role for later use
+      const userRole = user?.user_metadata?.role || 'senior';
+      userRoleForMetrics = userRole;
 
       if (userRole === 'manager') {
         rpcName = 'get_manager_dashboard_kpis';
-      } else { // Assumes 'senior'
+      } else { 
         rpcName = 'get_senior_dashboard_kpis';
       }
     }
@@ -1277,25 +1276,23 @@ export async function getPerformanceMetrics(agentId = null) {
     
     const metrics = data[0];
     if (!metrics) {
-        // If no data is returned, provide a default structure for all roles
         return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
     }
 
-    // Return the correct object based on the user's role
-    if (userRole === 'manager') {
+    if (userRoleForMetrics === 'manager') {
         return {
             totalOrders: metrics.total_reviews_today || 0,
             accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
             qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
         };
-    } else if (userRole === 'senior') {
+    } else if (userRoleForMetrics === 'senior') {
         return {
             completedOrders: metrics.reviews_today || 0,
             pendingEscalations: metrics.pending_escalations || 0,
             avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
             accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
         };
-    } else { // This is for the Quality Agent
+    } else { // Quality Agent
        return {
             completedOrders: metrics.todays_reviews || 0,
             pendingReviews: metrics.open_cases || 0,
@@ -1305,8 +1302,7 @@ export async function getPerformanceMetrics(agentId = null) {
     }
 
   } catch (error) {
-    console.error(`Error in getPerformanceMetrics (role: ${userRole}, agentId: ${agentId}):`, error);
-    // Return a default structure that covers all dashboards to prevent crashes
+    console.error(`Error in getPerformanceMetrics:`, error);
     return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
   }
 }
