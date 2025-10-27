@@ -1170,10 +1170,9 @@ async function generateSeniorReport() {
     }
 }
 
-        // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
-        // --- Update Team Performance Chart ---
+        // --- تحديث الرسم البياني الأول: أداء الفريق (الأعمدة) ---
         const performanceData = await getTeamPerformance();
         if (teamPerformanceChart && performanceData.length > 0) {
             teamPerformanceChart.data.labels = performanceData.map(p => p.agent_name);
@@ -1181,15 +1180,17 @@ async function updateSeniorDashboardCharts() {
             teamPerformanceChart.update();
         }
 
-        // --- Update Error Trends Chart ---
-        const trendData = await getErrorTrends();
-        if (errorTrendsChart && trendData.labels.length > 0) {
-            errorTrendsChart.data.labels = trendData.labels;
-            errorTrendsChart.data.datasets[0].data = trendData.values;
-            errorTrendsChart.update();
-        }
+        // --- الكود الخاص بالرسم البياني الثاني (هنصلحه لاحقاً) ---
+        // const trendData = await getErrorTrends();
+        // if (errorTrendsChart && trendData.labels.length > 0) {
+        //     errorTrendsChart.data.labels = trendData.labels;
+        //     errorTrendsChart.data.datasets[0].data = trendData.values;
+        //     errorTrendsChart.update();
+        // }
+
     } catch (error) {
-        console.error("Error updating senior dashboard charts:", error);
+        console.error("Error updating dashboard charts:", error);
+        showToast("Failed to load chart data.", "error");
     }
 }
         
