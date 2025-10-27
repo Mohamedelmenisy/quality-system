@@ -1254,73 +1254,83 @@ export async function getPerformanceMetrics(agentId = null) {
   try {
     let rpcName;
     let params = {};
-    let isSeniorOrManager = false; // سنستخدم هذا المتغير لاحقاً
+    let isSeniorOrManager = false;
 
     if (agentId) {
-      // Logic for Quality Agent remains the same
       rpcName = 'get_quality_dashboard_kpis';
       params = { p_agent_id: agentId };
     } else {
-      // This is for either a Senior or a Manager
       isSeniorOrManager = true;
-      // We will determine the RPC name based on the user's role
-    }
-
-    // --- START OF THE FIX ---
-    if (isSeniorOrManager) {
-      // Get the current user to check their role
+      // الحل: نجيب الـ user role من جدول users مش من auth
       const { data: { user } } = await supabase.auth.getUser();
-      const userRole = user?.user_metadata?.role || 'senior'; // Default to senior if role not found
-
-      if (userRole === 'manager') {
-        rpcName = 'get_manager_dashboard_kpis';
-        console.log('Fetching KPIs for Manager');
+      
+      if (user) {
+        const { data: userProfile } = await supabase
+          .from('users')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (userProfile?.role === 'manager') {
+          rpcName = 'get_manager_dashboard_kpis';
+          console.log('Fetching KPIs for Manager');
+        } else {
+          rpcName = 'get_senior_dashboard_kpis';
+          console.log('Fetching KPIs for Senior');
+        }
       } else {
-        // Assume senior for any other role in this context
-        rpcName = 'get_senior_dashboard_kpis';
-        console.log('Fetching KPIs for Senior');
+        rpcName = 'get_senior_dashboard_kpis'; // Default
       }
     }
-    // --- END OF THE FIX ---
 
     const { data, error } = await supabase.rpc(rpcName, params);
     if (error) throw error;
     
     const metrics = data[0];
     if (!metrics) {
-        // If no data is returned, provide a default structure
-        return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0 };
+      return { 
+        completedOrders: 0, 
+        pendingEscalations: 0, 
+        avgResolutionTime: 0, 
+        accuracyRate: 0, 
+        pendingReviews: 0, 
+        escalationRate: 0,
+        totalOrders: 0,
+        qualityTeamAccuracy: 0
+      };
     }
 
+    // الحل: نرجع بيانات موحدة للاتنين
     if (isSeniorOrManager) {
-        // Now, return the correct object based on the RPC that was called
-        if (rpcName === 'get_manager_dashboard_kpis') {
-            return {
-                totalOrders: metrics.total_reviews_today || 0,
-                accuracyRate: metrics.overall_team_accuracy ? parseFloat(metrics.overall_team_accuracy).toFixed(1) : 100.0,
-                qualityTeamAccuracy: metrics.quality_team_accuracy !== undefined ? parseFloat(metrics.quality_team_accuracy).toFixed(1) : 'N/A'
-            };
-        } else { // This must be a Senior
-            return {
-                completedOrders: metrics.reviews_today || 0,
-                pendingEscalations: metrics.pending_escalations || 0,
-                avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
-                accuracyRate: metrics.team_accuracy ? parseFloat(metrics.team_accuracy).toFixed(1) : 0.0
-            };
-        }
-    } else { // This is for the Quality Agent
-       return {
-            completedOrders: metrics.todays_reviews || 0,
-            pendingReviews: metrics.open_cases || 0,
-            accuracyRate: metrics.avg_quality_score ? parseFloat(metrics.avg_quality_score).toFixed(1) : 100.0,
-            escalationRate: metrics.escalation_rate ? parseFloat(metrics.escalation_rate).toFixed(1) : 0.0
-        };
+      return {
+        completedOrders: metrics.reviews_today || metrics.total_reviews_today || 0,
+        pendingEscalations: metrics.pending_escalations || 0,
+        avgResolutionTime: metrics.avg_resolution_time_minutes || 0,
+        accuracyRate: metrics.team_accuracy || metrics.overall_team_accuracy || 0,
+        totalOrders: metrics.total_reviews_today || 0,
+        qualityTeamAccuracy: metrics.quality_team_accuracy || 0
+      };
+    } else {
+      return {
+        completedOrders: metrics.todays_reviews || 0,
+        pendingReviews: metrics.open_cases || 0,
+        accuracyRate: metrics.avg_quality_score || 0,
+        escalationRate: metrics.escalation_rate || 0
+      };
     }
 
   } catch (error) {
-    console.error(`Error in getPerformanceMetrics (agentId: ${agentId}):`, error);
-    // Return a default structure that covers all dashboards to prevent crashes
-    return { completedOrders: 0, pendingEscalations: 0, avgResolutionTime: 0, accuracyRate: 0, pendingReviews: 0, escalationRate: 0, totalOrders: 0, qualityTeamAccuracy: 'N/A' };
+    console.error(`Error in getPerformanceMetrics:`, error);
+    return { 
+      completedOrders: 0, 
+      pendingEscalations: 0, 
+      avgResolutionTime: 0, 
+      accuracyRate: 0, 
+      pendingReviews: 0, 
+      escalationRate: 0,
+      totalOrders: 0,
+      qualityTeamAccuracy: 0
+    };
   }
 }
 
