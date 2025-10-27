@@ -1322,22 +1322,19 @@ async function updateSeniorDashboardCharts() {
         const loadAppealedErrors = () => loadData(getAppealedErrors, renderAppealedErrorsTable, 'appealed-errors-count', appealedErrors);
         const loadFinalizedDecisions = () => loadData(getFinalizedDecisions, renderFinalizedDecisionsTable, 'finalized-errors-count', finalizedDecisions);
 
-        async function loadPerformanceMetrics() {
+       // dashboard-senior-quality.html
+
+async function loadPerformanceMetrics() {
     try {
-        performanceMetrics = await getPerformanceMetrics(); 
+        const metrics = await getSeniorPerformanceMetrics(); 
         
-        // الحل: نستخدم نفس المفاتيح في الاتنين
-        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
-        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
-        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime || 0} mins`;
+        document.getElementById('reviews-today').textContent = metrics.completedOrders;
+        document.getElementById('pending-escalations').textContent = metrics.pendingEscalations;
+        document.getElementById('team-accuracy').textContent = `${metrics.accuracyRate}%`;
+        document.getElementById('avg-resolution-time').textContent = `${metrics.avgResolutionTime} mins`;
 
     } catch (error) {
         console.error('Error loading performance metrics into dashboard:', error);
-        document.getElementById('reviews-today').textContent = '0';
-        document.getElementById('pending-escalations').textContent = '0';
-        document.getElementById('team-accuracy').textContent = '0%';
-        document.getElementById('avg-resolution-time').textContent = '0 mins';
     }
 }
         
