@@ -1322,19 +1322,16 @@ export async function getPerformanceMetrics(agentId = null) {
   }
 }
 
-// api-client.js -> >>>>>>>>>>>> هذا هو الجزء المُصحح <<<<<<<<<<<<
-
 export async function getErrorTrends() {
   try {
     const { data, error } = await supabase.rpc('get_error_trends_last_30_days');
     if (error) throw error;
     
-    // This part formats the dates correctly for the chart
+    // Format data for Chart.js
     const labels = data.map(d => new Date(d.error_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }));
     const values = data.map(d => d.error_count);
     
     return { labels, values };
-
   } catch (error) {
     console.error('GetErrorTrends error:', error);
     return { labels: [], values: [] };
