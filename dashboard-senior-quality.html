@@ -1247,25 +1247,34 @@ async function updateSeniorDashboardCharts() {
         // [AI-FIX] This is the corrected function
 async function loadPerformanceMetrics() {
     try {
-        // This function now correctly returns an object like { completedOrders: 5, avgResolutionTime: 10, ... }
-        performanceMetrics = await getPerformanceMetrics(); 
-        
-        // Update the dashboard elements with the received data
-        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders;
-        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations;
-        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate}%`;
-        document.getElementById('avg-resolution-time').textContent = `${performanceMetrics.avgResolutionTime} mins`;
+        // 1. Fetch the general KPIs (reviews, escalations, time)
+        const generalMetrics = await getPerformanceMetrics();
+        document.getElementById('reviews-today').textContent = generalMetrics.completedOrders;
+        document.getElementById('pending-escalations').textContent = generalMetrics.pendingEscalations;
+        document.getElementById('avg-resolution-time').textContent = `${generalMetrics.avgResolutionTime} mins`;
+
+        // 2. Fetch detailed team performance for an accurate accuracy calculation
+        const teamData = await getTeamPerformance();
+        if (teamData && teamData.length > 0) {
+            // Calculate the average accuracy from individual performance data
+            const totalAccuracy = teamData.reduce((sum, member) => sum + parseFloat(member.accuracy), 0);
+            const avgAccuracy = totalAccuracy / teamData.length;
+            document.getElementById('team-accuracy').textContent = `${avgAccuracy.toFixed(1)}%`;
+        } else {
+            // Fallback if no team data is available
+            document.getElementById('team-accuracy').textContent = 'N/A';
+        }
 
     } catch (error) {
         console.error('Error loading performance metrics into dashboard:', error);
-        // Set all to 'N/A' on failure to indicate a problem
+        // Set all to N/A on failure
         document.getElementById('reviews-today').textContent = 'N/A';
         document.getElementById('pending-escalations').textContent = 'N/A';
         document.getElementById('team-accuracy').textContent = 'N/A';
         document.getElementById('avg-resolution-time').textContent = 'N/A';
     }
 }
-
+        
         // Render Functions
         function renderEscalationsTable(errorsToRender = pendingErrors) {
             const tableBody = document.getElementById('escalation-table-body');
