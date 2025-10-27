@@ -8,53 +8,51 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script type="module">
-        import { 
-            supabase, 
-            getCurrentUser,
-            getUserById,
-            getPerformanceMetrics,
-            getErrorTrends,
-            getDepartmentPerformance,
-            getTeamMembers,
-            updateUserProfile,
-            getTeamSchedule,
-            updateTeamSchedule,
-            getNotifications,
-            markNotificationAsRead,
-            subscribeToNotifications,
-            getCompanyEmployees,
-            getDepartments,
-            getTeamAccuracyKpi, // <-- 1. استيراد الدالة الجديدة
-            getKpiTargets,      // <-- إضافة دالة جديدة لتحميل أهداف KPI
-            updateKpiTargets,    // <-- إضافة دالة جديدة لحفظ أهداف KPI
-            // --- ADD THESE TWO LINES ---
-            getAgentAccuracySummary,
-            getReviewsVsOverturnedSummary
-            // -------------------------
-        } from './api-client.js';
-        
-        window.supabase = supabase;
-        window.getCurrentUser = getCurrentUser;
-        window.getUserById = getUserById;
-        window.getPerformanceMetrics = getPerformanceMetrics;
-        window.getErrorTrends = getErrorTrends;
-        window.getDepartmentPerformance = getDepartmentPerformance;
-        window.getTeamMembers = getTeamMembers;
-        window.updateUserProfile = updateUserProfile;
-        window.getTeamSchedule = getTeamSchedule;
-        window.updateTeamSchedule = updateTeamSchedule;
-        window.getNotifications = getNotifications;
-        window.markNotificationAsRead = markNotificationAsRead;
-        window.getCompanyEmployees = getCompanyEmployees;
-        window.getDepartments = getDepartments;
-        window.getTeamAccuracyKpi = getTeamAccuracyKpi; // <-- 1. إضافة الدالة إلى window
-        window.getKpiTargets = getKpiTargets;           // <-- إضافة الدالة إلى window
-        window.updateKpiTargets = updateKpiTargets;     // <-- إضافة الدالة إلى window
-        // --- ADD THESE TWO LINES ---
-        window.getAgentAccuracySummary = getAgentAccuracySummary;
-        window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
-        // -------------------------
-    </script>
+       import { 
+        supabase, 
+        getCurrentUser,
+        getUserById,
+        // THE FIX: Use the new, correct function name
+        getManagerPerformanceMetrics, 
+        getErrorTrends,
+        getDepartmentPerformance,
+        getTeamMembers,
+        updateUserProfile,
+        getTeamSchedule,
+        updateTeamSchedule,
+        getNotifications,
+        markNotificationAsRead,
+        subscribeToNotifications,
+        getCompanyEmployees,
+        getDepartments,
+        getTeamAccuracyKpi,
+        getKpiTargets,
+        updateKpiTargets,
+        getAgentAccuracySummary,
+        getReviewsVsOverturnedSummary
+    } from './api-client.js';
+    
+    window.supabase = supabase;
+    window.getCurrentUser = getCurrentUser;
+    window.getUserById = getUserById;
+    // THE FIX: Assign the new function to the window object
+    window.getManagerPerformanceMetrics = getManagerPerformanceMetrics; 
+    window.getErrorTrends = getErrorTrends;
+    window.getDepartmentPerformance = getDepartmentPerformance;
+    window.getTeamMembers = getTeamMembers;
+    window.updateUserProfile = updateUserProfile;
+    window.getTeamSchedule = getTeamSchedule;
+    window.updateTeamSchedule = updateTeamSchedule;
+    window.getNotifications = getNotifications;
+    window.markNotificationAsRead = markNotificationAsRead;
+    window.getCompanyEmployees = getCompanyEmployees;
+    window.getDepartments = getDepartments;
+    window.getTeamAccuracyKpi = getTeamAccuracyKpi;
+    window.getKpiTargets = getKpiTargets;
+    window.updateKpiTargets = updateKpiTargets;
+    window.getAgentAccuracySummary = getAgentAccuracySummary;
+    window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
+</script>
     <style>
         :root {
             --primary-color: #00bfff;
