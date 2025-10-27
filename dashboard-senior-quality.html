@@ -1247,18 +1247,19 @@ async function updateSeniorDashboardCharts() {
         // dashboard-senior-quality.html
 async function loadPerformanceMetrics() {
     try {
-        performanceMetrics = await getPerformanceMetrics(); 
+        // هذا السطر الآن يجلب البيانات بالأسماء الصحيحة للمشرف
+        const metrics = await getPerformanceMetrics(); 
         
-        // --- هذه هي الأسطر التي تصلح مشكلة الأرقام الصفرية ---
-        document.getElementById('reviews-today').textContent = performanceMetrics.completedOrders || 0;
-        document.getElementById('pending-escalations').textContent = performanceMetrics.pendingEscalations || 0;
-        document.getElementById('team-accuracy').textContent = `${performanceMetrics.accuracyRate || 0}%`;
+        document.getElementById('reviews-today').textContent = metrics.completedOrders || 0;
+        document.getElementById('pending-escalations').textContent = metrics.pendingEscalations || 0;
+        document.getElementById('team-accuracy').textContent = `${metrics.accuracyRate || 100}%`;
         
-        const avgTime = performanceMetrics.avgResolutionTime || 0;
+        const avgTime = metrics.avgResolutionTime || 0;
         document.getElementById('avg-resolution-time').textContent = `${avgTime} mins`;
 
     } catch (error) {
         console.error('Error loading performance metrics into dashboard:', error);
+        // في حالة حدوث خطأ، نعرض N/A
         document.getElementById('reviews-today').textContent = 'N/A';
         document.getElementById('pending-escalations').textContent = 'N/A';
         document.getElementById('team-accuracy').textContent = 'N/A';
