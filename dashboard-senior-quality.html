@@ -688,22 +688,20 @@
                             </select>
                             <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
                         </div>
-                        <!-- ================== START: HTML FIX / بداية الإصلاح في HTML ================== -->
                         <div class="charts-grid">
                              <div class="chart-container">
-                                 <h3>Team Accuracy by Agent</h3>
+                                 <h3 style="text-align: center; margin-bottom: 1.5rem;">Team Accuracy by Agent</h3>
                                  <canvas id="analyticsChart"></canvas>
                              </div>
                              <div class="chart-container">
-                                 <h3>Error Types Analysis</h3>
+                                 <h3 style="text-align: center; margin-bottom: 1.5rem;">Error Types Analysis</h3>
                                 <canvas id="errorTypesPieChart"></canvas>
                              </div>
                              <div class="chart-container">
-                                 <h3>Performance by Department</h3>
+                                 <h3 style="text-align: center; margin-bottom: 1.5rem;">Performance by Department</h3>
                                  <canvas id="departmentPerformanceChart"></canvas>
                              </div>
                         </div>
-                        <!-- =================== END: HTML FIX / نهاية الإصلاح في HTML =================== -->
                     </div>
                 </div>
 
@@ -949,11 +947,8 @@
         let directEscalations = [];
         let appealedErrors = [];
         let finalizedDecisions = [];
-        // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
-        // Note: 'agentAccuracyChart' and 'reviewsVsErrorsChart' were unused, so they are removed.
         let teamPerformanceChart = null, errorTrendsChart = null, departmentPerformanceChart = null;
         let analyticsChart = null, errorTypesPieChart = null; 
-        // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
         let isScheduleEditMode = false;
         let analyticsTabInitialized = false;
 
@@ -1116,10 +1111,10 @@
 // =========================================================================
 async function updateAnalyticsCharts() {
     const period = document.getElementById('report-period').value;
-    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Loading reports for ${periodText}...`, 'info');
+    showToast(`Loading reports for the selected period...`, 'info');
 
     try {
+        // Fetch all data concurrently
         const [performanceData, errorData, departmentData] = await Promise.all([
             getTeamPerformance(),
             getErrorTypesSummary(period),
@@ -1137,15 +1132,16 @@ async function updateAnalyticsCharts() {
                     label: 'Accuracy',
                     data: performanceData.map(d => d.accuracy),
                     backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 75 // Control bar width
                 }]
             },
             options: { 
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: { 
-                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
-                    x: { ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { display: false } } 
+                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
+                    x: { ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { display: false } } 
                 }
             }
         });
@@ -1183,15 +1179,16 @@ async function updateAnalyticsCharts() {
                     label: 'Accuracy',
                     data: departmentData.map(d => d.accuracy),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                    borderRadius: 4
+                    borderRadius: 4,
+                    maxBarThickness: 75 // Control bar width
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                    x: { ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { display: false } }
+                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { display: false } }
                 }
             }
         });
@@ -2137,16 +2134,15 @@ async function openEscalationDetailsModal(escalationId) {
         function initCharts() {
             // Set global defaults for all charts to ensure consistency and readability
             Chart.defaults.font.family = "'Poppins', sans-serif";
-            Chart.defaults.color = 'var(--text-muted-color)';
-            Chart.defaults.plugins.title.display = true;
-            Chart.defaults.plugins.title.color = 'var(--text-color)';
-            Chart.defaults.plugins.title.font = { size: 18, weight: '600' };
-
+            Chart.defaults.color = 'var(--text-color)';
+            Chart.defaults.plugins.title.display = false; // Disable global titles, we use HTML h3 tags now
+            Chart.defaults.plugins.legend.labels.color = 'var(--text-color)';
+            
             // Initialize the dashboard charts only
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
                 if(teamPerformanceChart) teamPerformanceChart.destroy();
-                teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
+                teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
@@ -2155,7 +2151,7 @@ async function openEscalationDetailsModal(escalationId) {
                 errorTrendsChart = new Chart(trendsCtx, { 
                     type: 'line', 
                     data: { labels: [], datasets: [{ label: 'Error Rate %', data: [], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } 
+                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } 
                 });
             }
         }
@@ -2391,9 +2387,7 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 hideModal('logout-confirm-modal');
             });
             
-            // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
             document.getElementById('report-period').addEventListener('change', updateAnalyticsCharts);
-            // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
