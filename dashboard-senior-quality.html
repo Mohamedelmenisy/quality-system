@@ -72,9 +72,7 @@
         window.getTeamPerformance = getTeamPerformance;
         window.getAgentAccuracySummary = getAgentAccuracySummary;
         window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
-        // ================== START: THE FIX / بداية الإصلاح ==================
         window.getErrorTypesSummary = getErrorTypesSummary;
-        // =================== END: THE FIX / نهاية الإصلاح ===================
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
      window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
@@ -696,14 +694,14 @@
                             <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
                             <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
                         </div>
-                        <div class="charts-grid">
-                            <div class="chart-container">
-                                <canvas id="analyticsChart"></canvas>
-                            </div>
-                            <div class="chart-container">
-                                <canvas id="errorTypesPieChart"></canvas>
-                            </div>
+                        <!-- ================== START: HTML FIX / بداية الإصلاح في HTML ================== -->
+                        <div class="chart-container" id="analyticsChartContainer" style="display: none; min-height: 400px; margin-top: 1.5rem;">
+                            <canvas id="analyticsChart"></canvas>
                         </div>
+                        <div class="chart-container" id="errorTypesPieChartContainer" style="display: none; min-height: 400px; margin-top: 1.5rem;">
+                            <canvas id="errorTypesPieChart"></canvas>
+                        </div>
+                        <!-- =================== END: HTML FIX / نهاية الإصلاح في HTML =================== -->
                     </div>
                 </div>
 
@@ -1108,7 +1106,7 @@
         }
 
      // =========================================================================
-// START: CORRECTED CODE BLOCK / بداية الكود المصحح
+// START: LOGIC FIX / بداية الإصلاح المنطقي
 // =========================================================================
 async function generateSeniorReport() {
     const generateBtn = document.getElementById('generate-report-btn');
@@ -1121,10 +1119,10 @@ async function generateSeniorReport() {
     generateBtn.textContent = 'Generating...';
     showToast(`Generating ${reportTypeText}...`, 'info');
 
-    const analyticsContainer = document.getElementById('analyticsChart').parentElement;
-    const errorPieContainer = document.getElementById('errorTypesPieChart').parentElement;
+    const analyticsContainer = document.getElementById('analyticsChartContainer');
+    const errorPieContainer = document.getElementById('errorTypesPieChartContainer');
 
-    // 1. Hide both containers first
+    // 1. Hide both containers first to ensure a clean slate
     analyticsContainer.style.display = 'none';
     errorPieContainer.style.display = 'none';
 
@@ -1147,14 +1145,14 @@ async function generateSeniorReport() {
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})`, color: 'var(--text-color)', font: { size: 16 } } },
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})` } },
                     scales: { 
                         y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
                         x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } 
                     }
                 }
             });
-            // 2. Show the correct container after chart is ready
+            // 2. Show the correct container after the chart is ready
             analyticsContainer.style.display = 'block';
 
         } else if (reportType === 'errors') {
@@ -1179,7 +1177,7 @@ async function generateSeniorReport() {
                 options: { 
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)', font: { size: 16 } },
+                        title: { display: true, text: `Error Types Analysis (${periodText})` },
                         legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
                     }
                 }
@@ -1205,7 +1203,7 @@ async function generateSeniorReport() {
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Performance by Department`, color: 'var(--text-color)', font: { size: 16 } } },
+                    plugins: { title: { display: true, text: `Performance by Department` } },
                     scales: {
                         y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
                         x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
@@ -1225,7 +1223,7 @@ async function generateSeniorReport() {
     }
 }
 // =========================================================================
-// END: CORRECTED CODE BLOCK / نهاية الكود المصحح
+// END: LOGIC FIX / نهاية الإصلاح المنطقي
 // =========================================================================
 
         // dashboard-senior-quality.html
@@ -2156,29 +2154,32 @@ async function openEscalationDetailsModal(escalationId) {
             reader.readAsText(file);
         }
 
-        // Charts
+        // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
         function initCharts() {
+            // Set global defaults for all charts to ensure consistency and readability
             Chart.defaults.font.family = "'Poppins', sans-serif";
+            Chart.defaults.color = 'var(--text-muted-color)';
+            Chart.defaults.plugins.legend.labels.color = 'var(--text-color)';
+            Chart.defaults.plugins.title.color = 'var(--text-color)';
+            Chart.defaults.plugins.title.font = { size: 16 };
+
+            // Initialize the dashboard charts only
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
                 if(teamPerformanceChart) teamPerformanceChart.destroy();
                 teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             
-            // =========================================================================
-            // START: MODIFIED CODE BLOCK / بداية الكود المعدل
-            // =========================================================================
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
             if (trendsCtx) {
                 if(errorTrendsChart) errorTrendsChart.destroy();
-                // Initialize the chart with empty data. It will be populated by updateSeniorDashboardCharts()
                 errorTrendsChart = new Chart(trendsCtx, { 
                     type: 'line', 
                     data: { 
-                        labels: [], // Initially empty
+                        labels: [],
                         datasets: [{ 
                             label: 'Error Rate %', 
-                            data: [], // Initially empty
+                            data: [],
                             borderColor: 'rgba(0, 191, 255, 1)', 
                             backgroundColor: 'rgba(0, 191, 255, 0.1)', 
                             fill: true, 
@@ -2195,21 +2196,9 @@ async function openEscalationDetailsModal(escalationId) {
                     } 
                 });
             }
-            // =========================================================================
-            // END: MODIFIED CODE BLOCK / نهاية الكود المعدل
-            // =========================================================================
-
-            const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
-            if (analyticsCtx) {
-                if(analyticsChart) analyticsChart.destroy();
-                analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Orders Reviewed', data: [320, 450, 410, 480], borderColor: '#00bfff', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true }, { label: 'Errors Found', data: [25, 18, 22, 15], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Monthly Performance Report', color: '#e6edf3', font: { size: 16 } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
-            }
-            const pieCtx = document.getElementById('errorTypesPieChart')?.getContext('2d');
-            if (pieCtx) {
-                if(errorTypesPieChart) errorTypesPieChart.destroy();
-                errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
-            }
+            // DO NOT initialize analytics charts here to keep the tab clean on load
         }
+        // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
 
         // [AI-FIX] New function for filtering assigned orders
         function applyAssignedOrdersFilters() {
