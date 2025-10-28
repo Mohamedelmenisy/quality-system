@@ -980,7 +980,42 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         }
 
         // ===================================================================================
-        // START: الكود الذي أضافه المطور
+        // START: FINAL FIX FOR TAB SWITCHING / بداية الحل النهائي لمشكلة التبويبات
+        // ===================================================================================
+
+        // This is our new, central function for handling all tab navigation
+        function switchTab(tabId) {
+            if (!tabId) return; // Safety check
+
+            // 1. Update visual state (sidebar link and content area)
+            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+
+            const tabLink = document.querySelector(`a[data-tab="${tabId}"]`);
+            if (tabLink) {
+                tabLink.parentElement.classList.add('active');
+                const tabContent = document.getElementById(tabId);
+                if (tabContent) tabContent.classList.add('active');
+
+                // 2. Update the page title in the top bar
+                document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+            }
+
+            // 3. Save the last opened tab to browser memory
+            localStorage.setItem('seniorActiveTab', tabId);
+
+            // 4. CRITICAL: If the new tab is the reports tab, generate the default report
+            if (tabId === 'reports-analytics') {
+                console.log(`Switched to reports tab. Generating default report...`);
+                // We use a small delay to ensure the chart canvas is visible before drawing
+                setTimeout(() => {
+                    generateSeniorReport();
+                }, 50); 
+            }
+        }
+
+        // ===================================================================================
+        // END: FINAL FIX FOR TAB SWITCHING / نهاية الحل النهائي لمشكلة التبويبات
         // ===================================================================================
 
         // 🧠 وظيفة لتحويل الحالة في الـ DB إلى نص واضح للمستخدم
@@ -1003,10 +1038,6 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
           // Fallback for any other status, including just 'closed' without a decision
           return `<span style="color: gray;">${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}</span>`;
         }
-
-        // ===================================================================================
-        // END: الكود الذي أضافه المطور
-        // ===================================================================================
 
 
         // Helper Functions
@@ -1052,8 +1083,9 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             try {
                 showToast('Loading Senior Dashboard...', 'info');
 
-                // [AI-FIX] Restore active tab on page load
-                applyStoredTab();
+                // [AI-FIX] Switch to the last active tab on page load
+                const lastTab = localStorage.getItem('seniorActiveTab') || 'dashboard';
+                switchTab(lastTab);
 
                 const user = await getCurrentUser();
                 if (!user) { window.location.href = 'login.html'; return; }
@@ -2123,9 +2155,6 @@ async function openEscalationDetailsModal(escalationId) {
             reader.readAsText(file);
         }
 
-        // =========================================================================
-        // START: CODE BLOCK REPLACED / بداية الكود المستبدل
-        // =========================================================================
         // Charts
         function initCharts() {
             Chart.defaults.font.family = "'Poppins', sans-serif";
@@ -2158,9 +2187,6 @@ async function openEscalationDetailsModal(escalationId) {
                 errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
             }
         }
-        // =========================================================================
-        // END: CODE BLOCK REPLACED / نهاية الكود المستبدل
-        // =========================================================================
 
         // [AI-FIX] New function for filtering assigned orders
         function applyAssignedOrdersFilters() {
@@ -2180,7 +2206,7 @@ async function openEscalationDetailsModal(escalationId) {
             renderAssignedOrdersTable();
         }
 
-        // [AI-FIX] New function to handle tab state persistence
+        // [AI-FIX] New function to handle tab state persistence - This function is now OBSOLETE and replaced by switchTab logic
         function applyStoredTab() {
             const lastTab = localStorage.getItem('seniorActiveTab');
             if (lastTab) {
@@ -2217,39 +2243,15 @@ async function openEscalationDetailsModal(escalationId) {
         document.addEventListener('DOMContentLoaded', () => {
             initApp();
 
-            // =========================================================================
-            // START: CODE BLOCK REPLACED / بداية الكود المستبدل
-            // =========================================================================
             const tabs = document.querySelectorAll('.sidebar-nav a[data-tab]');
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    if(tab.id === 'logout-btn') return;
-                    
+                    if (tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
-                    localStorage.setItem('seniorActiveTab', tabId); 
-                    
-                    // Old tab switching logic
-                    document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-                    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-                    tab.parentElement.classList.add('active');
-                    const activeTabContent = document.getElementById(tabId);
-                    if (activeTabContent) {
-                        activeTabContent.classList.add('active');
-                        document.getElementById('page-title').textContent = tab.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
-                    }
-                    
-                    // --- THIS IS THE NEW LOGIC ---
-                    // If the user clicks on the reports tab, generate the default report automatically.
-                    if (tabId === 'reports-analytics') {
-                        console.log('Reports tab opened, generating default report...');
-                        generateSeniorReport();
-                    }
+                    switchTab(tabId); // Use our new central function
                 });
             });
-            // =========================================================================
-            // END: CODE BLOCK REPLACED / نهاية الكود المستبدل
-            // =========================================================================
 
             document.getElementById('notification-btn')?.addEventListener('click', (e) => { e.stopPropagation(); document.getElementById('notification-dropdown')?.classList.toggle('show'); });
             document.addEventListener('click', (e) => { if (!e.target.closest('.notification-bell')) { document.getElementById('notification-dropdown')?.classList.remove('show'); } });
