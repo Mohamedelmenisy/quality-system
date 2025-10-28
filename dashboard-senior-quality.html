@@ -1124,12 +1124,14 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // Fetch all data concurrently
         const [performanceData, errorData, departmentData] = await Promise.all([
             getTeamPerformance(),
             getErrorTypesSummary(period),
             getDepartmentPerformance()
         ]);
+
+        const chartTextColor = '#e6edf3';
+        const chartGridColor = 'rgba(255, 255, 255, 0.1)';
 
         // --- 1. Team Accuracy Chart ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
@@ -1137,21 +1139,35 @@ async function updateAnalyticsCharts() {
         analyticsChart = new Chart(perfCtx, {
             type: 'bar',
             data: {
-                labels: performanceData.map(d => d.agent_name),
+                labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
                 datasets: [{
                     label: 'Accuracy',
                     data: performanceData.map(d => d.accuracy),
                     backgroundColor: 'rgba(0, 191, 255, 0.7)',
                     borderRadius: 4,
-                    maxBarThickness: 75 // Control bar width
+                    maxBarThickness: 75
                 }]
             },
-            options: { 
+            options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: { 
-                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
-                    x: { ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { display: false } } 
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#2c2c2c',
+                        titleColor: chartTextColor,
+                        bodyColor: chartTextColor,
+                        borderColor: 'var(--border-color)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
+                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
                 }
             }
         });
@@ -1162,7 +1178,7 @@ async function updateAnalyticsCharts() {
         errorTypesPieChart = new Chart(errorCtx, {
             type: 'pie',
             data: {
-                labels: errorData.length > 0 ? errorData.map(d => d.modified_reason) : ['No Error Data'],
+                labels: errorData.length > 0 ? errorData.map(d => d.modified_reason || 'Uncategorized') : ['No Error Data'],
                 datasets: [{
                     data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
                     backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'],
@@ -1170,10 +1186,34 @@ async function updateAnalyticsCharts() {
                     borderWidth: 3
                 }]
             },
-            options: { 
+            options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { 
-                    legend: { position: 'bottom', labels: { color: 'var(--text-color)', font: {size: 14} } }
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: { color: chartTextColor, font: { size: 14 } }
+                    },
+                    tooltip: {
+                         backgroundColor: '#2c2c2c',
+                         titleColor: chartTextColor,
+                         bodyColor: chartTextColor,
+                         borderColor: 'var(--border-color)',
+                         borderWidth: 1,
+                         callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed !== null) {
+                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = total > 0 ? (context.parsed / total * 100).toFixed(1) : 0;
+                                    label += `${context.raw} (${percentage}%)`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
                 }
             }
         });
@@ -1184,21 +1224,35 @@ async function updateAnalyticsCharts() {
         departmentPerformanceChart = new Chart(deptCtx, {
             type: 'bar',
             data: {
-                labels: departmentData.map(d => d.department_name),
+                labels: departmentData.map(d => d.department_name || 'Unknown Dept.'),
                 datasets: [{
                     label: 'Accuracy',
                     data: departmentData.map(d => d.accuracy),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4,
-                    maxBarThickness: 75 // Control bar width
+                    maxBarThickness: 75
                 }]
             },
             options: {
                 responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        backgroundColor: '#2c2c2c',
+                        titleColor: chartTextColor,
+                        bodyColor: chartTextColor,
+                        borderColor: 'var(--border-color)',
+                        borderWidth: 1,
+                        callbacks: {
+                            label: function(context) {
+                                return `${context.dataset.label}: ${context.parsed.y.toFixed(1)}%`;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                    x: { ticks: { color: 'var(--text-color)', font: { size: 14 } }, grid: { display: false } }
+                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
+                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
                 }
             }
         });
