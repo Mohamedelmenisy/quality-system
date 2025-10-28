@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -1105,79 +1104,126 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             }
         }
 
-     // dashboard-senior-quality.html
-
+     // =========================================================================
+// START: CORRECTED CODE BLOCK / بداية الكود المصحح
+// =========================================================================
 async function generateSeniorReport() {
+    const generateBtn = document.getElementById('generate-report-btn');
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} for ${periodText}...`, 'info');
+    const reportTypeText = document.getElementById('report-type').options[document.getElementById('report-type').selectedIndex].text;
 
-    // Hide both canvases to clear the view before drawing
-    const analyticsCanvas = document.getElementById('analyticsChart');
-    const errorPieCanvas = document.getElementById('errorTypesPieChart');
-    analyticsCanvas.style.display = 'none';
-    errorPieCanvas.style.display = 'none';
+    generateBtn.disabled = true;
+    generateBtn.textContent = 'Generating...';
+    showToast(`Generating ${reportTypeText}...`, 'info');
+
+    const analyticsContainer = document.getElementById('analyticsChart').parentElement;
+    const errorPieContainer = document.getElementById('errorTypesPieChart').parentElement;
+
+    // 1. Hide both containers first
+    analyticsContainer.style.display = 'none';
+    errorPieContainer.style.display = 'none';
 
     try {
         if (reportType === 'performance') {
-            // --- THIS IS FOR 'Performance Report' ---
-            analyticsCanvas.style.display = 'block'; // Show the correct canvas
-            
-            const accuracyData = await getAgentAccuracySummary(period);
-            const ctx = analyticsCanvas.getContext('2d');
-            
+            const performanceData = await getTeamPerformance();
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
             if (analyticsChart) analyticsChart.destroy();
+            
             analyticsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: accuracyData.length > 0 ? accuracyData.map(d => d.agent_name) : ['No Data'],
+                    labels: performanceData.map(d => d.agent_name),
                     datasets: [{
-                        label: 'Agent Accuracy',
-                        data: accuracyData.length > 0 ? accuracyData.map(d => d.accuracy) : [0],
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
+                        label: 'Team Accuracy',
+                        data: performanceData.map(d => d.accuracy),
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                        borderRadius: 4
                     }]
                 },
-                options: {
+                options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: 'Quality Agent Accuracy', color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100 } }
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})`, color: 'var(--text-color)', font: { size: 16 } } },
+                    scales: { 
+                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
+                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } 
+                    }
                 }
             });
+            // 2. Show the correct container after chart is ready
+            analyticsContainer.style.display = 'block';
 
         } else if (reportType === 'errors') {
-            // --- THIS IS FOR 'Error Analysis' ---
-            errorPieCanvas.style.display = 'block'; // Show the correct canvas
-
             const errorData = await getErrorTypesSummary(period);
-            const ctx = errorPieCanvas.getContext('2d');
-
+            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
             if (errorTypesPieChart) errorTypesPieChart.destroy();
+            
+            const labels = errorData.length > 0 ? errorData.map(d => d.modified_reason) : ['No Error Data Found'];
+            const data = errorData.length > 0 ? errorData.map(d => d.error_count) : [1];
+
             errorTypesPieChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Errors'],
+                    labels: labels,
                     datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
+                        data: data,
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'],
+                        borderColor: 'var(--card-bg)',
+                        borderWidth: 3
                     }]
                 },
-                options: {
+                options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: {
-                        title: { display: true, text: 'Error Types Analysis', color: 'var(--text-color)' },
+                    plugins: { 
+                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)', font: { size: 16 } },
                         legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
                     }
                 }
             });
-        }
-        // You can add 'else if (reportType === 'department')' here later
+            // 2. Show the correct container
+            errorPieContainer.style.display = 'block';
 
+        } else if (reportType === 'department') {
+            const departmentData = await getDepartmentPerformance();
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            if (analyticsChart) analyticsChart.destroy();
+
+            analyticsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: departmentData.map(d => d.department_name),
+                    datasets: [{
+                        label: 'Department Accuracy',
+                        data: departmentData.map(d => d.accuracy),
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Performance by Department`, color: 'var(--text-color)', font: { size: 16 } } },
+                    scales: {
+                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
+                    }
+                }
+            });
+            // 2. Show the correct container
+            analyticsContainer.style.display = 'block';
+        }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
-        showToast("Error generating report.", "error");
+        showToast("Error generating report. Check console for details.", "error");
+    } finally {
+        // 3. Re-enable the button
+        generateBtn.disabled = false;
+        generateBtn.textContent = 'Generate Report';
     }
 }
+// =========================================================================
+// END: CORRECTED CODE BLOCK / نهاية الكود المصحح
+// =========================================================================
 
         // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
@@ -2387,6 +2433,9 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 hideModal('logout-confirm-modal');
             });
             document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
+            // ================== START: ADDED LINE / بداية السطر المضاف ==================
+            document.getElementById('report-type').addEventListener('change', generateSeniorReport);
+            // =================== END: ADDED LINE / نهاية السطر المضاف ===================
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
