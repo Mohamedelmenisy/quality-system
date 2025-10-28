@@ -227,9 +227,29 @@ export async function getUserById(userId) {
 
 export async function getErrorTypesSummary(period) {
   try {
-    const { data, error } = await supabase.rpc('get_error_types_summary', { period_filter: period });
-    if (error) throw error;
-    return data;
+    // تحويل الرقم إلى النص المناسب
+    let periodFilter;
+    switch(parseInt(period)) {
+      case 7: periodFilter = 'week'; break;
+      case 30: periodFilter = 'month'; break;
+      case 90: periodFilter = 'quarter'; break;
+      case 365: periodFilter = 'year'; break;
+      default: periodFilter = 'month';
+    }
+    
+    console.log(`Fetching error types for period: ${periodFilter}`);
+    
+    const { data, error } = await supabase.rpc('get_error_types_summary', { 
+      period_filter: periodFilter 
+    });
+    
+    if (error) {
+      console.error('RPC Error:', error);
+      throw error;
+    }
+    
+    console.log('Error types data received:', data);
+    return data || [];
   } catch (error) {
     console.error('Error fetching error types summary:', error);
     return [];
