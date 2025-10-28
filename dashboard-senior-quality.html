@@ -1136,7 +1136,7 @@ async function generateSeniorReport() {
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})`, color: 'var(--text-color)' } },
                     scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
                 }
             });
@@ -1164,6 +1164,31 @@ async function generateSeniorReport() {
                     }
                 }
             });
+        
+        // --- START: NEW CODE BLOCK ---
+        } else if (reportType === 'department') {
+            document.getElementById('analyticsChart').style.display = 'block';
+            const departmentData = await getDepartmentPerformance(); // Calling the correct function
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            
+            if (analyticsChart) analyticsChart.destroy();
+            analyticsChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: departmentData.map(d => d.department_name), // Use department name
+                    datasets: [{
+                        label: 'Department Accuracy',
+                        data: departmentData.map(d => d.accuracy), // Use department accuracy
+                        backgroundColor: 'rgba(40, 167, 69, 0.7)' // Green color for departments
+                    }]
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { title: { display: true, text: `Team Accuracy by Department (${periodText})`, color: 'var(--text-color)' } },
+                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                }
+            });
+        // --- END: NEW CODE BLOCK ---
         }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
