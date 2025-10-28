@@ -1111,107 +1111,63 @@ async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    const reportTypeText = document.getElementById('report-type').options[document.getElementById('report-type').selectedIndex].text;
+    showToast(`Generating ${reportType} report for ${periodText}...`, 'info');
 
-    showToast(`Generating ${reportTypeText}...`, 'info');
-
-    const analyticsCanvas = document.getElementById('analyticsChart');
-    const errorPieCanvas = document.getElementById('errorTypesPieChart');
-    
-    // Hide both charts initially to avoid flicker
-    analyticsCanvas.parentElement.style.display = 'none';
-    errorPieCanvas.parentElement.style.display = 'none';
+    // Hide both canvases to clear the view
+    document.getElementById('analyticsChart').style.display = 'none';
+    document.getElementById('errorTypesPieChart').style.display = 'none';
 
     try {
         if (reportType === 'performance') {
-            analyticsCanvas.parentElement.style.display = 'block';
-            const performanceData = await getTeamPerformance(); // We can reuse this simple performance metric
-            const ctx = analyticsCanvas.getContext('2d');
+            document.getElementById('analyticsChart').style.display = 'block';
+            const accuracyData = await getAgentAccuracySummary(period); // Using REAL data
+            const ctx = document.getElementById('analyticsChart').getContext('2d');
             
             if (analyticsChart) analyticsChart.destroy();
-
             analyticsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: performanceData.map(d => d.agent_name),
+                    labels: accuracyData.map(d => d.agent_name),
                     datasets: [{
-                        label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                        borderColor: 'rgba(0, 191, 255, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
+                        label: 'Review Accuracy',
+                        data: accuracyData.map(d => d.accuracy),
+                        backgroundColor: 'rgba(0, 191, 255, 0.7)'
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})`, color: 'var(--text-color)', font: { size: 16 } } },
-                    scales: { 
-                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
-                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } 
-                    }
+                    plugins: { title: { display: true, text: `Quality Agent Accuracy`, color: 'var(--text-color)' } },
+                    scales: { y: { min: 80, max: 100 } }
                 }
             });
 
         } else if (reportType === 'errors') {
-            errorPieCanvas.parentElement.style.display = 'block';
-            const errorData = await getErrorTypesSummary(period);
-            const ctx = errorPieCanvas.getContext('2d');
+            document.getElementById('errorTypesPieChart').style.display = 'block';
+            const errorData = await getErrorTypesSummary(period); // Using REAL data
+            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
 
             if (errorTypesPieChart) errorTypesPieChart.destroy();
-
             errorTypesPieChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.modified_reason) : ['No Error Data'],
+                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Errors in Period'],
                     datasets: [{
-                        data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'],
-                        borderColor: 'var(--card-bg)',
-                        borderWidth: 3
+                        data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
                     }]
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
                     plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)', font: { size: 16 } },
+                        title: { display: true, text: `Error Types Analysis`, color: 'var(--text-color)' },
                         legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
-                    }
-                }
-            });
-        } else if (reportType === 'department') {
-            analyticsCanvas.parentElement.style.display = 'block';
-            const departmentData = await getDepartmentPerformance();
-             const ctx = analyticsCanvas.getContext('2d');
-
-            if (analyticsChart) analyticsChart.destroy();
-
-             analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: departmentData.map(d => d.department_name),
-                    datasets: [{
-                        label: 'Department Accuracy',
-                        data: departmentData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                         borderColor: 'rgba(40, 167, 69, 1)',
-                        borderWidth: 1,
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Performance by Department`, color: 'var(--text-color)', font: { size: 16 } } },
-                    scales: {
-                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
                     }
                 }
             });
         }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
-        showToast("Error generating report. Check console for details.", "error");
+        showToast("Error generating report.", "error");
     }
 }
 // =========================================================================
