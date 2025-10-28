@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en" dir="ltr">
 <head>
@@ -980,42 +981,7 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         }
 
         // ===================================================================================
-        // START: FINAL FIX FOR TAB SWITCHING / بداية الحل النهائي لمشكلة التبويبات
-        // ===================================================================================
-
-        // This is our new, central function for handling all tab navigation
-        function switchTab(tabId) {
-            if (!tabId) return; // Safety check
-
-            // 1. Update visual state (sidebar link and content area)
-            document.querySelectorAll('.sidebar-nav li').forEach(li => li.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-
-            const tabLink = document.querySelector(`a[data-tab="${tabId}"]`);
-            if (tabLink) {
-                tabLink.parentElement.classList.add('active');
-                const tabContent = document.getElementById(tabId);
-                if (tabContent) tabContent.classList.add('active');
-
-                // 2. Update the page title in the top bar
-                document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
-            }
-
-            // 3. Save the last opened tab to browser memory
-            localStorage.setItem('seniorActiveTab', tabId);
-
-            // 4. CRITICAL: If the new tab is the reports tab, generate the default report
-            if (tabId === 'reports-analytics') {
-                console.log(`Switched to reports tab. Generating default report...`);
-                // We use a small delay to ensure the chart canvas is visible before drawing
-                setTimeout(() => {
-                    generateSeniorReport();
-                }, 50); 
-            }
-        }
-
-        // ===================================================================================
-        // END: FINAL FIX FOR TAB SWITCHING / نهاية الحل النهائي لمشكلة التبويبات
+        // START: الكود الذي أضافه المطور
         // ===================================================================================
 
         // 🧠 وظيفة لتحويل الحالة في الـ DB إلى نص واضح للمستخدم
@@ -1038,6 +1004,10 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
           // Fallback for any other status, including just 'closed' without a decision
           return `<span style="color: gray;">${normalizedStatus.charAt(0).toUpperCase() + normalizedStatus.slice(1)}</span>`;
         }
+
+        // ===================================================================================
+        // END: الكود الذي أضافه المطور
+        // ===================================================================================
 
 
         // Helper Functions
@@ -1083,9 +1053,8 @@ window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
             try {
                 showToast('Loading Senior Dashboard...', 'info');
 
-                // [AI-FIX] Switch to the last active tab on page load
-                const lastTab = localStorage.getItem('seniorActiveTab') || 'dashboard';
-                switchTab(lastTab);
+                // [AI-FIX] Restore active tab on page load
+                applyStoredTab();
 
                 const user = await getCurrentUser();
                 if (!user) { window.location.href = 'login.html'; return; }
@@ -1167,7 +1136,7 @@ async function generateSeniorReport() {
                 },
                 options: { 
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})`, color: 'var(--text-color)' } },
+                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
                     scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
                 }
             });
@@ -1195,31 +1164,6 @@ async function generateSeniorReport() {
                     }
                 }
             });
-        
-        // --- START: NEW CODE BLOCK ---
-        } else if (reportType === 'department') {
-            document.getElementById('analyticsChart').style.display = 'block';
-            const departmentData = await getDepartmentPerformance(); // Calling the correct function
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            
-            if (analyticsChart) analyticsChart.destroy();
-            analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: departmentData.map(d => d.department_name), // Use department name
-                    datasets: [{
-                        label: 'Department Accuracy',
-                        data: departmentData.map(d => d.accuracy), // Use department accuracy
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)' // Green color for departments
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Department (${periodText})`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
-                }
-            });
-        // --- END: NEW CODE BLOCK ---
         }
     } catch (error) {
         console.error("Failed to generate senior report:", error);
@@ -2164,27 +2108,49 @@ async function openEscalationDetailsModal(escalationId) {
                 teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             
+            // =========================================================================
+            // START: MODIFIED CODE BLOCK / بداية الكود المعدل
+            // =========================================================================
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
             if (trendsCtx) {
                 if(errorTrendsChart) errorTrendsChart.destroy();
+                // Initialize the chart with empty data. It will be populated by updateSeniorDashboardCharts()
                 errorTrendsChart = new Chart(trendsCtx, { 
                     type: 'line', 
-                    data: { labels: [], datasets: [{ label: 'Error Rate %', data: [], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, 
-                    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } 
+                    data: { 
+                        labels: [], // Initially empty
+                        datasets: [{ 
+                            label: 'Error Rate %', 
+                            data: [], // Initially empty
+                            borderColor: 'rgba(0, 191, 255, 1)', 
+                            backgroundColor: 'rgba(0, 191, 255, 0.1)', 
+                            fill: true, 
+                            tension: 0.4 
+                        }] 
+                    }, 
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false, 
+                        scales: { 
+                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, 
+                            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } 
+                        } 
+                    } 
                 });
             }
+            // =========================================================================
+            // END: MODIFIED CODE BLOCK / نهاية الكود المعدل
+            // =========================================================================
 
-            // --- THIS IS THE MODIFICATION ---
-            // Initialize the report charts as empty shells. generateSeniorReport will build them.
             const analyticsCtx = document.getElementById('analyticsChart')?.getContext('2d');
             if (analyticsCtx) {
                 if(analyticsChart) analyticsChart.destroy();
-                analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
+                analyticsChart = new Chart(analyticsCtx, { type: 'line', data: { labels: ['Week 1', 'Week 2', 'Week 3', 'Week 4'], datasets: [{ label: 'Orders Reviewed', data: [320, 450, 410, 480], borderColor: '#00bfff', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true }, { label: 'Errors Found', data: [25, 18, 22, 15], borderColor: '#dc3545', backgroundColor: 'rgba(220, 53, 69, 0.1)', fill: true }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Monthly Performance Report', color: '#e6edf3', font: { size: 16 } } }, scales: { y: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } });
             }
             const pieCtx = document.getElementById('errorTypesPieChart')?.getContext('2d');
             if (pieCtx) {
                 if(errorTypesPieChart) errorTypesPieChart.destroy();
-                errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: [], datasets: [] }, options: { responsive: true, maintainAspectRatio: false } });
+                errorTypesPieChart = new Chart(pieCtx, { type: 'pie', data: { labels: ['Driver Behavior', 'Financial Fraud', 'Incorrect Information', 'System Error', 'Other'], datasets: [{ label: 'Error Types', data: [40, 25, 15, 10, 10], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#8b949e'], borderColor: 'var(--card-bg)', borderWidth: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: '#e6edf3' } }, title: { display: true, text: 'Error Types Analysis', color: '#e6edf3', font: { size: 16 } } } } });
             }
         }
 
@@ -2206,7 +2172,7 @@ async function openEscalationDetailsModal(escalationId) {
             renderAssignedOrdersTable();
         }
 
-        // [AI-FIX] New function to handle tab state persistence - This function is now OBSOLETE and replaced by switchTab logic
+        // [AI-FIX] New function to handle tab state persistence
         function applyStoredTab() {
             const lastTab = localStorage.getItem('seniorActiveTab');
             if (lastTab) {
@@ -2247,9 +2213,10 @@ async function openEscalationDetailsModal(escalationId) {
             tabs.forEach(tab => {
                 tab.addEventListener('click', (e) => {
                     e.preventDefault();
-                    if (tab.id === 'logout-btn') return;
+                    if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
-                    switchTab(tabId); // Use our new central function
+                    localStorage.setItem('seniorActiveTab', tabId); // [AI-FIX] Save tab on click
+                    applyStoredTab();
                 });
             });
 
