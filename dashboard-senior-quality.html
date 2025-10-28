@@ -73,8 +73,8 @@
         window.getAgentAccuracySummary = getAgentAccuracySummary;
         window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
         window.getErrorTypesSummary = getErrorTypesSummary;
-        window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
-     window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
+        window.reassignOrder = reassignOrder; 
+     window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; 
     </script>
     <style>
         :root {
@@ -170,9 +170,9 @@
         .detail-item span, .detail-item p { font-size: 1rem; font-weight: 500;}
         .feedback-form textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 8px; font-family: inherit; margin-top: 10px; }
         .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
-        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+        .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
-        .chart-container { height: 350px; }
+        .chart-container { min-height: 400px; padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); }
         .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
         .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); }
         .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-transform: capitalize; }
@@ -686,20 +686,22 @@
                                 <option value="90">Last 90 Days</option>
                                 <option value="365">Last Year</option>
                             </select>
-                            <select id="report-type">
-                                <option value="performance">Performance Report</option>
-                                <option value="errors">Error Analysis</option>
-                                <option value="department">Department Report</option>
-                            </select>
-                            <button class="btn btn-primary" id="generate-report-btn">Generate Report</button>
                             <button class="btn btn-secondary" id="export-report-btn">Export to CSV</button>
                         </div>
                         <!-- ================== START: HTML FIX / بداية الإصلاح في HTML ================== -->
-                        <div class="chart-container" id="analyticsChartContainer" style="display: none; min-height: 400px; margin-top: 1.5rem;">
-                            <canvas id="analyticsChart"></canvas>
-                        </div>
-                        <div class="chart-container" id="errorTypesPieChartContainer" style="display: none; min-height: 400px; margin-top: 1.5rem;">
-                            <canvas id="errorTypesPieChart"></canvas>
+                        <div class="charts-grid">
+                             <div class="chart-container">
+                                 <h3>Team Accuracy by Agent</h3>
+                                 <canvas id="analyticsChart"></canvas>
+                             </div>
+                             <div class="chart-container">
+                                 <h3>Error Types Analysis</h3>
+                                <canvas id="errorTypesPieChart"></canvas>
+                             </div>
+                             <div class="chart-container">
+                                 <h3>Performance by Department</h3>
+                                 <canvas id="departmentPerformanceChart"></canvas>
+                             </div>
                         </div>
                         <!-- =================== END: HTML FIX / نهاية الإصلاح في HTML =================== -->
                     </div>
@@ -947,9 +949,13 @@
         let directEscalations = [];
         let appealedErrors = [];
         let finalizedDecisions = [];
-        let teamPerformanceChart = null, errorTrendsChart = null, agentAccuracyChart = null;
-        let reviewsVsErrorsChart = null, analyticsChart = null, errorTypesPieChart = null;
+        // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
+        // Note: 'agentAccuracyChart' and 'reviewsVsErrorsChart' were unused, so they are removed.
+        let teamPerformanceChart = null, errorTrendsChart = null, departmentPerformanceChart = null;
+        let analyticsChart = null, errorTypesPieChart = null; 
+        // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
         let isScheduleEditMode = false;
+        let analyticsTabInitialized = false;
 
         // [AI-FIX] Pagination state
         let assignedOrdersCurrentPage = 1;
@@ -1081,7 +1087,7 @@
                     loadFinalizedDecisions()
                 ]);
 
-                initRealtimeSubscriptions(); // <--- أضف هذا السطر هنا
+                initRealtimeSubscriptions(); 
                  updateSeniorDashboardCharts();
                 
                 showToast('Senior Dashboard loaded successfully', 'success');
@@ -1108,118 +1114,91 @@
      // =========================================================================
 // START: LOGIC FIX / بداية الإصلاح المنطقي
 // =========================================================================
-async function generateSeniorReport() {
-    const generateBtn = document.getElementById('generate-report-btn');
+async function updateAnalyticsCharts() {
     const period = document.getElementById('report-period').value;
-    const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    const reportTypeText = document.getElementById('report-type').options[document.getElementById('report-type').selectedIndex].text;
-
-    generateBtn.disabled = true;
-    generateBtn.textContent = 'Generating...';
-    showToast(`Generating ${reportTypeText}...`, 'info');
-
-    const analyticsContainer = document.getElementById('analyticsChartContainer');
-    const errorPieContainer = document.getElementById('errorTypesPieChartContainer');
-
-    // 1. Hide both containers first to ensure a clean slate
-    analyticsContainer.style.display = 'none';
-    errorPieContainer.style.display = 'none';
+    showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        if (reportType === 'performance') {
-            const performanceData = await getTeamPerformance();
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            if (analyticsChart) analyticsChart.destroy();
-            
-            analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: performanceData.map(d => d.agent_name),
-                    datasets: [{
-                        label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                        borderRadius: 4
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent (${periodText})` } },
-                    scales: { 
-                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
-                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } 
-                    }
+        const [performanceData, errorData, departmentData] = await Promise.all([
+            getTeamPerformance(),
+            getErrorTypesSummary(period),
+            getDepartmentPerformance()
+        ]);
+
+        // --- 1. Team Accuracy Chart ---
+        const perfCtx = document.getElementById('analyticsChart').getContext('2d');
+        if (analyticsChart) analyticsChart.destroy();
+        analyticsChart = new Chart(perfCtx, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name),
+                datasets: [{
+                    label: 'Accuracy',
+                    data: performanceData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { 
+                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.1)' } }, 
+                    x: { ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { display: false } } 
                 }
-            });
-            // 2. Show the correct container after the chart is ready
-            analyticsContainer.style.display = 'block';
+            }
+        });
 
-        } else if (reportType === 'errors') {
-            const errorData = await getErrorTypesSummary(period);
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
-            if (errorTypesPieChart) errorTypesPieChart.destroy();
-            
-            const labels = errorData.length > 0 ? errorData.map(d => d.modified_reason) : ['No Error Data Found'];
-            const data = errorData.length > 0 ? errorData.map(d => d.error_count) : [1];
-
-            errorTypesPieChart = new Chart(ctx, {
-                type: 'pie',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'],
-                        borderColor: 'var(--card-bg)',
-                        borderWidth: 3
-                    }]
-                },
-                options: { 
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})` },
-                        legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
-                    }
+        // --- 2. Error Types Chart ---
+        const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(errorCtx, {
+            type: 'pie',
+            data: {
+                labels: errorData.length > 0 ? errorData.map(d => d.modified_reason) : ['No Error Data'],
+                datasets: [{
+                    data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
+                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997', '#fd7e14', '#e83e8c'],
+                    borderColor: 'var(--card-bg)',
+                    borderWidth: 3
+                }]
+            },
+            options: { 
+                responsive: true, maintainAspectRatio: false,
+                plugins: { 
+                    legend: { position: 'bottom', labels: { color: 'var(--text-color)', font: {size: 14} } }
                 }
-            });
-            // 2. Show the correct container
-            errorPieContainer.style.display = 'block';
+            }
+        });
 
-        } else if (reportType === 'department') {
-            const departmentData = await getDepartmentPerformance();
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
-            if (analyticsChart) analyticsChart.destroy();
-
-            analyticsChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: departmentData.map(d => d.department_name),
-                    datasets: [{
-                        label: 'Department Accuracy',
-                        data: departmentData.map(d => d.accuracy),
-                        backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                        borderRadius: 4
-                    }]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Performance by Department` } },
-                    scales: {
-                        y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } },
-                        x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } }
-                    }
+        // --- 3. Department Performance Chart ---
+        const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
+        if (departmentPerformanceChart) departmentPerformanceChart.destroy();
+        departmentPerformanceChart = new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                labels: departmentData.map(d => d.department_name),
+                datasets: [{
+                    label: 'Accuracy',
+                    data: departmentData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 80, max: 100, ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { color: 'rgba(255,255,255,0.1)' } },
+                    x: { ticks: { color: 'var(--text-color)', font: { size: 12 } }, grid: { display: false } }
                 }
-            });
-            // 2. Show the correct container
-            analyticsContainer.style.display = 'block';
-        }
+            }
+        });
+
     } catch (error) {
-        console.error("Failed to generate senior report:", error);
-        showToast("Error generating report. Check console for details.", "error");
-    } finally {
-        // 3. Re-enable the button
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Generate Report';
+        console.error("Failed to generate analytics charts:", error);
+        showToast("Error loading reports. Check console.", "error");
     }
 }
 // =========================================================================
@@ -2154,20 +2133,20 @@ async function openEscalationDetailsModal(escalationId) {
             reader.readAsText(file);
         }
 
-        // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
+        // Charts
         function initCharts() {
             // Set global defaults for all charts to ensure consistency and readability
             Chart.defaults.font.family = "'Poppins', sans-serif";
             Chart.defaults.color = 'var(--text-muted-color)';
-            Chart.defaults.plugins.legend.labels.color = 'var(--text-color)';
+            Chart.defaults.plugins.title.display = true;
             Chart.defaults.plugins.title.color = 'var(--text-color)';
-            Chart.defaults.plugins.title.font = { size: 16 };
+            Chart.defaults.plugins.title.font = { size: 18, weight: '600' };
 
             // Initialize the dashboard charts only
             const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
                 if(teamPerformanceChart) teamPerformanceChart.destroy();
-                teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
+                teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, title: { display: false } }, scales: { y: { min: 90, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
             }
             
             const trendsCtx = document.getElementById('errorTrendsChart')?.getContext('2d');
@@ -2175,30 +2154,11 @@ async function openEscalationDetailsModal(escalationId) {
                 if(errorTrendsChart) errorTrendsChart.destroy();
                 errorTrendsChart = new Chart(trendsCtx, { 
                     type: 'line', 
-                    data: { 
-                        labels: [],
-                        datasets: [{ 
-                            label: 'Error Rate %', 
-                            data: [],
-                            borderColor: 'rgba(0, 191, 255, 1)', 
-                            backgroundColor: 'rgba(0, 191, 255, 0.1)', 
-                            fill: true, 
-                            tension: 0.4 
-                        }] 
-                    }, 
-                    options: { 
-                        responsive: true, 
-                        maintainAspectRatio: false, 
-                        scales: { 
-                            y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, 
-                            x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } 
-                        } 
-                    } 
+                    data: { labels: [], datasets: [{ label: 'Error Rate %', data: [], borderColor: 'rgba(0, 191, 255, 1)', backgroundColor: 'rgba(0, 191, 255, 0.1)', fill: true, tension: 0.4 }] }, 
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { title: { display: false } }, scales: { y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } } } } 
                 });
             }
-            // DO NOT initialize analytics charts here to keep the tab clean on load
         }
-        // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
 
         // [AI-FIX] New function for filtering assigned orders
         function applyAssignedOrdersFilters() {
@@ -2228,8 +2188,14 @@ async function openEscalationDetailsModal(escalationId) {
                 const tabLink = document.querySelector(`a[data-tab="${lastTab}"]`);
                 if(tabLink) {
                     tabLink.parentElement.classList.add('active');
-                    document.getElementById(lastTab)?.classList.add('active');
+                    const activeTabContent = document.getElementById(lastTab);
+                    if(activeTabContent) activeTabContent.classList.add('active');
                     document.getElementById('page-title').textContent = tabLink.textContent.trim().replace(/[\u{1F600}-\u{1F64F}\u{1F300}-\u{1F5FF}\u{1F680}-\u{1F6FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, '').trim();
+                    
+                    if (lastTab === 'reports-analytics' && !analyticsTabInitialized) {
+                        updateAnalyticsCharts();
+                        analyticsTabInitialized = true;
+                    }
                 }
             }
         }
@@ -2261,7 +2227,7 @@ async function openEscalationDetailsModal(escalationId) {
                     e.preventDefault();
                     if(tab.id === 'logout-btn') return;
                     const tabId = tab.dataset.tab;
-                    localStorage.setItem('seniorActiveTab', tabId); // [AI-FIX] Save tab on click
+                    localStorage.setItem('seniorActiveTab', tabId); 
                     applyStoredTab();
                 });
             });
@@ -2424,8 +2390,10 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 try { showToast('Logging out...', 'info'); await supabase.auth.signOut(); localStorage.removeItem('seniorActiveTab'); setTimeout(() => window.location.href = 'login.html', 500); } catch (error) { showToast(`Logout failed: ${error.message}`, 'error'); }
                 hideModal('logout-confirm-modal');
             });
-            document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
-            document.getElementById('report-type').addEventListener('change', generateSeniorReport);
+            
+            // ================== START: SCRIPT FIX / بداية إصلاح السكريبت ==================
+            document.getElementById('report-period').addEventListener('change', updateAnalyticsCharts);
+            // =================== END: SCRIPT FIX / نهاية إصلاح السكريبت ===================
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
