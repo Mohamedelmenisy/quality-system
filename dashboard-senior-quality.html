@@ -1111,60 +1111,68 @@ async function generateSeniorReport() {
     const period = document.getElementById('report-period').value;
     const reportType = document.getElementById('report-type').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Generating ${reportType} report...`, 'info');
+    showToast(`Generating ${reportType} for ${periodText}...`, 'info');
 
-    // Hide both charts initially
-    document.getElementById('analyticsChart').style.display = 'none';
-    document.getElementById('errorTypesPieChart').style.display = 'none';
+    // Hide both canvases to clear the view before drawing
+    const analyticsCanvas = document.getElementById('analyticsChart');
+    const errorPieCanvas = document.getElementById('errorTypesPieChart');
+    analyticsCanvas.style.display = 'none';
+    errorPieCanvas.style.display = 'none';
 
     try {
         if (reportType === 'performance') {
-            document.getElementById('analyticsChart').style.display = 'block';
-            const performanceData = await getTeamPerformance();
-            const ctx = document.getElementById('analyticsChart').getContext('2d');
+            // --- THIS IS FOR 'Performance Report' ---
+            analyticsCanvas.style.display = 'block'; // Show the correct canvas
+            
+            const accuracyData = await getAgentAccuracySummary(period);
+            const ctx = analyticsCanvas.getContext('2d');
             
             if (analyticsChart) analyticsChart.destroy();
             analyticsChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: performanceData.map(d => d.agent_name),
+                    labels: accuracyData.length > 0 ? accuracyData.map(d => d.agent_name) : ['No Data'],
                     datasets: [{
-                        label: 'Team Accuracy',
-                        data: performanceData.map(d => d.accuracy),
+                        label: 'Agent Accuracy',
+                        data: accuracyData.length > 0 ? accuracyData.map(d => d.accuracy) : [0],
                         backgroundColor: 'rgba(0, 191, 255, 0.7)'
                     }]
                 },
-                options: { 
+                options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { title: { display: true, text: `Team Accuracy by Agent`, color: 'var(--text-color)' } },
-                    scales: { y: { min: 80, max: 100, ticks: { color: 'var(--text-color)' }, grid: { color: 'rgba(255,255,255,0.1)' } }, x: { ticks: { color: 'var(--text-color)' }, grid: { display: false } } }
+                    plugins: { title: { display: true, text: 'Quality Agent Accuracy', color: 'var(--text-color)' } },
+                    scales: { y: { min: 80, max: 100 } }
                 }
             });
 
         } else if (reportType === 'errors') {
-            document.getElementById('errorTypesPieChart').style.display = 'block';
+            // --- THIS IS FOR 'Error Analysis' ---
+            errorPieCanvas.style.display = 'block'; // Show the correct canvas
+
             const errorData = await getErrorTypesSummary(period);
-            const ctx = document.getElementById('errorTypesPieChart').getContext('2d');
+            const ctx = errorPieCanvas.getContext('2d');
 
             if (errorTypesPieChart) errorTypesPieChart.destroy();
             errorTypesPieChart = new Chart(ctx, {
                 type: 'pie',
                 data: {
-                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Error Data'],
+                    labels: errorData.length > 0 ? errorData.map(d => d.issue_type) : ['No Errors'],
                     datasets: [{
                         data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
                         backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997']
                     }]
                 },
-                options: { 
+                options: {
                     responsive: true, maintainAspectRatio: false,
-                    plugins: { 
-                        title: { display: true, text: `Error Types Analysis (${periodText})`, color: 'var(--text-color)' },
+                    plugins: {
+                        title: { display: true, text: 'Error Types Analysis', color: 'var(--text-color)' },
                         legend: { position: 'bottom', labels: { color: 'var(--text-color)' } }
                     }
                 }
             });
         }
+        // You can add 'else if (reportType === 'department')' here later
+
     } catch (error) {
         console.error("Failed to generate senior report:", error);
         showToast("Error generating report.", "error");
