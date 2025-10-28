@@ -172,7 +172,16 @@
         .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
-        .chart-container { min-height: 400px; padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); }
+        /* ================== START: CSS FIX / بداية إصلاح CSS ================== */
+        .chart-container {
+            position: relative;
+            height: 450px; /* Set a fixed height */
+            padding: 1.5rem;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-base);
+        }
+        /* =================== END: CSS FIX / نهاية إصلاح CSS =================== */
         .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
         .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); }
         .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-transform: capitalize; }
@@ -1111,7 +1120,8 @@
 // =========================================================================
 async function updateAnalyticsCharts() {
     const period = document.getElementById('report-period').value;
-    showToast(`Loading reports for the selected period...`, 'info');
+    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
+    showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
         // Fetch all data concurrently
@@ -2135,7 +2145,7 @@ async function openEscalationDetailsModal(escalationId) {
             // Set global defaults for all charts to ensure consistency and readability
             Chart.defaults.font.family = "'Poppins', sans-serif";
             Chart.defaults.color = 'var(--text-color)';
-            Chart.defaults.plugins.title.display = false; // Disable global titles, we use HTML h3 tags now
+            Chart.defaults.plugins.title.display = false;
             Chart.defaults.plugins.legend.labels.color = 'var(--text-color)';
             
             // Initialize the dashboard charts only
