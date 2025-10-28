@@ -71,7 +71,10 @@
         window.resolveEscalation = resolveEscalation;
         window.getTeamPerformance = getTeamPerformance;
         window.getAgentAccuracySummary = getAgentAccuracySummary;
-window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
+        window.getReviewsVsOverturnedSummary = getReviewsVsOverturnedSummary;
+        // ================== START: THE FIX / بداية الإصلاح ==================
+        window.getErrorTypesSummary = getErrorTypesSummary;
+        // =================== END: THE FIX / نهاية الإصلاح ===================
         window.reassignOrder = reassignOrder; // <--- أضف هذا السطر
      window.subscribeToAssignmentUpdates = subscribeToAssignmentUpdates; // <--- أضف هذا السطر
     </script>
@@ -2433,9 +2436,7 @@ document.getElementById('add-schedule-member-btn')?.addEventListener('click', ()
                 hideModal('logout-confirm-modal');
             });
             document.getElementById('generate-report-btn')?.addEventListener('click', generateSeniorReport);
-            // ================== START: ADDED LINE / بداية السطر المضاف ==================
             document.getElementById('report-type').addEventListener('change', generateSeniorReport);
-            // =================== END: ADDED LINE / نهاية السطر المضاف ===================
         });
 
 window.handleFinalDecision = async (errorId, decision) => {
@@ -2510,7 +2511,5 @@ window.handleFinalDecision = async (errorId, decision) => {
     }
 };
     </script>
-     <script src="./api-client.js"></script>
-    <script src="./dashboard-senior-quality.js"></script>
 </body>
 </html>
