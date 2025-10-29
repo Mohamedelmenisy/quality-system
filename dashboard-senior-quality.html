@@ -96,6 +96,10 @@
             --border-radius-base: 0.75rem;
             --green-bg: rgba(40, 167, 69, 0.1);
             --red-bg: rgba(220, 53, 69, 0.1);
+            --gradient-1: linear-gradient(135deg, #00bfff, #1e90ff);
+            --gradient-2: linear-gradient(135deg, #ffc107, #ff9800);
+            --gradient-3: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-4: linear-gradient(135deg, #dc3545, #f06292);
         }
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body { font-family: var(--font-body); background-color: var(--bg-color); color: var(--text-color); }
@@ -119,7 +123,7 @@
             text-decoration: none; color: var(--text-muted-color); font-weight: 500; border-radius: 0.5rem;
             transition: all 0.2s ease; cursor: pointer;
         }
-        .sidebar-nav a:hover, .sidebar-nav li.active a { background-color: var(--primary-color); color: black; }
+        .sidebar-nav a:hover, .sidebar-nav li.active a { background-color: var(--primary-color); color: black; transform: translateX(5px); box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3); }
         .sidebar-footer { padding: 1.5rem; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
         .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
@@ -129,28 +133,30 @@
         .main-wrapper { flex-grow: 1; margin-left: 260px; display: flex; flex-direction: column; }
         .topbar {
             background-color: var(--sidebar-bg); border-bottom: 1px solid var(--border-color);
-            padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center;
+            padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center;
             position: sticky; top: 0; z-index: 999;
         }
         .header-left { flex-grow: 1; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
-        .page-title { font-size: 1.5rem; color: var(--text-color); font-weight: 700; }
-        .main-content { padding: 2rem; flex-grow: 1; }
+        .page-title { font-size: 2.25rem; color: var(--text-color); font-weight: 800; }
+        .main-content { padding: 2.5rem; flex-grow: 1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 1.5rem; border: 1px solid var(--border-color); margin-bottom: 1.5rem; }
-        .widget h3 { font-size: 1.25rem; margin-bottom: 1rem; color: var(--text-color); font-weight: 700; }
+        .widget { background-color: var(--card-bg); border-radius: var(--border-radius-base); padding: 2rem; border: 1px solid var(--border-color); margin-bottom: 2rem; transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .widget:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); border-color: var(--primary-color); }
+        .widget h3 { font-size: 1.5rem; margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); color: var(--text-color); font-weight: 700; }
         .results-table-container { overflow-x: auto; position: relative; }
         .results-table-container::after { content: ''; position: absolute; top: 0; right: 0; bottom: 0; width: 30px; background: linear-gradient(to right, transparent, var(--card-bg)); pointer-events: none; opacity: 0; transition: opacity 0.2s; }
         .results-table-container.is-scrollable::after { opacity: 1; }
         .results-table { width: 100%; border-collapse: collapse; }
         .results-table thead th { padding: 1rem 1.5rem; text-align: left; background-color: #2c2c2c; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted-color); font-weight: 600; white-space: nowrap; }
-        .results-table tbody td { padding: 1rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap;}
+        .results-table tbody td { padding: 1.25rem 1.5rem; text-align: left; border-bottom: 1px solid var(--border-color); white-space: nowrap;}
         .results-table .wrap-text { white-space: normal; max-width: 200px; }
         .results-table tbody tr:last-child td { border-bottom: none; }
         .results-table tbody tr:hover { background-color: #2c2c2c; }
         .btn { padding: 0.6rem 1.2rem; border-radius: 0.5rem; border: none; cursor: pointer; font-weight: 600; transition: all 0.2s ease; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem;}
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .btn:disabled { background-color: #555 !important; color: #888 !important; cursor: not-allowed; }
         .btn-primary { background-color: var(--primary-color); color: black; }
         .btn-success { background-color: var(--success-color); color: white; }
@@ -173,19 +179,19 @@
         .feedback-form textarea { width: 100%; background: #2c2c2c; border: 1px solid var(--border-color); color: white; padding: 10px; border-radius: 8px; font-family: inherit; margin-top: 10px; }
         .feedback-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px; }
         .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem;}
-        /* ================== START: CSS FIX / بداية إصلاح CSS ================== */
-        .chart-container {
-            position: relative;
-            height: 450px; /* Set a fixed height */
-            padding: 1.5rem;
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: var(--border-radius-base);
-        }
-        /* =================== END: CSS FIX / نهاية إصلاح CSS =================== */
-        .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
-        .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 8px 12px; border: 1px solid var(--border-color); }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;}
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 1.5rem; border-left: 4px solid transparent; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-left-color: var(--primary-color); }
+        .kpi-icon-wrapper { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
+        .kpi-icon-wrapper svg { width: 28px; height: 28px; }
+        .kpi-content { flex-grow: 1; }
+        .kpi-card .kpi-title { font-size: 1rem; color: var(--text-muted-color); margin-bottom: 0.5rem; }
+        .kpi-card .kpi-value { font-size: 2.25rem; font-weight: 700; color: var(--text-color); line-height: 1.1; }
+        .chart-container { position: relative; height: 450px; padding: 1.5rem; background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); }
+        .filter-panel { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1.5rem; background-color: #222; border-radius: var(--border-radius-base); margin-bottom: 1.5rem; }
+        .filter-group { position: relative; }
+        .filter-group .filter-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted-color); pointer-events: none; }
+        .filter-panel select, .filter-panel input { background: #2c2c2c; border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); }
         .status-badge { padding: 0.3em 0.7em; border-radius: 20px; font-size: 0.75rem; font-weight: 600; color: white; text-transform: capitalize; }
         .status-pending { background-color: var(--info-color); }
         .status-completed { background-color: var(--success-color); }
@@ -204,9 +210,9 @@
         .form-group.toggle { display: flex; align-items: center; justify-content: space-between; }
         .page-actions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1.5rem; }
         .placeholder-content { padding: 3rem; text-align:center; color: var(--text-muted-color); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
-        #welcome-message { margin-bottom: 2rem; }
-        #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
-        #welcome-message p { color: var(--text-muted-color); }
+        #welcome-message { margin-bottom: 2.5rem; }
+        #welcome-message h2 { font-size: 2.25rem; font-weight: 700; }
+        #welcome-message p { color: var(--text-muted-color); font-size: 1.1rem; }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted-color); font-size: 24px; cursor: pointer; padding: 5px; }
         .notification-dropdown { display: none; position: absolute; right: 0; top: 120%; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); width: 320px; box-shadow: 0 8px 16px rgba(0,0,0,0.3); z-index: 1010; }
@@ -215,8 +221,9 @@
         .notification-list { list-style: none; padding: 0; max-height: 300px; overflow-y: auto; }
         .notification-item { padding: 1rem; border-bottom: 1px solid var(--border-color); font-size: 14px; }
         .settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted-color); }
-        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state { text-align: center; padding: 60px 40px; color: var(--text-muted-color); opacity: 0.7; }
+        .empty-state .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; line-height: 1; }
+        .empty-state h4 { font-size: 1.25rem; color: var(--text-color); font-weight: 600; margin-bottom: 0.5rem; }
         .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
         .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 15px 20px; margin-bottom: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; gap: 10px; max-width: 350px; animation: slideInRight 0.3s ease; }
         .toast.success { border-left: 4px solid var(--success-color); }
@@ -232,47 +239,12 @@
         .toast-title { font-weight: 600; margin-bottom: 5px; }
         .toast-message { font-size: 14px; color: var(--text-muted-color); }
         .toast-close { background: none; border: none; color: var(--text-muted-color); cursor: pointer; font-size: 18px; }
-        @keyframes slideInRight {
-            from { transform: translateX(100%); opacity: 0; }
-            to { transform: translateX(0); opacity: 1; }
-        }
-        .form-group.toggle {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        .form-group.toggle input[type="checkbox"] {
-            -webkit-appearance: none;
-            appearance: none;
-            width: 44px;
-            height: 24px;
-            background-color: #333;
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.3s ease-in-out;
-            flex-shrink: 0;
-        }
-        .form-group.toggle input[type="checkbox"]::before {
-            content: '';
-            position: absolute;
-            width: 18px;
-            height: 18px;
-            background-color: #8b949e;
-            border-radius: 50%;
-            top: 2px;
-            left: 2px;
-            transition: all 0.3s ease-in-out;
-        }
-        .form-group.toggle input[type="checkbox"]:checked {
-            background-color: var(--primary-color);
-            border-color: var(--primary-color);
-        }
-        .form-group.toggle input[type="checkbox"]:checked::before {
-            transform: translateX(20px);
-            background-color: black;
-        }
+        @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        .form-group.toggle { display: flex; align-items: center; justify-content: space-between; }
+        .form-group.toggle input[type="checkbox"] { -webkit-appearance: none; appearance: none; width: 44px; height: 24px; background-color: #333; border: 1px solid var(--border-color); border-radius: 12px; position: relative; cursor: pointer; transition: background-color 0.3s ease-in-out; flex-shrink: 0; }
+        .form-group.toggle input[type="checkbox"]::before { content: ''; position: absolute; width: 18px; height: 18px; background-color: #8b949e; border-radius: 50%; top: 2px; left: 2px; transition: all 0.3s ease-in-out; }
+        .form-group.toggle input[type="checkbox"]:checked { background-color: var(--primary-color); border-color: var(--primary-color); }
+        .form-group.toggle input[type="checkbox"]:checked::before { transform: translateX(20px); background-color: black; }
         .team-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
         .team-member-card { background-color: #222; border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; text-align: center; }
         .team-member-avatar-initials { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700; color: black; }
@@ -393,10 +365,34 @@
                         <p>Here is a summary of your activity and team oversight.</p>
                     </div>
                     <div class="kpi-grid">
-                         <div class="widget"><h3>Reviews Today</h3><p style="font-size: 2rem; font-weight: 700;" id="reviews-today">0</p></div>
-                         <div class="widget"><h3>Pending Escalations</h3><p style="font-size: 2rem; font-weight: 700; color: var(--warning-color);" id="pending-escalations">0</p></div>
-                         <div class="widget"><h3>Avg. Resolution Time</h3><p style="font-size: 2rem; font-weight: 700;" id="avg-resolution-time">0 mins</p></div>
-                         <div class="widget"><h3>Team Accuracy</h3><p style="font-size: 2rem; font-weight: 700; color: var(--success-color);" id="team-accuracy">0%</p></div>
+                         <div class="kpi-card">
+                             <div class="kpi-icon-wrapper" style="background: var(--gradient-1);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+                             <div class="kpi-content">
+                                 <div class="kpi-title">Reviews Today</div>
+                                 <div class="kpi-value" id="reviews-today">0</div>
+                             </div>
+                         </div>
+                         <div class="kpi-card">
+                             <div class="kpi-icon-wrapper" style="background: var(--gradient-2);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3H6a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3V6a3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3h12a3 3 0 0 0 3-3 3 3 0 0 0-3-3z"/></svg></div>
+                             <div class="kpi-content">
+                                 <div class="kpi-title">Pending Escalations</div>
+                                 <div class="kpi-value" id="pending-escalations">0</div>
+                             </div>
+                         </div>
+                         <div class="kpi-card">
+                             <div class="kpi-icon-wrapper" style="background: var(--gradient-4);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg></div>
+                             <div class="kpi-content">
+                                 <div class="kpi-title">Avg. Resolution Time</div>
+                                 <div class="kpi-value" id="avg-resolution-time">0m</div>
+                             </div>
+                         </div>
+                         <div class="kpi-card">
+                            <div class="kpi-icon-wrapper" style="background: var(--gradient-3);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg></div>
+                             <div class="kpi-content">
+                                 <div class="kpi-title">Team Accuracy</div>
+                                 <div class="kpi-value" id="team-accuracy">0%</div>
+                             </div>
+                         </div>
                     </div>
                      <div class="widget">
                          <h3>Team Performance Analysis</h3>
@@ -430,7 +426,6 @@
         </tr>
     </thead>
                                 <tbody id="appealed-errors-table-body">
-                                    <tr><td colspan="8" class="empty-state">No appealed errors to review.</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -462,7 +457,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="direct-escalations-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading direct escalations...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -486,7 +480,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="finalized-errors-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading decision history...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -520,7 +513,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="unassigned-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading unassigned orders...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -552,7 +544,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="assigned-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading assigned orders...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -1316,7 +1307,7 @@ async function loadPerformanceMetrics() {
         function renderEscalationsTable(errorsToRender = pendingErrors) {
             const tableBody = document.getElementById('escalation-table-body');
             if (errorsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">✅ No pending responses.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">✅</div><h4>All Clear!</h4><p>No pending responses to review.</p></td></tr>`;
                 return;
             }
             tableBody.innerHTML = errorsToRender.map(error => `
@@ -1334,7 +1325,7 @@ async function loadPerformanceMetrics() {
         function renderAppealedErrorsTable() {
             const tableBody = document.getElementById('appealed-errors-table-body');
             if (appealedErrors.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No appealed errors to review.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📥</div><h4>Inbox Clear</h4><p>No appealed errors are waiting for your decision.</p></td></tr>`;
                 return;
             }
             tableBody.innerHTML = appealedErrors.map(error => `
@@ -1356,7 +1347,7 @@ async function loadPerformanceMetrics() {
 function renderFinalizedDecisionsTable() {
     const tableBody = document.getElementById('finalized-errors-table-body');
     if (!finalizedDecisions || finalizedDecisions.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No decision history found.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🗄️</div><h4>No History</h4><p>You haven't made any final decisions yet.</p></td></tr>`;
         return;
     }
     tableBody.innerHTML = finalizedDecisions.map(decision => {
@@ -1447,7 +1438,7 @@ function openFinalDecisionDetailsModal(errorId) {
         function renderUnassignedOrdersTable(ordersToRender = unassignedOrders) {
             const tableBody = document.getElementById('unassigned-table-body');
             if (ordersToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📋 No unassigned orders.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📋</div><h4>Queue is Empty</h4><p>No orders are currently waiting for assignment.</p></td></tr>`;
                 return;
             }
             tableBody.innerHTML = ordersToRender.map(order => `
@@ -1470,7 +1461,7 @@ function renderAssignedOrdersTable() {
     const paginationControls = document.getElementById('assigned-orders-pagination');
 
     if (filteredAssignedOrders.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📊 No assigned orders found for the current filters.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📊</div><h4>No Results</h4><p>No assigned orders found for the current filters.</p></td></tr>`;
         paginationControls.style.display = 'none';
         return;
     }
@@ -1561,7 +1552,7 @@ function renderAssignedOrdersTable() {
     });
 
     if (escalationsToRender.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No direct escalations found.</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">📂</div><h4>No Direct Escalations</h4><p>Your direct escalation queue is empty.</p></td></tr>`;
         return;
     }
 
@@ -1647,7 +1638,7 @@ function openEscalationDetailsModal(escalationId) {
             const teamRoles = ['quality', 'helper', 'senior', 'manager', 'admin'];
             const teamToDisplay = teamMembers.filter(m => teamRoles.includes(m.role));
             if (teamToDisplay.length === 0) {
-                grid.innerHTML = `<div class="empty-state">👥 No team members found.</div>`; return;
+                grid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><div class="empty-state-icon">👥</div><h4>No Team Members</h4><p>Add team members to see them here.</p></div>`; return;
             }
             grid.innerHTML = teamToDisplay.map(member => `
                 <div class="team-member-card">
@@ -1661,7 +1652,7 @@ function openEscalationDetailsModal(escalationId) {
         function renderCompanyEmployeesTable(employeesToRender = companyEmployees) {
             const tableBody = document.getElementById('company-employees-table-body');
             if(employeesToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">🏢 No company employees found.</td></tr>`; return;
+                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🏢</div><h4>No Employees Found</h4><p>Add company employees to see them listed here.</p></td></tr>`; return;
             }
             tableBody.innerHTML = employeesToRender.map(emp => `
                 <tr>
@@ -1679,7 +1670,7 @@ function openEscalationDetailsModal(escalationId) {
             const tableBody = document.getElementById('schedule-table-body');
             const qualityTeam = teamMembers.filter(m => m.role === 'quality' || m.role === 'senior' || m.role === 'helper');
             if (qualityTeam.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">📅 No team members found to schedule.</td></tr>`; return;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to the team to manage their schedule.</p></td></tr>`; return;
             }
             const scheduleMap = {};
             teamSchedule.forEach(s => {
