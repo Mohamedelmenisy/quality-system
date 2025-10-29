@@ -1124,22 +1124,24 @@
         // START: LOGIC FIX / بداية الإصلاح المنطقي
         // =========================================================================
 async function updateAnalyticsCharts() {
+    // This part correctly gets the selected time period
     const period = document.getElementById('report-period').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // *** THE FIX IS HERE: We are no longer passing 'period' to getDepartmentPerformance ***
+        // *** STEP 1: Call ALL THREE functions WITH the 'period' filter ***
+        // This was the critical part we fixed.
         const [performanceData, errorData, departmentData] = await Promise.all([
             getAgentAccuracySummary(period),
             getErrorReasonsSummary(period),
-            getDepartmentPerformance() // <<< تم إزالة (period) من هنا
+            getDepartmentPerformance(period)
         ]);
 
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-        // --- 1. Team Accuracy Chart (This chart now filters correctly) ---
+        // --- Chart 1: Team Accuracy by Agent (This is correct and filters now) ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(perfCtx, {
@@ -1156,7 +1158,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
-        // --- 2. Error Types Chart (This chart now filters correctly) ---
+        // --- Chart 2: Error Types Analysis (This is correct and filters now) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
@@ -1173,15 +1175,17 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
         });
 
-        // --- 3. Department Performance Chart (This chart will now show OVERALL data) ---
+        // --- Chart 3: Performance by Department (This now has all fixes combined) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
             type: 'bar',
             data: {
+                // It uses the correct field name 'department'
                 labels: departmentData.map(d => d.department || 'Unknown Dept.'),
                 datasets: [{
                     label: 'Accuracy',
+                    // It uses the safe calculation from 'error_rate'
                     data: departmentData.map(d => {
                         const rate = parseFloat(d.error_rate);
                         return !isNaN(rate) ? 100 - rate : 0;
@@ -1190,7 +1194,15 @@ async function updateAnalyticsCharts() {
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    // It has the correct Y-axis that starts from 0
+                    y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } },
+                    x: { ticks: { color: chartTextColor } }
+                }
+            }
         });
 
     } catch (error) {
