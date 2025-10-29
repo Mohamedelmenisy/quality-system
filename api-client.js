@@ -527,55 +527,15 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
   }
 }
 
-export async function getDepartmentPerformanceSummary(period) {
+export async function getDepartmentPerformance(period = 'last_30_days') { // Default value
   try {
-    // 1. Build the date filter based on the period string
-    let fromDate = new Date();
-    const today = new Date();
-    if (period === 'last_7_days') fromDate.setDate(today.getDate() - 7);
-    else if (period === 'last_90_days') fromDate.setDate(today.getDate() - 90);
-    else if (period === 'last_365_days') fromDate.setDate(today.getDate() - 365);
-    else fromDate.setDate(today.getDate() - 30); // Default to last 30 days
-
-    // 2. Fetch all quality reviews within that date range
-    const { data: reviews, error } = await supabase
-      .from('quality_reviews')
-      .select('department, action_correctness')
-      .gte('reviewed_at', fromDate.toISOString());
-
+    // We assume the RPC function can be modified to accept a period filter
+    // This is the correct way to implement it.
+    const { data, error } = await supabase.rpc('get_department_performance', { period_filter: period });
     if (error) throw error;
-
-    if (!reviews || reviews.length === 0) {
-      return []; // Return empty if no data
-    }
-
-    // 3. Manually calculate the performance for each department in JavaScript
-    const departmentStats = {};
-
-    reviews.forEach(review => {
-      const dept = review.department || 'Unknown Dept.';
-      if (!departmentStats[dept]) {
-        departmentStats[dept] = { total: 0, errors: 0 };
-      }
-      departmentStats[dept].total++;
-      if (review.action_correctness === 'error') {
-        departmentStats[dept].errors++;
-      }
-    });
-
-    // 4. Format the result to match what the chart expects
-    const result = Object.entries(departmentStats).map(([dept, stats]) => {
-      const error_rate = (stats.total > 0) ? (stats.errors / stats.total) * 100 : 0;
-      return {
-        department: dept,
-        error_rate: error_rate.toFixed(2) // Return error_rate as expected
-      };
-    });
-
-    return result;
-
+    return data;
   } catch (error) {
-    console.error('Error in custom getDepartmentPerformanceSummary:', error);
+    console.error('Error fetching department performance:', error);
     return [];
   }
 }
