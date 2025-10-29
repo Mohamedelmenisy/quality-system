@@ -1124,92 +1124,214 @@
         // START: LOGIC FIX / بداية الإصلاح المنطقي
         // =========================================================================
 async function updateAnalyticsCharts() {
-    // This part correctly gets the selected time period
+    // الحصول على الفترة الزمنية المحددة
     const period = document.getElementById('report-period').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-    showToast(`Loading reports for ${periodText}...`, 'info');
+    showToast(`جاري تحميل التقارير للفترة ${periodText}...`, 'info');
 
     try {
-        // *** STEP 1: Call ALL THREE functions WITH the 'period' filter ***
-        // This was the critical part we fixed.
+        // الخطوة 1: استدعاء الدوال الثلاث مع عامل التصفية 'period'
         const [performanceData, errorData, departmentData] = await Promise.all([
             getAgentAccuracySummary(period),
             getErrorReasonsSummary(period),
             getDepartmentPerformance(period)
         ]);
 
+        console.log('بيانات الأداء:', performanceData);
+        console.log('بيانات الأخطاء:', errorData);
+        console.log('بيانات الأقسام:', departmentData);
+
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-        // --- Chart 1: Team Accuracy by Agent (This is correct and filters now) ---
+        // --- الرسم البياني 1: دقة الفريق حسب الوكيل ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
-        if (analyticsChart) analyticsChart.destroy();
-        analyticsChart = new Chart(perfCtx, {
+        if (window.analyticsChart) window.analyticsChart.destroy();
+        
+        // التأكد من وجود بيانات صالحة
+        const perfLabels = performanceData && performanceData.length > 0 
+            ? performanceData.map(d => d.agent_name || 'وكيل غير معروف')
+            : ['لا توجد بيانات'];
+            
+        const perfData = performanceData && performanceData.length > 0
+            ? performanceData.map(d => parseFloat(d.accuracy) || 0)
+            : [0];
+
+        window.analyticsChart = new Chart(perfCtx, {
             type: 'bar',
             data: {
-                labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
+                labels: perfLabels,
                 datasets: [{
-                    label: 'Accuracy',
-                    data: performanceData.map(d => d.accuracy),
+                    label: 'الدقة %',
+                    data: perfData,
                     backgroundColor: 'rgba(0, 191, 255, 0.7)',
                     borderRadius: 4,
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `الدقة: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                }, 
+                scales: { 
+                    y: { 
+                        min: 0, 
+                        max: 100, 
+                        ticks: { color: chartTextColor },
+                        title: {
+                            display: true,
+                            text: 'الدقة %',
+                            color: chartTextColor
+                        }
+                    }, 
+                    x: { 
+                        ticks: { color: chartTextColor },
+                        title: {
+                            display: true,
+                            text: 'الوكلاء',
+                            color: chartTextColor
+                        }
+                    } 
+                } 
+            }
         });
 
-        // --- Chart 2: Error Types Analysis (This is correct and filters now) ---
+        // --- الرسم البياني 2: تحليل أنواع الأخطاء ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
-        if (errorTypesPieChart) errorTypesPieChart.destroy();
-        errorTypesPieChart = new Chart(errorCtx, {
+        if (window.errorTypesPieChart) window.errorTypesPieChart.destroy();
+        
+        const errorLabels = errorData && errorData.length > 0 
+            ? errorData.map(d => d.reason || 'سبب غير معروف')
+            : ['لا توجد بيانات أخطاء'];
+            
+        const errorCounts = errorData && errorData.length > 0
+            ? errorData.map(d => parseInt(d.count) || 0)
+            : [1];
+
+        window.errorTypesPieChart = new Chart(errorCtx, {
             type: 'pie',
             data: {
-                labels: errorData.length > 0 ? errorData.map(d => d.reason) : ['No Error Data'],
+                labels: errorLabels,
                 datasets: [{
-                    data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
+                    data: errorCounts,
                     backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
                     borderColor: document.body.classList.contains('light-mode') ? '#fff' : '#1a1a1a',
                     borderWidth: 3
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
+            options: { 
+                responsive: true, 
+                maintainAspectRatio: false, 
+                plugins: { 
+                    legend: { 
+                        position: 'bottom', 
+                        labels: { color: chartTextColor },
+                        rtl: true
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const label = context.label || '';
+                                const value = context.parsed || 0;
+                                const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                const percentage = Math.round((value / total) * 100);
+                                return `${label}: ${value} (${percentage}%)`;
+                            }
+                        }
+                    }
+                } 
+            }
         });
 
-        // --- Chart 3: Performance by Department (This now has all fixes combined) ---
+        // --- الرسم البياني 3: الأداء حسب القسم ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
-        if (departmentPerformanceChart) departmentPerformanceChart.destroy();
-        departmentPerformanceChart = new Chart(deptCtx, {
+        if (window.departmentPerformanceChart) window.departmentPerformanceChart.destroy();
+        
+        const deptLabels = departmentData && departmentData.length > 0
+            ? departmentData.map(d => d.department || 'قسم غير معروف')
+            : ['لا توجد بيانات'];
+            
+        const deptData = departmentData && departmentData.length > 0
+            ? departmentData.map(d => {
+                const rate = parseFloat(d.error_rate);
+                return !isNaN(rate) ? Math.max(0, 100 - rate) : 0;
+            })
+            : [0];
+
+        window.departmentPerformanceChart = new Chart(deptCtx, {
             type: 'bar',
             data: {
-                // It uses the correct field name 'department'
-                labels: departmentData.map(d => d.department || 'Unknown Dept.'),
+                labels: deptLabels,
                 datasets: [{
-                    label: 'Accuracy',
-                    // It uses the safe calculation from 'error_rate'
-                    data: departmentData.map(d => {
-                        const rate = parseFloat(d.error_rate);
-                        return !isNaN(rate) ? 100 - rate : 0;
-                    }),
+                    label: 'الدقة %',
+                    data: deptData,
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4
                 }]
             },
             options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                responsive: true, 
+                maintainAspectRatio: false,
+                plugins: { 
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return `الدقة: ${context.parsed.y}%`;
+                            }
+                        }
+                    }
+                },
                 scales: {
-                    // It has the correct Y-axis that starts from 0
-                    y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } },
-                    x: { ticks: { color: chartTextColor } }
+                    y: { 
+                        beginAtZero: true, 
+                        max: 100, 
+                        ticks: { color: chartTextColor },
+                        title: {
+                            display: true,
+                            text: 'الدقة %',
+                            color: chartTextColor
+                        }
+                    },
+                    x: { 
+                        ticks: { color: chartTextColor },
+                        title: {
+                            display: true,
+                            text: 'الأقسام',
+                            color: chartTextColor
+                        }
+                    }
                 }
             }
         });
 
+        showToast(`تم تحميل التقارير بنجاح للفترة ${periodText}`, 'success');
+
     } catch (error) {
-        console.error("Failed to generate analytics charts:", error);
-        showToast("Error loading reports. Check console.", "error");
+        console.error("فشل في توليد الرسوم البيانية التحليلية:", error);
+        showToast("خطأ في تحميل التقارير. يرجى التحقق من وحدة التحكم.", "error");
     }
 }
+
+// دالة مساعدة للتأكد من تحميل الصفحة أولاً
+document.addEventListener('DOMContentLoaded', function() {
+    // تهيئة المتغيرات العالمية إذا لم تكن موجودة
+    if (!window.analyticsChart) window.analyticsChart = null;
+    if (!window.errorTypesPieChart) window.errorTypesPieChart = null;
+    if (!window.departmentPerformanceChart) window.departmentPerformanceChart = null;
+    
+    // تحميل البيانات الأولية
+    updateAnalyticsCharts();
+});
+
         // =========================================================================
         // END: LOGIC FIX / نهاية الإصلاح المنطقي
         // =========================================================================
