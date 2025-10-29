@@ -1115,12 +1115,9 @@
             }
         }
 
-     // =========================================================================
-// START: LOGIC FIX / بداية الإصلاح المنطقي
+   // =========================================================================
+// START: FINAL ROBUST LOGIC / بداية الإصلاح المنطقي المحصّن والنهائي
 // =========================================================================
-// =========================================================================
-        // START: LOGIC FIX / بداية الإصلاح المنطقي
-        // =========================================================================
 async function updateAnalyticsCharts() {
     const period = document.getElementById('report-period').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
@@ -1183,7 +1180,7 @@ async function updateAnalyticsCharts() {
             }
         });
 
-        // --- 3. Department Performance Chart (THIS IS THE CORRECTED PART) ---
+        // --- 3. Department Performance Chart (THIS IS THE ROBUST VERSION) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
@@ -1192,8 +1189,15 @@ async function updateAnalyticsCharts() {
                 labels: departmentData.map(d => d.department || 'Unknown Dept.'),
                 datasets: [{
                     label: 'Accuracy',
-                    // *** THE FIX IS HERE: Calculate accuracy from error_rate ***
-                    data: departmentData.map(d => d.error_rate ? (100 - parseFloat(d.error_rate)) : 0),
+                    // *** THE FIX IS HERE: This code is safer and handles non-numeric values ***
+                    data: departmentData.map(d => {
+                        const rate = parseFloat(d.error_rate); // Attempt to convert to a number
+                        // Check if the result is a valid number (not NaN)
+                        if (!isNaN(rate)) {
+                            return 100 - rate; // If valid, calculate accuracy
+                        }
+                        return 0; // If not valid (e.g., null or text), default to 0
+                    }),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4,
                     maxBarThickness: 75
@@ -1214,10 +1218,12 @@ async function updateAnalyticsCharts() {
         showToast("Error loading reports. Check console.", "error");
     }
 }
-        // =========================================================================
-        // END: LOGIC FIX / نهاية الإصلاح المنطقي
-        // =========================================================================
+        
+// =========================================================================
+// END: FINAL ROBUST LOGIC / نهاية الإصلاح المنطقي المحصّن والنهائي
+// =========================================================================```
 
+أنا متأكد من أن هذا الإصلاح سيعالج المشكلة المتبقية. أعتذر مرة أخرى عن الإحباط الذي سببته لك.
         // dashboard-senior-quality.html
 async function updateSeniorDashboardCharts() {
     try {
