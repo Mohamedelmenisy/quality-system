@@ -527,19 +527,13 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
   }
 }
 
-export async function getDepartmentPerformance(period = 'last_30_days') {
+export async function getDepartmentPerformance(period = 'last_30_days') { // Default value
   try {
+    // We assume the RPC function can be modified to accept a period filter
+    // This is the correct way to implement it.
     const { data, error } = await supabase.rpc('get_department_performance', { period_filter: period });
-    if (error) {
-      console.error('Department performance RPC error:', error);
-      // إرجاع بيانات افتراضية للاختبار
-      return [
-        { department: 'Sales', error_rate: 5.2 },
-        { department: 'Support', error_rate: 3.8 },
-        { department: 'Operations', error_rate: 7.1 }
-      ];
-    }
-    return data || [];
+    if (error) throw error;
+    return data;
   } catch (error) {
     console.error('Error fetching department performance:', error);
     return [];
@@ -1402,11 +1396,12 @@ export async function getErrorTrends() {
 }
 
 // ** NEW FUNCTIONS FOR REPORTS & ANALYTICS PAGE **
-export async function getAgentAccuracySummary(period = 'last_30_days') {
+export async function getAgentAccuracySummary(period) {
   try {
+    // The RPC function already accepts a period_filter, we just need to ensure we call it
     const { data, error } = await supabase.rpc('get_agent_accuracy_summary', { period_filter: period });
     if (error) throw error;
-    return data || [];
+    return data;
   } catch (error) {
     console.error('Error fetching agent accuracy summary:', error);
     return [];
@@ -1465,16 +1460,6 @@ export async function importOrdersFromCSV(csvData) {
   }
 }
 
-export async function getErrorReasonsSummary(period = 'last_30_days') {
-  try {
-    const { data, error } = await supabase.rpc('get_error_reasons_summary', { period_filter: period });
-    if (error) throw error;
-    return data || [];
-  } catch (error) {
-    console.error('Error fetching error reasons summary:', error);
-    return [];
-  }
-}
 // ==================== KPI & SETTINGS FUNCTIONS ====================
 
 export async function getKpiTargets() {
