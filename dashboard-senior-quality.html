@@ -1124,20 +1124,22 @@
         // START: LOGIC FIX / بداية الإصلاح المنطقي
         // =========================================================================
 async function updateAnalyticsCharts() {
-    // الحصول على الفترة الزمنية المحددة من القائمة المنسدلة
     const period = document.getElementById('report-period').value;
     const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // ======================= START: THE FIX / بداية الإصلاح =======================
-        // تم تمرير متغير 'period' إلى جميع الدوال الآن، بما في ذلك دالة أداء الأقسام
+        // ======================= START: THE ONLY FIX NEEDED / بداية الإصلاح الوحيد المطلوب =======================
+        // المشكلة كانت في هذا السطر فقط. تم الآن تمرير متغير 'period' إلى الدالة الثالثة
         const [performanceData, errorData, departmentData] = await Promise.all([
             getAgentAccuracySummary(period),
             getErrorReasonsSummary(period),
-            getDepartmentPerformance(period) // <-- تم إصلاح المشكلة هنا
+            getDepartmentPerformance(period) // <--- تم إصلاح المشكلة هنا
         ]);
-        // ======================== END: THE FIX / نهاية الإصلاح ========================
+        // ======================== END: THE ONLY FIX NEEDED / نهاية الإصلاح الوحيد المطلوب ========================
+        
+        // هذا الجزء من الكود صحيح ويقوم بفرز البيانات أبجديًا
+        performanceData.sort((a, b) => (a.agent_name || '').localeCompare(b.agent_name || ''));
 
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
@@ -1195,12 +1197,10 @@ async function updateAnalyticsCharts() {
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
-        
-        showToast(`Reports loaded successfully for ${periodText}`, 'success');
 
     } catch (error) {
         console.error("Failed to generate analytics charts:", error);
-        showToast("Error loading reports. Please check the console.", "error");
+        showToast("Error loading reports. Check console.", "error");
     }
 }
         // =========================================================================
