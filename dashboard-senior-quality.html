@@ -2144,7 +2144,7 @@ async function openEscalationDetailsModal(escalationId) {
             Chart.defaults.plugins.legend.labels.color = 'var(--text-color)';
             
             // Initialize the dashboard charts only
-            const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');ض
+            const teamCtx = document.getElementById('teamPerformanceChart')?.getContext('2d');
             if (teamCtx) {
                 if(teamPerformanceChart) teamPerformanceChart.destroy();
                 teamPerformanceChart = new Chart(teamCtx, { type: 'bar', data: { labels: [], datasets: [{ label: 'Accuracy Rate (%)', data: [], backgroundColor: 'rgba(0, 191, 255, 0.6)', borderWidth: 0, borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, grid: { color: 'rgba(255,255,255,0.1)' }, ticks: { color: '#e6edf3' } }, x: { grid: { display: false }, ticks: { color: '#e6edf3' } } } } });
