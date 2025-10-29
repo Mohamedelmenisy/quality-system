@@ -1129,112 +1129,106 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-      const period = document.getElementById('report-period').value;
+        // --- الخطوة 1: استدعاء جميع الدوال مع تمرير الفترة الزمنية الصحيحة ---
+        const [performanceData, errorData, departmentData] = await Promise.all([
+            getAgentAccuracySummary(period),
+            getErrorReasonsSummary(period),
+            getDepartmentPerformance(period)
+        ]);
 
-// تأكد من أننا نمرر الفترة الزمنية لجميع الدوال التي تحتاجها
-const [performanceData, errorData, departmentData] = await Promise.all([
-    getAgentAccuracySummary(period),      // <-- تأكد من وجود (period)
-    getErrorReasonsSummary(period),     // <-- هذه تعمل بالفعل بشكل صحيح
-    getDepartmentPerformance(period)    // <-- تأكد من وجود (period)
-]);
-        
-        // *** THE SECOND FIX: Sort the performance data alphabetically by name ***
-        performanceData.sort((a, b) => (a.agent_name || '').localeCompare(b.agent_name || ''));
+        // لسهولة التحقق في المستقبل، نعرض البيانات في الـ Console
+        console.log('Data for Team Accuracy:', performanceData);
+        console.log('Data for Error Types:', errorData);
+        console.log('Data for Department Performance:', departmentData);
 
-        const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
-        const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+        const chartTextColor = '#e6edf3'; // لون النصوص في الوضع الداكن
 
-        // --- Chart 1: Team Accuracy by Agent (Now sorted correctly) ---
-       // --- الرسم البياني 1: دقة الفريق حسب الوكيل (النسخة النهائية والمصححة) ---
-const perfCtx = document.getElementById('analyticsChart').getContext('2d');
-if (window.analyticsChart) {
-    window.analyticsChart.destroy();
-}
-
-const perfLabels = performanceData && performanceData.length > 0
-    ? performanceData.map(d => d.agent_name || 'وكيل غير معروف')
-    : ['لا توجد بيانات'];
-
-const perfData = performanceData && performanceData.length > 0
-    ? performanceData.map(d => parseFloat(d.accuracy) || 0)
-    : [0];
-
-window.analyticsChart = new Chart(perfCtx, {
-    type: 'bar',
-    data: {
-        labels: perfLabels,
-        datasets: [{
-            label: 'الدقة %',
-            data: perfData,
-            backgroundColor: 'rgba(0, 191, 255, 0.7)',
-            borderRadius: 4,
-        }]
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: { display: false }
-        },
-        scales: {
-            y: {
-                beginAtZero: true, // <-- هذا هو السطر الحاسم الذي يحل المشكلة
-                max: 100,
-                ticks: { color: chartTextColor },
-                title: {
-                    display: true,
-                    text: 'الدقة %',
-                    color: chartTextColor
-                }
+        // --- الرسم البياني 1: دقة الفريق (النسخة النهائية والمصححة) ---
+        const perfCtx = document.getElementById('analyticsChart').getContext('2d');
+        if (window.analyticsChart) { // التحقق أولاً إذا كان التشارت موجودًا
+            window.analyticsChart.destroy();
+        }
+        window.analyticsChart = new Chart(perfCtx, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name || 'Unknown'),
+                datasets: [{
+                    label: 'Accuracy %',
+                    data: performanceData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                    borderRadius: 4,
+                }]
             },
-            x: {
-                ticks: { color: chartTextColor },
-                title: {
-                    display: true,
-                    text: 'الوكلاء',
-                    color: chartTextColor
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true, // الحل النهائي: يبدأ المحور من الصفر
+                        max: 100,
+                        ticks: { color: chartTextColor }
+                    },
+                    x: { ticks: { color: chartTextColor } }
                 }
             }
-        }
-    }
-});
+        });
 
-        // --- Chart 2: Error Types Analysis (Correct and filters by period) ---
+        // --- الرسم البياني 2: أنواع الأخطاء (مع نفس الإصلاح) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
-        if (errorTypesPieChart) errorTypesPieChart.destroy();
-        errorTypesPieChart = new Chart(errorCtx, {
+        if (window.errorTypesPieChart) { // التحقق أولاً
+            window.errorTypesPieChart.destroy();
+        }
+        window.errorTypesPieChart = new Chart(errorCtx, {
             type: 'pie',
             data: {
-                labels: errorData.length > 0 ? errorData.map(d => d.reason) : ['No Error Data'],
+                labels: errorData.map(d => d.reason),
                 datasets: [{
-                    data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
-                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
-                    borderColor: document.body.classList.contains('light-mode') ? '#fff' : '#1a1a1a',
+                    data: errorData.map(d => d.count),
+                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1'],
+                    borderColor: '#1a1a1a',
                     borderWidth: 3
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } }
+            }
         });
 
-        // --- Chart 3: Performance by Department (Correct and shows overall data) ---
+        // --- الرسم البياني 3: أداء الأقسام (مع نفس الإصلاح) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
-        if (departmentPerformanceChart) departmentPerformanceChart.destroy();
-        departmentPerformanceChart = new Chart(deptCtx, {
+        if (window.departmentPerformanceChart) { // التحقق أولاً
+            window.departmentPerformanceChart.destroy();
+        }
+        window.departmentPerformanceChart = new Chart(deptCtx, {
             type: 'bar',
             data: {
-                labels: departmentData.map(d => d.department || 'Unknown Dept.'),
+                labels: departmentData.map(d => d.department),
                 datasets: [{
                     label: 'Accuracy',
-                    data: departmentData.map(d => {
-                        const rate = parseFloat(d.error_rate);
-                        return !isNaN(rate) ? 100 - rate : 0;
-                    }),
+                    data: departmentData.map(d => 100 - d.error_rate),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: { color: chartTextColor }
+                    },
+                    x: { ticks: { color: chartTextColor } }
+                }
+            }
         });
+
+        showToast(`Reports loaded successfully for ${periodText}`, 'success');
 
     } catch (error) {
         console.error("Failed to generate analytics charts:", error);
