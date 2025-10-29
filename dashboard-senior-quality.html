@@ -1136,7 +1136,7 @@ async function updateAnalyticsCharts() {
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-        // --- 1. Team Accuracy Chart (This part is working correctly) ---
+        // --- 1. Team Accuracy Chart (Working) ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(perfCtx, {
@@ -1161,7 +1161,7 @@ async function updateAnalyticsCharts() {
             }
         });
 
-        // --- 2. Error Types Chart (This part is showing the available data) ---
+        // --- 2. Error Types Chart (Working with available data) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
@@ -1189,11 +1189,11 @@ async function updateAnalyticsCharts() {
         departmentPerformanceChart = new Chart(deptCtx, {
             type: 'bar',
             data: {
-                // *** THE FIX IS HERE: Using 'department' instead of 'department_name' ***
                 labels: departmentData.map(d => d.department || 'Unknown Dept.'),
                 datasets: [{
                     label: 'Accuracy',
-                    data: departmentData.map(d => d.accuracy),
+                    // *** THE FIX IS HERE: Calculate accuracy from error_rate ***
+                    data: departmentData.map(d => d.error_rate ? (100 - parseFloat(d.error_rate)) : 0),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4,
                     maxBarThickness: 75
