@@ -141,6 +141,8 @@ export async function getAgentMonthlyPerformance(agentId) {
 }
 
 
+
+
 export async function getErrorReasonsSummary(period) {
   try {
     // 1. Get the list of standard, active error reasons
@@ -527,17 +529,143 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
   }
 }
 
-export async function getDepartmentPerformance(period = 'last_30_days') { // Default value
+export async function getDepartmentPerformanceSummary(period) {
   try {
-    // We assume the RPC function can be modified to accept a period filter
-    // This is the correct way to implement it.
-    const { data, error } = await supabase.rpc('get_department_performance', { period_filter: period });
+    // 1. Build the date filter based on the period string
+    let fromDate = new Date();
+    const today = new Date();
+    if (period === 'last_7_days') fromDate.setDate(today.getDate() - 7);
+    else if (period === 'last_90_days') fromDate.setDate(today.getDate() - 90);
+    else if (period === 'last_365_days') fromDate.setDate(today.getDate() - 365);
+    else fromDate.setDate(today.getDate() - 30); // Default to last 30 days
+
+    // 2. Fetch all quality reviews within that date range
+    const { data: reviews, error } = await supabase
+      .from('quality_reviews')
+      .select('department, action_correctness')
+      .gte('reviewed_at', fromDate.toISOString());
+
     if (error) throw error;
-    return data;
+
+    if (!reviews || reviews.length === 0) {
+      return []; // Return empty if no data
+    }
+
+    // 3. Manually calculate the performance for each department in JavaScript
+    const departmentStats = {};
+
+    reviews.forEach(review => {
+      const dept = review.department || 'Unknown Dept.';
+      if (!departmentStats[dept]) {
+        departmentStats[dept] = { total: 0, errors: 0 };
+      }
+      departmentStats[dept].total++;
+      if (review.action_correctness === 'error') {
+        departmentStats[dept].errors++;
+      }
+    });
+
+    // 4. Format the result to match what the chart expects
+    const result = Object.entries(departmentStats).map(([dept, stats]) => {
+      const error_rate = (stats.total > 0) ? (stats.errors / stats.total) * 100 : 0;
+      return {
+        department: dept,
+        error_rate: error_rate.toFixed(2) // Return error_rate as expected
+      };
+    });
+
+    return result;
+
   } catch (error) {
-    console.error('Error fetching department performance:', error);
+    console.error('Error in custom getDepartmentPerformanceSummary:', error);
     return [];
   }
+}
+الخطوة الثانية: التعديل النهائي لملف dashboard-senior-quality.html
+استيراد الدالة الجديدة: في أعلى قسم <script>، أضف getDepartmentPerformanceSummary إلى قائمة import.
+code
+JavaScript
+import {
+    // ... all other functions
+    getDepartmentPerformanceSummary, // <<< أضف هذا السطر
+    reassignOrder,
+    // ...
+} from './api-client.js';
+تعريف الدالة الجديدة: في قائمة window.، أضف السطر التالي:
+code
+JavaScript
+window.getDepartmentPerformanceSummary = getDepartmentPerformanceSummary; // <<< أضف هذا السطر
+استبدال updateAnalyticsCharts بهذا الكود النهائي: هذا الكود سيستدعي الدالة الجديدة المخصصة لك.
+code
+JavaScript
+// =========================================================================
+// START: THE ABSOLUTE FINAL FIX / الإصلاح النهائي المطلق
+// =========================================================================
+async function updateAnalyticsCharts() {
+    const period = document.getElementById('report-period').value;
+    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
+    showToast(`Loading reports for ${periodText}...`, 'info');
+
+    try {
+        // *** THE FINAL FIX: We call our new custom function ***
+        const [performanceData, errorData, departmentData] = await Promise.all([
+            getAgentAccuracySummary(period),
+            getErrorReasonsSummary(period),
+            getDepartmentPerformanceSummary(period) // <<< استدعاء الدالّة الجديدة والمضمونة
+        ]);
+        
+        performanceData.sort((a, b) => (a.agent_name || '').localeCompare(b.agent_name || ''));
+
+        const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
+
+        // --- Chart 1: Team Accuracy (Working) ---
+        const perfCtx = document.getElementById('analyticsChart').getContext('2d');
+        if (analyticsChart) analyticsChart.destroy();
+        analyticsChart = new Chart(perfCtx, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
+                datasets: [{ label: 'Accuracy', data: performanceData.map(d => d.accuracy), backgroundColor: 'rgba(0, 191, 255, 0.7)', borderRadius: 4 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+        });
+
+        // --- Chart 2: Error Types (Working) ---
+        const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(errorCtx, {
+            type: 'pie',
+            data: {
+                labels: errorData.length > 0 ? errorData.map(d => d.reason) : ['No Error Data'],
+                datasets: [{ data: errorData.length > 0 ? errorData.map(d => d.count) : [1], backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'], borderColor: '#1a1a1a', borderWidth: 3 }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
+        });
+
+        // --- Chart 3: Department Performance (Now using the new custom function) ---
+        const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
+        if (departmentPerformanceChart) departmentPerformanceChart.destroy();
+        departmentPerformanceChart = new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                labels: departmentData.map(d => d.department || 'Unknown Dept.'),
+                datasets: [{
+                    label: 'Accuracy',
+                    data: departmentData.map(d => {
+                        const rate = parseFloat(d.error_rate);
+                        return !isNaN(rate) ? 100 - rate : 0;
+                    }),
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+        });
+
+    } catch (error) {
+        console.error("Failed to generate analytics charts:", error);
+        showToast("Error loading reports. Check console.", "error");
+    }
 }
 
 // أضف هذه الوظيفة الجديدة لتحديث الحالة
