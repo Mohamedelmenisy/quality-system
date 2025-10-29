@@ -1136,11 +1136,14 @@ async function loadPerformanceMetrics() {
         if (teamMembers.length === 0) {
             await loadTeamMembers(); // ننتظر تحميل بيانات الفريق
         }
-        const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
         
         // This was missing from the original code but needed for the UI
-        document.getElementById('active-agents').textContent = activeAgentsCount;
-        
+        const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
+        const activeAgentsEl = document.getElementById('active-agents');
+        if (activeAgentsEl) {
+            activeAgentsEl.textContent = activeAgentsCount;
+        }
+
         // تحديث باقي الكروت بالبيانات الصحيحة
         document.getElementById('total-orders').textContent = metrics.totalOrders;
         
@@ -1154,10 +1157,17 @@ async function loadPerformanceMetrics() {
         }
 
         // Remove "Loading..." text from change indicators
-        document.getElementById('orders-change').textContent = `For today`;
-        document.getElementById('error-rate-change').textContent = `Overall team error rate`;
-        document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
-        document.getElementById('agents-change').textContent = `Currently active in team`;
+        const ordersChangeEl = document.getElementById('orders-change');
+        if (ordersChangeEl) ordersChangeEl.textContent = `For today`;
+        
+        const errorRateChangeEl = document.getElementById('error-rate-change');
+        if (errorRateChangeEl) errorRateChangeEl.textContent = `Overall team error rate`;
+
+        const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
+        if (qualityAccuracyChangeEl) qualityAccuracyChangeEl.textContent = `Based on senior reviews`;
+        
+        const agentsChangeEl = document.getElementById('agents-change');
+        if (agentsChangeEl) agentsChangeEl.textContent = `Currently active in team`;
 
 
     } catch (error) {
