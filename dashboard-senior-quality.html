@@ -1129,12 +1129,14 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // *** THE FIRST FIX: Call getDepartmentPerformance WITHOUT the period filter ***
-        const [performanceData, errorData, departmentData] = await Promise.all([
-            getAgentAccuracySummary(period),
-            getErrorReasonsSummary(period),
-            getDepartmentPerformance() // <<< لا نمرر أي فلتر هنا، لتعمل الدالة بشكل صحيح
-        ]);
+      const period = document.getElementById('report-period').value;
+
+// تأكد من أننا نمرر الفترة الزمنية لجميع الدوال التي تحتاجها
+const [performanceData, errorData, departmentData] = await Promise.all([
+    getAgentAccuracySummary(period),      // <-- تأكد من وجود (period)
+    getErrorReasonsSummary(period),     // <-- هذه تعمل بالفعل بشكل صحيح
+    getDepartmentPerformance(period)    // <-- تأكد من وجود (period)
+]);
         
         // *** THE SECOND FIX: Sort the performance data alphabetically by name ***
         performanceData.sort((a, b) => (a.agent_name || '').localeCompare(b.agent_name || ''));
