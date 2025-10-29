@@ -74,6 +74,10 @@
             --purple: #6f42c1;
             --purple-bg: rgba(111, 66, 193, 0.1);
             --border-radius-base: 0.75rem;
+            --gradient-1: linear-gradient(135deg, #00bfff, #1e90ff);
+            --gradient-2: linear-gradient(135deg, #ffc107, #ff9800);
+            --gradient-3: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-4: linear-gradient(135deg, #dc3545, #f06292);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
@@ -87,40 +91,45 @@
         .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
         .sidebar-nav { list-style:none; padding:0; margin:0; }
         .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; white-space: nowrap; }
-        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; transform: translateX(5px); box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3); }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
         .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
         .user-status { font-size: 0.75rem; color: var(--green); margin-top: 2px; }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; }
+        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 40px; flex: 1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 1rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem; }
         .header-left { flex-grow: 1; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
-        .page-title { font-size: 24px; font-weight: 700; }
-        #welcome-message { margin-bottom: 2rem; }
-        #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
-        #welcome-message p { color: var(--text-muted); }
-        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; margin-bottom: 30px; }
-        .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: box-shadow 0.3s ease; }
-        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
-        .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
-        .stat-card .stat-header { display: flex; justify-content: space-between; align-items: center; color: var(--text-muted); }
-        .stat-card .stat-value { font-size: 32px; font-weight: 600; margin: 10px 0; }
-        .stat-card .stat-change { display: flex; align-items: center; font-weight: 500; font-size: 14px; gap: 5px; }
+        .page-title { font-size: 2.25rem; font-weight: 800; }
+        #welcome-message { margin-bottom: 2.5rem; }
+        #welcome-message h2 { font-size: 2.25rem; font-weight: 700; }
+        #welcome-message p { color: var(--text-muted); font-size: 1.1rem; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .card { background: var(--card-bg); padding: 30px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); border-color: var(--primary-color); }
+        .card h3 { font-size: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
+        .stat-card { display: flex; align-items: center; gap: 1.5rem; padding: 1.5rem; }
+        .stat-icon-wrapper { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
+        .stat-icon-wrapper svg { width: 28px; height: 28px; }
+        .stat-content { flex-grow: 1; }
+        .stat-card .stat-title { font-size: 1rem; color: var(--text-muted); margin-bottom: 0.5rem; }
+        .stat-card .stat-value { font-size: 2.25rem; font-weight: 700; line-height: 1.1; }
+        .stat-card .stat-change { display: flex; align-items: center; font-weight: 500; font-size: 14px; gap: 5px; margin-top: 0.5rem; }
         .stat-card .stat-change.positive { color: var(--green); }
         .stat-card .stat-change.negative { color: var(--red); }
-        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-bottom: 30px; align-items: start; }
+        .charts-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; margin-bottom: 2rem; align-items: start; }
         .chart-container { position: relative; height: 350px; }
-        .filter-container { display: flex; justify-content: center; width: 100%; margin-bottom: 30px; }
-        .filter-panel { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; background: var(--card-bg); padding: 20px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 100%; max-width: 1200px; }
-        .filter-group { flex: 1; min-width: 200px; }
+        .filter-container { display: flex; justify-content: center; width: 100%; margin-bottom: 2.5rem; }
+        .filter-panel { display: flex; gap: 1.5rem; flex-wrap: wrap; align-items: flex-end; background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); width: 100%; max-width: 1200px; }
+        .filter-group { flex: 1; min-width: 200px; position: relative; }
+        .filter-group .filter-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
         .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
-        .filter-group input, .filter-group select { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
+        .filter-group input, .filter-group select { width: 100%; padding: 10px 12px 10px 40px; border: 1px solid var(--border-color); border-radius: 8px; font-family: 'Poppins'; background: #2c2c2c; color:#fff; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: all 0.2s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .btn-primary { background: var(--primary-color); color: #000; }
@@ -129,8 +138,9 @@
         .btn-secondary:hover { background-color: #218838; }
         .btn-danger { background-color: var(--red); color: white; }
         .btn-danger:hover { background-color: #c82333; }
-        .placeholder-content { padding: 40px; text-align: center; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
-        .placeholder-content h3 { color: var(--text-color); margin-bottom: 10px; }
+        .placeholder-content { padding: 60px 40px; text-align:center; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: var(--border-radius-base); }
+        .placeholder-content .placeholder-icon { font-size: 4rem; margin-bottom: 1rem; line-height: 1; }
+        .placeholder-content h3 { font-size: 1.5rem; color: var(--text-color); margin-bottom: 10px; }
         .search-input-container { position: relative; }
         .search-input-container .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
         .search-input-container input { background: #2c2c2c; border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 38px; width: 100%; }
@@ -176,8 +186,9 @@
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
-        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state { text-align: center; padding: 60px 40px; color: var(--text-muted); opacity: 0.7; }
+        .empty-state .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; line-height: 1; }
+        .empty-state h4 { font-size: 1.25rem; color: var(--text-color); font-weight: 600; margin-bottom: 0.5rem; }
         .user-management-table { width: 100%; border-collapse: collapse; }
         .user-management-table th, .user-management-table td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
         .user-management-table th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: rgba(0,0,0,0.1); }
@@ -238,31 +249,11 @@
         .action-btn.primary { border-color: var(--green); color: var(--green); }
         .action-btn.primary:hover { background-color: var(--green); color: white; }
         
-        /* New styles for department performance snapshot */
-        .kpi-card {
-            background: var(--card-bg);
-            padding: 1.5rem;
-            border-radius: var(--border-radius-base);
-            border: 1px solid var(--border-color);
-        }
-        .kpi-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-        .kpi-value {
-            font-size: 1.8rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-        .widget {
-            margin-top: 2rem;
-        }
-        .widget h3 {
-            margin-bottom: 1rem;
-        }
+        .kpi-card { background: var(--card-bg); padding: 1.5rem; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); }
+        .kpi-title { font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .kpi-value { font-size: 1.8rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .widget { margin-top: 2rem; }
+        .widget h3 { margin-bottom: 1rem; }
 
         @media (max-width: 1024px) {
             .sidebar { width: 220px; }
@@ -369,49 +360,51 @@
 
                     <section class="stats-grid">
                         <div class="card stat-card">
-                            <div class="stat-header"><span>Total Orders Reviewed</span><span style="color:var(--primary-color)">👁️</span></div>
-                            <div class="stat-value" id="total-orders">0</div>
-                            <div class="stat-change positive" id="orders-change"><span>⬆️</span> Loading...</div>
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-1);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Total Orders Reviewed</div>
+                                <div class="stat-value" id="total-orders">0</div>
+                            </div>
+                        </div>
+                         <div class="card stat-card">
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-4);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Overall Error Rate</div>
+                                <div class="stat-value" id="error-rate">0%</div>
+                            </div>
                         </div>
                         <div class="card stat-card">
-                            <div class="stat-header"><span>Overall Error Rate</span><span style="color:var(--red)">❌</span></div>
-                            <div class="stat-value" id="error-rate">0%</div>
-                            <div class="stat-change positive" id="error-rate-change" style="color: var(--green)"><span>⬇️</span> Loading...</div>
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-3);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Top Performing Team</div>
+                                <div class="stat-value" id="top-team">Loading...</div>
+                            </div>
                         </div>
                         <div class="card stat-card">
-                            <div class="stat-header"><span>Top Performing Team</span><span style="color:var(--green)">⭐</span></div>
-                            <div class="stat-value" id="top-team">Loading...</div>
-                            <div class="stat-change positive" id="top-team-rate">Loading...</div>
-                        </div>
-                        <!-- 2. بطاقة KPI جديدة -->
-                        <div class="card stat-card">
-                            <div class="stat-header"><span>Quality Team Accuracy</span><span style="color:var(--yellow)">🎯</span></div>
-                            <div class="stat-value" id="quality-team-accuracy">100%</div>
-                            <div class="stat-change positive" id="quality-team-accuracy-change">Loading...</div>
-                        </div>
-                        <div class="card stat-card">
-                            <div class="stat-header"><span>Active Agents</span><span style="color:var(--purple)">👤</span></div>
-                            <div class="stat-value" id="active-agents">0</div>
-                            <div class="stat-change positive" id="agents-change"><span>➕</span> Loading...</div>
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-2);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Quality Team Accuracy</div>
+                                <div class="stat-value" id="quality-team-accuracy">100%</div>
+                            </div>
                         </div>
                     </section>
 
                     <div class="filter-container">
                         <section class="filter-panel">
                             <div class="filter-group">
-                                <label>Department</label>
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
                                 <select id="filter-department">
-                                    <option value="all">All</option>
+                                    <option value="all">All Departments</option>
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label>Employee</label>
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
                                 <select id="filter-employee">
-                                    <option value="all">All</option>
+                                    <option value="all">All Employees</option>
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label>Date Range</label>
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
                                 <input type="date" id="filter-date" style="color-scheme: dark;">
                             </div>
                             <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
@@ -437,7 +430,6 @@
                         </div>
                     </section>
                     
-                    <!-- New Department Performance Snapshot Section -->
                     <section class="widget">
                         <h3>Department Performance Snapshot</h3>
                         <div id="department-performance-snapshot" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: center;">
@@ -460,12 +452,10 @@
                     </section>
                 </div>
 
-                <!-- استبدال قسم Reports بالكامل -->
                 <div id="reports" class="tab-content">
                     <div class="card">
                         <h3>Advanced Reports & Analytics</h3>
                         <div class="filter-panel" style="margin-bottom: 2rem;">
-                            <!-- Filters remain the same -->
                             <div class="filter-group">
                                 <label>Report Type</label>
                                 <select id="report-type">
@@ -485,7 +475,6 @@
                             <button class="btn btn-secondary" id="export-analytics-csv-btn">Export CSV</button>
                         </div>
                         
-                        <!-- This part is new and replaces the placeholder -->
                         <section class="charts-grid">
                             <div class="card">
                                 <h3>Quality Agent Accuracy</h3>
@@ -508,14 +497,12 @@
                         <h3>Team Management</h3>
                         <div class="filter-panel">
                             <div class="filter-group">
-                                <label>Search Users</label>
                                 <div class="search-input-container">
                                     <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                                     <input type="search" placeholder="Search by name or email..." id="user-search">
                                 </div>
                             </div>
                             <div class="filter-group">
-                                <label>Role</label>
                                 <select id="filter-role">
                                     <option value="all">All Roles</option>
                                     <option value="agent">Agent</option>
@@ -525,7 +512,6 @@
                                 </select>
                             </div>
                             <div class="filter-group">
-                                <label>Status</label>
                                 <select id="filter-user-status">
                                     <option value="all">All Status</option>
                                     <option value="active">Active</option>
@@ -549,7 +535,6 @@
                                     </tr>
                                 </thead>
                                 <tbody id="users-table-body">
-                                    <tr><td colspan="7" class="empty-state">Loading users...</td></tr>
                                 </tbody>
                             </table>
                         </div>
@@ -565,17 +550,14 @@
         </div>
         <div class="form-group">
             <label for="profile-fullname">Full Name</label>
-            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
             <input type="text" id="profile-fullname" placeholder="Loading name...">
         </div>
         <div class="form-group">
             <label for="profile-email">Email Address</label>
-            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
             <input type="email" id="profile-email" placeholder="Loading email..." readonly style="background-color: var(--border-color); cursor: not-allowed;">
         </div>
         <div class="form-group">
             <label for="profile-phone">Phone Number</label>
-            <!-- تم التعديل هنا: استخدام placeholder بدلاً من value -->
             <input type="tel" id="profile-phone" placeholder="Enter your phone number...">
         </div>
         <div class="page-actions">
@@ -638,6 +620,7 @@
                 <div id="help" class="tab-content">
                     <div class="card">
                         <div class="placeholder-content">
+                            <div class="placeholder-icon">❓</div>
                             <h3>Help Center & Documentation</h3>
                             <p>Find answers to common questions or contact support for assistance.</p>
                             <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
@@ -645,7 +628,6 @@
                     </div>
                 </div>
                 
-                <!-- Team Scheduling Content -->
                 <div id="team-scheduling" class="tab-content">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -663,14 +645,12 @@
                             <table class="user-management-table" id="schedule-table">
                                 <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
                                 <tbody id="schedule-table-body">
-                                    <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Company Employees Content -->
                 <div id="company-employees" class="tab-content">
                     <div class="card">
                         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -681,14 +661,12 @@
                             <table class="user-management-table">
                                 <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
                                 <tbody id="company-employees-table-body">
-                                    <tr><td colspan="6" class="empty-state">Loading...</td></tr>
                                 </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
 
-                <!-- Departments Content -->
                 <div id="departments" class="tab-content">
                      <div class="card">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
@@ -703,7 +681,6 @@
     </div>
 </div>
 </div>
-                <!-- Payments Content -->
                 <div id="payments" class="tab-content">
                     <div class="card">
                         <h3>Available Payment Methods</h3>
@@ -722,7 +699,6 @@
                     </div>
                 </div>
 
-                <!-- استبدال قسم KPIs بالكامل -->
                 <div id="kpis" class="tab-content">
                     <div class="card">
                         <h3>Manage Team Key Performance Indicators (KPIs)</h3>
@@ -1161,9 +1137,10 @@ async function loadPerformanceMetrics() {
             await loadTeamMembers(); // ننتظر تحميل بيانات الفريق
         }
         const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
+        
+        // This was missing from the original code but needed for the UI
         document.getElementById('active-agents').textContent = activeAgentsCount;
-        document.getElementById('agents-change').textContent = `Currently active in team`;
-
+        
         // تحديث باقي الكروت بالبيانات الصحيحة
         document.getElementById('total-orders').textContent = metrics.totalOrders;
         
@@ -1176,9 +1153,12 @@ async function loadPerformanceMetrics() {
             qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
         }
 
+        // Remove "Loading..." text from change indicators
         document.getElementById('orders-change').textContent = `For today`;
         document.getElementById('error-rate-change').textContent = `Overall team error rate`;
         document.getElementById('quality-team-accuracy-change').textContent = `Based on senior reviews`;
+        document.getElementById('agents-change').textContent = `Currently active in team`;
+
 
     } catch (error) {
         console.error('Error loading manager performance metrics:', error);
@@ -1299,17 +1279,14 @@ async function generateAndDisplayReport() {
         // Update top team card based on department performance
         function updateTopTeamCard() {
             const topTeamCard = document.getElementById('top-team');
-            const topTeamRateCard = document.getElementById('top-team-rate');
 
             if (departmentPerformance && departmentPerformance.length > 0) {
                 // Sort departments by error_rate ascending (best is first)
                 const sortedPerformance = [...departmentPerformance].sort((a, b) => a.error_rate - b.error_rate);
                 const bestTeam = sortedPerformance[0];
                 topTeamCard.textContent = bestTeam.department;
-                topTeamRateCard.textContent = `${bestTeam.error_rate}% Error Rate`;
             } else {
                 topTeamCard.textContent = 'N/A';
-                topTeamRateCard.textContent = 'No data';
             }
         }
 
@@ -1396,7 +1373,7 @@ function initRealtimeSubscriptions() {
         function renderUsersTable(users) {
             const tableBody = document.getElementById('users-table-body');
             if (users.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state">No users found.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-icon">👥</div><h4>No Users Found</h4><p>No users match the current filters.</p></td></tr>`;
             } else {
                 tableBody.innerHTML = users.map(user => `
                     <tr>
@@ -1542,7 +1519,7 @@ function initRealtimeSubscriptions() {
             const tableBody = document.getElementById('company-employees-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = companyEmployees.length === 0
-                ? `<tr><td colspan="6" class="empty-state">No company employees found.</td></tr>`
+                ? `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🏢</div><h4>No Employees</h4><p>Company employee data could not be loaded.</p></td></tr>`
                 : companyEmployees.map(emp => `
                     <tr>
                         <td>${emp.employee_name}</td>
@@ -1570,7 +1547,7 @@ function initRealtimeSubscriptions() {
             const tableBody = document.getElementById('departments-table-body');
             if (!tableBody) return;
             tableBody.innerHTML = departments.length === 0
-                ? `<tr><td colspan="3" class="empty-state">No departments found.</td></tr>`
+                ? `<tr><td colspan="3" class="empty-state"><div class="empty-state-icon">🏛️</div><h4>No Departments</h4><p>No company departments have been configured.</p></td></tr>`
                 : departments.map(dept => `
                     <tr>
                         <td>${dept.department_name}</td>
@@ -1614,7 +1591,7 @@ function initRealtimeSubscriptions() {
             const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
             
             if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No team members found to schedule.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to manage their schedule.</p></td></tr>`;
                 return;
             }
 
