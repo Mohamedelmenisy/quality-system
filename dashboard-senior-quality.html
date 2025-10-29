@@ -40,6 +40,7 @@
     getReviewsVsOverturnedSummary,
              getErrorTypesSummary,
             reassignOrder,
+              getErrorReasonsSummary,
             subscribeToAssignmentUpdates // <--- أضف هذه
         } from './api-client.js';
 
@@ -1127,9 +1128,10 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
+        // *** THE FIX IS HERE: Calling the new getErrorReasonsSummary function ***
         const [performanceData, errorData, departmentData] = await Promise.all([
             getTeamPerformance(),
-            getErrorTypesSummary(period),
+            getErrorReasonsSummary(period), // <<< تم استدعاء الدالة الجديدة هنا
             getDepartmentPerformance()
         ]);
 
@@ -1147,43 +1149,31 @@ async function updateAnalyticsCharts() {
                     label: 'Accuracy',
                     data: performanceData.map(d => d.accuracy),
                     backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                    borderRadius: 4,
-                    maxBarThickness: 75
+                    borderRadius: 4
                 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
-                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
-        // --- 2. Error Types Chart (Working with available data) ---
+        // --- 2. Error Types Chart (NOW CORRECT) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
             type: 'pie',
             data: {
-                labels: errorData.length > 0 ? errorData.map(d => d.modified_reason || 'Uncategorized') : ['No Error Data'],
+                // *** THE FIX IS HERE: Using the new field names 'reason' and 'count' ***
+                labels: errorData.length > 0 ? errorData.map(d => d.reason) : ['No Error Data'],
                 datasets: [{
-                    data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
+                    data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
                     backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
                     borderColor: document.body.classList.contains('light-mode') ? '#fff' : '#1a1a1a',
                     borderWidth: 3
                 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: {
-                    legend: { position: 'bottom', labels: { color: chartTextColor, font: { size: 14 } } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
         });
 
-        // --- 3. Department Performance Chart (THIS IS THE FINAL VERSION) ---
+        // --- 3. Department Performance Chart (Working) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
@@ -1194,23 +1184,13 @@ async function updateAnalyticsCharts() {
                     label: 'Accuracy',
                     data: departmentData.map(d => {
                         const rate = parseFloat(d.error_rate);
-                        if (!isNaN(rate)) { return 100 - rate; }
-                        return 0;
+                        return !isNaN(rate) ? 100 - rate : 0;
                     }),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                    borderRadius: 4,
-                    maxBarThickness: 75
+                    borderRadius: 4
                 }]
             },
-            options: {
-                responsive: true, maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    // *** THE FIX IS HERE: We removed "min: 80" to allow all values to be displayed ***
-                    y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
-                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
-                }
-            }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
     } catch (error) {
