@@ -1183,7 +1183,7 @@ async function updateAnalyticsCharts() {
             }
         });
 
-        // --- 3. Department Performance Chart (THIS IS THE ROBUST VERSION) ---
+        // --- 3. Department Performance Chart (THIS IS THE FINAL VERSION) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
@@ -1192,14 +1192,10 @@ async function updateAnalyticsCharts() {
                 labels: departmentData.map(d => d.department || 'Unknown Dept.'),
                 datasets: [{
                     label: 'Accuracy',
-                    // *** THE FIX IS HERE: This code is safer and handles non-numeric values ***
                     data: departmentData.map(d => {
-                        const rate = parseFloat(d.error_rate); // Attempt to convert to a number
-                        // Check if the result is a valid number (not NaN)
-                        if (!isNaN(rate)) {
-                            return 100 - rate; // If valid, calculate accuracy
-                        }
-                        return 0; // If not valid (e.g., null or text), default to 0
+                        const rate = parseFloat(d.error_rate);
+                        if (!isNaN(rate)) { return 100 - rate; }
+                        return 0;
                     }),
                     backgroundColor: 'rgba(40, 167, 69, 0.7)',
                     borderRadius: 4,
@@ -1210,7 +1206,8 @@ async function updateAnalyticsCharts() {
                 responsive: true, maintainAspectRatio: false,
                 plugins: { legend: { display: false } },
                 scales: {
-                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
+                    // *** THE FIX IS HERE: We removed "min: 80" to allow all values to be displayed ***
+                    y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
                     x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
                 }
             }
