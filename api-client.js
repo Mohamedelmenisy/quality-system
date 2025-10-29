@@ -141,6 +141,61 @@ export async function getAgentMonthlyPerformance(agentId) {
 }
 
 
+export async function getErrorReasonsSummary(period) {
+  try {
+    // 1. Get the list of standard, active error reasons
+    const { data: standardReasonsData, error: reasonsError } = await supabase
+      .from('error_reasons')
+      .select('reason_text')
+      .eq('is_active', true);
+    if (reasonsError) throw reasonsError;
+    const standardReasons = standardReasonsData.map(r => r.reason_text);
+
+    // 2. Get all reviews marked as "error" within the selected period
+    let query = supabase
+      .from('quality_reviews')
+      .select('modified_reason')
+      .eq('action_correctness', 'error');
+
+    // Apply the period filter (this part needs logic to translate 'last_30_days' to actual dates)
+    const today = new Date();
+    let fromDate = new Date();
+    if (period === 'last_7_days') fromDate.setDate(today.getDate() - 7);
+    else if (period === 'last_90_days') fromDate.setDate(today.getDate() - 90);
+    else if (period === 'last_365_days') fromDate.setDate(today.getDate() - 365);
+    else fromDate.setDate(today.getDate() - 30); // Default to last 30 days
+    
+    query = query.gte('reviewed_at', fromDate.toISOString());
+
+    const { data: errorReviews, error: reviewsError } = await query;
+    if (reviewsError) throw reviewsError;
+
+    // 3. Process the data in JavaScript to categorize correctly
+    const summary = {};
+    standardReasons.forEach(reason => { summary[reason] = 0; }); // Initialize all standard reasons with 0
+    summary['Uncategorized'] = 0; // Add a counter for uncategorized errors
+
+    errorReviews.forEach(review => {
+      const reason = review.modified_reason;
+      if (reason && standardReasons.includes(reason)) {
+        summary[reason]++;
+      } else {
+        summary['Uncategorized']++;
+      }
+    });
+    
+    // 4. Format the result into an array of objects for the chart
+    return Object.entries(summary)
+      .map(([reason, count]) => ({ reason, count }))
+      .filter(item => item.count > 0) // Only return reasons that actually occurred
+      .sort((a, b) => b.count - a.count); // Sort from most frequent to least
+
+  } catch (error) {
+    console.error('Error in getErrorReasonsSummary:', error);
+    return []; // Return empty array on error
+  }
+}
+
 export async function getAgentIssueTypes(agentId) {
   try {
     const { data, error } = await supabase.rpc('get_agent_issue_types', { p_agent_id: agentId });
