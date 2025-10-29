@@ -1129,17 +1129,17 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // *** THE FIX IS HERE: Calling the new getErrorReasonsSummary function ***
+        // *** THE FIX IS HERE: Passing the period to all relevant functions ***
         const [performanceData, errorData, departmentData] = await Promise.all([
-            getTeamPerformance(),
-            getErrorReasonsSummary(period), // <<< تم استدعاء الدالة الجديدة هنا
-            getDepartmentPerformance()
+            getAgentAccuracySummary(period),      // Pass the period
+            getErrorReasonsSummary(period),
+            getDepartmentPerformance(period)  // Pass the period
         ]);
 
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-        // --- 1. Team Accuracy Chart (Working) ---
+        // --- 1. Team Accuracy Chart ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(perfCtx, {
@@ -1150,19 +1150,18 @@ async function updateAnalyticsCharts() {
                     label: 'Accuracy',
                     data: performanceData.map(d => d.accuracy),
                     backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                    borderRadius: 4
+                    borderRadius: 4,
                 }]
             },
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
-        // --- 2. Error Types Chart (NOW CORRECT) ---
+        // --- 2. Error Types Chart ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
             type: 'pie',
             data: {
-                // *** THE FIX IS HERE: Using the new field names 'reason' and 'count' ***
                 labels: errorData.length > 0 ? errorData.map(d => d.reason) : ['No Error Data'],
                 datasets: [{
                     data: errorData.length > 0 ? errorData.map(d => d.count) : [1],
@@ -1174,7 +1173,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
         });
 
-        // --- 3. Department Performance Chart (Working) ---
+        // --- 3. Department Performance Chart ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
