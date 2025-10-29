@@ -1121,100 +1121,99 @@
 // =========================================================================
         // START: LOGIC FIX / بداية الإصلاح المنطقي
         // =========================================================================
-        async function updateAnalyticsCharts() {
-            const period = document.getElementById('report-period').value;
-            const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
-            showToast(`Loading reports for ${periodText}...`, 'info');
+async function updateAnalyticsCharts() {
+    const period = document.getElementById('report-period').value;
+    const periodText = document.getElementById('report-period').options[document.getElementById('report-period').selectedIndex].text;
+    showToast(`Loading reports for ${periodText}...`, 'info');
 
-            try {
-                // --- 1. جلب البيانات الصحيحة بشكل متزامن ---
-                const [performanceData, errorData, departmentData] = await Promise.all([
-                    getTeamPerformance(),
-                    getErrorTypesSummary(period),
-                    getDepartmentPerformance()
-                ]);
+    try {
+        const [performanceData, errorData, departmentData] = await Promise.all([
+            getTeamPerformance(),
+            getErrorTypesSummary(period),
+            getDepartmentPerformance()
+        ]);
 
-                // --- تحديد الألوان بناءً على المظهر الحالي ---
-                const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
-                const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+        const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
+        const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-                // --- 2. رسم مخطط دقة الفريق (Team Accuracy) ---
-                const perfCtx = document.getElementById('analyticsChart').getContext('2d');
-                if (analyticsChart) analyticsChart.destroy(); // تدمير المخطط القديم قبل رسم الجديد
-                analyticsChart = new Chart(perfCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
-                        datasets: [{
-                            label: 'Accuracy',
-                            data: performanceData.map(d => d.accuracy),
-                            backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                            borderRadius: 4,
-                            maxBarThickness: 75
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
-                            x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
-                        }
-                    }
-                });
-
-                // --- 3. رسم مخطط أنواع الأخطاء (Error Types) ---
-                const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
-                if (errorTypesPieChart) errorTypesPieChart.destroy();
-                errorTypesPieChart = new Chart(errorCtx, {
-                    type: 'pie',
-                    data: {
-                        labels: errorData.length > 0 ? errorData.map(d => d.modified_reason || 'Uncategorized') : ['No Error Data'],
-                        datasets: [{
-                            data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
-                            backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
-                            borderColor: document.body.classList.contains('light-mode') ? '#fff' : '#1a1a1a',
-                            borderWidth: 3
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'bottom', labels: { color: chartTextColor, font: { size: 14 } } }
-                        }
-                    }
-                });
-
-                // --- 4. رسم مخطط أداء الأقسام (Department Performance) ---
-                const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
-                if (departmentPerformanceChart) departmentPerformanceChart.destroy();
-                departmentPerformanceChart = new Chart(deptCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: departmentData.map(d => d.department_name || 'Unknown Dept.'),
-                        datasets: [{
-                            label: 'Accuracy',
-                            data: departmentData.map(d => d.accuracy),
-                            backgroundColor: 'rgba(40, 167, 69, 0.7)',
-                            borderRadius: 4,
-                            maxBarThickness: 75
-                        }]
-                    },
-                    options: {
-                        responsive: true, maintainAspectRatio: false,
-                        plugins: { legend: { display: false } },
-                        scales: {
-                            y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
-                            x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
-                        }
-                    }
-                });
-
-            } catch (error) {
-                console.error("Failed to generate analytics charts:", error);
-                showToast("Error loading reports. Check console.", "error");
+        // --- 1. Team Accuracy Chart (This part is working correctly) ---
+        const perfCtx = document.getElementById('analyticsChart').getContext('2d');
+        if (analyticsChart) analyticsChart.destroy();
+        analyticsChart = new Chart(perfCtx, {
+            type: 'bar',
+            data: {
+                labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
+                datasets: [{
+                    label: 'Accuracy',
+                    data: performanceData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(0, 191, 255, 0.7)',
+                    borderRadius: 4,
+                    maxBarThickness: 75
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
+                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
+                }
             }
-        }
+        });
+
+        // --- 2. Error Types Chart (This part is showing the available data) ---
+        const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
+        if (errorTypesPieChart) errorTypesPieChart.destroy();
+        errorTypesPieChart = new Chart(errorCtx, {
+            type: 'pie',
+            data: {
+                labels: errorData.length > 0 ? errorData.map(d => d.modified_reason || 'Uncategorized') : ['No Error Data'],
+                datasets: [{
+                    data: errorData.length > 0 ? errorData.map(d => d.error_count) : [1],
+                    backgroundColor: ['#dc3545', '#ffc107', '#007BFF', '#17a2b8', '#6f42c1', '#20c997'],
+                    borderColor: document.body.classList.contains('light-mode') ? '#fff' : '#1a1a1a',
+                    borderWidth: 3
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom', labels: { color: chartTextColor, font: { size: 14 } } }
+                }
+            }
+        });
+
+        // --- 3. Department Performance Chart (THIS IS THE CORRECTED PART) ---
+        const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
+        if (departmentPerformanceChart) departmentPerformanceChart.destroy();
+        departmentPerformanceChart = new Chart(deptCtx, {
+            type: 'bar',
+            data: {
+                // *** THE FIX IS HERE: Using 'department' instead of 'department_name' ***
+                labels: departmentData.map(d => d.department || 'Unknown Dept.'),
+                datasets: [{
+                    label: 'Accuracy',
+                    data: departmentData.map(d => d.accuracy),
+                    backgroundColor: 'rgba(40, 167, 69, 0.7)',
+                    borderRadius: 4,
+                    maxBarThickness: 75
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { min: 80, max: 100, ticks: { color: chartTextColor, font: { size: 14 } }, grid: { color: chartGridColor } },
+                    x: { ticks: { color: chartTextColor, font: { size: 14 } }, grid: { display: false } }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Failed to generate analytics charts:", error);
+        showToast("Error loading reports. Check console.", "error");
+    }
+}
         // =========================================================================
         // END: LOGIC FIX / نهاية الإصلاح المنطقي
         // =========================================================================
