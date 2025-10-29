@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Performance - QualityX</title>
-    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%2300bfff'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%230ea5e9'/%3E%3Ctext x='50' y='55' font-family='Poppins, sans-serif' font-size='60' font-weight='bold' fill='white' text-anchor='middle' dominant-baseline='middle'%3EQ%3C/text%3E%3C/svg%3E">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
@@ -514,7 +514,7 @@ function openViewErrorModal(errorId) {
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { position: 'bottom', labels: { color: '#e6edf3', font: { family: 'Poppins', size: 14 } } },
-                    tooltip: { backgroundColor: 'rgba(26, 26, 26, 0.9)', titleColor: '#00bfff', bodyColor: '#e6edf3', borderColor: '#333', borderWidth: 1, titleFont: { family: 'Poppins', size: 14, weight: 'bold' }, bodyFont: { family: 'Poppins', size: 12 } }
+                    tooltip: { backgroundColor: 'rgba(26, 26, 26, 0.9)', titleColor: '#0ea5e9', bodyColor: '#e6edf3', borderColor: '#333', borderWidth: 1, titleFont: { family: 'Poppins', size: 14, weight: 'bold' }, bodyFont: { family: 'Poppins', size: 12 } }
                 },
                 cutout: '60%'
             }
@@ -588,6 +588,14 @@ function openViewErrorModal(errorId) {
     }
 
     function setupEventListeners() {
+        // Sidebar Toggle
+        const sidebarToggleBtn = document.getElementById('sidebar-toggle-btn');
+        if (sidebarToggleBtn) {
+            sidebarToggleBtn.addEventListener('click', () => {
+                document.body.classList.toggle('sidebar-collapsed');
+            });
+        }
+
         document.querySelectorAll('.sidebar-nav a[data-tab]').forEach(tab => {
             tab.addEventListener('click', e => {
                 e.preventDefault();
@@ -759,8 +767,8 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
 
 <style>
     :root {
-        --primary-color: #00bfff;
-        --primary-hover: #00a4d9;
+        --primary-color: #0ea5e9;
+        --primary-hover: #0c8ac5;
         --bg-color: #121212;
         --sidebar-bg: #1a1a1a;
         --card-bg: #1a1a1a;
@@ -777,23 +785,33 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
     }
     * { margin: 0; padding: 0; box-sizing: border-box; }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; line-height: 1.6; font-size: 16px; }
-    .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
-    .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
+    body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; min-height: 100vh; line-height: 1.6; font-size: 16px; transition: padding-left 0.3s ease-in-out; }
+    .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; transition: width 0.3s ease-in-out; }
+    .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); position: relative; }
     .sidebar-logo { height: 32px; fill: var(--primary-color); }
-    .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
+    .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; white-space: nowrap; transition: opacity 0.3s ease-in-out; }
+    #sidebar-toggle-btn { background: #2c2c2c; border: 1px solid var(--border-color); color: var(--text-muted); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; position: absolute; right: -16px; top: 50%; transform: translateY(-50%); z-index: 1001; transition: all 0.3s ease; }
+    #sidebar-toggle-btn:hover { background-color: var(--primary-color); color: #fff; }
     .sidebar-nav-container { flex-grow: 1; overflow-y: auto; padding-top: 1rem; }
     .nav-group { margin-bottom: 1.5rem; padding: 0 20px; }
-    .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
+    .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; white-space: nowrap; transition: opacity 0.3s ease-in-out; }
     .sidebar-nav { list-style: none; padding: 0; margin: 0; }
-    .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor: pointer; font-weight: 500; }
+    .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor: pointer; font-weight: 500; white-space: nowrap; overflow: hidden; }
     .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; transform: translateX(5px); }
+    .sidebar-nav a span { font-size: 1.2rem; }
     .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
     .user-profile-widget { display: flex; align-items: center; gap: 12px; }
-    .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; }
+    .avatar-initials { width: 44px; height: 44px; border-radius: 50%; background-color: var(--primary-color); color: black; font-weight: 700; font-size: 1rem; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .user-details { overflow: hidden; white-space: nowrap; transition: opacity 0.3s ease-in-out; }
     .user-name { font-weight: 600; font-size: 1rem; }
     .user-role { font-size: 0.8rem; color: var(--text-muted); }
-    .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; display: flex; flex-direction: column; }
+    .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; display: flex; flex-direction: column; transition: margin-left 0.3s ease-in-out, width 0.3s ease-in-out; }
+    body.sidebar-collapsed .sidebar { width: 80px; }
+    body.sidebar-collapsed .main-content { margin-left: 80px; width: calc(100% - 80px); }
+    body.sidebar-collapsed .sidebar-title, body.sidebar-collapsed .nav-group-title, body.sidebar-collapsed .user-details { opacity: 0; pointer-events: none; }
+    body.sidebar-collapsed .sidebar-nav a { justify-content: center; }
+    body.sidebar-collapsed .sidebar-nav a .link-text { display: none; }
+    body.sidebar-collapsed #sidebar-toggle-btn { transform: translateY(-50%) rotate(180deg); }
     .content-wrapper { flex: 1; }
     .tab-content { display: none; }
     .tab-content.active { display: block; animation: fadeIn 0.5s; }
@@ -807,7 +825,7 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
     #welcome-message p { color: var(--text-muted); }
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 30px; }
     .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .card:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3); }
+    .card:hover { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2); }
     .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
     .progress-card .progress-info { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
     .progress-card .progress-value { font-size: 24px; font-weight: 600; }
@@ -849,7 +867,7 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
     .notification-message { flex: 1; }
     .notification-time { font-size: 12px; color: var(--text-muted); }
     .mark-read-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 14px; padding: 4px 8px; border-radius: 4px; transition: background-color 0.3s ease; }
-    .mark-read-btn:hover { background-color: rgba(0, 191, 255, 0.1); }
+    .mark-read-btn:hover { background-color: rgba(14, 165, 233, 0.1); }
     .filter-panel { display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end; padding: 20px; background: #222; border-radius: var(--border-radius-base); margin-bottom: 30px; border: 1px solid var(--border-color); }
     .filter-group { flex: 1; min-width: 150px; }
     .filter-group label { display: block; margin-bottom: 5px; font-weight: 500; font-size: 14px; }
@@ -914,7 +932,10 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
     @media (max-width: 768px) {
         body { flex-direction: column; }
         .sidebar { width: 100%; height: auto; position: relative; }
+        body.sidebar-collapsed .sidebar { width: 100%; } /* Disable collapse on mobile */
         .main-content { margin-left: 0; width: 100%; padding: 20px; }
+        body.sidebar-collapsed .main-content { margin-left: 0; width: 100%; } /* Disable collapse on mobile */
+        #sidebar-toggle-btn { display: none; } /* Hide toggle on mobile */
         .stats-grid { grid-template-columns: 1fr; }
         .filter-panel { flex-direction: column; }
         .filter-group { min-width: 100%; }
@@ -932,14 +953,17 @@ document.getElementById('submit-appeal-btn').addEventListener('click', async fun
             <div class="sidebar-header">
                 <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path><path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 <h1 class="sidebar-title">QualityX</h1>
+                <button id="sidebar-toggle-btn" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/></svg>
+                </button>
             </div>
             <div class="sidebar-nav-container">
-                <div class="nav-group"><h2 class="nav-group-title">Menu</h2><ul class="sidebar-nav"><li><a class="active" data-tab="dashboard"><span>📊</span>Dashboard</a></li><li><a data-tab="my-errors"><span>❌</span>My Errors</a></li></ul></div>
-                <div class="nav-group"><h2 class="nav-group-title">Account</h2><ul class="sidebar-nav"><li><a data-tab="profile"><span>👤</span>Profile</a></li><li><a data-tab="settings"><span>⚙️</span>Settings</a></li><li><a data-tab="help"><span>❓</span>Get Help</a></li><li><a id="logout-btn"><span>🚪</span>Logout</a></li></ul></div>
+                <div class="nav-group"><h2 class="nav-group-title">Menu</h2><ul class="sidebar-nav"><li><a class="active" data-tab="dashboard"><span>📊</span><span class="link-text">Dashboard</span></a></li><li><a data-tab="my-errors"><span>❌</span><span class="link-text">My Errors</span></a></li></ul></div>
+                <div class="nav-group"><h2 class="nav-group-title">Account</h2><ul class="sidebar-nav"><li><a data-tab="profile"><span>👤</span><span class="link-text">Profile</span></a></li><li><a data-tab="settings"><span>⚙️</span><span class="link-text">Settings</span></a></li><li><a data-tab="help"><span>❓</span><span class="link-text">Get Help</span></a></li><li><a id="logout-btn"><span>🚪</span><span class="link-text">Logout</span></a></li></ul></div>
             </div>
         </div>
         <div class="sidebar-footer">
-            <div class="user-profile-widget"><div class="avatar-initials" id="sidebar-avatar-initials">--</div><div><div class="user-name" id="sidebar-username">Loading...</div><div class="user-role" id="sidebar-userrole">Loading...</div></div></div>
+            <div class="user-profile-widget"><div class="avatar-initials" id="sidebar-avatar-initials">--</div><div class="user-details"><div class="user-name" id="sidebar-username">Loading...</div><div class="user-role" id="sidebar-userrole">Loading...</div></div></div>
         </div>
     </aside>
 
