@@ -111,8 +111,12 @@ document.addEventListener('click', function(e){
             --green-bg: rgba(40, 167, 69, 0.1);
             --yellow: #ffc107;
             --yellow-bg: rgba(255, 193, 7, 0.1);
-           --blue-bg: rgba(0, 191, 255, 0.1); /* أضف هذا السطر */
+            --blue-bg: rgba(0, 191, 255, 0.1); 
             --border-radius-base: 0.75rem;
+            --gradient-1: linear-gradient(135deg, #00bfff, #1e90ff);
+            --gradient-2: linear-gradient(135deg, #ffc107, #ff9800);
+            --gradient-3: linear-gradient(135deg, #28a745, #20c997);
+            --gradient-4: linear-gradient(135deg, #dc3545, #f06292);
         }
         body.light-mode {
             --bg-color: #f4f7fa;
@@ -134,7 +138,7 @@ document.addEventListener('click', function(e){
         .nav-group-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-muted); font-weight: 600; margin-bottom: 0.75rem; }
         .sidebar-nav { list-style:none; padding:0; margin:0; }
         .sidebar-nav a { display: flex; align-items: center; padding: 12px 15px; border-radius: 8px; color: var(--text-muted); text-decoration: none; margin-bottom: 10px; transition: all 0.3s ease; gap: 15px; cursor:pointer; }
-        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; }
+        .sidebar-nav a:hover, .sidebar-nav a.active { background-color: var(--primary-color); color: #000; transform: translateX(5px); box-shadow: 0 4px 15px rgba(0, 191, 255, 0.3); }
         body.light-mode .sidebar-nav a:hover, body.light-mode .sidebar-nav a.active { color: white; }
         .sidebar-footer { padding: 15px 20px; border-top: 1px solid var(--border-color); }
         .user-profile-widget { display: flex; align-items: center; gap: 12px; }
@@ -142,31 +146,35 @@ document.addEventListener('click', function(e){
         body.light-mode .avatar-initials { color: white; }
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 30px; flex: 1; display: flex; flex-direction: column; }
+        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 40px; flex: 1; display: flex; flex-direction: column; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 1rem; }
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem; gap: 1rem; }
         .header-left { flex-grow: 1; }
         .header-actions { display: flex; align-items: center; gap: 1rem; }
-        .page-title { font-size: 24px; font-weight: 700; }
-        #welcome-message { margin-bottom: 2rem; }
+        .page-title { font-size: 2.25rem; font-weight: 800; }
+        #welcome-message { margin-bottom: 2.5rem; }
         #welcome-message h2 { font-size: 1.75rem; font-weight: 700; }
-        #welcome-message p { color: var(--text-muted); }
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
-        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; transition: all 0.3s; }
+        #welcome-message p { color: var(--text-muted); font-size: 1.1rem; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+        .kpi-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 1.5rem; transition: all 0.3s ease; display: flex; align-items: center; gap: 1.5rem; border-left: 4px solid transparent; }
+        .kpi-card:hover { transform: translateY(-5px); box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-left-color: var(--primary-color); }
+        .kpi-icon-wrapper { width: 60px; height: 60px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: white; }
+        .kpi-icon-wrapper svg { width: 28px; height: 28px; }
+        .kpi-content { flex-grow: 1; }
         .kpi-card .kpi-title { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem; }
         .kpi-card .kpi-value { font-size: 2rem; font-weight: 700; color: var(--text-color); }
         .kpi-card .kpi-change { font-size: 0.9rem; font-weight: 500; margin-top: 0.25rem; }
-        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 1.5rem; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 2rem; }
         .grid-col-span-12 { grid-column: span 12; }
         .grid-col-span-8 { grid-column: span 8; }
         .grid-col-span-4 { grid-column: span 4; }
         .grid-col-span-6 { grid-column: span 6; }
-        .card { background: var(--card-bg); padding: 25px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: background-color 0.3s, border-color 0.3s, box-shadow 0.3s; }
-        .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+        .card { background: var(--card-bg); padding: 30px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease; }
+        .card:hover { transform: translateY(-4px); box-shadow: 0 8px 25px rgba(0,0,0,0.2); border-color: var(--primary-color); }
         body.light-mode .card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
-        .card h3 { font-size: 18px; font-weight: 600; margin-bottom: 20px; }
+        .card h3 { font-size: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem; }
         .chart-container { position: relative; height: 350px; width: 100%; }
         .activity-feed { list-style: none; }
         .activity-item { display: flex; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--border-color); }
@@ -177,7 +185,7 @@ document.addEventListener('click', function(e){
         .activity-time { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
         .table-container { background: var(--card-bg); padding: 20px; border-radius: var(--border-radius-base); border: 1px solid var(--border-color); overflow-x: auto;}
         table { width: 100%; border-collapse: collapse; }
-        th, td { padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
+        th, td { padding: 18px 15px; text-align: left; border-bottom: 1px solid var(--border-color); vertical-align: middle; white-space: nowrap; }
         th { font-weight: 600; font-size: 14px; color:var(--text-muted); text-transform: uppercase; background-color: rgba(0,0,0,0.1); }
         body.light-mode th { background-color: #f5f5f5; }
         tbody tr:last-child td { border-bottom: none; }
@@ -202,7 +210,7 @@ document.addEventListener('click', function(e){
         .action-btn.warning { background: var(--yellow); color: #000; }
         .action-btn.warning:hover { background: #e0a800; }
         .search-input-container { position: relative; }
-        .search-input-container input[type="search"] { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px; width: 250px; }
+        .search-input-container input[type="search"] { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 40px; width: 250px; }
         body.light-mode .search-input-container input[type="search"] { background: #fff; }
         .notification-bell { position: relative; }
         .notification-btn { background: none; border: none; color: var(--text-muted); font-size: 24px; cursor: pointer; padding: 5px; position: relative; }
@@ -217,10 +225,11 @@ document.addEventListener('click', function(e){
         .notification-time { font-size: 12px; color: var(--text-muted); margin-top: 5px; }
         .notification-actions { margin-left: 10px; }
         .mark-read-btn { background: none; border: none; color: var(--primary-color); cursor: pointer; font-size: 12px; }
-        .filter-bar { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; padding: 1rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
-        .filter-group { display: flex; align-items: center; gap: 0.5rem; }
+        .filter-bar { display: flex; flex-wrap: wrap; gap: 1.5rem; align-items: center; padding: 1.5rem; background-color: var(--card-bg); border-radius: var(--border-radius-base); margin-bottom: 2rem; border: 1px solid var(--border-color); }
+        .filter-group { display: flex; align-items: center; gap: 0.5rem; position: relative; }
+        .filter-group .filter-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); pointer-events: none; }
         .filter-bar label { font-size: 0.9rem; font-weight: 500; color: var(--text-muted); margin-right: 0.25rem; }
-        .filter-bar select, .filter-bar input[type="date"] { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 8px 12px; min-width: 160px; }
+        .filter-bar select, .filter-bar input { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; color: var(--text-color); padding: 10px 12px 10px 40px; min-width: 180px; }
         body.light-mode .filter-bar select, body.light-mode .filter-bar input[type="date"] { background: #fff; }
         .btn { padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.3s; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
@@ -314,8 +323,9 @@ document.addEventListener('click', function(e){
             from { transform: translateX(100%); opacity: 0; }
             to { transform: translateX(0); opacity: 1; }
         }
-        .empty-state { text-align: center; padding: 40px; color: var(--text-muted); }
-        .empty-state-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        .empty-state { text-align: center; padding: 60px 40px; color: var(--text-muted); opacity: 0.7; }
+        .empty-state .empty-state-icon { font-size: 4rem; margin-bottom: 1rem; line-height: 1; }
+        .empty-state h4 { font-size: 1.25rem; color: var(--text-color); font-weight: 600; margin-bottom: 0.5rem; }
         .inquiry-badge { background: var(--yellow-bg); color: var(--yellow); padding: 3px 8px; border-radius: 12px; font-size: 11px; margin-left: 5px; }
         .payments-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
         .payment-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: var(--border-radius-base); padding: 2rem; text-align: center; font-weight: 600; font-size: 1.1rem; transition: transform 0.2s ease, box-shadow 0.2s ease; }
@@ -693,32 +703,42 @@ document.addEventListener('click', function(e){
                 <p>Your central hub for monitoring quality and driving team excellence.</p>
             </div>
 
-            <div class="filter-bar">
-                <div class="search-input-container" style="width: 100%;">
-                    <input type="search" id="dashboard-search-input" placeholder="Search anything... (e.g., Order ID, Issue Type, Member Name)" style="width: 100%;">
-                </div>
-            </div>
-
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-title">Today's Reviews</div>
-                    <div class="kpi-value" id="todays-reviews">0</div>
-                    <div class="kpi-change" id="todays-reviews-change" style="color: var(--green);"></div>
+                    <div class="kpi-icon-wrapper" style="background: var(--gradient-1);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                    </div>
+                    <div class="kpi-content">
+                        <div class="kpi-title">Today's Reviews</div>
+                        <div class="kpi-value" id="todays-reviews">0</div>
+                    </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">Open Cases</div>
-                    <div class="kpi-value" id="open-cases">0</div>
-                    <div class="kpi-change" id="open-cases-change" style="color: var(--yellow);"></div>
+                    <div class="kpi-icon-wrapper" style="background: var(--gradient-2);">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.54 15H17l-2 4-4-8-4 4H2.46"/><path d="m22 7-1.25-2.5L18 3l-2.5 1.25L13 7l1.25 2.5L18 11l2.5-1.25L22 7Z"/><path d="m7 2-1.25 2.5L3 6l2.5 1.25L7 10l1.25-2.5L11 6 8.5 4.75 7 2Z"/></svg>
+                    </div>
+                    <div class="kpi-content">
+                        <div class="kpi-title">Open Cases</div>
+                        <div class="kpi-value" id="open-cases">0</div>
+                    </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">Avg. Quality Score</div>
-                    <div class="kpi-value" id="quality-score">0%</div>
-                    <div class="kpi-change" id="quality-score-change" style="color: var(--green);"></div>
+                    <div class="kpi-icon-wrapper" style="background: var(--gradient-3);">
+                         <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+                    </div>
+                    <div class="kpi-content">
+                        <div class="kpi-title">Avg. Quality Score</div>
+                        <div class="kpi-value" id="quality-score">0%</div>
+                    </div>
                 </div>
                 <div class="kpi-card">
-                    <div class="kpi-title">Escalation Rate</div>
-                    <div class="kpi-value" id="escalation-rate">0%</div>
-                    <div class="kpi-change" id="escalation-rate-change" style="color: var(--red);"></div>
+                    <div class="kpi-icon-wrapper" style="background: var(--gradient-4);">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 3 3"/><path d="M14 2a2 2 0 0 1 2 2v2h4a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4V4a2 2 0 0 1 2-2Z"/><path d="M8 21h8"/><path d="M12 16v5"/></svg>
+                    </div>
+                    <div class="kpi-content">
+                        <div class="kpi-title">Escalation Rate</div>
+                        <div class="kpi-value" id="escalation-rate">0%</div>
+                    </div>
                 </div>
             </div>
 
@@ -742,14 +762,15 @@ document.addEventListener('click', function(e){
         </div>
 
         <div id="my-assigned-orders" class="tab-content">
-            <div class="filter-bar">
-                <div class="filter-group search-input-container">
+             <div class="filter-bar">
+                <div class="filter-group">
+                    <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></div>
                     <input type="search" id="orders-search-input" placeholder="Search by ID, issue...">
                 </div>
                 <div class="filter-group">
-                    <label for="filter-status">Status:</label>
+                    <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
                     <select id="filter-status">
-                        <option value="all">All</option>
+                        <option value="all">All Statuses</option>
                         <option value="pending">Pending</option>
                         <option value="in_progress">In Progress</option>
                         <option value="completed">Completed</option>
@@ -757,18 +778,18 @@ document.addEventListener('click', function(e){
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="filter-issue-type">Issue:</label>
+                    <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M12 8v4l3 3"/></svg></div>
                     <select id="filter-issue-type">
-                        <option value="all">All Types</option>
+                        <option value="all">All Issue Types</option>
                     </select>
                 </div>
                 <div class="filter-group">
-                    <label for="filter-from-date">From:</label>
-                    <input type="date" id="filter-from-date">
+                     <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
+                    <input type="date" id="filter-from-date" placeholder="From">
                 </div>
-                <div class="filter-group">
-                    <label for="filter-to-date">To:</label>
-                    <input type="date" id="filter-to-date">
+                 <div class="filter-group">
+                    <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
+                    <input type="date" id="filter-to-date" placeholder="To">
                 </div>
                 <button class="btn btn-secondary" id="export-csv-btn">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
@@ -793,7 +814,7 @@ document.addEventListener('click', function(e){
                             </tr>
                         </thead>
                         <tbody id="orders-table-body">
-                            <tr><td colspan="8" class="empty-state">Loading assigned orders...</td></tr> <!-- غير لـ 8 -->
+                            <!-- JS will populate this -->
                         </tbody>
                     </table>
                 </div>
@@ -842,7 +863,7 @@ document.addEventListener('click', function(e){
                             </tr>
                         </thead>
                         <tbody id="escalations-table-body">
-                            <tr><td colspan="6" class="empty-state">Loading escalations...</td></tr>
+                            <!-- JS will populate this -->
                         </tbody>
                     </table>
                 </div>
@@ -887,7 +908,7 @@ document.addEventListener('click', function(e){
                             </tr>
                         </thead>
                         <tbody id="inquiries-table-body">
-                            <tr><td colspan="6" class="empty-state">Loading inquiries...</td></tr>
+                           <!-- JS will populate this -->
                         </tbody>
                     </table>
                 </div>
@@ -914,7 +935,7 @@ document.addEventListener('click', function(e){
                             </tr>
                         </thead>
                         <tbody id="schedule-table-body">
-                            <tr><td colspan="8" class="empty-state">Loading schedule...</td></tr>
+                           <!-- JS will populate this -->
                         </tbody>
                     </table>
                 </div>
@@ -925,7 +946,7 @@ document.addEventListener('click', function(e){
             <div class="card">
                 <h3>Team Members</h3>
                 <div class="team-grid" id="team-grid">
-                    <div class="empty-state">Loading team members...</div>
+                    <!-- JS will populate this -->
                 </div>
             </div>
         </div>
@@ -945,7 +966,7 @@ document.addEventListener('click', function(e){
                             </tr>
                         </thead>
                         <tbody id="employees-table-body">
-                            <tr><td colspan="5" class="empty-state">Loading company employees...</td></tr>
+                           <!-- JS will populate this -->
                         </tbody>
                     </table>
                 </div>
@@ -1720,7 +1741,7 @@ document.addEventListener('click', function(e){
                 const tableBody = document.getElementById('overturned-reviews-table-body');
                 
                 if (!reviews || reviews.length === 0) {
-                    tableBody.innerHTML = `<tr><td colspan="4" class="empty-state">🎉 Great work! You have no overturned reviews.</td></tr>`;
+                    tableBody.innerHTML = `<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">🎉</div><h4>Great Work!</h4><p>You have no overturned reviews.</p></td></tr>`;
                     return;
                 }
 
@@ -1736,7 +1757,7 @@ document.addEventListener('click', function(e){
             } catch (error) {
                 console.error("Failed to load overturned reviews:", error);
                 const tableBody = document.getElementById('overturned-reviews-table-body');
-                tableBody.innerHTML = `<tr><td colspan="4" class="empty-state" style="color: var(--danger-color);">Error loading overturned reviews.</td></tr>`;
+                 tableBody.innerHTML = `<tr><td colspan="4" class="empty-state"><div class="empty-state-icon">❌</div><h4>Error</h4><p>Could not load overturned reviews data.</p></td></tr>`;
             }
         }
 
@@ -1924,7 +1945,7 @@ function renderOrdersTable(ordersToRender) {
         const paginationContainer = document.getElementById('orders-pagination');
 
         if (!ordersToRender || ordersToRender.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="8" class="empty-state">No assigned orders found.</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📋</div><h4>No Orders Found</h4><p>There are no assigned orders matching your current filters.</p></td></tr>`;
             paginationContainer.innerHTML = ''; // Clear pagination if no orders
             return;
         }
@@ -2184,7 +2205,7 @@ function renderOrdersTable(ordersToRender) {
             const tableBody = document.getElementById('escalations-table-body');
 
             if (!escalationsToRender || escalationsToRender.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="empty-state">No escalations match the current filters.</td></tr>`;
+                 tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">🚨</div><h4>No Escalations</h4><p>No escalations match the current filters.</p></td></tr>`;
                 return;
             }
 
@@ -2243,7 +2264,7 @@ function renderInquiriesTable(inquiriesToRender) {
     const tableBody = document.getElementById('inquiries-table-body');
     
     if (!inquiriesToRender || inquiriesToRender.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><div>No inquiries match the current filters.</div></td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="6" class="empty-state"><div class="empty-state-icon">❓</div><h4>No Inquiries</h4><p>No inquiries match the current filters.</p></td></tr>`;
         return;
     }
 
@@ -2307,14 +2328,7 @@ function renderInquiriesTable(inquiriesToRender) {
             const tableBody = document.getElementById('employees-table-body');
 
             if (companyEmployees.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="5" class="empty-state">
-                            <div class="empty-state-icon">🏢</div>
-                            <div>No company employees found.</div>
-                        </td>
-                    </tr>
-                `;
+                tableBody.innerHTML = `<tr><td colspan="5" class="empty-state"><div class="empty-state-icon">🏢</div><h4>No Employees Found</h4><p>Could not retrieve the company employee list.</p></td></tr>`;
             } else {
                 tableBody.innerHTML = companyEmployees.map(employee => `
                     <tr>
@@ -2332,12 +2346,7 @@ function renderInquiriesTable(inquiriesToRender) {
             const teamGrid = document.getElementById('team-grid');
             
             if (teamMembers.length === 0) {
-                teamGrid.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">👥</div>
-                        <div>No team members found.</div>
-                    </div>
-                `;
+                 teamGrid.innerHTML = `<div class="empty-state" style="grid-column: 1 / -1;"><div class="empty-state-icon">👥</div><h4>No Team Members</h4><p>No team members have been added yet.</p></div>`;
             } else {
                 teamGrid.innerHTML = teamMembers.map(member => {
                     const color = stringToColor(member.name);
@@ -2361,14 +2370,7 @@ function renderInquiriesTable(inquiriesToRender) {
             const tableBody = document.getElementById('schedule-table-body');
             
             if (teamSchedule.length === 0) {
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="8" class="empty-state">
-                            <div class="empty-state-icon">📅</div>
-                            <div>No schedule data available.</div>
-                        </td>
-                    </tr>
-                `;
+                 tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Schedule Data</h4><p>The team schedule has not been set up.</p></td></tr>`;
             } else {
                 const scheduleByUser = {};
                 teamSchedule.forEach(shift => {
