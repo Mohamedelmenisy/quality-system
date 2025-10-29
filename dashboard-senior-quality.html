@@ -1129,17 +1129,17 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // *** THE FIX IS HERE: Passing the period to all relevant functions ***
+        // *** THE FIX IS HERE: We are no longer passing 'period' to getDepartmentPerformance ***
         const [performanceData, errorData, departmentData] = await Promise.all([
-            getAgentAccuracySummary(period),      // Pass the period
+            getAgentAccuracySummary(period),
             getErrorReasonsSummary(period),
-            getDepartmentPerformance(period)  // Pass the period
+            getDepartmentPerformance() // <<< تم إزالة (period) من هنا
         ]);
 
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
-        // --- 1. Team Accuracy Chart ---
+        // --- 1. Team Accuracy Chart (This chart now filters correctly) ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(perfCtx, {
@@ -1156,7 +1156,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
-        // --- 2. Error Types Chart ---
+        // --- 2. Error Types Chart (This chart now filters correctly) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
@@ -1173,7 +1173,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
         });
 
-        // --- 3. Department Performance Chart ---
+        // --- 3. Department Performance Chart (This chart will now show OVERALL data) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
