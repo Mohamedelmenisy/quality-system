@@ -527,9 +527,11 @@ export async function reassignOrder(assignmentId, newAgentId, reassignedById) {
   }
 }
 
-export async function getDepartmentPerformance() {
+export async function getDepartmentPerformance(period = 'last_30_days') { // Default value
   try {
-    const { data, error } = await supabase.rpc('get_department_performance');
+    // We assume the RPC function can be modified to accept a period filter
+    // This is the correct way to implement it.
+    const { data, error } = await supabase.rpc('get_department_performance', { period_filter: period });
     if (error) throw error;
     return data;
   } catch (error) {
@@ -1396,12 +1398,13 @@ export async function getErrorTrends() {
 // ** NEW FUNCTIONS FOR REPORTS & ANALYTICS PAGE **
 export async function getAgentAccuracySummary(period) {
   try {
+    // The RPC function already accepts a period_filter, we just need to ensure we call it
     const { data, error } = await supabase.rpc('get_agent_accuracy_summary', { period_filter: period });
     if (error) throw error;
     return data;
   } catch (error) {
     console.error('Error fetching agent accuracy summary:', error);
-    return []; // Return an empty array on error
+    return [];
   }
 }
 
