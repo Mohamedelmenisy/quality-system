@@ -1145,21 +1145,59 @@ const [performanceData, errorData, departmentData] = await Promise.all([
         const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
 
         // --- Chart 1: Team Accuracy by Agent (Now sorted correctly) ---
-        const perfCtx = document.getElementById('analyticsChart').getContext('2d');
-        if (analyticsChart) analyticsChart.destroy();
-        analyticsChart = new Chart(perfCtx, {
-            type: 'bar',
-            data: {
-                labels: performanceData.map(d => d.agent_name || 'Unknown Agent'),
-                datasets: [{
-                    label: 'Accuracy',
-                    data: performanceData.map(d => d.accuracy),
-                    backgroundColor: 'rgba(0, 191, 255, 0.7)',
-                    borderRadius: 4,
-                }]
+       // --- الرسم البياني 1: دقة الفريق حسب الوكيل (النسخة النهائية والمصححة) ---
+const perfCtx = document.getElementById('analyticsChart').getContext('2d');
+if (window.analyticsChart) {
+    window.analyticsChart.destroy();
+}
+
+const perfLabels = performanceData && performanceData.length > 0
+    ? performanceData.map(d => d.agent_name || 'وكيل غير معروف')
+    : ['لا توجد بيانات'];
+
+const perfData = performanceData && performanceData.length > 0
+    ? performanceData.map(d => parseFloat(d.accuracy) || 0)
+    : [0];
+
+window.analyticsChart = new Chart(perfCtx, {
+    type: 'bar',
+    data: {
+        labels: perfLabels,
+        datasets: [{
+            label: 'الدقة %',
+            data: perfData,
+            backgroundColor: 'rgba(0, 191, 255, 0.7)',
+            borderRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true, // <-- هذا هو السطر الحاسم الذي يحل المشكلة
+                max: 100,
+                ticks: { color: chartTextColor },
+                title: {
+                    display: true,
+                    text: 'الدقة %',
+                    color: chartTextColor
+                }
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
-        });
+            x: {
+                ticks: { color: chartTextColor },
+                title: {
+                    display: true,
+                    text: 'الوكلاء',
+                    color: chartTextColor
+                }
+            }
+        }
+    }
+});
 
         // --- Chart 2: Error Types Analysis (Correct and filters by period) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
