@@ -1158,7 +1158,7 @@ const [performanceData, errorData, departmentData] = await Promise.all([
                     borderRadius: 4,
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
         // --- Chart 2: Error Types Analysis (Correct and filters by period) ---
