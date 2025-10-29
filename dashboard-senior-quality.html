@@ -1129,22 +1129,20 @@ async function updateAnalyticsCharts() {
     showToast(`Loading reports for ${periodText}...`, 'info');
 
     try {
-        // *** الإصلاح الصحيح ***
-        // نستدعي كل دالة بالطريقة الصحيحة:
-        // - أول دالتين تأخذان الفلتر الزمني.
-        // - الدالة الثالثة (الخاصة بالقسم) لا تأخذ أي فلتر.
+        // *** THE FIRST FIX: Call getDepartmentPerformance WITHOUT the period filter ***
         const [performanceData, errorData, departmentData] = await Promise.all([
             getAgentAccuracySummary(period),
             getErrorReasonsSummary(period),
-            getDepartmentPerformance() // <-- تبقى بدون متغيرات، وهذا هو الصحيح
+            getDepartmentPerformance() // <<< لا نمرر أي فلتر هنا، لتعمل الدالة بشكل صحيح
         ]);
         
-        // فرز بيانات أداء الوكلاء أبجديًا
+        // *** THE SECOND FIX: Sort the performance data alphabetically by name ***
         performanceData.sort((a, b) => (a.agent_name || '').localeCompare(b.agent_name || ''));
 
         const chartTextColor = document.body.classList.contains('light-mode') ? '#2c3e50' : '#e6edf3';
-        
-        // --- الرسم البياني 1: دقة الفريق حسب الوكيل (يعمل مع الفلتر) ---
+        const chartGridColor = document.body.classList.contains('light-mode') ? 'rgba(0, 0, 0, 0.1)' : 'rgba(255, 255, 255, 0.1)';
+
+        // --- Chart 1: Team Accuracy by Agent (Now sorted correctly) ---
         const perfCtx = document.getElementById('analyticsChart').getContext('2d');
         if (analyticsChart) analyticsChart.destroy();
         analyticsChart = new Chart(perfCtx, {
@@ -1161,7 +1159,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { min: 80, max: 100, ticks: { color: chartTextColor } }, x: { ticks: { color: chartTextColor } } } }
         });
 
-        // --- الرسم البياني 2: تحليل أنواع الأخطاء (يعمل مع الفلتر) ---
+        // --- Chart 2: Error Types Analysis (Correct and filters by period) ---
         const errorCtx = document.getElementById('errorTypesPieChart').getContext('2d');
         if (errorTypesPieChart) errorTypesPieChart.destroy();
         errorTypesPieChart = new Chart(errorCtx, {
@@ -1178,7 +1176,7 @@ async function updateAnalyticsCharts() {
             options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { color: chartTextColor } } } }
         });
 
-        // --- الرسم البياني 3: الأداء حسب القسم (يعمل الآن ويعرض البيانات الإجمالية) ---
+        // --- Chart 3: Performance by Department (Correct and shows overall data) ---
         const deptCtx = document.getElementById('departmentPerformanceChart').getContext('2d');
         if (departmentPerformanceChart) departmentPerformanceChart.destroy();
         departmentPerformanceChart = new Chart(deptCtx, {
