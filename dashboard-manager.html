@@ -279,455 +279,458 @@
     </style>
 </head>
 <body>
-    <div style="display: flex; flex: 1;">
-        <aside class="sidebar">
-            <div>
-                <div class="sidebar-header">
-                    <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
-                        <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
-                    </svg>
-                    <h1 class="sidebar-title">QualityX</h1>
-                </div>
-                <div class="sidebar-nav-container">
-                    <div class="nav-group">
-                        <h2 class="nav-group-title">Menu</h2>
-                        <ul class="sidebar-nav">
-                            <li><a class="active" data-tab="dashboard">📊 Dashboard</a></li>
-                            <li><a data-tab="reports">📄 Reports & Analytics</a></li>
-                            <li><a data-tab="teams">👥 Teams</a></li>
-                            <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
-                            <li><a data-tab="company-employees">🏢 Company Employees</a></li>
-                            <li><a data-tab="departments">🏛️ Departments</a></li>
-                            <li><a data-tab="payments">💳 Payments</a></li>
-                            <li><a data-tab="kpis">📈 KPIs</a></li>
-                        </ul>
+    <div class="container-wrapper" style="display: flex; flex-direction: column; min-height: 100vh;">
+        <div style="display: flex; flex: 1;">
+            <aside class="sidebar">
+                <div>
+                    <div class="sidebar-header">
+                        <svg class="sidebar-logo" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5-10-5-10 5z" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.3"></path>
+                            <path d="M12 22V12" stroke="#FFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                        <h1 class="sidebar-title">QualityX</h1>
                     </div>
-                    <div class="nav-group">
-                        <h2 class="nav-group-title">Account</h2>
-                        <ul class="sidebar-nav">
-                            <li><a data-tab="profile">👤 Profile</a></li>
-                            <li><a data-tab="settings">⚙️ Settings</a></li>
-                            <li><a data-tab="help">❓ Get Help</a></li>
-                            <li><a id="logout-btn">🚪 Logout</a></li>
-                        </ul>
+                    <div class="sidebar-nav-container">
+                        <div class="nav-group">
+                            <h2 class="nav-group-title">Menu</h2>
+                            <ul class="sidebar-nav">
+                                <li><a class="active" data-tab="dashboard">📊 Dashboard</a></li>
+                                <li><a data-tab="reports">📄 Reports & Analytics</a></li>
+                                <li><a data-tab="teams">👥 Teams</a></li>
+                                <li><a data-tab="team-scheduling">📅 Team Scheduling</a></li>
+                                <li><a data-tab="company-employees">🏢 Company Employees</a></li>
+                                <li><a data-tab="departments">🏛️ Departments</a></li>
+                                <li><a data-tab="payments">💳 Payments</a></li>
+                                <li><a data-tab="kpis">📈 KPIs</a></li>
+                            </ul>
+                        </div>
+                        <div class="nav-group">
+                            <h2 class="nav-group-title">Account</h2>
+                            <ul class="sidebar-nav">
+                                <li><a data-tab="profile">👤 Profile</a></li>
+                                <li><a data-tab="settings">⚙️ Settings</a></li>
+                                <li><a data-tab="help">❓ Get Help</a></li>
+                                <li><a id="logout-btn">🚪 Logout</a></li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="sidebar-footer">
-                <div class="user-profile-widget">
-                    <div class="avatar-initials" id="sidebar-avatar-initials">NO</div>
-                    <div>
+                <div class="sidebar-footer">
+                    <div class="user-profile-widget">
+                        <div class="avatar-initials" id="sidebar-avatar-initials">NO</div>
+                        <div>
 <div class="user-name" id="sidebar-username">Loading...</div>
 <div class="user-role" id="sidebar-userrole">Loading...</div>
-                        <div class="user-status" id="sidebar-userstatus">● Connected</div>
+                            <div class="user-status" id="sidebar-userstatus">● Connected</div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </aside>
+            </aside>
 
-        <main class="main-content">
-            <header>
-                <div class="header-left">
-                    <h2 class="page-title" id="page-title-header">Dashboard</h2>
-                </div>
-                <div class="header-actions">
-                    <div class="search-input-container">
-                        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                        <input type="search" placeholder="Search reports, teams..." id="main-search">
+            <main class="main-content">
+                <header>
+                    <div class="header-left">
+                        <h2 class="page-title" id="page-title-header">Dashboard</h2>
                     </div>
-                    <div class="notification-bell">
-                        <button id="notification-btn" class="notification-btn">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-                        </button>
-                        <div id="notification-dropdown" class="notification-dropdown">
-                            <div class="notification-header">Notifications</div>
-                            <ul class="notification-list" id="notification-list">
-                                <li class="notification-item">Loading notifications...</li>
-                            </ul>
+                    <div class="header-actions">
+                        <div class="search-input-container">
+                            <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                            <input type="search" placeholder="Search reports, teams..." id="main-search">
                         </div>
+                        <div class="notification-bell">
+                            <button id="notification-btn" class="notification-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+                            </button>
+                            <div id="notification-dropdown" class="notification-dropdown">
+                                <div class="notification-header">Notifications</div>
+                                <ul class="notification-list" id="notification-list">
+                                    <li class="notification-item">Loading notifications...</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="export-report-btn">Export Overall Report</button>
                     </div>
-                    <button class="btn btn-primary" id="export-report-btn">Export Overall Report</button>
-                </div>
-            </header>
+                </header>
 
-            <div id="dashboard" class="tab-content active">
-                <div id="welcome-message">
-                    <h2 id="welcome-user-h2">Welcome, Loading...!</h2>
-                    <p>Here is the high-level overview of your quality operations.</p>
-                </div>
+                <div id="dashboard" class="tab-content active">
+                    <div id="welcome-message">
+                        <h2 id="welcome-user-h2">Welcome, Loading...!</h2>
+                        <p>Here is the high-level overview of your quality operations.</p>
+                    </div>
 
-                <section class="stats-grid">
-                    <div class="card stat-card">
-                        <div class="stat-icon-wrapper" style="background: var(--gradient-1);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
-                        <div class="stat-content">
-                            <div class="stat-title">Total Orders Reviewed</div>
-                            <div class="stat-value" id="total-orders">0</div>
+                    <section class="stats-grid">
+                        <div class="card stat-card">
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-1);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Total Orders Reviewed</div>
+                                <div class="stat-value" id="total-orders">0</div>
+                            </div>
                         </div>
-                    </div>
-                     <div class="card stat-card">
-                        <div class="stat-icon-wrapper" style="background: var(--gradient-4);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
-                        <div class="stat-content">
-                            <div class="stat-title">Overall Error Rate</div>
-                            <div class="stat-value" id="error-rate">0%</div>
+                         <div class="card stat-card">
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-4);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Overall Error Rate</div>
+                                <div class="stat-value" id="error-rate">0%</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="stat-icon-wrapper" style="background: var(--gradient-3);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
-                        <div class="stat-content">
-                            <div class="stat-title">Top Performing Team</div>
-                            <div class="stat-value" id="top-team">Loading...</div>
+                        <div class="card stat-card">
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-3);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Top Performing Team</div>
+                                <div class="stat-value" id="top-team">Loading...</div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="card stat-card">
-                        <div class="stat-icon-wrapper" style="background: var(--gradient-2);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
-                        <div class="stat-content">
-                            <div class="stat-title">Quality Team Accuracy</div>
-                            <div class="stat-value" id="quality-team-accuracy">100%</div>
+                        <div class="card stat-card">
+                            <div class="stat-icon-wrapper" style="background: var(--gradient-2);"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></div>
+                            <div class="stat-content">
+                                <div class="stat-title">Quality Team Accuracy</div>
+                                <div class="stat-value" id="quality-team-accuracy">100%</div>
+                            </div>
                         </div>
-                    </div>
-                </section>
-
-                <div class="filter-container">
-                    <section class="filter-panel">
-                        <div class="filter-group">
-                            <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
-                            <select id="filter-department">
-                                <option value="all">All Departments</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
-                            <select id="filter-employee">
-                                <option value="all">All Employees</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
-                            <input type="date" id="filter-date" style="color-scheme: dark;">
-                        </div>
-                        <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
-                        <button id="download-report-btn" class="btn btn-secondary">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                            Download Report
-                        </button>
                     </section>
-                </div>
 
-                <section class="charts-grid">
-                    <div class="card">
-                        <h3>Error Rate Trend (Last 30 Days)</h3>
-                        <div class="chart-container">
-                            <canvas id="errorTrendChart"></canvas>
-                        </div>
+                    <div class="filter-container">
+                        <section class="filter-panel">
+                            <div class="filter-group">
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg></div>
+                                <select id="filter-department">
+                                    <option value="all">All Departments</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div>
+                                <select id="filter-employee">
+                                    <option value="all">All Employees</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <div class="filter-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></svg></div>
+                                <input type="date" id="filter-date" style="color-scheme: dark;">
+                            </div>
+                            <button class="btn btn-primary" id="apply-filters-btn">Apply Filters</button>
+                            <button id="download-report-btn" class="btn btn-secondary">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                                Download Report
+                            </button>
+                        </section>
                     </div>
-                    <div class="card">
-                        <h3>Errors by Department</h3>
-                        <div class="chart-container">
-                            <canvas id="departmentErrorsChart"></canvas>
-                        </div>
-                    </div>
-                </section>
-                
-                <section class="widget">
-                    <h3>Department Performance Snapshot</h3>
-                    <div id="department-performance-snapshot" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: center;">
-                        <div class="kpi-card">
-                            <div class="kpi-title" style="color: var(--green);">Top Department</div>
-                            <div class="kpi-value" id="best-dept-name">Loading...</div>
-                            <small id="best-dept-rate">_</small>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-title" style="color: var(--text-muted);">Average Error Rate</div>
-                            <div class="kpi-value" id="avg-dept-rate">Loading...</div>
-                            <small>Across all departments</small>
-                        </div>
-                        <div class="kpi-card">
-                            <div class="kpi-title" style="color: var(--red);">Highest Error Rate</div>
-                            <div class="kpi-value" id="worst-dept-name">Loading...</div>
-                            <small id="worst-dept-rate">_</small>
-                        </div>
-                    </div>
-                </section>
-            </div>
 
-            <div id="reports" class="tab-content">
-                <div class="card">
-                    <h3>Advanced Reports & Analytics</h3>
-                    <div class="filter-panel" style="margin-bottom: 2rem;">
-                        <div class="filter-group">
-                            <label>Report Type</label>
-                            <select id="report-type">
-                                <option value="performance">Team Performance</option>
-                                <option value="errors">Error Analysis</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <label>Time Period</label>
-                            <select id="report-period">
-                                <option value="week">Last Week</option>
-                                <option value="month">Last Month</option>
-                                <option value="quarter">Last Quarter</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary" id="generate-report-btn">Generate & View</button>
-                        <button class="btn btn-secondary" id="export-analytics-csv-btn">Export CSV</button>
-                    </div>
-                    
                     <section class="charts-grid">
                         <div class="card">
-                            <h3>Quality Agent Accuracy</h3>
+                            <h3>Error Rate Trend (Last 30 Days)</h3>
                             <div class="chart-container">
-                                <canvas id="agentAccuracyChart"></canvas>
+                                <canvas id="errorTrendChart"></canvas>
                             </div>
                         </div>
                         <div class="card">
-                            <h3>Reviews vs. Overturned Decisions</h3>
+                            <h3>Errors by Department</h3>
                             <div class="chart-container">
-                                <canvas id="reviewsVsErrorsChart"></canvas>
+                                <canvas id="departmentErrorsChart"></canvas>
+                            </div>
+                        </div>
+                    </section>
+                    
+                    <section class="widget">
+                        <h3>Department Performance Snapshot</h3>
+                        <div id="department-performance-snapshot" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; text-align: center;">
+                            <div class="kpi-card">
+                                <div class="kpi-title" style="color: var(--green);">Top Department</div>
+                                <div class="kpi-value" id="best-dept-name">Loading...</div>
+                                <small id="best-dept-rate">_</small>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title" style="color: var(--text-muted);">Average Error Rate</div>
+                                <div class="kpi-value" id="avg-dept-rate">Loading...</div>
+                                <small>Across all departments</small>
+                            </div>
+                            <div class="kpi-card">
+                                <div class="kpi-title" style="color: var(--red);">Highest Error Rate</div>
+                                <div class="kpi-value" id="worst-dept-name">Loading...</div>
+                                <small id="worst-dept-rate">_</small>
                             </div>
                         </div>
                     </section>
                 </div>
-            </div>
 
-            <div id="teams" class="tab-content">
-                <div class="card">
-                    <h3>Team Management</h3>
-                    <div class="filter-panel">
-                        <div class="filter-group">
-                            <div class="search-input-container">
-                                <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                                <input type="search" placeholder="Search by name or email..." id="user-search">
+                <div id="reports" class="tab-content">
+                    <div class="card">
+                        <h3>Advanced Reports & Analytics</h3>
+                        <div class="filter-panel" style="margin-bottom: 2rem;">
+                            <div class="filter-group">
+                                <label>Report Type</label>
+                                <select id="report-type">
+                                    <option value="performance">Team Performance</option>
+                                    <option value="errors">Error Analysis</option>
+                                </select>
                             </div>
-                        </div>
-                        <div class="filter-group">
-                            <select id="filter-role">
-                                <option value="all">All Roles</option>
-                                <option value="agent">Agent</option>
-                                <option value="quality">Quality Agent</option>
-                                <option value="senior">Senior Quality</option>
-                                <option value="manager">Manager</option>
-                            </select>
-                        </div>
-                        <div class="filter-group">
-                            <select id="filter-user-status">
-                                <option value="all">All Status</option>
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
-                        </div>
-                        <button class="btn btn-primary" id="apply-user-filters">Apply Filters</button>
-                        <button class="btn btn-secondary" id="add-user-btn">Add New User</button>
-                    </div>
-                    <div class="table-container">
-                        <table class="user-management-table">
-                            <thead>
-                                <tr>
-                                    <th>User</th>
-                                    <th>Email</th>
-                                    <th>Role</th>
-                                    <th>Department</th>
-                                    <th>Status</th>
-                                    <th>Last Active</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody id="users-table-body">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="profile" class="tab-content">
-<div class="card">
-    <h3>Edit Profile</h3>
-    <div class="form-group">
-        <label for="profile-photo">Profile Picture</label>
-        <input type="file" id="profile-photo" accept="image/*" />
-    </div>
-    <div class="form-group">
-        <label for="profile-fullname">Full Name</label>
-        <input type="text" id="profile-fullname" placeholder="Loading name...">
-    </div>
-    <div class="form-group">
-        <label for="profile-email">Email Address</label>
-        <input type="email" id="profile-email" placeholder="Loading email..." readonly style="background-color: var(--border-color); cursor: not-allowed;">
-    </div>
-    <div class="form-group">
-        <label for="profile-phone">Phone Number</label>
-        <input type="tel" id="profile-phone" placeholder="Enter your phone number...">
-    </div>
-    <div class="page-actions">
-        <button class="btn" style="background: #333; color: white;">Cancel</button>
-        <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
-    </div>
-</div>
-</div>
-
-            <div id="settings" class="tab-content">
-                <div class="card">
-                    <h3>Application Settings</h3>
-                    <p style="color: var(--text-muted); margin-top:-0.5rem; margin-bottom: 2rem;">Manage global settings, user access, and system configurations.</p>
-                    <div class="settings-layout">
-                        <nav class="settings-nav">
-                            <ul>
-                                <li><a href="#" class="active" data-section="general">General</a></li>
-                                <li><a href="#" data-section="user-management">User Management</a></li>
-                                <li><a href="#" data-section="quality-standards">Quality Standards</a></li>
-                                <li><a href="#" data-section="system">System & API</a></li>
-                            </ul>
-                        </nav>
-                        <div class="settings-content">
-                            <section id="settings-section-general" class="settings-section active">
-                                <div class="setting-card">
-                                    <h4>General Settings</h4>
-                                    <p>Configure application-wide preferences.</p>
-                                    <button class="btn" style="background: #333; color: white;">Configure Themes & Language</button>
-                                </div>
-                            </section>
-                            <section id="settings-section-user-management" class="settings-section">
-                                <div class="setting-card">
-                                    <h4>User Management</h4>
-                                    <p>Invite new users, assign roles (Agent, Senior, Manager), and manage teams.</p>
-                                    <div style="display: flex; gap: 10px;">
-                                        <button class="btn btn-primary" id="invite-user-btn">Invite New User</button>
-                                        <button class="btn" style="background: #333; color: white;">Manage Roles & Teams</button>
-                                    </div>
-                                </div>
-                            </section>
-                            <section id="settings-section-quality-standards" class="settings-section">
-                                <div class="setting-card">
-                                    <h4>Quality Standards</h4>
-                                    <p>Define error types, severity, and set monthly quality score targets for all departments.</p>
-                                    <button class="btn" style="background: #333; color: white;">Configure Quality Metrics</button>
-                                </div>
-                            </section>
-                            <section id="settings-section-system" class="settings-section">
-                                <div class="setting-card">
-                                    <h4>System & API</h4>
-                                    <p>Manage API keys for integrations and configure system-level settings.</p>
-                                    <button class="btn" style="background: #333; color: white;">Manage API Keys</button>
-                                </div>
-                            </section>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="help" class="tab-content">
-                <div class="card">
-                    <div class="placeholder-content">
-                        <div class="placeholder-icon">❓</div>
-                        <h3>Help Center & Documentation</h3>
-                        <p>Find answers to common questions or contact support for assistance.</p>
-                        <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
-                    </div>
-                </div>
-            </div>
-            
-            <div id="team-scheduling" class="tab-content">
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3>Weekly Team Schedule</h3>
-                        <div>
-                            <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
-                            <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
-                            <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
-                                <button id="cancel-schedule-btn" class="btn" style="background-color: #333;">Cancel</button>
-                                <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
+                            <div class="filter-group">
+                                <label>Time Period</label>
+                                <select id="report-period">
+                                    <option value="week">Last Week</option>
+                                    <option value="month">Last Month</option>
+                                    <option value="quarter">Last Quarter</option>
+                                </select>
                             </div>
-                        </div>
-                    </div>
-                    <div class="table-container">
-                        <table class="user-management-table" id="schedule-table">
-                            <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
-                            <tbody id="schedule-table-body">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="company-employees" class="tab-content">
-                <div class="card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-                        <h3 style="white-space: nowrap;">Company Employees</h3>
-                        <button id="add-company-employee-btn" class="btn btn-secondary">Add New Employee</button>
-                    </div>
-                    <div class="table-container">
-                        <table class="user-management-table">
-                            <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
-                            <tbody id="company-employees-table-body">
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <div id="departments" class="tab-content">
-                 <div class="card">
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
-    <h3>Company Departments</h3>
-    <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
-</div>
-<div class="table-container">
-    <table class="user-management-table">
-        <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
-        <tbody id="departments-table-body"></tbody>
-    </table>
-</div>
-</div>
-</div>
-            <div id="payments" class="tab-content">
-                <div class="card">
-                    <h3>Available Payment Methods</h3>
-                    <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
-                        <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
-                    </div>
-                </div>
-            </div>
-
-            <div id="kpis" class="tab-content">
-                <div class="card">
-                    <h3>Manage Team Key Performance Indicators (KPIs)</h3>
-                    <p style="color: var(--text-muted); margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents and Seniors will be evaluated.</p>
-                    
-                    <div style="max-width: 600px;">
-                        <div class="form-group">
-                            <label for="kpi-accuracy-target">Minimum Review Accuracy Target (%)</label>
-                            <input type="number" id="kpi-accuracy-target" placeholder="e.g., 98" min="0" max="100">
-                            <small style="color: var(--text-muted);">The minimum accuracy for Quality Agents after senior reviews.</small>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="kpi-reviews-per-day">Daily Reviews Target (per agent)</label>
-                            <input type="number" id="kpi-reviews-per-day" placeholder="e.g., 25" min="0">
-                            <small style="color: var(--text-muted);">The number of reviews expected from each Quality Agent per day.</small>
+                            <button class="btn btn-primary" id="generate-report-btn">Generate & View</button>
+                            <button class="btn btn-secondary" id="export-analytics-csv-btn">Export CSV</button>
                         </div>
                         
-                        <div class="page-actions" style="border-top: none; padding-top: 0;">
-                            <button class="btn btn-primary" id="save-kpi-btn">Save KPI Targets</button>
+                        <section class="charts-grid">
+                            <div class="card">
+                                <h3>Quality Agent Accuracy</h3>
+                                <div class="chart-container">
+                                    <canvas id="agentAccuracyChart"></canvas>
+                                </div>
+                            </div>
+                            <div class="card">
+                                <h3>Reviews vs. Overturned Decisions</h3>
+                                <div class="chart-container">
+                                    <canvas id="reviewsVsErrorsChart"></canvas>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <div id="teams" class="tab-content">
+                    <div class="card">
+                        <h3>Team Management</h3>
+                        <div class="filter-panel">
+                            <div class="filter-group">
+                                <div class="search-input-container">
+                                    <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                                    <input type="search" placeholder="Search by name or email..." id="user-search">
+                                </div>
+                            </div>
+                            <div class="filter-group">
+                                <select id="filter-role">
+                                    <option value="all">All Roles</option>
+                                    <option value="agent">Agent</option>
+                                    <option value="quality">Quality Agent</option>
+                                    <option value="senior">Senior Quality</option>
+                                    <option value="manager">Manager</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select id="filter-user-status">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" id="apply-user-filters">Apply Filters</button>
+                            <button class="btn btn-secondary" id="add-user-btn">Add New User</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead>
+                                    <tr>
+                                        <th>User</th>
+                                        <th>Email</th>
+                                        <th>Role</th>
+                                        <th>Department</th>
+                                        <th>Status</th>
+                                        <th>Last Active</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="users-table-body">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
-            </div>
-        </main>
+
+                <div id="profile" class="tab-content">
+    <div class="card">
+        <h3>Edit Profile</h3>
+        <div class="form-group">
+            <label for="profile-photo">Profile Picture</label>
+            <input type="file" id="profile-photo" accept="image/*" />
+        </div>
+        <div class="form-group">
+            <label for="profile-fullname">Full Name</label>
+            <input type="text" id="profile-fullname" placeholder="Loading name...">
+        </div>
+        <div class="form-group">
+            <label for="profile-email">Email Address</label>
+            <input type="email" id="profile-email" placeholder="Loading email..." readonly style="background-color: var(--border-color); cursor: not-allowed;">
+        </div>
+        <div class="form-group">
+            <label for="profile-phone">Phone Number</label>
+            <input type="tel" id="profile-phone" placeholder="Enter your phone number...">
+        </div>
+        <div class="page-actions">
+            <button class="btn" style="background: #333; color: white;">Cancel</button>
+            <button class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+        </div>
+    </div>
+</div>
+
+                <div id="settings" class="tab-content">
+                    <div class="card">
+                        <h3>Application Settings</h3>
+                        <p style="color: var(--text-muted); margin-top:-0.5rem; margin-bottom: 2rem;">Manage global settings, user access, and system configurations.</p>
+                        <div class="settings-layout">
+                            <nav class="settings-nav">
+                                <ul>
+                                    <li><a href="#" class="active" data-section="general">General</a></li>
+                                    <li><a href="#" data-section="user-management">User Management</a></li>
+                                    <li><a href="#" data-section="quality-standards">Quality Standards</a></li>
+                                    <li><a href="#" data-section="system">System & API</a></li>
+                                </ul>
+                            </nav>
+                            <div class="settings-content">
+                                <section id="settings-section-general" class="settings-section active">
+                                    <div class="setting-card">
+                                        <h4>General Settings</h4>
+                                        <p>Configure application-wide preferences.</p>
+                                        <button class="btn" style="background: #333; color: white;">Configure Themes & Language</button>
+                                    </div>
+                                </section>
+                                <section id="settings-section-user-management" class="settings-section">
+                                    <div class="setting-card">
+                                        <h4>User Management</h4>
+                                        <p>Invite new users, assign roles (Agent, Senior, Manager), and manage teams.</p>
+                                        <div style="display: flex; gap: 10px;">
+                                            <button class="btn btn-primary" id="invite-user-btn">Invite New User</button>
+                                            <button class="btn" style="background: #333; color: white;">Manage Roles & Teams</button>
+                                        </div>
+                                    </div>
+                                </section>
+                                <section id="settings-section-quality-standards" class="settings-section">
+                                    <div class="setting-card">
+                                        <h4>Quality Standards</h4>
+                                        <p>Define error types, severity, and set monthly quality score targets for all departments.</p>
+                                        <button class="btn" style="background: #333; color: white;">Configure Quality Metrics</button>
+                                    </div>
+                                </section>
+                                <section id="settings-section-system" class="settings-section">
+                                    <div class="setting-card">
+                                        <h4>System & API</h4>
+                                        <p>Manage API keys for integrations and configure system-level settings.</p>
+                                        <button class="btn" style="background: #333; color: white;">Manage API Keys</button>
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="help" class="tab-content">
+                    <div class="card">
+                        <div class="placeholder-content">
+                            <div class="placeholder-icon">❓</div>
+                            <h3>Help Center & Documentation</h3>
+                            <p>Find answers to common questions or contact support for assistance.</p>
+                            <button class="btn btn-primary" style="margin-top: 1rem;">Contact Support</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="team-scheduling" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3>Weekly Team Schedule</h3>
+                            <div>
+                                <button id="add-member-schedule-btn" class="btn btn-secondary">Add Member</button>
+                                <button id="edit-schedule-btn" class="btn btn-primary">Edit Schedule</button>
+                                <div id="schedule-edit-controls" style="display: none; gap: 0.5rem;">
+                                    <button id="cancel-schedule-btn" class="btn" style="background-color: #333;">Cancel</button>
+                                    <button id="save-schedule-btn" class="btn btn-primary">Save Changes</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table" id="schedule-table">
+                                <thead><tr><th>Member</th><th>Monday</th><th>Tuesday</th><th>Wednesday</th><th>Thursday</th><th>Friday</th><th>Saturday</th><th>Sunday</th></tr></thead>
+                                <tbody id="schedule-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="company-employees" class="tab-content">
+                    <div class="card">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                            <h3 style="white-space: nowrap;">Company Employees</h3>
+                            <button id="add-company-employee-btn" class="btn btn-secondary">Add New Employee</button>
+                        </div>
+                        <div class="table-container">
+                            <table class="user-management-table">
+                                <thead><tr><th>Name</th><th>Username</th><th>Admin ID</th><th>Department</th><th>Title</th><th>Actions</th></tr></thead>
+                                <tbody id="company-employees-table-body">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="departments" class="tab-content">
+                     <div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+        <h3>Company Departments</h3>
+        <button id="add-department-btn" class="btn btn-primary">Add New Department</button>
+    </div>
+    <div class="table-container">
+        <table class="user-management-table">
+            <thead><tr><th>Department Name</th><th>Head of Department</th><th>Actions</th></tr></thead>
+            <tbody id="departments-table-body"></tbody>
+        </table>
+    </div>
+</div>
+</div>
+                <div id="payments" class="tab-content">
+                    <div class="card">
+                        <h3>Available Payment Methods</h3>
+                        <div class="payments-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem;">
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Visa Master Card</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Apple Pay</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Mada</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Visa-Master</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & MADA</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Apple-Pay</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Tamara</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & Tamara</div>
+                            <div class="payment-card" style="background: #2c2c2c; border-radius: 0.5rem; padding: 1.5rem; text-align: center; font-weight: 500;">Wallet & STC Pay</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="kpis" class="tab-content">
+                    <div class="card">
+                        <h3>Manage Team Key Performance Indicators (KPIs)</h3>
+                        <p style="color: var(--text-muted); margin-top:-1rem; margin-bottom: 2rem;">Set the targets against which Quality Agents and Seniors will be evaluated.</p>
+                        
+                        <div style="max-width: 600px;">
+                            <div class="form-group">
+                                <label for="kpi-accuracy-target">Minimum Review Accuracy Target (%)</label>
+                                <input type="number" id="kpi-accuracy-target" placeholder="e.g., 98" min="0" max="100">
+                                <small style="color: var(--text-muted);">The minimum accuracy for Quality Agents after senior reviews.</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="kpi-reviews-per-day">Daily Reviews Target (per agent)</label>
+                                <input type="number" id="kpi-reviews-per-day" placeholder="e.g., 25" min="0">
+                                <small style="color: var(--text-muted);">The number of reviews expected from each Quality Agent per day.</small>
+                            </div>
+                            
+                            <div class="page-actions" style="border-top: none; padding-top: 0;">
+                                <button class="btn btn-primary" id="save-kpi-btn">Save KPI Targets</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 260px;">
+            &copy; 2025 Mohamed Elmenisy. All rights reserved.
+        </footer>
     </div>
 
-    <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 260px;">
-        &copy; 2025 Mohamed Elmenisy. All rights reserved.
-    </footer>
 
     <!-- Add User Modal -->
     <div class="modal-overlay" id="add-user-modal">
@@ -1122,75 +1125,56 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        // REPLACED FUNCTION
-        async function loadPerformanceMetrics() {
-            try {
-                const metrics = await getPerformanceMetrics(); 
-                
-                if (teamMembers.length === 0) {
-                    await loadTeamMembers();
-                }
-                
-                const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
-                const activeAgentsEl = document.getElementById('active-agents');
-                if (activeAgentsEl) {
-                    activeAgentsEl.textContent = activeAgentsCount;
-                }
+        // dashboard-manager.html
 
-                document.getElementById('total-orders').textContent = metrics.totalOrders;
-                
-                const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
-
-                // Handle the display logic based on whether there are reviewed orders.
-                if (metrics.totalOrders > 0) {
-                    const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
-                    document.getElementById('error-rate').textContent = `${errorRate}%`;
-                    
-                    if (qualityAccuracyEl) {
-                        // Ensure the value is a number before displaying.
-                        if (metrics.qualityTeamAccuracy !== null && !isNaN(metrics.qualityTeamAccuracy)) {
-                            qualityAccuracyEl.textContent = `${parseFloat(metrics.qualityTeamAccuracy).toFixed(1)}%`;
-                            qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
-                        } else {
-                            qualityAccuracyEl.textContent = 'N/A%';
-                            qualityAccuracyEl.style.color = 'var(--text-muted)';
-                        }
-                    }
-                } else {
-                    // If no orders, Error Rate and Accuracy are Not Applicable.
-                    document.getElementById('error-rate').textContent = 'N/A%';
-                    if (qualityAccuracyEl) {
-                        qualityAccuracyEl.textContent = 'N/A%';
-                        qualityAccuracyEl.style.color = 'var(--text-muted)';
-                    }
-                }
-
-                // Remove "Loading..." text from change indicators, which was part of the original function.
-                const ordersChangeEl = document.getElementById('orders-change');
-                if (ordersChangeEl) ordersChangeEl.textContent = `For today`;
-                
-                const errorRateChangeEl = document.getElementById('error-rate-change');
-                if (errorRateChangeEl) errorRateChangeEl.textContent = `Overall team error rate`;
-
-                const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
-                if (qualityAccuracyChangeEl) qualityAccuracyChangeEl.textContent = `Based on senior reviews`;
-                
-                const agentsChangeEl = document.getElementById('agents-change');
-                if (agentsChangeEl) agentsChangeEl.textContent = `Currently active in team`;
-
-                // Finally, re-evaluate the top team card since we have the total orders count now.
-                updateTopTeamCard();
-
-            } catch (error) {
-                console.error('Error loading manager performance metrics:', error);
-                showToast('Failed to load dashboard KPIs', 'error');
-                // In case of error, still try to update the top team card to 'N/A' if appropriate
-                document.getElementById('total-orders').textContent = '0';
-                document.getElementById('error-rate').textContent = 'N/A%';
-                document.getElementById('quality-team-accuracy').textContent = 'N/A%';
-                updateTopTeamCard();
-            }
+async function loadPerformanceMetrics() {
+    try {
+        const metrics = await getPerformanceMetrics(); 
+        
+        // --- الإصلاح لمشكلة "Loading..." ---
+        // نتأكد أن بيانات الموظفين تم تحميلها أولاً
+        if (teamMembers.length === 0) {
+            await loadTeamMembers(); // ننتظر تحميل بيانات الفريق
         }
+        
+        // This was missing from the original code but needed for the UI
+        const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
+        const activeAgentsEl = document.getElementById('active-agents');
+        if (activeAgentsEl) {
+            activeAgentsEl.textContent = activeAgentsCount;
+        }
+
+        // تحديث باقي الكروت بالبيانات الصحيحة
+        document.getElementById('total-orders').textContent = metrics.totalOrders;
+        
+        const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
+        document.getElementById('error-rate').textContent = `${errorRate}%`;
+        
+        const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
+        if (qualityAccuracyEl) {
+            qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
+            qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
+        }
+
+        // Remove "Loading..." text from change indicators
+        const ordersChangeEl = document.getElementById('orders-change');
+        if (ordersChangeEl) ordersChangeEl.textContent = `For today`;
+        
+        const errorRateChangeEl = document.getElementById('error-rate-change');
+        if (errorRateChangeEl) errorRateChangeEl.textContent = `Overall team error rate`;
+
+        const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
+        if (qualityAccuracyChangeEl) qualityAccuracyChangeEl.textContent = `Based on senior reviews`;
+        
+        const agentsChangeEl = document.getElementById('agents-change');
+        if (agentsChangeEl) agentsChangeEl.textContent = `Currently active in team`;
+
+
+    } catch (error) {
+        console.error('Error loading manager performance metrics:', error);
+        showToast('Failed to load dashboard KPIs', 'error');
+    }
+}
         
 // This is a new helper function
 async function refreshDashboardData() {
@@ -1295,26 +1279,16 @@ async function generateAndDisplayReport() {
             try {
                 await updateDepartmentErrorsChart();
                 
-                // Update top team based on the newly loaded department performance data
+                // Update top team based on department performance
                 updateTopTeamCard();
             } catch (error) {
                 console.error('Error loading department performance:', error);
             }
         }
         
-        // REPLACED FUNCTION
+        // Update top team card based on department performance
         function updateTopTeamCard() {
             const topTeamCard = document.getElementById('top-team');
-            const totalOrdersEl = document.getElementById('total-orders');
-            
-            // Ensure the element exists and the value is a number
-            const totalOrders = totalOrdersEl ? parseInt(totalOrdersEl.textContent, 10) : NaN;
-
-            // If there are no orders, there cannot be a "top performing team".
-            if (isNaN(totalOrders) || totalOrders === 0) {
-                topTeamCard.textContent = 'N/A';
-                return;
-            }
 
             if (departmentPerformance && departmentPerformance.length > 0) {
                 // Sort departments by error_rate ascending (best is first)
@@ -1322,7 +1296,6 @@ async function generateAndDisplayReport() {
                 const bestTeam = sortedPerformance[0];
                 topTeamCard.textContent = bestTeam.department;
             } else {
-                // If there are orders but no department data, it's also not applicable.
                 topTeamCard.textContent = 'N/A';
             }
         }
@@ -1628,7 +1601,7 @@ function initRealtimeSubscriptions() {
             const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
             
             if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to the team to manage their schedule.</p></td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to manage their schedule.</p></td></tr>`;
                 return;
             }
 
