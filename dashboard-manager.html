@@ -1122,56 +1122,75 @@
             document.getElementById('profile-phone').value = currentUser.phone || '';
         }
 
-        // dashboard-manager.html
+        // REPLACED FUNCTION
+        async function loadPerformanceMetrics() {
+            try {
+                const metrics = await getPerformanceMetrics(); 
+                
+                if (teamMembers.length === 0) {
+                    await loadTeamMembers();
+                }
+                
+                const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
+                const activeAgentsEl = document.getElementById('active-agents');
+                if (activeAgentsEl) {
+                    activeAgentsEl.textContent = activeAgentsCount;
+                }
 
-async function loadPerformanceMetrics() {
-    try {
-        const metrics = await getPerformanceMetrics(); 
-        
-        // --- الإصلاح لمشكلة "Loading..." ---
-        // نتأكد أن بيانات الموظفين تم تحميلها أولاً
-        if (teamMembers.length === 0) {
-            await loadTeamMembers(); // ننتظر تحميل بيانات الفريق
+                document.getElementById('total-orders').textContent = metrics.totalOrders;
+                
+                const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
+
+                // Handle the display logic based on whether there are reviewed orders.
+                if (metrics.totalOrders > 0) {
+                    const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
+                    document.getElementById('error-rate').textContent = `${errorRate}%`;
+                    
+                    if (qualityAccuracyEl) {
+                        // Ensure the value is a number before displaying.
+                        if (metrics.qualityTeamAccuracy !== null && !isNaN(metrics.qualityTeamAccuracy)) {
+                            qualityAccuracyEl.textContent = `${parseFloat(metrics.qualityTeamAccuracy).toFixed(1)}%`;
+                            qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
+                        } else {
+                            qualityAccuracyEl.textContent = 'N/A%';
+                            qualityAccuracyEl.style.color = 'var(--text-muted)';
+                        }
+                    }
+                } else {
+                    // If no orders, Error Rate and Accuracy are Not Applicable.
+                    document.getElementById('error-rate').textContent = 'N/A%';
+                    if (qualityAccuracyEl) {
+                        qualityAccuracyEl.textContent = 'N/A%';
+                        qualityAccuracyEl.style.color = 'var(--text-muted)';
+                    }
+                }
+
+                // Remove "Loading..." text from change indicators, which was part of the original function.
+                const ordersChangeEl = document.getElementById('orders-change');
+                if (ordersChangeEl) ordersChangeEl.textContent = `For today`;
+                
+                const errorRateChangeEl = document.getElementById('error-rate-change');
+                if (errorRateChangeEl) errorRateChangeEl.textContent = `Overall team error rate`;
+
+                const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
+                if (qualityAccuracyChangeEl) qualityAccuracyChangeEl.textContent = `Based on senior reviews`;
+                
+                const agentsChangeEl = document.getElementById('agents-change');
+                if (agentsChangeEl) agentsChangeEl.textContent = `Currently active in team`;
+
+                // Finally, re-evaluate the top team card since we have the total orders count now.
+                updateTopTeamCard();
+
+            } catch (error) {
+                console.error('Error loading manager performance metrics:', error);
+                showToast('Failed to load dashboard KPIs', 'error');
+                // In case of error, still try to update the top team card to 'N/A' if appropriate
+                document.getElementById('total-orders').textContent = '0';
+                document.getElementById('error-rate').textContent = 'N/A%';
+                document.getElementById('quality-team-accuracy').textContent = 'N/A%';
+                updateTopTeamCard();
+            }
         }
-        
-        // This was missing from the original code but needed for the UI
-        const activeAgentsCount = teamMembers.filter(m => m.is_active && ['quality', 'senior'].includes(m.role)).length;
-        const activeAgentsEl = document.getElementById('active-agents');
-        if (activeAgentsEl) {
-            activeAgentsEl.textContent = activeAgentsCount;
-        }
-
-        // تحديث باقي الكروت بالبيانات الصحيحة
-        document.getElementById('total-orders').textContent = metrics.totalOrders;
-        
-        const errorRate = (100 - parseFloat(metrics.accuracyRate)).toFixed(1);
-        document.getElementById('error-rate').textContent = `${errorRate}%`;
-        
-        const qualityAccuracyEl = document.getElementById('quality-team-accuracy');
-        if (qualityAccuracyEl) {
-            qualityAccuracyEl.textContent = `${metrics.qualityTeamAccuracy}%`;
-            qualityAccuracyEl.style.color = metrics.qualityTeamAccuracy < 98 ? 'var(--yellow)' : 'var(--green)';
-        }
-
-        // Remove "Loading..." text from change indicators
-        const ordersChangeEl = document.getElementById('orders-change');
-        if (ordersChangeEl) ordersChangeEl.textContent = `For today`;
-        
-        const errorRateChangeEl = document.getElementById('error-rate-change');
-        if (errorRateChangeEl) errorRateChangeEl.textContent = `Overall team error rate`;
-
-        const qualityAccuracyChangeEl = document.getElementById('quality-team-accuracy-change');
-        if (qualityAccuracyChangeEl) qualityAccuracyChangeEl.textContent = `Based on senior reviews`;
-        
-        const agentsChangeEl = document.getElementById('agents-change');
-        if (agentsChangeEl) agentsChangeEl.textContent = `Currently active in team`;
-
-
-    } catch (error) {
-        console.error('Error loading manager performance metrics:', error);
-        showToast('Failed to load dashboard KPIs', 'error');
-    }
-}
         
 // This is a new helper function
 async function refreshDashboardData() {
@@ -1276,16 +1295,26 @@ async function generateAndDisplayReport() {
             try {
                 await updateDepartmentErrorsChart();
                 
-                // Update top team based on department performance
+                // Update top team based on the newly loaded department performance data
                 updateTopTeamCard();
             } catch (error) {
                 console.error('Error loading department performance:', error);
             }
         }
         
-        // Update top team card based on department performance
+        // REPLACED FUNCTION
         function updateTopTeamCard() {
             const topTeamCard = document.getElementById('top-team');
+            const totalOrdersEl = document.getElementById('total-orders');
+            
+            // Ensure the element exists and the value is a number
+            const totalOrders = totalOrdersEl ? parseInt(totalOrdersEl.textContent, 10) : NaN;
+
+            // If there are no orders, there cannot be a "top performing team".
+            if (isNaN(totalOrders) || totalOrders === 0) {
+                topTeamCard.textContent = 'N/A';
+                return;
+            }
 
             if (departmentPerformance && departmentPerformance.length > 0) {
                 // Sort departments by error_rate ascending (best is first)
@@ -1293,6 +1322,7 @@ async function generateAndDisplayReport() {
                 const bestTeam = sortedPerformance[0];
                 topTeamCard.textContent = bestTeam.department;
             } else {
+                // If there are orders but no department data, it's also not applicable.
                 topTeamCard.textContent = 'N/A';
             }
         }
