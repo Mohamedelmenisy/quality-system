@@ -82,7 +82,7 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         html { scroll-behavior: smooth; }
         body { font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); display: flex; flex-direction: column; min-height: 100vh; }
-        .sidebar { width: 260px; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
+        .sidebar { width: 16.25rem; background-color: var(--sidebar-bg); height: 100vh; position: fixed; left: 0; top: 0; border-right:1px solid var(--border-color); display: flex; flex-direction: column; z-index: 1000; }
         .sidebar-header { display: flex; align-items: center; gap: 10px; padding: 20px; border-bottom: 1px solid var(--border-color); }
         .sidebar-logo { height: 32px; fill: var(--primary-color); }
         .sidebar-title { font-size: 1.25rem; color: var(--primary-color); font-weight: 700; }
@@ -98,7 +98,7 @@
         .user-name { font-weight: 600; font-size: 1rem; }
         .user-role { font-size: 0.8rem; color: var(--text-muted); }
         .user-status { font-size: 0.75rem; color: var(--green); margin-top: 2px; }
-        .main-content { margin-left: 260px; width: calc(100% - 260px); padding: 40px; flex: 1; }
+        .main-content { margin-left: 16.25rem; width: calc(100% - 16.25rem); padding: 40px; flex: 1; }
         .tab-content { display: none; }
         .tab-content.active { display: block; animation: fadeIn 0.5s; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -256,15 +256,15 @@
         .widget h3 { margin-bottom: 1rem; }
 
         @media (max-width: 1024px) {
-            .sidebar { width: 220px; }
-            .main-content { margin-left: 220px; width: calc(100% - 220px); }
+            .sidebar { width: 13.75rem; }
+            .main-content { margin-left: 13.75rem; width: calc(100% - 13.75rem); }
             .charts-grid { grid-template-columns: 1fr; }
         }
         @media (max-width: 768px) {
-            .sidebar { width: 70px; }
+            .sidebar { width: 4.375rem; }
             .sidebar-title, .nav-group-title, .user-name, .user-role, .user-status { display: none; }
             .sidebar-nav a span:not(.icon) { display: none; }
-            .main-content { margin-left: 70px; width: calc(100% - 70px); padding: 15px; }
+            .main-content { margin-left: 4.375rem; width: calc(100% - 4.375rem); padding: 15px; }
             .stats-grid { grid-template-columns: 1fr; }
             .filter-panel { flex-direction: column; }
             .filter-group { min-width: 100%; }
@@ -726,7 +726,7 @@
             </main>
         </div>
 
-        <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 260px;">
+        <footer style="text-align: center; padding: 20px 30px; color: var(--text-muted); font-size: 0.9rem; border-top: 1px solid var(--border-color); margin-left: 16.25rem;">
             &copy; 2025 Mohamed Elmenisy. All rights reserved.
         </footer>
     </div>
