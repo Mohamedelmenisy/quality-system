@@ -1601,7 +1601,7 @@ function initRealtimeSubscriptions() {
             const teamToSchedule = teamMembers.filter(m => ['quality', 'senior', 'admin', 'manager'].includes(m.role));
             
             if (teamToSchedule.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to manage their schedule.</p></td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="8" class="empty-state"><div class="empty-state-icon">📅</div><h4>No Team Members</h4><p>Add members to the team to manage their schedule.</p></td></tr>`;
                 return;
             }
 
